@@ -4,3 +4,9 @@ DATABASE_URL=postgresql://flask_celery:flask_celery@db/flask_celery
 SECRET_KEY=my_precious
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+
+
+AWS_ACCESS_KEY_ID=AKIAQTJEEW4MLEQWVDX6 
+AWS_SECRET_ACCESS_KEY=tG4FgDx/Lgxw6Vbp9WR3EHni8kFykEcLdILrkHpI
+AWS_DEFAULT_REGION=us-west-1
