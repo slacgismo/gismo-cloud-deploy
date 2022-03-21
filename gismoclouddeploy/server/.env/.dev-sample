@@ -4,7 +4,7 @@ DATABASE_URL=postgresql://flask_celery:flask_celery@db/flask_celery
 SECRET_KEY=my_precious
 CELERY_BROKER_URL=redis://redis:6379/0
 CELERY_RESULT_BACKEND=redis://redis:6379/0
-
+SOCKETIO_MESSAGE_QUEUE=redis://redis:6379/0
 
 
 AWS_ACCESS_KEY_ID=AKIAQTJEEW4MLEQWVDX6 
