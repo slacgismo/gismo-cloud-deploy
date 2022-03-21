@@ -66,3 +66,13 @@ def webhook_test_2():
    task = task_process_notification.delay()
    current_app.logger.info(task.id)
    return 'pong'
+
+@users_blueprint.route('/form_ws/', methods=('GET', 'POST'))
+def subscribe_ws():
+    form = YourForm()
+    if form.validate_on_submit():
+        task = sample_task.delay(form.email.data)
+        return jsonify({
+            'task_id': task.task_id,
+        })
+    return render_template('form_ws.html', form=form)

@@ -1,4 +1,4 @@
-from project import create_app, ext_celery
+from project import create_app, ext_celery, socketio
 
 app = create_app()
 celery = ext_celery.celery
@@ -20,3 +20,12 @@ def celery_worker():
         )
 
     run_process("./project", run_worker)
+
+
+if __name__ == '__main__':
+    socketio.run(
+        app,
+        debug=True,
+        use_reloader=True,
+        host='0.0.0.0'
+    )
