@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster
+FROM python:3.8
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -13,6 +13,8 @@ RUN apt-get update \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install libblas3 liblapack3 liblapack-dev libblas-dev cmake -y
+RUN apt install libhdf5-dev -y
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements.txt /requirements.txt

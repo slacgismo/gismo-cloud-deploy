@@ -18,3 +18,15 @@ pytest-factoryboy==2.1.0
 pytest-cov==2.12.1
 Pillow==8.3.1
 gunicorn==20.1.0
+
+boto3
+scipy
+numpy
+pandas
+scikit-learn
+seaborn
+requests
+pvlib
+cvxpy>=1.1.0
+Mosek
+solar-data-tools
