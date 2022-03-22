@@ -59,3 +59,10 @@ def dynamic_example_two():
 @shared_task(name='high_priority:dynamic_example_three')
 def dynamic_example_three():
     logger.info('Example Three')
+
+
+@shared_task()
+def task_send_welcome_email(user_pk):
+    from project.users.models import User
+    user = User.query.get(user_pk)
+    logger.info(f'send email to {user.email} {user.id}')
