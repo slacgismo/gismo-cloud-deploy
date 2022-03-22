@@ -41,3 +41,7 @@ def task_process_notification(self):
 def task_postrun_handler(task_id, **kwargs):
     from project.users.events import update_celery_task_status
     update_celery_task_status(task_id)
+
+@shared_task(name='task_schedule_work')
+def task_schedule_work():
+    logger.info('task_schedule_work run')
