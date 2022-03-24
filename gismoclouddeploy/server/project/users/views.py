@@ -22,6 +22,10 @@ def api_call(email):
     requests.post('https://httpbin.org/delay/5')
 
 
+@users_blueprint.route('/health/', methods=('GET',))
+def health_check():
+    return "Okay"
+
 @users_blueprint.route('/form/', methods=('GET', 'POST'))
 def subscribe():
     form = YourForm()

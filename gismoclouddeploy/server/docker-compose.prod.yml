@@ -1,29 +1,35 @@
 version: '3.8'
 
 services:
+
+  nginx:
+    build: ./compose/production/nginx
+    volumes:
+      - mediafiles:/app/upload
+    ports:
+      - 80:80
+      - 5559:5555
+      - 15672:15672
+    depends_on:
+      - web
+      - flower
+
   web:
     build:
       context: .
-      dockerfile: ./compose/local/flask/Dockerfile
-    image: flask_celery_example_web
-    # '/start' is the shell script used to run the service
+      dockerfile: ./compose/production/flask/Dockerfile
     command: /start
-    # this volume is used to map the files and folders on the host to the container
-    # so if we change code on the host, code in the docker container will also be changed
     volumes:
-      - .:/app
-    ports:
-      - 5010:5000
+
+      - mediafiles:/app/upload
     env_file:
-      - .env/.dev-sample
-    environment:
-      - FLASK_APP=app
+      - ./.env/.prod-sample
     depends_on:
       - redis
       - db
 
   db:
-    image: postgres:13-alpine
+    image: postgres:13.0-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -38,19 +44,17 @@ services:
     image: rabbitmq:3-management
     env_file:
       - ./.env/.prod-sample
-      
+
   celery_worker:
     build:
       context: .
-      dockerfile: ./compose/local/flask/Dockerfile
+      dockerfile: ./compose/production/flask/Dockerfile
     image: flask_celery_example_celery_worker
     command: /start-celeryworker
     volumes:
-      - .:/app
+      - mediafiles:/app/upload
     env_file:
-      - .env/.dev-sample
-    environment:
-      - FLASK_APP=celery_app
+      - ./.env/.prod-sample
     depends_on:
       - redis
       - db
@@ -58,20 +62,17 @@ services:
   flower:
     build:
       context: .
-      dockerfile: ./compose/local/flask/Dockerfile
+      dockerfile: ./compose/production/flask/Dockerfile
     image: flask_celery_example_celery_flower
     command: /start-flower
     volumes:
-      - .:/app
+      - mediafiles:/app/upload
     env_file:
-      - .env/.dev-sample
-    environment:
-      - FLASK_APP=celery_app
-    ports:
-      - 5557:5555
+      - ./.env/.prod-sample
     depends_on:
       - redis
       - db
 
 volumes:
   postgres_data:
+  mediafiles:
