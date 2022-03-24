@@ -13,33 +13,51 @@ RUN apt-get update \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
+
 RUN apt update && apt install libblas3 liblapack3 liblapack-dev libblas-dev cmake -y
 RUN apt install libhdf5-dev -y
+
+RUN addgroup --system flask \
+    && adduser --system --ingroup flask flask
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 
-COPY ./compose/local/flask/entrypoint /entrypoint
+COPY ./compose/production/flask/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
+RUN chown flask /entrypoint
 
-COPY ./compose/local/flask/start /start
+COPY ./compose/production/flask/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
+RUN chown flask /start
 
-COPY ./compose/local/flask/celery/worker/start /start-celeryworker
+COPY ./compose/production/flask/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
+RUN chown flask /start-celeryworker
 
-# COPY ./compose/local/flask/celery/beat/start /start-celerybeat
+# COPY ./compose/production/flask/celery/beat/start /start-celerybeat
 # RUN sed -i 's/\r$//g' /start-celerybeat
 # RUN chmod +x /start-celerybeat
+# RUN chown flask /start-celerybeat
 
-COPY ./compose/local/flask/celery/flower/start /start-flower
+COPY ./compose/production/flask/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 
+RUN mkdir /app
+RUN mkdir /app/upload
+RUN mkdir /app/flower_db
 WORKDIR /app
+
+# copy project code
+COPY . .
+
+RUN chown -R flask:flask /app
+
+USER flask
 
 ENTRYPOINT ["/entrypoint"]
