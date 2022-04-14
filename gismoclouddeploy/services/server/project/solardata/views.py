@@ -1,4 +1,5 @@
 import os
+from io import StringIO
 import requests
 from flask import current_app, render_template, jsonify,current_app,request
 from celery.result import AsyncResult
@@ -6,7 +7,7 @@ from . import solardata_blueprint
 from project.solardata.models import SolarData
 import boto3
 import time
-from project.solardata.tasks import process_data_task
+from project.solardata.tasks import process_data_task, save_data_from_db_to_s3_task,read_all_datas_from_db
 from project import csrf,db
 
 import pandas as pd
@@ -20,7 +21,12 @@ def ping():
         'container_id': os.uname()[1]
     })    
 
-    
+@solardata_blueprint.route('/read_datas_from_db/', methods=['POST'])
+@csrf.exempt
+def read_datas_from_db():
+    task = read_all_datas_from_db.apply_async()
+    return jsonify({"task_id": task.id}), 202
+
 @solardata_blueprint.route("/run_process_file", methods=["POST"])
 @csrf.exempt
 def run_process_file():
@@ -38,9 +44,7 @@ def run_process_file():
         column_name,
         start_time,
         solver])
-    # task = process_data_task.apply_async([bucket_name])
     return jsonify({"task_id": task.id}), 202
-    # return bucket_name + file_path + file_name + column_name
 
 
 @solardata_blueprint.route("/tasks/<task_id>", methods=["GET"])
@@ -101,8 +105,40 @@ def save_all_results_from_db_to_s3():
         'status': 'success',
         'container_id': os.uname()[1]
     }
+    post_data = request.get_json()
+    bucket_name = post_data.get('bucket_name')
+    file_path = post_data.get('file_path')
+    file_name = post_data.get('file_name')
+    delete_data = post_data.get('delete_data')
+    # task = save_data_from_db_to_s3_task.apply_async(
+    #     [bucket_name,
+    #     file_path,
+    #     file_name,
+    #     delete_data])
+    # return jsonify({"task_id": task.id}), 202
+   
+    all_datas = [solardata.to_json() for solardata in SolarData.query.all()]
+    # convert josn to csv file and save to s3
+    # current_app.logger.info(all_datas)
+    df = pd.json_normalize(all_datas)
+    csv_buffer=StringIO()
+    df.to_csv(csv_buffer)
+    content = csv_buffer.getvalue()
+    try:
+        to_s3(bucket_name,file_path,file_name, content)
+    except Exception as e:
+        response_object = {
+            'status': 'failed',
+            'container_id': os.uname()[1],
+            'error': str(e)
+        }
     return response_object
+    
 
+def to_s3(bucket,file_path,filename, content):
+    s3_client = connect_aws_client('s3')
+    k = file_path+"/"+filename
+    s3_client.put_object(Bucket=bucket, Key=k, Body=content)
 
 # save results to db
 @solardata_blueprint.route("/all_results/", methods=["POST", "GET"])

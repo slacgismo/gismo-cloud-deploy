@@ -78,6 +78,8 @@ def task_status():
             }
         return jsonify(response)
 
+
+
 @users_blueprint.route('/webhook_test/', methods=('POST', ))
 @csrf.exempt
 def webhook_test():
