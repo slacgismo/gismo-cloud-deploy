@@ -1,0 +1,15 @@
+.PHONY: ecr-validation
+ecr-validation:
+	@echo "validaton aws ecr credentidals"
+	aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 041414866712.dkr.ecr.us-east-2.amazonaws.com
+
+
+.PHONY: push-server
+push-server:
+	docker image tag web 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+	docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+
+.PHONY: push-worker
+push-worker:
+	docker image tag worker 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+	docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
