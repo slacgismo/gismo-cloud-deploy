@@ -12,25 +12,16 @@ class SolarData(db.Model):
     file_name = db.Column(db.String(128),  nullable=False)
     column_name = db.Column(db.String(128), nullable=False)
     process_time = db.Column(db.Float(), nullable=False)
-
     length = db.Column(db.Float(),  nullable=False)
     power_units = db.Column(db.String(128),  nullable=False)
-
     capacity_estimate = db.Column(db.Float(),  nullable=False)
-
     data_sampling = db.Column(db.Integer,  nullable=False)
-
     data_quality_score = db.Column(db.Float(),  nullable=False)
     data_clearness_score =db.Column(db.Float(),  nullable=False)
-
     error_message = db.Column(db.String(1024), nullable=True)
-    
     time_shifts = db.Column(db.Boolean(),  nullable=False)
-
     capacity_changes =  db.Column(db.Boolean(),  nullable=False)
     num_clip_points = db.Column(db.Integer,  nullable=False)
-
-
     tz_correction = db.Column(db.Integer,  nullable=False)
     inverter_clipping = db.Column(db.Boolean(),  nullable=False)
     normal_quality_scores = db.Column(db.Boolean(),  nullable=False)
@@ -89,7 +80,6 @@ class SolarData(db.Model):
             'process_time': self.process_time,
             'power_units': self.power_units,
             'length': self.length,
-
             'capacity_estimate': self.capacity_estimate,
             'data_sampling': self.data_sampling,
             'data_quality_score': self.data_quality_score,
@@ -97,7 +87,6 @@ class SolarData(db.Model):
             'capacity_changes': self.capacity_changes,
             'num_clip_points': self.num_clip_points,
             'normal_quality_scores': self.normal_quality_scores,
-
             'data_clearness_score': self.data_clearness_score,
             'inverter_clipping': self.inverter_clipping,
             'tz_correction': self.tz_correction,

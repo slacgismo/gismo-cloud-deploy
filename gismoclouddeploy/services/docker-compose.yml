@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: ./server/compose/local/flask/Dockerfile
-    container_name: web
+    image: web
     # '/start' is the shell script used to run the service
     command: /start
     # this volume is used to map the files and folders on the host to the container
@@ -32,7 +32,7 @@ services:
     build:
       context: ./db
       dockerfile: Dockerfile
-    container_name: postgres-13
+    image: postgres-13
     # image: postgres:13-alpine
     # platform: linux/amd64
     # build:
@@ -54,7 +54,7 @@ services:
     build:
       context: .
       dockerfile: ./server/compose/local/flask/Dockerfile
-    container_name: worker
+    image: worker
     command: /start-celeryworker
     volumes:
       - ./server:/app

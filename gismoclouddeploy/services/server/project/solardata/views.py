@@ -1,13 +1,13 @@
 import os
 from io import StringIO
 import requests
-from flask import current_app, render_template, jsonify,current_app,request
+from flask import current_app, render_template, jsonify,request
 from celery.result import AsyncResult
 from . import solardata_blueprint
 from project.solardata.models import SolarData
 import boto3
 import time
-from project.solardata.tasks import process_data_task, save_data_from_db_to_s3_task,read_all_datas_from_db
+from project.solardata.tasks import process_data_task, save_data_from_db_to_s3_task,read_all_datas_from_solardata
 from project import csrf,db
 
 import pandas as pd
@@ -24,7 +24,7 @@ def ping():
 @solardata_blueprint.route('/read_datas_from_db/', methods=['POST'])
 @csrf.exempt
 def read_datas_from_db():
-    task = read_all_datas_from_db.apply_async()
+    task = read_all_datas_from_solardata.apply_async()
     return jsonify({"task_id": task.id}), 202
 
 @solardata_blueprint.route("/run_process_file", methods=["POST"])
@@ -116,10 +116,11 @@ def save_all_results_from_db_to_s3():
     #     file_name,
     #     delete_data])
     # return jsonify({"task_id": task.id}), 202
-   
-    all_datas = [solardata.to_json() for solardata in SolarData.query.all()]
+    from project.solardata import queries
+
+    all_datas = [solardata.to_json() for solardata in queries.get_all_data_from_solardata()]
     # convert josn to csv file and save to s3
-    # current_app.logger.info(all_datas)
+
     df = pd.json_normalize(all_datas)
     csv_buffer=StringIO()
     df.to_csv(csv_buffer)
