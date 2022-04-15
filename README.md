@@ -130,5 +130,12 @@ sample=#
 ~~~
 5. Check server is running on URL: in your local machine.
 
+6. Use kubectl create secrets. 
+
+~~~
+kubectl create secret generic aws-access-key-id --form-literal  aws-access-key-id=<your AWS access key>
+kubectl create secret generic aws-secret-key --form-literal aws-secret-key =<your AWS secret key>
+
+~~~
 ## AWS EKS
 
