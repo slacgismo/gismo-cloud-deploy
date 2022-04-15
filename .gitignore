@@ -27,7 +27,7 @@ htmlcov/
 *,cover
 
 # licence
-licence/
+
 *.lic
 
 

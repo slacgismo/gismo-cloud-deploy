@@ -18,9 +18,15 @@ from io import StringIO
 logger = get_task_logger(__name__)
 
 @shared_task()
-def read_all_datas_from_db():
-    all_datas = [solardata.to_json() for solardata in SolarData.query.all()]
-    return jsonify(all_datas)
+def read_all_datas_from_solardata():
+    # from project import services, queries
+    # from flask import current_ap
+    # (app, _, _) = current_ap()
+    # with app.ctx():
+    #     solardata = queries.get_all_data_from_solardata()
+    #     print(solardata)
+    # all_datas = [solardata.to_json() for solardata in SolarData.query.all()]
+    return "done"
 
    
 @shared_task()
