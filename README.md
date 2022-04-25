@@ -1,5 +1,7 @@
 # Gismo-Cloud-Deploy
-
+## Describtion
+## System diagram
+![System diagram](./Solar-data-tools-AWS.png)
 
 ## Start the project
 
@@ -84,9 +86,6 @@ You shoud see:
 ~~~
 
 
-
-6. 
-
 ## Local Kubernetes
 
 1. Enable kubernetes on Docker Desktop.
@@ -137,5 +136,71 @@ kubectl create secret generic aws-access-key-id --form-literal  aws-access-key-i
 kubectl create secret generic aws-secret-key --form-literal aws-secret-key =<your AWS secret key>
 
 ~~~
-## AWS EKS
+## Setup AWS EKS 
+`(will be simplied by terraform)`
+1. Crreate an ec2 bastion tunnel. 
+2. SSH to bastion tunnel
+3. Install eksctl
+~~~
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+~~~
+4. Update AWS CLI to Version 2
+~~~
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+~~~
+5. log out of your shell and back in again.
 
+6. Set up a user group
+7. Set up a group with the Permissions of
+- AmazonEC2FullAccess
+- IAMFullAccess
+- AWSCloudFormationFullAccess
+- create a custom security permission:
+~~~
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "eks:*",
+      "Resource": "*"
+    },
+    {
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    }
+  ]
+}
+~~~
+8.  Add a user to the group
+Use the console to add a user to your new group, and then use "aws configure" to input the credentials
+9. Install kubectl.
+~~~
+export RELEASE=<enter default eks version number here. Eg 1.21.0>
+curl -LO https://storage.googleapis.com/kubernetes-release/release/v$RELEASE/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+sudo mv ./kubectl /usr/local/bin/kubectl
+~~~
+10.  Check the version 
+~~~
+kubectl version --client"
+~~~
+11.  Start your cluster!
+~~~
+eksctl create cluster --name fleetman --nodes-min=3
+~~~
+
+### excute command
+`(will be simplied by cli tools)`
+~~~
+kubectl get pods
+
+
+~~~
