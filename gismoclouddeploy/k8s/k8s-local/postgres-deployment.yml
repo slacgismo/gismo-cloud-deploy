@@ -20,6 +20,8 @@ spec:
       containers:
       - name: postgres
         image: postgres:13-alpine
+        # Local postgres images has created db command at initial 
+        imagePullPolicy: IfNotPresent
         env:
           - name: POSTGRES_USER
             value: sample

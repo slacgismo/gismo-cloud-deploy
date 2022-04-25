@@ -15,10 +15,12 @@ spec:
     spec:
       containers:
       - name: webapp
-        image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+        image: web:latest
         command: ["/start"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
+          - name: FLASK_APP
+            value: app 
           - name: FLASK_ENV
             value: development 
           - name: FLASK_CONFIG
@@ -29,6 +31,19 @@ spec:
             value: "redis://back-api:6379/0"
           - name: DATABASE_URL
             value: "postgresql://sample:pleasechangeme@postgres-services/flask_celery"
-          - name: SECRET_KEY  
+          - name: SECRET_KEY
             value: my_precious
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: aws-access-key-id
+                key: aws-access-key-id
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret-access-key
+                key: aws-secret-access-key
+          - name: AWS_DEFAULT_REGION
+            value: us-west-2
+
 

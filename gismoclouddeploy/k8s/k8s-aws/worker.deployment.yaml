@@ -15,10 +15,12 @@ spec:
     spec:
       containers:
       - name: worker
-        image: worker:latest
-        imagePullPolicy: IfNotPresent
+        image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+        imagePullPolicy: Always
         command: ["/start-celeryworker"]
         env:
+          - name: FLASK_APP
+            value: app 
           - name: FLASK_ENV
             value: development 
           - name: FLASK_CONFIG
@@ -29,5 +31,5 @@ spec:
             value: "redis://back-api:6379/0"
           - name: DATABASE_URL
             value: "postgresql://sample:pleasechangeme@postgres/flask_celery"
-          - name: SECRET_KEY
+          - name: SECRET_KEY  
             value: my_precious

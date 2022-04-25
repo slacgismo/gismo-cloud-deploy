@@ -12,10 +12,10 @@ class User(db.Model):
     def __init__(self, username, email, *args, **kwargs):
         self.username = username
         self.email = email
-
+    
     def to_json(self):
         return {
             'id': self.id,
             'username': self.username,
-            'email': self.email,
+            'email': self.email
         }

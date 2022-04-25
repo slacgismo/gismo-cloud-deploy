@@ -18,6 +18,7 @@ services:
     env_file:
       - ./server/.env/.dev-sample
     environment:
+      - FLASK_APP=app
       - FLASK_ENV=development
       - FLASK_CONFIG=development
       - DATABASE_URL=postgresql://flask_celery:flask_celery@db/flask_celery
@@ -29,16 +30,11 @@ services:
       - db
 
   db:
-    build:
-      context: ./db
-      dockerfile: Dockerfile
-    image: postgres-13
     # image: postgres:13-alpine
-    # platform: linux/amd64
-    # build:
-    #   context: ./db
-    #   dockerfile: Dockerfile
-    # image: postgres-13
+    build:
+      context:  ./db
+      dockerfile: Dockerfile
+    image: postgres:13-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -61,7 +57,7 @@ services:
     env_file:
       - ./server/.env/.dev-sample
     environment:
-
+      - FLASK_APP=app
       - FLASK_ENV=development
       - FLASK_CONFIG=development
       - DATABASE_URL=postgresql://flask_celery:flask_celery@db/flask_celery

@@ -1,24 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: worker
+  name: webapp
 spec:
   # minReadySeconds: 30
   selector:
     matchLabels:
-      app: worker
+      app: webapp
   replicas: 1
   template: # template for the pods
     metadata:
       labels:
-        app: worker
+        app: webapp
     spec:
       containers:
-      - name: worker
-        image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+      - name: webapp
+        image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+        command: ["/start"]
         imagePullPolicy: Always
-        command: ["/start-celeryworker"]
         env:
+          - name: FLASK_APP
+            value: app 
           - name: FLASK_ENV
             value: development 
           - name: FLASK_CONFIG
@@ -28,6 +30,7 @@ spec:
           - name: CELERY_RESULT_BACKEND
             value: "redis://back-api:6379/0"
           - name: DATABASE_URL
-            value: "postgresql://sample:pleasechangeme@postgres/flask_celery"
+            value: "postgresql://sample:pleasechangeme@postgres-services/flask_celery"
           - name: SECRET_KEY  
             value: my_precious
+

@@ -1,2 +1,1 @@
-CREATE DATABASE users;
-CREATE DATABASE solardata;
+-- CREATE DATABASE flask_celery;

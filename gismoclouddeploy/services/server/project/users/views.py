@@ -1,7 +1,6 @@
 import random
 import logging
-import os
-
+from string import ascii_lowercase
 import requests
 from celery.result import AsyncResult
 from flask import Blueprint, render_template, flash, abort, request, Response, jsonify, current_app
@@ -9,8 +8,18 @@ from flask import Blueprint, render_template, flash, abort, request, Response, j
 from . import users_blueprint
 from project import csrf, db
 from project.users.forms import YourForm
-from project.users.tasks import sample_task, task_process_notification
+from project.users.tasks import (
+    sample_task,
+    task_process_notification,
+    task_send_welcome_email,
+    get_all_users,
+)
 from project.users.models import User
+
+def random_username():
+    username = ''.join([random.choice(ascii_lowercase) for i in range(5)])
+    return username
+
 
 def api_call(email):
     # used for testing a failed api call
@@ -20,33 +29,10 @@ def api_call(email):
     # used for simulating a call to a third-party api
     requests.post('https://httpbin.org/delay/5')
 
-
-@users_blueprint.route('/ping/', methods=['GET'])
-def ping():
-    return jsonify({
-        'status': 'success',
-        'message': 'pong!',
-        'container_id': os.uname()[1]
-    })
-
-
-@users_blueprint.route('/allusers/', methods=['GET', 'POST'])
-@csrf.exempt
-def all_users():
-    response_object = {
-        'status': 'success',
-        'container_id': os.uname()[1]
-    }
-    if request.method == 'POST':
-        post_data = request.get_json()
-        username = post_data.get('username')
-        email = post_data.get('email')
-        db.session.add(User(username=username, email=email))
-        db.session.commit()
-        response_object['message'] = 'user added!'
-    else:
-        response_object['users'] = [user.to_json() for user in User.query.all()]
-    return jsonify(response_object)
+@users_blueprint.route('/query_users/', methods=["GET"])
+def query_users():
+    task = get_all_users.delay()
+    return jsonify({"task_id": task.id}), 202
 
 @users_blueprint.route('/form/', methods=('GET', 'POST'))
 def subscribe():
@@ -60,7 +46,6 @@ def subscribe():
 
 
 @users_blueprint.route('/task_status/', methods=('GET', 'POST'))
-@csrf.exempt
 def task_status():
     task_id = request.args.get('task_id')
 
@@ -77,8 +62,6 @@ def task_status():
                 'state': task.state,
             }
         return jsonify(response)
-
-
 
 @users_blueprint.route('/webhook_test/', methods=('POST', ))
 @csrf.exempt
@@ -97,3 +80,22 @@ def webhook_test_2():
    task = task_process_notification.delay()
    current_app.logger.info(task.id)
    return 'pong'
+
+
+@users_blueprint.route('/transaction_celery/', methods=('GET', 'POST'))
+def transaction_celery():
+    try:
+        username = random_username()
+        user = User(
+            username=f'{username}',
+            email=f'{username}@test.com',
+        )
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise
+
+    current_app.logger.info(f'user {user.id} {user.username} is persistent now')
+    task_send_welcome_email.delay(user.id)
+    return 'done'

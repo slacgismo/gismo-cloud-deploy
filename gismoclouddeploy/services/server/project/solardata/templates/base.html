@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Flask Stock Portfolio App</title>
+      
+        <!-- Local CSS file for styling the application-->
+       <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/base_style.css') }}"> -->
+      
+        <!-- Additional Styling -->
+        {% block styling %}
+        <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/index_style.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/form_style.css') }}"> -->
+        <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/results_style.css') }}"> -->
+        {% endblock %}
+    </head>
+
+    <body>
+        <header class="site-header">
+          <nav class="nav">
+            <ul class="nav-list">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('solardata.list_all_results') }}">All Results</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('solardata.process_single_file') }}">Process Data</a></li>
+            </ul>
+          </nav>
+        </header>
+      
+        <main class="content">
+          <!-- child template -->
+          {% block content %}
+          {% endblock %}
+        </main>
+      
+        <footer class="site-footer">
+          <small>SLAC GISMO 2022</small>
+        </footer>
+
+    </body>
+</html>

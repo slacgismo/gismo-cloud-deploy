@@ -1,19 +1,60 @@
 import os
 from io import StringIO
 import requests
-from flask import current_app, render_template, jsonify,request
+from flask import current_app, render_template, jsonify,request,flash
 from celery.result import AsyncResult
 from . import solardata_blueprint
 from project.solardata.models import SolarData
-import boto3
+
 import time
-from project.solardata.tasks import process_data_task, save_data_from_db_to_s3_task,read_all_datas_from_solardata
+# from project.solardata.tasks import process_data_task, save_data_from_db_to_s3_task,read_all_datas_from_solardata
+from project.solardata.tasks import (
+    read_all_datas_from_solardata,
+    save_data_from_db_to_s3_task,
+    process_data_task
+)
 from project import csrf,db
 
 import pandas as pd
 
+from project.solardata.utils import (
+    connect_aws_client,
+    connect_aws_resource,
+    list_all_buckets_in_s3,
+    read_column_from_csv_from_s3,
+    list_files_in_bucket
+)
 
-@solardata_blueprint.route('/ping/', methods=['GET'])
+
+
+
+
+@solardata_blueprint.route('/about', methods=["GET"])
+def about():
+    flash('Thanks for learning about this site!', 'info')
+    return render_template('about.html')
+
+@solardata_blueprint.route('/', methods=["GET"])
+def index():
+    return render_template('index.html')
+
+@solardata_blueprint.route('/list_data', methods=["GET"])
+def list_data():
+    return render_template('list_data.html')
+
+@solardata_blueprint.route('/list_all_results')
+def list_all_results():
+    solardatas = SolarData.query.all()
+    return render_template('list_all_results.html', solardatas=solardatas)
+
+
+
+
+@solardata_blueprint.route('/process_single_file', methods=['GET'])
+def process_single_file():
+    return render_template('process_single_file.html')
+
+@solardata_blueprint.route('/ping', methods=['GET'])
 def ping():
     return jsonify({
         'status': 'success',
@@ -21,7 +62,7 @@ def ping():
         'container_id': os.uname()[1]
     })    
 
-@solardata_blueprint.route('/read_datas_from_db/', methods=['POST'])
+@solardata_blueprint.route('/read_datas_from_db', methods=['POST'])
 @csrf.exempt
 def read_datas_from_db():
     task = read_all_datas_from_solardata.apply_async()
@@ -36,6 +77,7 @@ def run_process_file():
     file_name = request_data['file_name']
     column_name = request_data['column_name']
     solver = request_data['solver']
+    print(f"bucket_name: {bucket_name},file_path: {file_path} file_name: {file_name}, column_name: {column_name}, solver: {solver} " )
     start_time = time.time()
     task = process_data_task.apply_async(
         [bucket_name,
@@ -58,33 +100,36 @@ def get_status(task_id):
     return jsonify(result), 200
 
 # AWS command
-@solardata_blueprint.route("/list_all_buckets_name/", methods=["GET"])
+@solardata_blueprint.route("/list_buckets", methods=["GET"])
 
 def list_all_buckets_name():
-    s3_resource = connect_aws_resource('s3')
     try:
-        all_buckets = list_all_buckets_in_s3(s3_resource)
+        all_buckets = list_all_buckets_in_s3()
     except Exception as e:
         raise
     return jsonify(all_buckets)
 
 
-@solardata_blueprint.route("/list_content_of_bucket/", methods=["POST"])
+@solardata_blueprint.route("/list_files", methods=["POST"])
 @csrf.exempt
 def list_content_of_bucket():
 
     request_data = request.get_json()
     bucket_name = request_data['bucket_name']
-    path = request_data["file_path"]
-    s3_resource = connect_aws_resource('s3')
-    my_bucket = s3_resource.Bucket(bucket_name)
-    all_files = []
-    
-    for file in  my_bucket.objects.filter(Prefix=path + "/"):
-        all_files.append(file.key)
+    try:
+        all_files = list_files_in_bucket(bucket_name)
+    except Exception as e:
+        raise
     return jsonify(all_files)
+    # s3_resource = connect_aws_resource('s3')
+    # my_bucket = s3_resource.Bucket(bucket_name)
+    # all_files = []
+    
+    # for file in  my_bucket.objects.filter(Prefix=path + "/"):
+    #     all_files.append(file.key)
+    # return jsonify(all_files)
 
-@solardata_blueprint.route("/list_columns_name_of_file/", methods=["POST"])
+@solardata_blueprint.route("/list_columns_name_of_file", methods=["POST"])
 @csrf.exempt
 def list_columns_name_of_file():
     s3_client = connect_aws_client('s3')
@@ -98,7 +143,7 @@ def list_columns_name_of_file():
     return jsonify(column_names)
 
 # save results to s3
-@solardata_blueprint.route("/save_all_results_from_db_to_s3/", methods=["POST"])
+@solardata_blueprint.route("/save_all_results_from_db_to_s3", methods=["POST"])
 @csrf.exempt
 def save_all_results_from_db_to_s3():
     response_object = {
@@ -110,30 +155,12 @@ def save_all_results_from_db_to_s3():
     file_path = post_data.get('file_path')
     file_name = post_data.get('file_name')
     delete_data = post_data.get('delete_data')
-    # task = save_data_from_db_to_s3_task.apply_async(
-    #     [bucket_name,
-    #     file_path,
-    #     file_name,
-    #     delete_data])
-    # return jsonify({"task_id": task.id}), 202
-    from project.solardata import queries
-
-    all_datas = [solardata.to_json() for solardata in queries.get_all_data_from_solardata()]
-    # convert josn to csv file and save to s3
-
-    df = pd.json_normalize(all_datas)
-    csv_buffer=StringIO()
-    df.to_csv(csv_buffer)
-    content = csv_buffer.getvalue()
-    try:
-        to_s3(bucket_name,file_path,file_name, content)
-    except Exception as e:
-        response_object = {
-            'status': 'failed',
-            'container_id': os.uname()[1],
-            'error': str(e)
-        }
-    return response_object
+    task = save_data_from_db_to_s3_task.apply_async(
+        [bucket_name,
+        file_path,
+        file_name,
+        delete_data])
+    return jsonify({"task_id": task.id}), 202
     
 
 def to_s3(bucket,file_path,filename, content):
@@ -142,7 +169,7 @@ def to_s3(bucket,file_path,filename, content):
     s3_client.put_object(Bucket=bucket, Key=k, Body=content)
 
 # save results to db
-@solardata_blueprint.route("/all_results/", methods=["POST", "GET"])
+@solardata_blueprint.route("/all_results", methods=["POST", "GET"])
 @csrf.exempt
 def all_reuslts():
     response_object = {
@@ -201,81 +228,9 @@ def all_reuslts():
             db.session.rollback()
             raise
     else:
-        response_object['solardata'] = [solardata.to_json() for solardata in SolarData.query.all()]
+        response_object['solardata']= [solardata.to_json() for solardata in SolarData.query.all()]
     return response_object
 
 
-def connect_aws_client(client_name):
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION')
-    # current_app.logger.info(f'AWS_ACCESS_KEY_ID key {AWS_ACCESS_KEY_ID} {AWS_SECRET_ACCESS_KEY} is persistent now')
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
-        client = boto3.client(
-            client_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
-        )
-        return client
-    raise Exception('AWS Validation Error')
-    
-def connect_aws_resource(resource_name):
-    AWS_ACCESS_KEY_ID = current_app.config["AWS_ACCESS_KEY_ID"]
-    AWS_SECRET_ACCESS_KEY = current_app.config["AWS_SECRET_ACCESS_KEY"]
-    AWS_DEFAULT_REGION = current_app.config["AWS_DEFAULT_REGION"]
-    # current_app.logger.info(f'AWS_ACCESS_KEY_ID key {AWS_ACCESS_KEY_ID} {AWS_SECRET_ACCESS_KEY} is persistent now')
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
-        resource = boto3.resource(
-            resource_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
-        )
-        return resource
-    raise Exception('AWS Validation Error')
 
-def list_all_buckets_in_s3(s3_resource):
 
-    buckets = []
-    for bucket in s3_resource.buckets.all():
-        buckets.append(bucket.name)
-    return buckets
-
-def check_aws_validity(key_id, secret):
-    try:
-        client = boto3.client('s3', aws_access_key_id=key_id, aws_secret_access_key=secret)
-        response = client.list_buckets()
-        return True
-
-    except Exception as e:
-        if str(e)!="An error occurred (InvalidAccessKeyId) when calling the ListBuckets operation: The AWS Access Key Id you provided does not exist in our records.":
-            return True
-        return False
-
-def list_all_buckets_in_s3(resource):
-    buckets = []
-    for bucket in resource.buckets.all():
-        buckets.append(bucket.name)
-    return buckets
-
-def read_column_from_csv_from_s3(
-    bucket_name=None,
-    file_path=None,
-    file_name=None,
-    s3_client = None
-    ):
-    full_path = file_path + "/" + file_name
-    if bucket_name is None or full_path is None or s3_client is None:
-        return
-    
-    response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
-
-    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-
-    if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
-        result_df = pd.read_csv(response.get("Body"),nrows =1)
-    else:
-        print(f"Unsuccessful S3 get_object response. Status - {status}")
-    return result_df

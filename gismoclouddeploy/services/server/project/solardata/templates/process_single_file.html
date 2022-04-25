@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="form-wrap">
+  <h1>Process Files:</h1>
+
+
+
+
+<form onsubmit="submitForm(event)">
+  <div class="field">
+    <label for="bucketName">Bucket Name <em>(required)</em></label>
+    <input type="text" id="bucketName" name="bucket_name"  placeholder="pv.insight.nrel" value="pv.insight.nrel" required />
+  </div>
+
+  <div class="field">
+    <label for="filePath">File Path <em>(required)</em></label>
+    <input type="text" id="filePath" name="file_path"  placeholder="PVO/PVOutput" value="PVO/PVOutput" required />
+  </div>
+
+  <div class="field">
+    <label for="fileName">File Name <em>(required)</em></label>
+    <input type="text" id="fileName" name="file_name"  placeholder="10059.csv" value="10059.csv" required />
+  </div>
+
+  <div class="field">
+    <label for="columnName">Column Name <em>(required)</em></label>
+    <input type="text" id="columnName" name="column_name"  placeholder="Power(W)"   value="Power(W)" required />
+  </div>
+
+  <div class="field">
+    <label for="solver">Solver ($) <em>(required)</em></label>
+    <input
+      type="text"
+      id="solver"
+      name="solver"
+      required
+      placeholder="MOSEK"
+      value="MOSEK"
+      />
+  </div>
+  <input type="submit">
+</form>
+
+
+<br><br>
+<div>
+  <h3>Task Status</h3>
+  <br>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Status</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody id="tasks">  
+    </tbody>
+  </table>
+</div>
+</div>
+<script type="text/javascript">
+
+  function submitForm(e){
+      event.preventDefault();
+      const form = new FormData(e.target);
+      const bucket_name = form.get("bucket_name");
+      const file_path = form.get("file_path");
+      const file_name = form.get("file_name");
+      const column_name = form.get("column_name");
+      const solver = form.get("solver");
+      fetch('/solardata/run_process_file', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify( 
+                              { bucket_name: bucket_name,
+                                file_path:file_path,
+                                file_name:file_name,
+                                column_name:column_name,
+                                solver:solver
+                              }
+                            ),
+      })
+      .then(response => response.json())
+      .then(data => getStatus(data.task_id));
+
+  }
+
+  
+  function getStatus(taskID) {
+    fetch(`/solardata/tasks/${taskID}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+    .then(response => response.json())
+    .then(res => {
+      const html = `
+        <tr>
+          <td>${taskID}</td>
+          <td>${res.task_status}</td>
+          <td>${res.task_result}</td>
+        </tr>`;
+
+      const newRow = document.getElementById('tasks').insertRow(0);
+      html.id = taskID
+      newRow.innerHTML = html;
+  
+      const taskStatus = res.task_status;
+      if (taskStatus === 'SUCCESS' || taskStatus === 'FAILURE') return false;
+      setTimeout(function() {
+        getStatus(res.task_id);
+      }, 1000);
+    })
+    .catch(err => console.log(err));
+  }
+</script>
+  
+{% endblock %}

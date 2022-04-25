@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<div>
+  <div>
+    <h1>List of All Results</h1>
+
+    <table>
+      <!-- Table Header Row -->
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Task ID</th>
+          <th>Bucket Name</th>
+          <th>File Path</th>
+          <th>File Name</th>
+          <th>Column Name</th>
+          <th>Process Time</th>
+          <th>Length</th>
+          <th>Power Units</th>
+          <th>Capacity Estimate</th>
+          <th>Data Sampling</th>
+          <th>Data Quality Score</th>
+          <th>Data Clearness Score</th>
+          <th>Time Shifts</th>
+          <th>Capacity Changes</th>
+          <th>Num Clip Points</th>
+          <th>Tz Correction</th>
+          <th>Inverter Clipping</th>
+          <th>Normal Quality Score</th>
+          <th>Error Mesage</th>
+        </tr>
+      </thead>
+
+      <!-- Table Elements (Rows) -->
+      {% for solardata in solardatas %}
+        <tr>
+          <td>{{ solardata.id }}</td>
+          <td>{{ solardata.task_id }}</td>
+          <td>{{ solardata.bucket_name }}</td>
+          <td>{{ solardata.file_path }}</td>
+          <td>${{ solardata.file_name }}</td>
+          <td>${{ solardata.column_name }}</td>
+          <td>${{ solardata.process_time }}</td>
+          <td>${{ solardata.length }}</td>
+          <td>${{ solardata.power_units }}</td>
+          <td>${{ solardata.capacity_estimate }}</td>
+          <td>${{ solardata.data_sampling }}</td>
+          <td>${{ solardata.data_quality_score }}</td>
+          <td>${{ solardata.data_clearness_score }}</td>
+          <td>${{ solardata.time_shifts }}</td>
+          <td>${{ solardata.capacity_changes }}</td>
+          <td>${{ solardata.num_clip_points }}</td>
+          <td>${{ solardata.tz_correction }}</td>
+          <td>${{ solardata.inverter_clipping }}</td>
+          <td>${{ solardata.normal_quality_scores }}</td>
+          <td>${{ solardata.error_message }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+</div>
+{% endblock %}

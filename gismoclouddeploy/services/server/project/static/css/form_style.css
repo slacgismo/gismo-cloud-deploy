@@ -1,0 +1,97 @@
+/* Form Styling
+ **************/
+
+form {
+  padding: 30px;
+  background: white;
+}
+
+.form-wrap {
+  margin: 0 auto;
+  max-width: 500px;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: .7em .5em;
+  border: 1px solid #999;
+  border-radius: 2px;
+  font-family: var(--font);
+}
+
+label {
+  display: block;
+  margin: 0 .5em .35em 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #292929;
+
+}
+
+label em {
+  display: inline-block;
+  font-size: .9em;
+  font-weight: normal;
+  vertical-align: middle;
+}
+
+input {
+  font-size: 1.1em;
+}
+
+.field + .field {
+  margin-top: 1.5rem;
+}
+
+.checkbox {
+  display: flex;
+}
+
+.checkbox label {
+  order: 1;
+  margin-left: 1ch;
+}
+
+.checkbox input {
+  order: 0;
+}
+
+button,
+input[type="submit"] {
+  background-color: blue;
+  color: white;
+
+  max-width: 20ch;
+  padding: 12px 24px;
+  text-align: center;
+  font-size: 1.2em;
+  border-radius: 3px;
+  border: none;
+  margin-bottom: 0.5em;
+}
+
+button:hover, input[type="submit"]:hover {
+  background-color: darkblue;
+  cursor: pointer;
+}
+
+button:disabled, input[type="submit"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type="checkbox"] {
+  height: 1.0em;
+  width: 1.0em;
+}
+
+.validation-error {
+  color: red;
+}
+
+.forgot-password {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+}
