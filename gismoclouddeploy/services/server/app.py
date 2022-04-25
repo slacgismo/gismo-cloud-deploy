@@ -2,6 +2,9 @@ from project import create_app, ext_celery,db
 from flask.cli import FlaskGroup
 from project.users.models import User
 from project.solardata.models import SolarData
+from project.users.tasks import (
+    divide
+)
 
 app = create_app()
 celery = ext_celery.celery
@@ -11,6 +14,11 @@ cli = FlaskGroup(create_app=create_app)
 @app.route("/")
 def hello_world():
     return "Hello, World!"
+
+@cli.command("test_task")
+def test_simple():
+    task = divide.delay(1, 2)
+    print(task.id , flush=True)
 
 @cli.command('recreate_db')
 def recreate_db():
