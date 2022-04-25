@@ -54,6 +54,6 @@ WORKDIR /app
 # copy project code
 
 
-COPY . .
+COPY ./server .
 
 ENTRYPOINT ["/entrypoint"]

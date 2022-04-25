@@ -1,0 +1,54 @@
+/* Homepage Styling
+ ******************/
+.container {
+  display: flex;
+  justify-content: space-between;
+  margin: 60px 0 40px;
+}
+
+.content-text {
+  order: 1;
+  flex: 1 1 auto;
+  margin: 10px 0 calc(var(--spacer) * 2) calc(var(--spacer) * 2);
+}
+
+.content-text h1 {
+  font-size: 2.3rem;
+  font-weight: 300;
+}
+
+.content-text h1 strong {
+  display: block;
+  font-weight: 700;
+}
+
+.content-text p {
+  font-size: 1.25rem;
+  margin-top: 0.5em;
+  max-width: 35ch;
+}
+
+.content-image {
+  order: 0;
+  flex: 1 0 320px;
+  margin: auto;
+}
+
+@media (max-width: 650px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .content-text {
+    order: 0;
+    margin: 0 var(--spacer);
+  }
+
+  .content-text h1 {
+    font-size: 1.8rem;
+  }
+
+  .content-image {
+    order: 1;
+  }
+}
