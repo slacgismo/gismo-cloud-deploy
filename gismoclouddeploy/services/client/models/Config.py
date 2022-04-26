@@ -8,8 +8,8 @@ class Config(object):
                  column_names,
                  saved_bucket,
                  saved_tmp_path,
-                 saved__target_path,
-                 saved__target_filename,
+                 saved_target_path,
+                 saved_target_filename,
                  environment,
                  container_type,
                  container_name
@@ -19,8 +19,8 @@ class Config(object):
         self.column_names = column_names
         self.saved_bucket = saved_bucket
         self.saved_tmp_path = saved_tmp_path
-        self.saved__target_path = saved__target_path
-        self.saved__target_filename = saved__target_filename
+        self.saved_target_path = saved_target_path
+        self.saved_target_filename = saved_target_filename
         self.environment = environment
         self.container_type = container_type
         self.container_name = container_name
@@ -33,8 +33,8 @@ class Config(object):
             column_names = config_params["files_config"]["column_names"],
             saved_bucket = config_params["output"]["saved_bucket"],
             saved_tmp_path = config_params["output"]["saved_tmp_path"],
-            saved__target_path = config_params["output"]["saved__target_path"],
-            saved__target_filename = config_params["output"]["saved__target_filename"],
+            saved_target_path = config_params["output"]["saved__target_path"],
+            saved_target_filename = config_params["output"]["saved__target_filename"],
             environment = config_params["general"]["environment"],
             container_type = config_params["general"]["container_type"],
             container_name = config_params["general"]["container_name"])
