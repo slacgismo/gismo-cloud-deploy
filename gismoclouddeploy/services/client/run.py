@@ -9,7 +9,7 @@ from utils.InvokeFunction import invok_docekr_exec_run_process_file, invoke_dock
 from multiprocessing.pool import ThreadPool as Pool
 from threading import Timer
 import asyncio
-from utils.k8s import get_k8s_pod_name
+
 
 class CustomTimer(Timer):
     def __init__(self, interval, function, args=[], kwargs={}):
@@ -23,9 +23,6 @@ class CustomTimer(Timer):
     def join(self):
         super(CustomTimer, self).join()
         return self.result
-
-
-
 
 
 files_config = read_yaml("./config/run-files.yaml")
