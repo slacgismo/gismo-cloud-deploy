@@ -1,15 +1,18 @@
 
 
+from distutils.command.config import config
+import json
 from utils.ReadWriteIO import (read_yaml)
 import io
 import sys
 import os
-from utils.InvokeFunction import invok_docekr_exec_run_process_file, invoke_docker_exec_get_task_status
+from utils.InvokeFunction import invok_docekr_exec_run_process_file, invoke_docker_exec_get_task_status, invoke_docker_exec_combine_files
 
 from multiprocessing.pool import ThreadPool as Pool
 from threading import Timer
 import asyncio
-
+from models.Solardata import Solardata
+from models.Config import Config
 
 class CustomTimer(Timer):
     def __init__(self, interval, function, args=[], kwargs={}):
@@ -25,46 +28,69 @@ class CustomTimer(Timer):
         return self.result
 
 
+
+
+solardata = Solardata.import_solardata_from_yaml("./config/config.yaml")
+config_params = Config.import_config_from_yaml("./config/config.yaml")
+
+
 files_config = read_yaml("./config/run-files.yaml")
 files = files_config['files_config']['files']
 bucket = files_config['files_config']['bucket']
 column_names = files_config['files_config']['column_names']
+saved_bucket = files_config['output']['saved_bucket']
+
+saved_tmp_path = files_config['output']['saved_tmp_path']
+saved__target_path = files_config['output']['saved__target_path']
+saved__target_filename = files_config['output']['saved__target_filename']
+
+
+# final_saved_filename = files_config['output']['saved_filename']
 
 sdt_params = read_yaml("./config/sdt-params.yaml")
 solver = sdt_params['solardata']['solver']
 
-gen_config =  read_yaml("./config/general.yaml")
+gen_config = read_yaml("./config/general.yaml")
 environment = gen_config['general']['environment']
 container_type = gen_config['general']['container_type']
 container_name = gen_config['general']['container_name']
 
 
-
-
-
-def run_process_files(bucket, files, column_names, solver):
+def run_process_files(bucket, files, column_names, solver, saved_bucket, saved_file_path, container_type, container_name):
     task_ids = []
     for file in files:
         for col_name in column_names:
             path, filename = os.path.split(file)
             # print(f"head {head} {tail}")
-            print(f"bucket:{bucket} path:{path} filename:{filename},col_name:{col_name},solver:{solver}")
-            task_id = invok_docekr_exec_run_process_file(bucket,path, filename, col_name, solver,container_type,container_name )
-            if task_id :
-                key,value = task_id.replace(" ","").replace("\n","").split(":")
-                task_ids.append({key:value, "task_status":"PENDING"})
+
+            prefix = path.replace("/", "-")
+            saved_filename = f"{prefix}-{filename}"
+            print(
+                f"bucket:{bucket} path:{path} filename:{filename},col_name:{col_name},solver:{solver}")
+            task_id = invok_docekr_exec_run_process_file(
+                bucket, path, filename, col_name, solver, saved_bucket, saved_file_path, saved_filename, container_type, container_name,)
+            if task_id:
+                key, value = task_id.replace(
+                    " ", "").replace("\n", "").split(":")
+                task_ids.append({key: value, "task_status": "PENDING"})
                 # print(f"file: {file},col_name: {col_name} ,solver:{solver}")
     print(task_ids)
     return task_ids
 
-import json
 
 def check_status(ids):
     for id in ids:
-        response = invoke_docker_exec_get_task_status(id,container_type,container_name)
+        response = invoke_docker_exec_get_task_status(
+            id, container_type, container_name)
         # data = json.load(response)
         print(f"response: {response}, id {id}, task_status: ")
 
+
+def combine_files_and_clean():
+    """Combines all tmp result files into one and deleted tmp result files"""
+    task_id = invoke_docker_exec_combine_files(
+        saved_bucket, saved_tmp_path, saved__target_path, saved__target_filename, container_type, container_name)
+    return task_id
 # def add_together(a, b):
 #     return a + b
 
@@ -74,7 +100,7 @@ def check_status(ids):
 # print (c.join())
 
 # from multiprocessing import Pool
-# pool_size = 5  
+# pool_size = 5
 # # define worker function before a Pool is instantiated
 # def worker(item):
 #     try:
@@ -93,21 +119,19 @@ def check_status(ids):
 # pool.join()
 
 
-
 # async def test(item):
 #     while True:
 #         print(f"Hello {item}")
 #         await asyncio.sleep(2)
 
 
-
 # get task_ids
-#  
-task_ids = run_process_files(bucket, files, column_names, solver)
+#
+# task_ids = run_process_files(bucket, files, column_names, solver,saved_bucket,saved_path,container_type,container_name)
 # # print("---- end of sending task---------")
 # # #  process long pulling
 # task_ids = ["20dbd71d-7ccd-4a57-8966-8b5dfc0594e3"]
-check_status(task_ids)
+# check_status(task_ids)
 # json_data = '[{"Detail":" Rs. 2000 Topup Rs.1779.99 Talktime","Amount":"2000","Validity":"Unlimited"},{"Detail":" Rs. 1900 Topup Rs.1690.99 Talktime","Amount":"1900","Validity":"Unlimited"}]'
 # json_data ="[{"task_id":"20dbd71d-7ccd-4a57-8966-8b5dfc0594e3", "task_status":"SUCCESS", "task_result:True}]"
 # # convert to python data structure
@@ -127,7 +151,6 @@ check_status(task_ids)
 #     sleep(5) # your long-running job goes here...
 # finally:
 #     rt.stop() # better in a try/finally block to make sure the program ends!
-
 
 
 # get_k8s_pod_name()
