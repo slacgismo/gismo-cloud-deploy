@@ -27,8 +27,9 @@ def invok_docekr_exec_run_process_file( bucket_name,
         
     elif container_type == "kubernetes":
         # get pod name
-        
-        pod_name = get_k8s_pod_name("webapp")
+       
+        pod_name = get_k8s_pod_name(container_name)
+        print(f" k8s pod_name: {pod_name}")
         # print(f"pod_name: {pod_name}")
         command = [ "kubectl", 
                     "exec",
