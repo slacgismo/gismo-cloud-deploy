@@ -234,6 +234,10 @@ def combine_files_to_file(bucket_name, source_folder, target_folder, target_file
     print("combine files ---->")
     s3_client = connect_aws_client('s3')
     filter_files = list_files_in_folder_of_bucket(bucket_name,source_folder,s3_client)
+ 
+    if not filter_files:
+        print("No tmp file in folder")
+        return False
     contents = []
     for file in filter_files:
          df = read_csv_from_s3(bucket_name,file, s3_client)
