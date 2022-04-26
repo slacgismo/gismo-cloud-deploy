@@ -1,0 +1,12 @@
+# process file 
+files_config:
+  bucket: "pv.insight.nrel"
+  files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv"]
+  column_names: ["Power(W)"]
+
+output:
+  save_bucket: "pv.insight.test"
+  save_path: "tmp"
+  save_filename: "result.csv"
+
+
