@@ -30,7 +30,7 @@ spec:
           - name: CELERY_RESULT_BACKEND
             value: "redis://back-api:6379/0"
           - name: DATABASE_URL
-            value: "postgresql://sample:pleasechangeme@postgres/flask_celery"
+            value: "postgresql://sample:pleasechangeme@postgres-services/flask_celery"
           - name: SECRET_KEY
             value: my_precious
           - name: AWS_ACCESS_KEY_ID
