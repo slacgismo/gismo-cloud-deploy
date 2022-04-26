@@ -1,25 +1,89 @@
+from curses import flash
 from project import create_app, ext_celery,db
 from flask.cli import FlaskGroup
+from flask import jsonify
 from project.users.models import User
 from project.solardata.models import SolarData
-from project.users.tasks import (
-    divide
+import click
+from celery.result import AsyncResult
+import time
+
+from project.solardata.tasks import (
+    read_all_datas_from_solardata,
+    save_data_from_db_to_s3_task,
+    process_data_task
 )
+
 
 app = create_app()
 celery = ext_celery.celery
 
 cli = FlaskGroup(create_app=create_app)
 
+
+@cli.command()
+@click.argument('x', nargs=1)
+@click.argument('y', nargs=1)
+def power(x, y):
+    print(int(x)**int(y))
+
 @app.route("/")
 def hello_world():
     return "Hello, World!"
 
-@cli.command("test_task")
-def test_simple():
-    task = divide.delay(1, 2)
-    print(task.id , flush=True)
+@cli.command("hi")
+def hi():
+    print("hello world2")
+    return "Hello, World!"
 
+@cli.command("read_data_from_db")
+def read_data_from_db():
+    task = read_all_datas_from_solardata.delay()
+    print(f"task id : {task.id}")
+
+
+@cli.command("process_a_file")
+@click.argument('bucket_name', nargs=1)
+@click.argument('file_path', nargs=1)
+@click.argument('file_name', nargs=1)
+@click.argument('column_name', nargs=1)
+@click.argument('solver', nargs=1)
+def process_a_file(bucket_name,file_path,file_name,column_name,solver):
+    start_time = time.time()
+    task = process_data_task.apply_async(
+        [bucket_name,
+        file_path,
+        file_name,
+        column_name,
+        start_time,
+        solver])
+    print(f"task id : {task.id}")
+
+
+
+
+@cli.command("get_task_status")    
+@click.argument('task_id', nargs=1)
+def get_task_status(task_id):
+    task_result = AsyncResult(task_id)
+    result = [{
+        "task_id":task_id,
+        "task_status":task_result.status,
+        "task_result":task_result.result
+    }]
+    # result = {
+    #     "task_id": task_id,
+    #     "task_status": task_result.status,
+    #     "task_result": task_result.result
+    # }
+    # return jsonify(result), 200
+    print(f"{result}")
+
+
+
+
+
+# DB
 @cli.command('recreate_db')
 def recreate_db():
     db.drop_all()
