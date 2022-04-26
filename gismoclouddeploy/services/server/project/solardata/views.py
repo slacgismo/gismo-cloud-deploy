@@ -29,31 +29,6 @@ from project.solardata.utils import (
 
 
 
-@solardata_blueprint.route('/about', methods=["GET"])
-def about():
-    flash('Thanks for learning about this site!', 'info')
-    return render_template('about.html')
-
-@solardata_blueprint.route('/', methods=["GET"])
-def index():
-    return render_template('index.html')
-
-@solardata_blueprint.route('/list_data', methods=["GET"])
-def list_data():
-    return render_template('list_data.html')
-
-@solardata_blueprint.route('/list_all_results')
-def list_all_results():
-    solardatas = SolarData.query.all()
-    return render_template('list_all_results.html', solardatas=solardatas)
-
-
-
-
-@solardata_blueprint.route('/process_single_file', methods=['GET'])
-def process_single_file():
-    return render_template('process_single_file.html')
-
 @solardata_blueprint.route('/ping', methods=['GET'])
 def ping():
     return jsonify({

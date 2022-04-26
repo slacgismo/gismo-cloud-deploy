@@ -6,7 +6,9 @@ services:
     build:
       context: .
       dockerfile: ./server/compose/local/flask/Dockerfile
+  
     image: web
+    container_name: web
     # '/start' is the shell script used to run the service
     command: /start
     # this volume is used to map the files and folders on the host to the container
