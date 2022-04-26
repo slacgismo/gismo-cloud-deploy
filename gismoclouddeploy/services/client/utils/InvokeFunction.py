@@ -1,4 +1,5 @@
 from subprocess import PIPE, run
+from kubernetes import client, config
 
 def invok_docekr_exec_run_process_file( bucket_name, 
                                         file_path,
@@ -27,8 +28,8 @@ def invok_docekr_exec_run_process_file( bucket_name,
     elif container_type == "kubernetes":
         # get pod name
         
-        pod_name = get_k8s_pod_name(container_name)
-        print(f"pod_name: {pod_name}")
+        pod_name = get_k8s_pod_name("webapp")
+        # print(f"pod_name: {pod_name}")
         command = [ "kubectl", 
                     "exec",
                     pod_name,
@@ -70,3 +71,15 @@ def exec_docker_command(command):
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     # print(result.returncode, result.stdout, result.stderr)
     return result.stdout
+
+def get_k8s_pod_name(container_name):
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    print("Listing pods with their IPs:")
+    ret = v1.list_pod_for_all_namespaces(watch=False)
+    for i in ret.items:
+        # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+        podname = i.metadata.name.split("-")[0]
+        if podname == container_name:
+            # print(f"podname: {i.metadata.name}")
+            return i.metadata.name
