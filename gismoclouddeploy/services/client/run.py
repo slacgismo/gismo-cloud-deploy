@@ -58,9 +58,10 @@ def run_process_files(bucket, files, column_names, solver):
     return task_ids
 
 import json
+
 def check_status(ids):
     for id in ids:
-        response = invoke_docker_exec_get_task_status(id)
+        response = invoke_docker_exec_get_task_status(id,container_type,container_name)
         # data = json.load(response)
         print(f"response: {response}, id {id}, task_status: ")
 
