@@ -14,18 +14,18 @@ import asyncio
 from models.Solardata import Solardata
 from models.Config import Config
 
-class CustomTimer(Timer):
-    def __init__(self, interval, function, args=[], kwargs={}):
-        self._original_function = function
-        super(CustomTimer, self).__init__(
-            interval, self._do_execute, args, kwargs)
+# class CustomTimer(Timer):
+#     def __init__(self, interval, function, args=[], kwargs={}):
+#         self._original_function = function
+#         super(CustomTimer, self).__init__(
+#             interval, self._do_execute, args, kwargs)
 
-    def _do_execute(self, *a, **kw):
-        self.result = self._original_function(*a, **kw)
+#     def _do_execute(self, *a, **kw):
+#         self.result = self._original_function(*a, **kw)
 
-    def join(self):
-        super(CustomTimer, self).join()
-        return self.result
+#     def join(self):
+#         super(CustomTimer, self).join()
+#         return self.result
 
 
 
@@ -86,14 +86,14 @@ def check_status(ids):
         print(f"response: {response}, id {id}, task_status: ")
 
 
-def combine_files_and_clean():
+def combine_files_and_clean(config: Config) -> str:
     """Combines all tmp result files into one and deleted tmp result files"""
-    task_id = invoke_docker_exec_combine_files(
-        saved_bucket, saved_tmp_path, saved__target_path, saved__target_filename, container_type, container_name)
+    task_id = invoke_docker_exec_combine_files(config)
     return task_id
 # def add_together(a, b):
 #     return a + b
-
+task_id = combine_files_and_clean(config_params)
+print(task_id)
 # c = CustomTimer(1, add_together, (2, 4))
 # c = CustomTimer(1,invoke_docker_exec_get_task_status,("3a6ccb65-2ec0-4732-8fbd-33954f7b058e"))
 # c.start()

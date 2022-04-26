@@ -1,6 +1,6 @@
 from subprocess import PIPE, run
 from kubernetes import client, config
-
+from models.Config import Config
 def invok_docekr_exec_run_process_file( bucket_name, 
                                         file_path,
                                         file_name, 
@@ -97,28 +97,29 @@ def invoke_docker_exec_get_task_status(task_id,container_type,container_name ):
 
 
 
-def invoke_docker_exec_combine_files(bucket_name,source_folder,target_folder,target_filename,container_type,container_name):
-    if container_type == "docker":
+# def invoke_docker_exec_combine_files(bucket_name,source_folder,target_folder,target_filename,container_type,container_name):
+def invoke_docker_exec_combine_files(config:Config) -> str:
+    if config.container_type == "docker":
         
         command = ["docker", 
         "exec",
         "-it",
-        container_name,
+        config.container_name,
         "python",
         "app.py",
         "combine_files",
-        f"{bucket_name}",
-        f"{source_folder}",
-        f"{target_folder}",
-        f"{target_filename}"
+        f"{config.saved_bucket}",
+        f"{config.saved_tmp_path}",
+        f"{config.saved_target_path}",
+        f"{config.saved_target_filename}"
         ]
         print(f"command here--->: {command}")
         res = exec_docker_command(command)
         r2 = res.replace("\'","\"")
         
         return res
-    elif container_type == "kubernetes":
-        pod_name = get_k8s_pod_name(container_name)
+    elif config.container_type == "kubernetes":
+        pod_name = get_k8s_pod_name(config.container_name)
         command = [ "kubectl", 
                     "exec",
                     pod_name,
@@ -128,10 +129,10 @@ def invoke_docker_exec_combine_files(bucket_name,source_folder,target_folder,tar
                     "python",
                     "app.py",
                     "combine_files",
-                    f"{bucket_name}",
-                    f"{source_folder}",
-                    f"{target_folder}",
-                    f"{target_filename}",
+                    f"{config.saved_bucket}",
+                    f"{config.saved_tmp_path}",
+                    f"{config.saved_target_path}",
+                    f"{config.saved_target_filename}",
                 ]
         res = exec_docker_command(command)
         r2 = res.replace("\'","\"")
