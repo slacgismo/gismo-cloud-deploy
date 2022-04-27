@@ -12,8 +12,11 @@ class Config(object):
                  saved_target_filename,
                  environment,
                  container_type,
-                 container_name
+                 container_name,
+                 interval_of_check_task_status,
+                 interval_of_exit_check_status,
                  ):
+
         self.files = files
         self.bucket = bucket
         self.column_names = column_names
@@ -24,6 +27,9 @@ class Config(object):
         self.environment = environment
         self.container_type = container_type
         self.container_name = container_name
+        self.interval_of_check_task_status = interval_of_check_task_status
+        self.interval_of_exit_check_status = interval_of_exit_check_status
+
     
     def import_config_from_yaml(file):
         config_params = read_yaml(file)
@@ -37,7 +43,10 @@ class Config(object):
             saved_target_filename = config_params["output"]["saved__target_filename"],
             environment = config_params["general"]["environment"],
             container_type = config_params["general"]["container_type"],
-            container_name = config_params["general"]["container_name"])
+            container_name = config_params["general"]["container_name"],
+            interval_of_check_task_status = config_params["general"]["interval_of_check_task_status"],
+            interval_of_exit_check_status = config_params["general"]["interval_of_exit_check_status"]
+            )
         return config
 
 # gen_config =  read_yaml("./config/general.yaml")
