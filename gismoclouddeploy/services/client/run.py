@@ -7,6 +7,7 @@ import io
 import sys
 import os
 from utils.InvokeFunction import invok_docekr_exec_run_process_file, invoke_docker_exec_get_task_status, invoke_docker_exec_combine_files
+from typing import List
 
 from multiprocessing.pool import ThreadPool as Pool
 from threading import Timer
@@ -28,60 +29,37 @@ from models.Config import Config
 #         return self.result
 
 
-
-
 solardata = Solardata.import_solardata_from_yaml("./config/config.yaml")
 config_params = Config.import_config_from_yaml("./config/config.yaml")
 
 
-files_config = read_yaml("./config/run-files.yaml")
-files = files_config['files_config']['files']
-bucket = files_config['files_config']['bucket']
-column_names = files_config['files_config']['column_names']
-saved_bucket = files_config['output']['saved_bucket']
 
-saved_tmp_path = files_config['output']['saved_tmp_path']
-saved__target_path = files_config['output']['saved__target_path']
-saved__target_filename = files_config['output']['saved__target_filename']
-
-
-# final_saved_filename = files_config['output']['saved_filename']
-
-sdt_params = read_yaml("./config/sdt-params.yaml")
-solver = sdt_params['solardata']['solver']
-
-gen_config = read_yaml("./config/general.yaml")
-environment = gen_config['general']['environment']
-container_type = gen_config['general']['container_type']
-container_name = gen_config['general']['container_name']
-
-
-def run_process_files(bucket, files, column_names, solver, saved_bucket, saved_file_path, container_type, container_name):
+# def run_process_files(bucket, files, column_names, solver, saved_bucket, saved_file_path, container_type, container_name):
+def run_process_files(config: Config, solardata: Solardata) -> List[str]:
     task_ids = []
-    for file in files:
-        for col_name in column_names:
+    for file in config.files:
+        for col_name in config.column_names:
             path, filename = os.path.split(file)
-            # print(f"head {head} {tail}")
 
             prefix = path.replace("/", "-")
-            saved_filename = f"{prefix}-{filename}"
+            tem_saved_filename = f"{prefix}-{filename}"
             print(
-                f"bucket:{bucket} path:{path} filename:{filename},col_name:{col_name},solver:{solver}")
+                f"bucket:{config.bucket} path:{path} filename:{filename},col_name:{col_name},solver:{solardata.solver}")
             task_id = invok_docekr_exec_run_process_file(
-                bucket, path, filename, col_name, solver, saved_bucket, saved_file_path, saved_filename, container_type, container_name,)
+                config.bucket, path, filename, col_name, solardata.solver, config.saved_bucket, config.saved_tmp_path, tem_saved_filename, config.container_type, config.container_name,)
             if task_id:
                 key, value = task_id.replace(
                     " ", "").replace("\n", "").split(":")
                 task_ids.append({key: value, "task_status": "PENDING"})
-                # print(f"file: {file},col_name: {col_name} ,solver:{solver}")
+      
     print(task_ids)
     return task_ids
 
 
-def check_status(ids):
+def check_status(ids: List[str], config:Config):
     for id in ids:
         response = invoke_docker_exec_get_task_status(
-            id, container_type, container_name)
+            id, config.container_type, config.container_name)
         # data = json.load(response)
         print(f"response: {response}, id {id}, task_status: ")
 
@@ -90,10 +68,13 @@ def combine_files_and_clean(config: Config) -> str:
     """Combines all tmp result files into one and deleted tmp result files"""
     task_id = invoke_docker_exec_combine_files(config)
     return task_id
+
+task_ids = run_process_files(config_params, solardata)
+check_status(task_ids, config_params)
 # def add_together(a, b):
 #     return a + b
-task_id = combine_files_and_clean(config_params)
-print(task_id)
+# task_id = combine_files_and_clean(config_params)
+# print(task_id)
 # c = CustomTimer(1, add_together, (2, 4))
 # c = CustomTimer(1,invoke_docker_exec_get_task_status,("3a6ccb65-2ec0-4732-8fbd-33954f7b058e"))
 # c.start()

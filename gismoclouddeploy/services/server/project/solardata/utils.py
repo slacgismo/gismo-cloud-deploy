@@ -90,20 +90,20 @@ def read_column_from_csv_from_s3(
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
 
-def read_csv_from_s3(
+def read_csv_from_s3_2(
     bucket_name=None,
     file_path=None,
     file_name=None,
-    s3_resource = None,
+    s3_client = None,
     index_col=0,
     parse_dates=[0],
     usecols=[1, 3]
     ):
     full_path = file_path + "/" + file_name
-    if bucket_name is None or full_path is None or s3_resource is None:
+    if bucket_name is None or full_path is None or s3_client is None:
         return
     
-    response = s3_resource.get_object(Bucket=bucket_name, Key=full_path)
+    response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
 
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
@@ -145,8 +145,8 @@ def process_solardata_tools(bucket_name,
                             saved_filename
                             ):
 
-    s3_resource = connect_aws_client("s3")
-    df = read_csv_from_s3(bucket_name,file_path,file_name,s3_resource)
+    s3_client = connect_aws_client("s3")
+    df = read_csv_from_s3_2(bucket_name,file_path,file_name,s3_client)
 
     dh = solardatatools.DataHandler(df)
     error_message = ""
