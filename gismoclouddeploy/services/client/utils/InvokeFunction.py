@@ -75,7 +75,7 @@ def invoke_docker_exec_get_task_status(task_id,container_type,container_name ):
         ]
         res = exec_docker_command(command)
         r2 = res.replace("\'","\"")
-        print(f"res here--->: {r2}")
+        # print(f"res here--->: {r2}")
         return res
     elif container_type == "kubernetes":
         pod_name = get_k8s_pod_name(container_name)
@@ -92,7 +92,7 @@ def invoke_docker_exec_get_task_status(task_id,container_type,container_name ):
                 ]
         res = exec_docker_command(command)
         r2 = res.replace("\'","\"")
-        print(f"res here--->: {r2}")
+        # print(f"res here--->: {r2}")
         return res
 
 
@@ -141,6 +141,40 @@ def invoke_docker_exec_combine_files(config:Config) -> str:
 
 
 
+def invok_docekr_exec_hi(container_type,container_name):
+    if container_type == "docker":
+        command = [ "docker", 
+                    "exec",
+                    "-it",
+                    container_name,
+                    "python",
+                    "app.py",
+                    "hi",
+                    ]
+        res = exec_docker_command(command)
+        return res
+        
+    elif container_type == "kubernetes":
+        # get pod name
+       
+        pod_name = get_k8s_pod_name(container_name)
+        # print(f" k8s pod_name: {pod_name}")
+        # print(f"pod_name: {pod_name}")
+        command = [ "kubectl", 
+                    "exec",
+                    pod_name,
+                    "--stdin",
+                    "--tty",
+                    "--",
+                    "python",
+                    "app.py",
+                    "hi"
+                ]
+        res = exec_docker_command(command)
+        return res
+    else :
+        print("no docker image or container found")
+
 
 
 def exec_docker_command(command):
@@ -151,11 +185,11 @@ def exec_docker_command(command):
 def get_k8s_pod_name(container_name):
     config.load_kube_config()
     v1 = client.CoreV1Api()
-    print("Listing pods with their IPs:")
+    # print("Listing pods with their IPs:")
     ret = v1.list_pod_for_all_namespaces(watch=False)
     for i in ret.items:
         # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
         podname = i.metadata.name.split("-")[0]
         if podname == container_name:
-            print(f"podname: {i.metadata.name}")
+            # print(f"podname: {i.metadata.name}")
             return i.metadata.name
