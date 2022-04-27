@@ -1,12 +1,16 @@
 # process file 
 general:
-  environment: "local"  # local , AWS
-  container_type: "docker"  # docker , kubernetes
-  container_name: "web"     # web . webapp
+  environment: "local"  # "local" , "AWS"
+  container_type: "kubernetes"  # "docker" , "kubernetes"
+  container_name: "webapp"     # "web" . "webapp"
+  interval_of_check_task_status: "1" # in second
+  interval_of_exit_check_status: "60" # in second. If the task status didn't update after this period. stop check status 
 
 files_config:
   bucket: "pv.insight.nrel"
+  process_all_files : "False" # If true, this program will run all files in this bucket. The files parameters will be ignored.
   files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv","PVO/PVOutput/10664.csv"]
+  # files: ["PVO/PVOutput/10059.csv"]
   column_names: ["Power(W)"]
 
 output:

@@ -1,5 +1,6 @@
 
 
+from concurrent.futures import thread
 from distutils.command.config import config
 import json
 from utils.ReadWriteIO import (read_yaml)
@@ -14,29 +15,13 @@ from threading import Timer
 import asyncio
 from models.Solardata import Solardata
 from models.Config import Config
-
-# class CustomTimer(Timer):
-#     def __init__(self, interval, function, args=[], kwargs={}):
-#         self._original_function = function
-#         super(CustomTimer, self).__init__(
-#             interval, self._do_execute, args, kwargs)
-
-#     def _do_execute(self, *a, **kw):
-#         self.result = self._original_function(*a, **kw)
-
-#     def join(self):
-#         super(CustomTimer, self).join()
-#         return self.result
+from models.Task import Task
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
+from apscheduler.schedulers.background import BackgroundScheduler
 
 
-solardata = Solardata.import_solardata_from_yaml("./config/config.yaml")
-config_params = Config.import_config_from_yaml("./config/config.yaml")
-
-
-
-# def run_process_files(bucket, files, column_names, solver, saved_bucket, saved_file_path, container_type, container_name):
-def run_process_files(config: Config, solardata: Solardata) -> List[str]:
-    task_ids = []
+def run_process_files(config: Config, solardata: Solardata) -> List[Task]:
+    task_objs= []
     for file in config.files:
         for col_name in config.column_names:
             path, filename = os.path.split(file)
@@ -45,15 +30,15 @@ def run_process_files(config: Config, solardata: Solardata) -> List[str]:
             tem_saved_filename = f"{prefix}-{filename}"
             print(
                 f"bucket:{config.bucket} path:{path} filename:{filename},col_name:{col_name},solver:{solardata.solver}")
-            task_id = invok_docekr_exec_run_process_file(
+            task_id =  invok_docekr_exec_run_process_file(
                 config.bucket, path, filename, col_name, solardata.solver, config.saved_bucket, config.saved_tmp_path, tem_saved_filename, config.container_type, config.container_name,)
             if task_id:
-                key, value = task_id.replace(
-                    " ", "").replace("\n", "").split(":")
-                task_ids.append({key: value, "task_status": "PENDING"})
+                key, value = task_id.replace(" ", "").replace("\n", "").split(":")
+                task = Task(value, "PENDING", None)
+                task_objs.append(task)
+                # task_ids.append({key: value, "task_status": "PENDING"})
       
-    print(task_ids)
-    return task_ids
+    return task_objs
 
 
 def check_status(ids: List[str], config:Config):
@@ -61,7 +46,7 @@ def check_status(ids: List[str], config:Config):
         response = invoke_docker_exec_get_task_status(
             id, config.container_type, config.container_name)
         # data = json.load(response)
-        print(f"response: {response}, id {id}, task_status: ")
+        print(f"response: {response}, id {id}, task_status:   ")
 
 
 def combine_files_and_clean(config: Config) -> str:
@@ -69,71 +54,62 @@ def combine_files_and_clean(config: Config) -> str:
     task_id = invoke_docker_exec_combine_files(config)
     return task_id
 
-task_ids = run_process_files(config_params, solardata)
-check_status(task_ids, config_params)
-# def add_together(a, b):
-#     return a + b
-# task_id = combine_files_and_clean(config_params)
-# print(task_id)
-# c = CustomTimer(1, add_together, (2, 4))
-# c = CustomTimer(1,invoke_docker_exec_get_task_status,("3a6ccb65-2ec0-4732-8fbd-33954f7b058e"))
-# c.start()
-# print (c.join())
 
-# from multiprocessing import Pool
-# pool_size = 5
-# # define worker function before a Pool is instantiated
-# def worker(item):
-#     try:
-#         # print(f"item: {item}")
-#         asyncio.run(test())
+import threading
+import time
 
-#     except:
-#         print('error with item')
-
-# pool = Pool(pool_size)
-
-# for item in ["1","2"]:
-#     pool.apply_async(worker, (item))
-
-# pool.close()
-# pool.join()
+exitFlag = 0
 
 
-# async def test(item):
-#     while True:
-#         print(f"Hello {item}")
-#         await asyncio.sleep(2)
+class taskThread (threading.Thread):
+    def __init__(self, threadID:int, name:str, task:Task, delay:int, config:Config):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.task = task
+        self.delay = delay
+        self.config = config
+
+    def run(self):
+      print ("Starting " + self.name)
+      check_status(self.name, self.task, 5, self.delay, self.config)
+      print ("Exiting " + self.name)
 
 
-# get task_ids
-#
-# task_ids = run_process_files(bucket, files, column_names, solver,saved_bucket,saved_path,container_type,container_name)
-# # print("---- end of sending task---------")
-# # #  process long pulling
-# task_ids = ["20dbd71d-7ccd-4a57-8966-8b5dfc0594e3"]
-# check_status(task_ids)
-# json_data = '[{"Detail":" Rs. 2000 Topup Rs.1779.99 Talktime","Amount":"2000","Validity":"Unlimited"},{"Detail":" Rs. 1900 Topup Rs.1690.99 Talktime","Amount":"1900","Validity":"Unlimited"}]'
-# json_data ="[{"task_id":"20dbd71d-7ccd-4a57-8966-8b5dfc0594e3", "task_status":"SUCCESS", "task_result:True}]"
-# # convert to python data structure
-# d_list = json.loads(json_data)
-# for d in d_list:
-#     # use get for safety
-#     print (d.get('Detail'))
-#     print (d.get('Amount'))
-# from time import sleep
-
-# def hello(name):
-#     print ("Hello %s!" % name)
-
-# print ("starting...")
-# rt = RepeatedTimer(1, hello, "World") # it auto-starts, no need of rt.start()
-# try:
-#     sleep(5) # your long-running job goes here...
-# finally:
-#     rt.stop() # better in a try/finally block to make sure the program ends!
+def check_status(threadName:str, task:Task, counter:int, delay:int, config:Config) -> None:
+    while counter:
+        if exitFlag:
+            break
+        response = invoke_docker_exec_get_task_status(task.task_id, config.container_type, config.container_name)
+        # parse response 
+        json_obj = json.loads(response.replace('None', "\'None\'").replace("\'","\""))
+        print(f"response: {json_obj}")
+        response_status = json_obj['task_status']
+        if response_status == "SUCCESS":
+            print("Task Success ")
+            break
+        
+        # print (f"task id: {task.task_id}, task status: {task.task_status}, Time: {time.ctime(time.time())}")
+        time.sleep(delay)
+        
+        counter -= 1
 
 
-# get_k8s_pod_name()
 
-# Configs can be set in Configuration class directly or using helper utility
+if __name__ == "__main__":
+
+
+    solardata = Solardata.import_solardata_from_yaml("./config/config.yaml")
+    config_params = Config.import_config_from_yaml("./config/config.yaml")
+
+    print("------- check task status ---------")
+    tasks = run_process_files(config_params, solardata)
+    for task in tasks:
+        print(f"task id {task.task_id}, status: {task.task_status}")
+    # index = 0 
+    # for task in tasks:
+    #     thread = taskThread(index,task.task_id,task, 1,config_params )
+    #     thread.start()
+    #     index += 1
+  
+        
