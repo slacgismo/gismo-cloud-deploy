@@ -157,5 +157,5 @@ def get_k8s_pod_name(container_name):
         # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
         podname = i.metadata.name.split("-")[0]
         if podname == container_name:
-            # print(f"podname: {i.metadata.name}")
+            print(f"podname: {i.metadata.name}")
             return i.metadata.name
