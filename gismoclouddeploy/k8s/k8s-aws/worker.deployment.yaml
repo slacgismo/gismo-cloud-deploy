@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: worker
-  replicas: 1
+  replicas: 2
   template: # template for the pods
     metadata:
       labels:
@@ -30,6 +30,18 @@ spec:
           - name: CELERY_RESULT_BACKEND
             value: "redis://back-api:6379/0"
           - name: DATABASE_URL
-            value: "postgresql://sample:pleasechangeme@postgres/flask_celery"
+            value: "postgresql://sample:pleasechangeme@postgres-services/flask_celery"
           - name: SECRET_KEY  
             value: my_precious
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: aws-access-key-id
+                key: aws-access-key-id
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                name: aws-secret-access-key
+                key: aws-secret-access-key
+          - name: AWS_DEFAULT_REGION
+            value: us-west-2
