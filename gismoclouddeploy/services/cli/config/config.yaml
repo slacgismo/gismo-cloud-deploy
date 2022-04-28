@@ -9,8 +9,8 @@ general:
 files_config:
   bucket: "pv.insight.nrel"
   process_all_files : "False" # If true, this program will run all files in this bucket. The files parameters will be ignored.
-  files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv","PVO/PVOutput/10664.csv"]
-  # files: ["PVO/PVOutput/10059.csv"]
+  # files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv","PVO/PVOutput/10664.csv"]
+  files: ["PVO/PVOutput/10059.csv"]
   column_names: ["Power(W)"]
 
 output:
