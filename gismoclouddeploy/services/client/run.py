@@ -104,8 +104,13 @@ if __name__ == "__main__":
 
     print("------- check task status ---------")
     tasks = run_process_files(config_params, solardata)
+
     for task in tasks:
         print(f"task id {task.task_id}, status: {task.task_status}")
+        check_status(task.task_id, task, 5, 1, config_params)
+    print("------- end of task status ---------")
+    save_rsult = combine_files_and_clean(config_params)
+    print("Save result success")
     # index = 0 
     # for task in tasks:
     #     thread = taskThread(index,task.task_id,task, 1,config_params )
