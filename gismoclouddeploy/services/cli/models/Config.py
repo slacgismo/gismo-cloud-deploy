@@ -1,3 +1,4 @@
+from urllib3 import Retry
 from utils.ReadWriteIO import read_yaml
 
 class Config(object):
@@ -5,6 +6,7 @@ class Config(object):
     def __init__(self,
                  files,
                  bucket,
+                 process_all_files,
                  column_names,
                  saved_bucket,
                  saved_tmp_path,
@@ -19,6 +21,7 @@ class Config(object):
 
         self.files = files
         self.bucket = bucket
+        self.process_all_files = process_all_files
         self.column_names = column_names
         self.saved_bucket = saved_bucket
         self.saved_tmp_path = saved_tmp_path
@@ -33,8 +36,11 @@ class Config(object):
     
     def import_config_from_yaml(file):
         config_params = read_yaml(file)
+
         config = Config(
+            
             files = config_params["files_config"]["files"],
+            process_all_files = config_params["files_config"]["process_all_files"],
             bucket = config_params["files_config"]["bucket"],
             column_names = config_params["files_config"]["column_names"],
             saved_bucket = config_params["output"]["saved_bucket"],
@@ -49,28 +55,18 @@ class Config(object):
             )
         return config
 
-# gen_config =  read_yaml("./config/general.yaml")
-# environment = gen_config['general']['environment']
-# container_type = gen_config['general']['container_type']
-# container_name = gen_config['general']['container_name']
+    def parse_config_to_json_str(self):
 
-# files_config = read_yaml("./config/run-files.yaml")
-# files = files_config['files_config']['files']
-# bucket = files_config['files_config']['bucket']
-# column_names = files_config['files_config']['column_names']
-# saved_bucket = files_config['output']['saved_bucket']
-
-# saved_tmp_path = files_config['output']['saved_tmp_path']
-# saved__target_path = files_config['output']['saved__target_path']
-# saved__target_filename = files_config['output']['saved__target_filename']
-
-
-# # final_saved_filename = files_config['output']['saved_filename']
-
-# sdt_params = read_yaml("./config/sdt-params.yaml")
-# solver = sdt_params['solardata']['solver']
-
-# gen_config =  read_yaml("./config/general.yaml")
-# environment = gen_config['general']['environment']
-# container_type = gen_config['general']['container_type']
-# container_name = gen_config['general']['container_name']
+        str = "{" 
+        str+= f" \"bucket\":\"{self.bucket}\"," 
+        str+= f" \"process_all_files\":\"{self.process_all_files}\"," 
+        str+= f" \"files\":\"{self.files}\"," 
+        str+= f" \"column_names\":\"{self.column_names}\"," 
+        str+= f" \"saved_bucket\":\"{self.saved_bucket}\"," 
+        str+= f" \"saved_tmp_path\":\"{self.saved_tmp_path}\"," 
+        str+= f" \"saved_target_path\":\"{self.saved_target_path}\","
+        str+= f" \"saved_target_filename\":\"{self.saved_target_filename}\","  
+        str+= f" \"interval_of_check_task_status\":\"{self.interval_of_check_task_status}\","  
+        str+= f" \"interval_of_exit_check_status\":\"{self.interval_of_exit_check_status}\""  
+        str+="}"
+        return str

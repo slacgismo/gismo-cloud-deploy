@@ -14,6 +14,7 @@ async def run(cmd: str):
         print(f'[stdout]\n{stdout.decode()}')
     if stderr:
         print(f'[stderr]\n{stderr.decode()}')
-
-# for i in [2,3,3]:
-#     asyncio.run(run('docker exec -it web python app.py hi'))
+task_id="4f498d17-89cc-434a-8e2e-4bb9590259dc"
+for i in [2,3,3]:
+    asyncio.run(run(f'docker exec -it web python app.py get_task_status {task_id}'))
+# 4f498d17-89cc-434a-8e2e-4bb9590259dc

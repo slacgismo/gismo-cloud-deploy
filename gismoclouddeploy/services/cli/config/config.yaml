@@ -32,14 +32,15 @@ solardata:
   linearity_threshold: 0.1
   clear_day_smoothness_param: 0.9
   clear_day_energy_param: 0.8
-  verbose: True
+  verbose: False
   start_day_ix: "None"
-  end_day_ix: None
-  c1: None
+  end_day_ix: "None"
+  c1: "None"
   c2: 500.0
   solar_noon_estimator: "com"
   correct_tz: True
   extra_cols: "None"
   daytime_threshold: "0.1"
   units: "W"
+  # solver: "None"
   solver: "MOSEK"

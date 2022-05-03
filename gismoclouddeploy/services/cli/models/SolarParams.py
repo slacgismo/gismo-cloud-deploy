@@ -1,7 +1,7 @@
 from utils.ReadWriteIO import read_yaml
 
 
-class Solardata(object):
+class SolarParams(object):
 
     def __init__(self,
                  power_col=None,
@@ -50,9 +50,9 @@ class Solardata(object):
         self.units = units
         self.solver = solver
 
-    def import_solardata_from_yaml(file):
+    def import_solar_params_from_yaml(file):
         sdt_params = read_yaml(file)
-        solardata = Solardata(
+        solardata = SolarParams(
             power_col=sdt_params['solardata']['power_col'],
             min_val=sdt_params['solardata']['min_val'],
             max_val=sdt_params['solardata']['max_val'],
@@ -76,3 +76,30 @@ class Solardata(object):
             units=sdt_params['solardata']['units'],
             solver=sdt_params['solardata']['solver'])
         return solardata
+
+    def parse_solardata_params_to_json_str(self):
+        str = "{" 
+        str+= f" \"power_col\":\"{self.power_col}\"," 
+        str+= f" \"min_val\":\"{self.min_val}\"," 
+        str+= f" \"max_val\":\"{self.max_val}\"," 
+        str+= f" \"zero_night\":\"{self.zero_night}\"," 
+        str+= f" \"interp_day\":\"{self.interp_day}\"," 
+        str+= f" \"fix_shifts\":\"{self.fix_shifts}\"," 
+        str+= f" \"density_lower_threshold\":\"{self.density_lower_threshold}\"," 
+        str+= f" \"density_upper_threshold\":\"{self.density_upper_threshold}\","
+        str+= f" \"linearity_threshold\":\"{self.linearity_threshold}\","  
+        str+= f" \"clear_day_smoothness_param\":\"{self.clear_day_smoothness_param}\","  
+        str+= f" \"clear_day_energy_param\":\"{self.clear_day_energy_param}\"," 
+        str+= f" \"verbose\":\"{self.verbose}\","
+        str+= f" \"start_day_ix\":\"{self.start_day_ix}\","
+        str+= f" \"end_day_ix\":\"{self.end_day_ix}\","
+        str+= f" \"c1\":\"{self.c1}\","
+        str+= f" \"c2\":\"{self.c2}\","
+        str+= f" \"solar_noon_estimator\":\"{self.solar_noon_estimator}\","
+        str+= f" \"correct_tz\":\"{self.correct_tz}\","
+        str+= f" \"extra_cols\":\"{self.extra_cols}\","
+        str+= f" \"daytime_threshold\":\"{self.daytime_threshold}\","
+        str+= f" \"units\":\"{self.units}\","
+        str+= f" \"solver\":\"{self.solver}\""
+        str+="}"
+        return str
