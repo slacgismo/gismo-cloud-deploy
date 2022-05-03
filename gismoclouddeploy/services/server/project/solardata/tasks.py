@@ -11,7 +11,9 @@ import pandas as pd
 import solardatatools
 import asyncio
 import numbers
-from project.solardata.models import SolarData
+from project.solardata.models.SolarData import SolarData 
+from project.solardata.models.SolarParams import SolarParams,make_solardata_params_from_str
+from project.solardata.models.Configure import Configure
 from io import StringIO
 
 
@@ -81,11 +83,14 @@ def save_data_from_db_to_s3_task(bucket_name, file_path, file_name, delete_data)
 
 
 @shared_task(bind=True)
-def process_data_task(self, bucket_name, file_path, file_name, column_name, start_time, solver, saved_bucket, saved_file_path, saved_filename):
+def process_data_task(self, bucket_name,file_path_name, column_name,saved_bucket, saved_file_path, saved_filename,start_time,solar_params_str:str) -> str:
     response_object = {
         'status': 'success',
         'container_id': os.uname()[1]
     }
+    solar_params_obj = make_solardata_params_from_str(solar_params_str)
+    print(f"solar_params_obj verbose {solar_params_obj.verbose}")
+    print("hello world here")
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
@@ -93,7 +98,35 @@ def process_data_task(self, bucket_name, file_path, file_name, column_name, star
     )
     app = create_app()
     with app.app_context():
+        process_solardata_tools(  
+                            self.request.id,
+                            bucket_name ,
+                            file_path_name,
+                            column_name,
+                            start_time,
+                            saved_bucket,
+                            saved_file_path,
+                            saved_filename,
+                            solar_params_obj
+                            )
+        print("process solardata")
+        # return True
 
-        process_solardata_tools(bucket_name, file_path, file_name, column_name, solver,
-                                start_time, self.request.id, saved_bucket, saved_file_path, saved_filename)
-        return "return  from process solardatatools"
+    # print(f"{solardata_params}")
+# def process_data_task(self, bucket_name, file_path, file_name, column_name, start_time, solardata_params, saved_bucket, saved_file_path, saved_filename):
+#     response_object = {
+#         'status': 'success',
+#         'container_id': os.uname()[1]
+#     }
+#     print(f"{solardata_params}")
+    # from project import create_app
+    # from project.solardata.models import SolarData
+    # from project.solardata.utils import (
+    #     process_solardata_tools
+    # )
+    # app = create_app()
+    # with app.app_context():
+
+    # #     process_solardata_tools(bucket_name, file_path, file_name, column_name, solver,
+    # #                             start_time, self.request.id, saved_bucket, saved_file_path, saved_filename)
+    # #     return "return  from process solardatatools"

@@ -8,8 +8,7 @@ class SolarData(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     task_id = db.Column(db.String(128), unique=True, nullable=False)
     bucket_name = db.Column(db.String(128), nullable=False)
-    file_path = db.Column(db.String(128),  nullable=False)
-    file_name = db.Column(db.String(128),  nullable=False)
+    file_path_name = db.Column(db.String(128),  nullable=False)
     column_name = db.Column(db.String(128), nullable=False)
     process_time = db.Column(db.Float(), nullable=False)
     length = db.Column(db.Float(),  nullable=False)
@@ -29,8 +28,7 @@ class SolarData(db.Model):
     def __init__( self, 
                     task_id, 
                     bucket_name, 
-                    file_path,
-                    file_name,
+                    file_path_name,
                     column_name,
                     process_time,
                     length,
@@ -50,11 +48,9 @@ class SolarData(db.Model):
 
         self.task_id = task_id
         self.bucket_name = bucket_name
-        self.file_path = file_path
-        self.file_name = file_name
+        self.file_path_name = file_path_name
         self.column_name = column_name
         self.process_time = process_time
-
         self.power_units = power_units
         self.length = length
         self.capacity_estimate = capacity_estimate
@@ -74,8 +70,7 @@ class SolarData(db.Model):
             'id': self.id,
             'task_id': self.task_id,
             'bucket_name': self.bucket_name,
-            'file_path': self.file_path,
-            'file_name': self.file_name,
+            'file_path_name': self.file_path_name,
             'column_name': self.column_name,
             'process_time': self.process_time,
             'power_units': self.power_units,
@@ -92,3 +87,4 @@ class SolarData(db.Model):
             'tz_correction': self.tz_correction,
             'time_shifts': self.time_shifts,
         }
+

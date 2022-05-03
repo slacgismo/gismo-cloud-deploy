@@ -34,9 +34,7 @@ def create_app(config_name=None):
     ext_celery.init_app(app)
     csrf.init_app(app)  # new
     cors.init_app(app, resources={r"*": {"origins": "*"}})  # new
-    # register blueprints
-    from project.users import users_blueprint
-    app.register_blueprint(users_blueprint)
+
 
     from project.solardata import solardata_blueprint
     app.register_blueprint(solardata_blueprint)

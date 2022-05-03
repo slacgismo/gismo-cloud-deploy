@@ -32,10 +32,6 @@ services:
       - db
 
   db:
-    # image: postgres:13-alpine
-    build:
-      context:  ./db
-      dockerfile: Dockerfile
     image: postgres:13-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
