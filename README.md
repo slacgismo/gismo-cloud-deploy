@@ -194,7 +194,9 @@ kubectl version --client"
 ~~~
 11.  Start your cluster!
 ~~~
-eksctl create cluster --name fleetman --nodes-min=3
+eksctl create cluster     --name gcd-eks-cluster     --version 1.21     --without-nodegroup
+eksctl create nodegroup   --cluster gcd-eks-cluster   --region us-east-2   --name gcd-node-group-lt   --node-type m5.large   --nodes 3   --nodes-min 2   --nodes-max 4 
+eksctl scale nodegroup --cluster gcd-eks-cluster --name gcd-node-group-lt --nodes 0 --nodes-max 1 --nodes-min 0
 ~~~
 
 ### excute command
