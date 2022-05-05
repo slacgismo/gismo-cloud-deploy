@@ -18,7 +18,7 @@ from models.Config import Config
 from models.Task import Task
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from apscheduler.schedulers.background import BackgroundScheduler
-
+# import click
 
 def run_process_files(config: Config, solardata: Solardata) -> List[Task]:
     task_objs= []
@@ -97,7 +97,7 @@ def check_status(threadName:str, task:Task, counter:int, delay:int, config:Confi
 
 
 if __name__ == "__main__":
-
+    # main()
 
     solardata = Solardata.import_solardata_from_yaml("./config/config.yaml")
     config_params = Config.import_config_from_yaml("./config/config.yaml")
@@ -111,10 +111,10 @@ if __name__ == "__main__":
     print("------- end of task status ---------")
     save_rsult = combine_files_and_clean(config_params)
     print("Save result success")
-    # index = 0 
-    # for task in tasks:
-    #     thread = taskThread(index,task.task_id,task, 1,config_params )
-    #     thread.start()
-    #     index += 1
+    index = 0 
+    for task in tasks:
+        thread = taskThread(index,task.task_id,task, 1,config_params )
+        thread.start()
+        index += 1
   
         

@@ -132,8 +132,8 @@ sample=#
 6. Use kubectl create secrets. 
 
 ~~~
-kubectl create secret generic aws-access-key-id --form-literal  aws-access-key-id=<your AWS access key>
-kubectl create secret generic aws-secret-key --form-literal aws-secret-key =<your AWS secret key>
+kubectl create secret generic aws-access-key-id --from-literal  aws-access-key-id=<your AWS access key>
+kubectl create secret generic aws-secret-access-key --from-literal aws-secret-access-key=<your AWS secret key>
 
 ~~~
 ## Setup AWS EKS 
@@ -190,7 +190,7 @@ sudo mv ./kubectl /usr/local/bin/kubectl
 ~~~
 10.  Check the version 
 ~~~
-kubectl version --client"
+kubectl version --client
 ~~~
 11.  Create your cluster!
 ~~~
@@ -209,7 +209,7 @@ eksctl create cluster \
   --node-type m5.large \
   --nodes 3 \
   --nodes-min 2 \
-  --nodes-max 4 \
+  --nodes-max 4 
 ~~~
 13. EKS iam authority
 ~~~
