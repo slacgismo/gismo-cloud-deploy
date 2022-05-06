@@ -41,6 +41,37 @@ def run_process_files(config: Config, solardata: Solardata) -> List[Task]:
     return task_objs
 
 
+def list_files_in_bucket(bucket_name):
+    """ Get filename and size from S3 , remove non csv file """
+    s3_client = connect_aws_client('s3')
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    files = response['Contents']
+    filterFiles =[]
+    for file in files:
+        split_tup = os.path.splitext(file['Key'])
+        file_extension = split_tup[1]
+        if file_extension == ".csv":
+            obj = {
+                'Key': file['Key'],
+                'Size': file['Size'],
+            }
+            filterFiles.append(obj)
+    return  filterFiles
+
+def run_all_files(config: Config, solardata: Solardata) -> List[Task]:
+    task_objs= []
+    # list all bucket 
+    
+            # task_id =  invok_docekr_exec_run_process_file(
+            #     config.bucket, path, filename, col_name, solardata.solver, config.saved_bucket, config.saved_tmp_path, tem_saved_filename, config.container_type, config.container_name,)
+            # if task_id:
+            #     key, value = task_id.replace(" ", "").replace("\n", "").split(":")
+            #     task = Task(value, "PENDING", None)
+            #     task_objs.append(task)
+                # task_ids.append({key: value, "task_status": "PENDING"})
+      
+    return task_objs
+
 def check_status(ids: List[str], config:Config):
     for id in ids:
         response = invoke_docker_exec_get_task_status(
@@ -101,7 +132,7 @@ if __name__ == "__main__":
 
     solardata = Solardata.import_solardata_from_yaml("./config/config.yaml")
     config_params = Config.import_config_from_yaml("./config/config.yaml")
-
+    
     print("------- check task status ---------")
     tasks = run_process_files(config_params, solardata)
 
@@ -111,10 +142,10 @@ if __name__ == "__main__":
     print("------- end of task status ---------")
     save_rsult = combine_files_and_clean(config_params)
     print("Save result success")
-    index = 0 
-    for task in tasks:
-        thread = taskThread(index,task.task_id,task, 1,config_params )
-        thread.start()
-        index += 1
+    # index = 0 
+    # for task in tasks:
+    #     thread = taskThread(index,task.task_id,task, 1,config_params )
+    #     thread.start()
+    #     index += 1
   
         
