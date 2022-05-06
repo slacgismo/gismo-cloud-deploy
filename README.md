@@ -236,3 +236,22 @@ kubectl get pods
 
 
 ~~~
+
+
+## Logging
+elk
+edit logging from clusterIP -> LoadBalancer
+~~~
+kubectl edit svc kibana-logging -n kube-system
+~~~
+
+## Monitoring
+prometheus
+grafana
+- default username: admin
+- default password: prom-operator
+
+edit  from clusterIP -> LoadBalancer
+~~~
+kubectl edit svc monitoring-grafana -n monitoring
+~~~
