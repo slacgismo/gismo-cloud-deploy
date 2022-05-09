@@ -1,11 +1,11 @@
 # Giamo cloud deployment command line interface 
 ## Description
 
-This program implements `solar-data-tools` algorithm to process multiple files parallelly on AWS with multiple EC2 instances.
+This program implements this [Solar-data-tools](https://github.com/slacgismo/solar-data-tools) algorithm to process multiple files in parallel on AWS with multiple EC2 instances.
 
 Goals:
 
-- Implemented AWS cloud computation parallelly by processing multiple files with [Solar-Data-Tools](https://github.com/slacgismo/solar-data-tools) algorithm.
+- Implemented AWS cloud computation parallelly by processing multiple files with this [Solar-data-tools](https://github.com/slacgismo/solar-data-tools) algorithm.
 - Read configuration setting from `config.yaml`
 - Scale down the nodes number to zero after processing files to avoid extra cost.
 - Save all the process results in a file on the AWS S3 bucket.
