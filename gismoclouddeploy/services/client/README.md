@@ -1,16 +1,17 @@
 # Giamo cloud deployment command line interface 
 ## Description
 
-This program demostrates implementing `solar-data-tools` algorithm to process multiple files parallelly on AWS with multiple EC2 instances.
+This program implements `solar-data-tools` algorithm to process multiple files parallelly on AWS with multiple EC2 instances.
 
-The program demostrates following targets.
-- Implemented AWS cloud computation parallelly by processing multiple fies with [Solar-Data-Tools](https://github.com/slacgismo/solar-data-tools) algorithm.
+Goals:
+
+- Implemented AWS cloud computation parallelly by processing multiple files with [Solar-Data-Tools](https://github.com/slacgismo/solar-data-tools) algorithm.
 - Read configuration setting from `config.yaml`
-- Scale down the nodes number to zero after process files to avoid extra cost.
-- Save all the process results in a file on AWS S3 bucket.
+- Scale down the nodes number to zero after processing files to avoid extra cost.
+- Save all the process results in a file on the AWS S3 bucket.
 - Hosting AWS services with EKS.
 - Monitoring EKS performance by [Prometheus](https://prometheus.io/) monitoring service with [Grafana](https://grafana.com/) interface.
-- Tracking Log infromation with [kibana](https://www.elastic.co/kibana/).
+- Tracking Log information with [kibana](https://www.elastic.co/kibana/).
 ## System diagram
 ![System diagram](./Solar-data-tools-AWS.png)
 
@@ -34,10 +35,10 @@ make run-files [-n]
 
 1. Check the reuslts from saved file on the AWS S3 bucket. Developers can define the save file's configuration such as `saved_bucket`, `saved__target_path` and `saved__target_filename` in `config.yaml`.
 2. Check logs files.
-   Developers can check the log information from `Kibana`.
+   Developers can check the log information from `Kibana` in EKS by following Link.
    The Kiana URL: <>
 3. Monitoring the services.
-   Developers can monitor the kubernetes performance by unsing `Prometheus` monitoring service with `Grafana` UI.
+   Developers can monitor the kubernetes performance by unsing `Prometheus` monitoring service with `Grafana` UI in EKS by following Link.
    The Grafana URL: <>
    Username: `admin`
    Password: `prom-operation`
@@ -62,6 +63,7 @@ Under `config` folder, developers can modify parametes of the project.
 
 ## Local development
 
+The AWS EKS hosts services based on the ECR images. In order to build new images to be used by Kubernetes, developers have to build and test images by docker-compose command. If the images are verified, developers can push images to ECR.
 ### Installation
 1). Download git repository
 ~~~
@@ -95,9 +97,16 @@ AWS_ACCESS_KEY_ID=<your-access-key>
 AWS_SECRET_ACCESS_KEY=<your-secret-key-id>
 AWS_DEFAULT_REGION=<region>
 ~~~
+Push images to ECR
+~~~
+make push-server
+make push-worker
+~~~
 
 #### using `kubernetes`
-Before using kubernetes to host local services, please start kubernetes services and install necessary tools by following instruction [Kubernetes Link](https://kubernetes.io/docs/tasks/tools/).
+Before using kubernetes to host local services, please start kubernetes services and install necessary tools by following instruction [Kubernetes Link](https://kubernetes.io/docs/tasks/tools/). 
+
+Kubernets dose not generate new images. It runs the built images by docer-compose locally or the published images on ECR.
 
 ~~~
 cd gismo-cloud-deploy/gismoclouddeploy/k8s/k8s-local/
