@@ -1,7 +1,64 @@
 # Giamo cloud deployment command line interface 
+## Description
+
+This program demostrates implementing `solar-data-tools` algorithm to process multiple files parallelly on AWS with multiple EC2 instances.
+
+The program demostrates following targets.
+- Implemented AWS cloud computation parallelly by processing multiple fies with [Solar-Data-Tools](https://github.com/slacgismo/solar-data-tools) algorithm.
+- Read configuration setting from `config.yaml`
+- Scale down the nodes number to zero after process files to avoid extra cost.
+- Save all the process results in a file on AWS S3 bucket.
+- Hosting AWS services with EKS.
+- Monitoring EKS performance by [Prometheus](https://prometheus.io/) monitoring service with [Grafana](https://grafana.com/) interface.
+- Tracking Log infromation with [kibana](https://www.elastic.co/kibana/).
 ## System diagram
+![System diagram](./Solar-data-tools-AWS.png)
 
 
+### AWS Quick Start
+
+1. SSH to EC2 tunnerl.
+
+~~~
+ssh -i <pem-file> ec2-user@<host-ip>
+~~~
+
+2. Modification the configuration in `./config/config.yaml` files.
+
+3. Run process files command.
+
+~~~
+cd gismoclouddeploy/services/server/cli
+make run-files [-n]
+~~~
+
+1. Check the reuslts from saved file on the AWS S3 bucket. Developers can define the save file's configuration such as `saved_bucket`, `saved__target_path` and `saved__target_filename` in `config.yaml`.
+2. Check logs files.
+   Developers can check the log information from `Kibana`.
+   The Kiana URL: <>
+3. Monitoring the services.
+   Developers can monitor the kubernetes performance by unsing `Prometheus` monitoring service with `Grafana` UI.
+   The Grafana URL: <>
+   Username: `admin`
+   Password: `prom-operation`
+
+### Command
+
+The make command supports the following subcommands:
+
+- make run-files [-n]
+- make help
+- make version
+
+
+If option command `-n` after run-files is specified, the program runs all files of the bucket that is defined in `config.yaml` file.
+
+### Configuration files
+
+Under `config` folder, developers can modify parametes of the project.
+1). The `general` configuration contains all the environement variables setting.
+2). The `file-config` configuration contains all the config setting of run multiple files.
+3). The `solardata` configuration contains all the parametes of solar-data-tools algorithm.
 
 ## Local development
 
@@ -18,22 +75,57 @@ source ./venv/bin/activate
 pip install -r requirements.txt
 ~~~
 3). Developers are allowed to use `docker-compose` or `kubernetes` to manage the system
-
-Using `docker-compose`
+#### Using `docker-compose`
+Before using docker to host local services, please install docker by following the instructions [Docker Link](https://docs.docker.com/get-docker/).
 Staring docker images by command
 ~~~
-cd gismo-cloud-deploy/services
+cd gismo-cloud-deploy/gismoclouddeploy/services
 docker-compose up --build
 ~~~
-Check if images is exist
 
+Setup AWS credentials for Kubernetes
+~~~
+touch ./gismo-cloud-deploy/gismoclouddeploy/services/server/.env/.dev-sample
+~~~
 
-using `kubernetes`
+Replace the environemnt variables inside `<xxx-xxx-xxx>`.
 
+~~~
+AWS_ACCESS_KEY_ID=<your-access-key>
+AWS_SECRET_ACCESS_KEY=<your-secret-key-id>
+AWS_DEFAULT_REGION=<region>
+~~~
+
+#### using `kubernetes`
+Before using kubernetes to host local services, please start kubernetes services and install necessary tools by following instruction [Kubernetes Link](https://kubernetes.io/docs/tasks/tools/).
+
+~~~
+cd gismo-cloud-deploy/gismoclouddeploy/k8s/k8s-local/
+~~~
+
+start all all services by using kubectl command
+
+~~~
+kubectl apply -f .
+~~~
+
+check if services is running by command.
+
+~~~
+kubectk get all 
+~~~
+
+Setup AWS credentials for Kubernetes.
+
+~~~
+kubectl create secret generic aws-access-key-id --from-literal  aws-access-key-id=<your AWS access key>
+kubectl create secret generic aws-secret-access-key --from-literal aws-secret-access-key=<your AWS secret key>
+~~~
 
 
 ## AWS development
-### Deployment to EC2 and EKS
+
+### EC2 and EKS Re-deployment
 1.If (ssh tunnel) bastion instance is not created, deploying bastion instance on AWS by command as below.
 ~~~
 cd deploy
@@ -42,10 +134,12 @@ make tf-plan
 make tf-apply
 ~~~
 
-2. SSH to bastion 
+2. If (ssh tunnel) is created and running, SSH to bastion.
+
 ~~~
 ssh -i <pem-file> ec2-user@<host-ip>
 ~~~
+
 3. Download git repository in Bastion instance
 
 ~~~
@@ -55,36 +149,59 @@ cd gismo-cloud-deploy
 ~~~
 
 4. CLI installation
-~~~
-make install-ec2
-~~~
 
-4. If EKS is not created, run command as below:
-~~~
-eksctl create cluster --name <cluster-name> --nodes-min=1
-~~~
+Create virtual environment, and install dependencies by following command.
 
-5. Apply kubernetes configuration file
 ~~~
-cd /usr/src/app/gismo-cloud-deploy/k8s/k8s-aws
-kubectl apply -f .
+cd gismoclouddeploy/services/server/cli
+make setup-ec2-env
 ~~~
 
-### Command 
+5. Check EKS status. If EKS was not created, create EKS.
 
-The make command supports the following subcommands:
+Check EKS status
+~~~
+cd gismoclouddeploy/services/server/cli
+make list-eks
+~~~
 
-- make run-files [-n]
-- make list-files 
-- make run-folder 
-- make help
-- make version
+Create EKS
 
+~~~
+cd gismoclouddeploy/services/server/cli
+make create-eks [--name EKSNAME]
+~~~
 
-### Configuration files
+Scale the nodes.
 
-Under `config` folder, developers can change parametes of the project. 
-1). The `general.yaml` contains all the environement variables setting.
-2). The `run-files.yaml` contains all the config setting of run multiple files. Option command `[-n]` will run all files in the bucket listed in  `run-files.yaml` file. 
-3). The `run-foler.yaml` constins all the config setting of run multiple folders.
-4). The `sdt-params.yaml` contains the parameters setting of solardatatools `ataHandler.run_pipeline`. 
+~~~
+cd gismoclouddeploy/services/server/cli
+make scale [--nodes NODESNUMBER]
+~~~
+
+6. Apply kubernetes configuration file
+
+~~~
+cd gismoclouddeploy/services/server/cli
+make apply 
+~~~
+
+7. Check all services status
+
+~~~
+cd gismoclouddeploy/services/server/cli
+make get-all 
+~~~
+
+8. If all services are running, process files by command:
+
+~~~
+cd gismoclouddeploy/services/server/cli
+make run-files [-n]
+~~~
+9. Delete EKS
+
+~~~
+cd gismoclouddeploy/services/server/cli
+make delete-eks [--name EKSNAME]
+~~~
