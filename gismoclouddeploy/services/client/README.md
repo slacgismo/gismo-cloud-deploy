@@ -26,33 +26,47 @@ ssh -i <pem-file> ec2-user@<host-ip>
 
 2. Modification the configuration in `./config/config.yaml` files.
 
-3. Run process files command.
+3. Setup the node number and replica number of the worker(ec2-instance)
+   - Replica number(`replica`) of worker defines how many workers(ec2-instances) process the files with algorithm in parallel on AWS. (Minimum replica of worker is `1`, the default number is `2`).
+   - Node number (`node_number`) defines how many total instance runing the program including loging, monitoring, workers and scheduler. (Minimum number of node is `1`, the default number is `3`)
+   - To prevent extra cost after processing program, set the variable `min_node_number_after_process` to `0`. It deletes all nodes after completion.
+   - To track log information and monitoring, you have to maintain at least one node running after processing program. Therefore, set up `min_node_number_after_process` to at least `1` is necessary.
+   - If developer change the node number or replica number. Please run commnad `make k8s-apply` to apply the change.
+
+4. Run process files command with command.
 
 ~~~
 cd gismoclouddeploy/services/server/cli
 make run-files [-n]
 ~~~
 
-1. Check the reuslts from saved file on the AWS S3 bucket. Developers can define the save file's configuration such as `saved_bucket`, `saved__target_path` and `saved__target_filename` in `config.yaml`.
-2. Check logs files.
-   Developers can check the log information from `Kibana` in EKS by following Link.
+4. Check the reuslts from saved file on the AWS S3 bucket. Developers can define the save file's configuration such as `saved_bucket`, `saved__target_path` and `saved__target_filename` in `config.yaml`.
+
+
+
+### Logs and monitoring
+
+- Check logs information.
+   Developers can track the log information from `Kibana` in EKS by following Link.
    The Kiana URL: <>
-3. Monitoring the services.
+- Monitoring the services.
    Developers can monitor the kubernetes performance by unsing `Prometheus` monitoring service with `Grafana` UI in EKS by following Link.
    The Grafana URL: <>
    Username: `admin`
    Password: `prom-operation`
-
+- Developer can set the nodes number to `0` to prevent extra cost after finished by command: ` make scale-nodes --min-nodes 0`
 ### Command
 
 The make command supports the following subcommands:
 
 - make run-files [-n]
+- make scale-nodes --min-nodes [0]
+- make k8s-apply
 - make help
 - make version
 
-
-If option command `-n` after run-files is specified, the program runs all files of the bucket that is defined in `config.yaml` file.
+If option command `-n` after `run-files` is specified, the program runs all files inside of the bucket defined in `config.yaml` file.
+The `make scale-nodes` command can increate the nodes number of the EKS. If `--min-nodes` is set to `0`, it forces EKS to close all running ec2 instances.
 
 ### Configuration files
 
