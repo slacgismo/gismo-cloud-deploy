@@ -26,7 +26,7 @@ ssh -i <pem-file> ec2-user@<host-ip>
 
 2. Modification the configuration in `./config/config.yaml` files.
 
-3. Setup the node number and replica number of the worker(ec2-instance)
+3. Setup the node number of EKS and replica number of the worker(ec2-instance)
    - Replica number(`replica`) of worker defines how many workers(ec2-instances) process the files with algorithm in parallel on AWS. (Minimum replica of worker is `1`, the default number is `2`).
    - Node number (`node_number`) defines how many total instance runing the program including loging, monitoring, workers and scheduler. (Minimum number of node is `1`, the default number is `3`)
    - To prevent extra cost after processing program, set the variable `min_node_number_after_process` to `0`. It deletes all nodes after completion.
@@ -41,8 +41,6 @@ make run-files [-n]
 ~~~
 
 4. Check the reuslts from saved file on the AWS S3 bucket. Developers can define the save file's configuration such as `saved_bucket`, `saved__target_path` and `saved__target_filename` in `config.yaml`.
-
-
 
 ### Logs and monitoring
 
