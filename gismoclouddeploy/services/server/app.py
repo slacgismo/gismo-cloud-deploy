@@ -1,4 +1,5 @@
 from curses import flash
+from itertools import count
 # from project import create_app, ext_celery,db
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
@@ -94,35 +95,36 @@ def process_files( config_params_str,
                     ])
             task_ids.append(task_id)
     print(task_ids)
-    # pending_task = task_ids
-    # success_task = []
-    # delay = 1
-    # counter = 8
     # for id in task_ids:
-    #     res = AsyncResult(id, app= app)
-    #     print(res)
-    # th = taskThread(1,"thtest", 1, task_ids= task_ids )
-    # th.start()
+    #     res = AsyncResult(str(id))
+    #     print(f"schedulers: id: {res.task_id} \n task status: {res.status}, ")
+    counter = 40
+    num_success_task = 0
+    while counter > 0:
+        # check the task status
+        time.sleep(1)
+        for id in task_ids:
+            res = AsyncResult(str(id))
+            status = str(res.status)
+            print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
+            if status == "SUCCESS":
+                # print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
+                print("get success task")
+                num_success_task += 1
+            if num_success_task == len(task_ids):
+                break 
+        counter -= 1
 
-    # while counter > 0:
-    #     print (f"counter: {counter}")
-    #     counter -=1 
-    #     time.sleep(delay)
- 
-    # while counter == 0:
-    #     print (f"counter: {counter}")
-    #     # pending_task.clear() 
-    #     for id in task_ids:
-    #         task_result = AsyncResult(id)
-    #         if task_result.status == "PENDING":
-    #             pending_task.append(id)
-    #         elif task_result.status == "SUCCESS":
-    #             success_task.append(id)
-            
-    #     time.sleep(delay)
-    #     for id in pending_task:
-    #         print(f"pending id : {id}")
-    #     counter -= 1
+    print("Start combine files")
+    print(f"bucket_name: {configure_obj.saved_bucket} ,source_folder {configure_obj.saved_tmp_path} ,target_folder: {configure_obj.saved_target_path},target_filename: {configure_obj.saved_target_filename}")
+    task = combine_files_to_file_task.apply_async(
+        [configure_obj.saved_bucket,
+        configure_obj.saved_tmp_path,
+        configure_obj.saved_target_path,
+        configure_obj.saved_target_filename
+        ])
+    print("combile files task : {task}")
+
         
 
 @cli.command("process_all_files_in_bucket")
