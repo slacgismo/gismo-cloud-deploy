@@ -3,14 +3,15 @@ from unicodedata import name
 import pandas as pd
 from project.solardata.models.SolarParams import SolarParams
 from project.solardata.models.SolarData import SolarData
-
+from datetime import datetime
 import os
 from io import StringIO
 import boto3
 from flask import current_app
-# from project import db
 import solardatatools
 import time
+import socket
+
 def connect_aws_client(client_name):
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
@@ -126,15 +127,7 @@ def to_s3(bucket,file_path,filename, content):
     s3_client.put_object(Bucket=bucket, Key=k, Body=content)
 
 
-# def transaction_solardata(solardata:SolarData):
-#     try:
-#         db.session.add(solardata)
-#         db.session.commit()
-#         print("save to postgres success!!!")
-#     except Exception as e:
-#         db.session.rollback()
-#         raise
-#     return 'done'
+
 
 def process_solardata_tools(  
                             task_id:str = None,
@@ -161,6 +154,7 @@ def process_solardata_tools(
     
     solarParams.power_col = column_name
     error_message = ""
+
     try:
         dh = solardatatools.DataHandler(df)
         print(f"run pipeline solarParams.verbose: {solarParams.verbose}, solver: {solarParams.solver}")
@@ -211,37 +205,53 @@ def process_solardata_tools(
         inverter_clipping = bool(dh.inverter_clipping)
         normal_quality_scores = bool(dh.normal_quality_scores)
         capacity_changes = bool(dh.capacity_changes)
-        process_time = time.time() - float(start_time)
-        print(f"process_time {process_time}")
-        solardata = SolarData(
-                task_id=task_id,
-                bucket_name=bucket_name,
-                file_path_name = file_path_name,
-                column_name=column_name,
-                process_time=process_time,
-                length=length,
-                power_units=power_units,
-                capacity_estimate=capacity_estimate,
-                data_sampling=data_sampling,
-                data_quality_score = data_quality_score,
-                data_clearness_score = data_clearness_score,
-                error_message=error_message,
-                time_shifts=time_shifts,
-                capacity_changes=capacity_changes,
-                num_clip_points=num_clip_points,
-                tz_correction =tz_correction,
-                inverter_clipping = inverter_clipping,
-                normal_quality_scores=normal_quality_scores,
-        )
+        end_time = time.time() 
+        process_time =float(end_time)  - float(start_time)
+        end_time_date = datetime.fromtimestamp(end_time)
+        start_time_date = datetime.fromtimestamp(start_time)
 
-        response = save_solardata_to_file(solardata.to_json(),saved_bucket,saved_file_path,saved_filename)
-        print(f"---------------->")
-        response_object = {
-            'status': 'success',
-            'solardata': solardata.to_json
-        }
-        print(f"solardata result response: {solardata.to_json()}")
-        print(f"save response: {response}")
+        hostname = socket.gethostname()
+        host_ip = socket.gethostbyname(hostname)
+
+
+        print(f"file: {file_path_name},column_name:{column_name} , process_time {process_time}, hostname: {hostname}, host_ip: {host_ip}, start_time: {start_time_date}, end_time: {end_time_date}, process_time: {process_time}")
+        solarData = SolarData(task_id=task_id,
+                            hostname= hostname,
+                            host_ip = host_ip,
+                            stat_time = start_time_date,
+                            end_time = end_time_date,
+                            bucket_name=(bucket_name),
+                            file_path_name = (file_path_name),
+                            column_name=(column_name),
+                            process_time=(process_time),
+                            length=(length),
+                            power_units=(power_units),
+                            capacity_estimate=(capacity_estimate),
+                            data_sampling=(data_sampling),
+                            data_quality_score = (data_quality_score),
+                            data_clearness_score = (data_clearness_score),
+                            error_message=(error_message),
+                            time_shifts=(time_shifts),
+                            capacity_changes=(capacity_changes),
+                            num_clip_points=(num_clip_points),
+                            tz_correction =(tz_correction),
+                            inverter_clipping = (inverter_clipping),
+                            normal_quality_scores=(normal_quality_scores),
+                            )
+        print(f"solarData ---> :{solarData.task_id},{solarData.hostname},  {solarData.power_units} ")
+        print(f"results solarData to json ---> :{solarData.to_json()} ")
+        response = save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
+
+        print(f"------ save solardata to S3 response: {response}")
+
+        # response = save_solardata_to_file(solardata.to_json(),saved_bucket,saved_file_path,saved_filename)
+        # print(f"---------------->")
+        # response_object = {
+        #     'status': 'success',
+        #     'solardata': solardata.to_json
+        # }
+       
+        # print(f"save response: {response}")
         return True
        
     except Exception as e:
@@ -250,8 +260,7 @@ def process_solardata_tools(
     
 
 
-    # transaction_solardata(solardata)
-    # generate temp file 
+
     
 
     

@@ -90,7 +90,7 @@ def process_data_task(self, bucket_name,file_path_name, column_name,saved_bucket
     }
     solar_params_obj = make_solardata_params_from_str(solar_params_str)
     print(f"solar_params_obj verbose {solar_params_obj.verbose}")
-    print("hello world here")
+    # print("hello world here")
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
