@@ -13,8 +13,8 @@ from project.solardata.tasks import (
     save_data_from_db_to_s3_task,
     process_data_task
 )
-from project import csrf,db
-
+# from project import csrf,db
+from project import csrf
 import pandas as pd
 
 from project.solardata.utils import (

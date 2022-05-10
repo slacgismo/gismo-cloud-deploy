@@ -8,7 +8,7 @@ import os
 from io import StringIO
 import boto3
 from flask import current_app
-from project import db
+# from project import db
 import solardatatools
 import time
 def connect_aws_client(client_name):
@@ -126,15 +126,15 @@ def to_s3(bucket,file_path,filename, content):
     s3_client.put_object(Bucket=bucket, Key=k, Body=content)
 
 
-def transaction_solardata(solardata:SolarData):
-    try:
-        db.session.add(solardata)
-        db.session.commit()
-        print("save to postgres success!!!")
-    except Exception as e:
-        db.session.rollback()
-        raise
-    return 'done'
+# def transaction_solardata(solardata:SolarData):
+#     try:
+#         db.session.add(solardata)
+#         db.session.commit()
+#         print("save to postgres success!!!")
+#     except Exception as e:
+#         db.session.rollback()
+#         raise
+#     return 'done'
 
 def process_solardata_tools(  
                             task_id:str = None,

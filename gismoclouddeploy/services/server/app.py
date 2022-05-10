@@ -1,5 +1,6 @@
 from curses import flash
-from project import create_app, ext_celery,db
+# from project import create_app, ext_celery,db
+from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 from flask import jsonify
 import json
