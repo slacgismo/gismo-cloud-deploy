@@ -77,7 +77,7 @@ def process_first_n_files( config_params_str:str,
             prefix = path.replace("/", "-")
             temp_saved_filename = f"{prefix}-{filename}"
             start_time = time.time()
-            # print(f"temp_saved_filename: {temp_saved_filename}")
+    
             task_id = process_data_task.apply_async([
                     configure_obj.bucket,
                     file['Key'],
@@ -91,8 +91,14 @@ def process_first_n_files( config_params_str:str,
             task_ids.append(str(task_id)) 
     for id in task_ids:
         print(id)
-    # task_ids = ["3006afaa-bf9a-4c36-a09a-ea4272f91561","50fffc52-99a3-416f-8e7d-e64f963a0979"]
-    loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, configure_obj.interval_of_exit_check_status, task_ids])
+
+    loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, 
+                                                    configure_obj.interval_of_exit_check_status,
+                                                    task_ids,
+                                                    configure_obj.saved_bucket,
+                                                    configure_obj.saved_tmp_path,
+                                                    configure_obj.saved_target_path,
+                                                    configure_obj.saved_target_filename])
     print(f"loop task: {loop_task}")
     # for id in task_ids:
         

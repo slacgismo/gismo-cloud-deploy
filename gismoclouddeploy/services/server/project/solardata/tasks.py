@@ -113,13 +113,8 @@ def process_data_task(self, bucket_name,file_path_name, column_name,saved_bucket
         # return True
 
 @shared_task()
-def loop_tasks_status_task(delay,count,task_ids):
-    print(f"--------------> delay: {delay}, count : {count}")
-  
-    # for id in task_ids:
-    #     # print(f"id {id}")
-    #     res = AsyncResult(str(id))
-    #     print(f"---- >   res status {res.status} id:{res.task_id}")
+def loop_tasks_status_task(delay,count,task_ids, bucket_name, source_folder,target_folder,target_filename):
+    print(f"set delay: {delay}, count : {count}")
     counter = int(count)
     num_completed_task =0
     while counter > 0:
@@ -130,13 +125,18 @@ def loop_tasks_status_task(delay,count,task_ids):
             status = str(res.status)
            
             if status != "PENDING":
-                print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
-                # print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
-                # print("get task")
+                print(f"completed schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
                 num_completed_task += 1
         if num_completed_task == len(task_ids):
             print(f"num_success_task: {num_completed_task}")
             break 
         counter -= 1
-
+    print("------- start combine files---------")
+    from project import create_app
+    from project.solardata.models import SolarData
+    from project.solardata.utils import combine_files_to_file
+    app = create_app()
+    with app.app_context():
+        response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
+        return response
     
