@@ -114,12 +114,29 @@ def process_data_task(self, bucket_name,file_path_name, column_name,saved_bucket
 
 @shared_task()
 def loop_tasks_status_task(delay,count,task_ids):
-    print(f"--------------> delay: {delay}")
+    print(f"--------------> delay: {delay}, count : {count}")
   
-    for id in task_ids:
-        # print(f"id {id}")
-        res = AsyncResult(str(id))
-        print(f"---- >   res status {res.status} id:{res.task_id}")
-    # while count > 0:
-    #     time.sleep(delay)
-    #     count -= 1
+    # for id in task_ids:
+    #     # print(f"id {id}")
+    #     res = AsyncResult(str(id))
+    #     print(f"---- >   res status {res.status} id:{res.task_id}")
+    counter = int(count)
+    num_completed_task =0
+    while counter > 0:
+        # check the task status
+        time.sleep(int(delay))
+        for id in task_ids:
+            res = AsyncResult(str(id))
+            status = str(res.status)
+           
+            if status != "PENDING":
+                print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
+                # print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
+                # print("get task")
+                num_completed_task += 1
+        if num_completed_task == len(task_ids):
+            print(f"num_success_task: {num_completed_task}")
+            break 
+        counter -= 1
+
+    
