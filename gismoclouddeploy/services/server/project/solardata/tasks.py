@@ -4,7 +4,7 @@ from celery.signals import task_postrun
 import requests
 from celery import shared_task
 from celery.utils.log import get_task_logger
-
+from celery.result import AsyncResult
 import os
 import boto3
 import pandas as pd
@@ -15,7 +15,7 @@ from project.solardata.models.SolarData import SolarData
 from project.solardata.models.SolarParams import SolarParams,make_solardata_params_from_str
 from project.solardata.models.Configure import Configure
 from io import StringIO
-
+import time
 
 logger = get_task_logger(__name__)
 
@@ -112,21 +112,14 @@ def process_data_task(self, bucket_name,file_path_name, column_name,saved_bucket
         print("process solardata")
         # return True
 
-    # print(f"{solardata_params}")
-# def process_data_task(self, bucket_name, file_path, file_name, column_name, start_time, solardata_params, saved_bucket, saved_file_path, saved_filename):
-#     response_object = {
-#         'status': 'success',
-#         'container_id': os.uname()[1]
-#     }
-#     print(f"{solardata_params}")
-    # from project import create_app
-    # from project.solardata.models import SolarData
-    # from project.solardata.utils import (
-    #     process_solardata_tools
-    # )
-    # app = create_app()
-    # with app.app_context():
-
-    # #     process_solardata_tools(bucket_name, file_path, file_name, column_name, solver,
-    # #                             start_time, self.request.id, saved_bucket, saved_file_path, saved_filename)
-    # #     return "return  from process solardatatools"
+@shared_task()
+def loop_tasks_status_task(delay,count,task_ids):
+    print(f"--------------> delay: {delay}")
+  
+    for id in task_ids:
+        # print(f"id {id}")
+        res = AsyncResult(str(id))
+        print(f"---- >   res status {res.status} id:{res.task_id}")
+    # while count > 0:
+    #     time.sleep(delay)
+    #     count -= 1

@@ -21,6 +21,7 @@ from project.solardata.tasks import (
     save_data_from_db_to_s3_task,
     process_data_task,
     combine_files_to_file_task,
+    loop_tasks_status_task,
 )
 
 
@@ -53,7 +54,48 @@ def combine_files(bucket_name, source_folder,target_folder,target_filename):
 
     print(f"task id : {task.id}")
     
+# ***************************        
+# Process first n files
+# ***************************   
+@cli.command("process_first_n_files")
+@click.argument('config_params_str', nargs=1)
+@click.argument('solardata_params_str', nargs=1)
+@click.argument('first_n_files', nargs=1)
+def process_first_n_files( config_params_str:str,
+                    solardata_params_str:str,
+                    first_n_files: str
+                    ):
 
+    configure_obj = make_configure_from_str(config_params_str)
+    print(f"Process first {first_n_files} files")
+    task_ids = []
+    files = list_files_in_bucket(configure_obj.bucket)
+    n_files = files[0:int(first_n_files)]
+    for file in n_files:
+        for column in configure_obj.column_names:
+            path, filename = os.path.split(file['Key'])
+            prefix = path.replace("/", "-")
+            temp_saved_filename = f"{prefix}-{filename}"
+            start_time = time.time()
+            # print(f"temp_saved_filename: {temp_saved_filename}")
+            task_id = process_data_task.apply_async([
+                    configure_obj.bucket,
+                    file['Key'],
+                    column,
+                    configure_obj.saved_bucket,
+                    configure_obj.saved_tmp_path,
+                    temp_saved_filename,
+                    start_time,
+                    solardata_params_str
+                    ])
+            task_ids.append(str(task_id)) 
+    for id in task_ids:
+        print(id)
+    # task_ids = ["3006afaa-bf9a-4c36-a09a-ea4272f91561","50fffc52-99a3-416f-8e7d-e64f963a0979"]
+    loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, configure_obj.interval_of_exit_check_status, task_ids])
+    print(f"loop task: {loop_task}")
+    # for id in task_ids:
+        
 # ***************************        
 # Process multiple files
 # ***************************   
@@ -62,8 +104,8 @@ def combine_files(bucket_name, source_folder,target_folder,target_filename):
 @click.argument('config_params_str', nargs=1)
 @click.argument('solardata_params_str', nargs=1)
 
-def process_files( config_params_str,
-                    solardata_params_str
+def process_files( config_params_str:str,
+                    solardata_params_str:str,               
                     ):
     # convert command str to json format and pass to object
     configure_obj = make_configure_from_str(config_params_str)
