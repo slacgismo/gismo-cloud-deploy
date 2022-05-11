@@ -1,5 +1,6 @@
 from curses import flash
 from itertools import count
+import logging
 # from project import create_app, ext_celery,db
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
@@ -10,7 +11,7 @@ from project.solardata.models.SolarParams import SolarParams
 from project.solardata.models.SolarParams import make_solardata_params_from_str
 from project.solardata.models.Configure import Configure
 from project.solardata.models.Configure import make_configure_from_str
-from project.solardata.utils import list_files_in_bucket,connect_aws_client
+from project.solardata.utils import list_files_in_bucket,connect_aws_client,read_csv_from_s3_with_column_and_time
 import click
 from celery.result import AsyncResult
 import time
@@ -19,7 +20,7 @@ from project.solardata.tasks import (
     read_all_datas_from_solardata,
     save_data_from_db_to_s3_task,
     process_data_task,
-    combine_files_to_file_task
+    combine_files_to_file_task,
 )
 
 
@@ -31,14 +32,7 @@ cli = FlaskGroup(create_app=create_app)
 
 
 
-@app.route("/")
-def hello_world():
-    return "Hello, World!"
 
-@cli.command("hi")
-def hi():
-    print("hello world")
-    return "Hello, World!"
 
 
 
@@ -59,11 +53,10 @@ def combine_files(bucket_name, source_folder,target_folder,target_filename):
 
     print(f"task id : {task.id}")
     
-# @cli.command("read_data_from_db")
-# def read_data_from_db():
-#     task = read_all_datas_from_solardata.delay()
-#     print(f"task id : {task.id}")
 
+# ***************************        
+# Process multiple files
+# ***************************   
 
 @cli.command("process_files")
 @click.argument('config_params_str', nargs=1)
@@ -74,7 +67,7 @@ def process_files( config_params_str,
                     ):
     # convert command str to json format and pass to object
     configure_obj = make_configure_from_str(config_params_str)
-
+    
     task_ids = []
     for file in configure_obj.files:
         for column in configure_obj.column_names:
@@ -100,19 +93,22 @@ def process_files( config_params_str,
     #     print(f"schedulers: id: {res.task_id} \n task status: {res.status}, ")
     counter = 40
     num_success_task = 0
+ 
     while counter > 0:
         # check the task status
         time.sleep(1)
         for id in task_ids:
             res = AsyncResult(str(id))
             status = str(res.status)
-            print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
+           
             if status == "SUCCESS":
+                print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
                 # print(f"schedulers: id: {res.task_id} \n task status: {res.status}, Time: {time.ctime(time.time())}")
                 print("get success task")
                 num_success_task += 1
-            if num_success_task == len(task_ids):
-                break 
+        if num_success_task == len(task_ids):
+            print(f"num_success_task: {num_success_task}")
+            break 
         counter -= 1
 
     print("Start combine files")
@@ -125,7 +121,9 @@ def process_files( config_params_str,
         ])
     print("combile files task : {task}")
 
-        
+# ***************************        
+# process all files in bucket
+# ***************************      
 
 @cli.command("process_all_files_in_bucket")
 @click.argument('config_params_str', nargs=1)
@@ -134,17 +132,33 @@ def process_all_files(config_params_str:str,solardata_params_str:str):
     
     # convert command str to json format and pass to object
     configure_obj = make_configure_from_str(config_params_str)
-    solar_params_obj = make_solardata_params_from_str(solardata_params_str)
+    # solar_params_obj = make_solardata_params_from_str(solardata_params_str)
     # get all csv files in bucket 
+    task_ids = []
     files = list_files_in_bucket(configure_obj.bucket)
+    # print(files)
     for file in files:
         for column in configure_obj.column_names:
-            # print(file['Key'])
-            s3_client = connect_aws_client('s3')
-            df = read_csv_from_s3_column_names(configure_obj.bucket,file['Key'],[f"{column}"],s3_client)
-            # fileter out the cloumn name didn't exit or column has no value
-            if df.empty:
-                print(f"file: {file} column : {column} is empty" )
+
+            path, filename = os.path.split(file['Key'])
+            prefix = path.replace("/", "-")
+            temp_saved_filename = f"{prefix}-{filename}"
+            print(f"temp_saved_filename {temp_saved_filename}")
+            start_time = time.time()
+            task_id = process_data_task.apply_async([
+                    configure_obj.bucket,
+                    file['Key'],
+                    column,
+                    configure_obj.saved_bucket,
+                    configure_obj.saved_tmp_path,
+                    temp_saved_filename,
+                    start_time,
+                    solardata_params_str
+                    ])
+            task_ids.append(task_id)
+            # print(f"df {df.head()}")
+            # if df.empty:
+            #     print(f"file: {file} column : {column} is empty" )
             # print(f"df {df}")
         
 

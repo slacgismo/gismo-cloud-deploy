@@ -1,4 +1,6 @@
+import re
 from tabnanny import verbose
+from tkinter import E
 from unicodedata import name
 import pandas as pd
 from project.solardata.models.SolarParams import SolarParams
@@ -74,23 +76,101 @@ def check_aws_validity(key_id, secret):
         return False
 
 
-def read_column_from_csv_from_s3(
+# def read_column_from_csv_from_s3(
+#     bucket_name=None,
+#     file_path=None,
+#     file_name=None,
+#     s3_client = None
+#     ):
+#     full_path = file_path + "/" + file_name
+#     if bucket_name is None or full_path is None or s3_client is None:
+#         return
+    
+#     response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
+
+#     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+#     if status == 200:
+#         print(f"Successful S3 get_object response. Status - {status}")
+#         result_df = pd.read_csv(response.get("Body"),nrows =1)
+#     else:
+#         print(f"Unsuccessful S3 get_object response. Status - {status}")
+#     return result_df
+
+def read_csv_from_s3_with_column_and_time(
     bucket_name=None,
-    file_path=None,
-    file_name=None,
-    s3_client = None
+    file_path_name=None,
+    column_name = None,
+    s3_client = None,
+    index_col=0,
+    parse_dates=[0],
     ):
-    full_path = file_path + "/" + file_name
-    if bucket_name is None or full_path is None or s3_client is None:
+
+    if bucket_name is None or file_path_name is None or s3_client is None or column_name is None :
         return
     
-    response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
 
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
         print(f"Successful S3 get_object response. Status - {status}")
-        result_df = pd.read_csv(response.get("Body"),nrows =1)
+        result_df = pd.read_csv(response.get("Body"),
+                                index_col=index_col,
+                                parse_dates=parse_dates,
+                                usecols=['Time',column_name])
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
+def read_csv_from_s3_with_column_name(
+    bucket_name=None,
+    file_path_name=None,
+    column_name = None,
+    s3_client = None,
+    # index_col=0,
+    # parse_dates=[0],
+    ):
+
+    if bucket_name is None or file_path_name is None or s3_client is None or column_name is None :
+        return
+    
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        result_df = pd.read_csv(response.get("Body"),
+                                # index_col=index_col,
+                                # parse_dates=parse_dates,
+                                usecols=[column_name])
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
+def read_csv_from_s3_first_two_rows(
+    bucket_name=None,
+    file_path_name=None,
+    s3_client = None,
+    index_col=0,
+    parse_dates=[0],
+    usecols=[1,3],
+    ):
+
+    if bucket_name is None or file_path_name is None or s3_client is None :
+        return
+    
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        result_df = pd.read_csv(response.get("Body"),
+                                index_col=index_col,
+                                parse_dates=parse_dates,
+                                usecols=usecols)
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
@@ -144,14 +224,12 @@ def process_solardata_tools(
         return False
 
     s3_client = connect_aws_client("s3")
-    df = read_csv_from_s3_first_three_rows(bucket_name,file_path_name,s3_client)
-    if column_name not in df:
-        print(f"column {column_name} not exit")
+    try:
+        df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
+    except Exception as e:
+        print(f"read column and time error: {e}")
         return False
-    
-    # Process solar adata
-     
-    
+
     solarParams.power_col = column_name
     error_message = ""
 
@@ -214,7 +292,7 @@ def process_solardata_tools(
         host_ip = socket.gethostbyname(hostname)
 
 
-        print(f"file: {file_path_name},column_name:{column_name} , process_time {process_time}, hostname: {hostname}, host_ip: {host_ip}, start_time: {start_time_date}, end_time: {end_time_date}, process_time: {process_time}")
+        # print(f"file: {file_path_name},column_name:{column_name} , process_time {process_time}, hostname: {hostname}, host_ip: {host_ip}, start_time: {start_time_date}, end_time: {end_time_date}, process_time: {process_time}")
         solarData = SolarData(task_id=task_id,
                             hostname= hostname,
                             host_ip = host_ip,
@@ -238,10 +316,8 @@ def process_solardata_tools(
                             inverter_clipping = (inverter_clipping),
                             normal_quality_scores=(normal_quality_scores),
                             )
-        print(f"solarData ---> :{solarData.task_id},{solarData.hostname},  {solarData.power_units} ")
         print(f"results solarData to json ---> :{solarData.to_json()} ")
         response = save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
-
         print(f"------ save solardata to S3 response: {response}")
 
         # response = save_solardata_to_file(solardata.to_json(),saved_bucket,saved_file_path,saved_filename)
@@ -258,11 +334,6 @@ def process_solardata_tools(
         error_message += str(e)
         return False
     
-
-
-
-    
-
     
 
 

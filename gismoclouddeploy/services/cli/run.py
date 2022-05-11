@@ -9,7 +9,8 @@ import io
 import sys
 import os
 from utils.InvokeFunction import (
-    invok_docekr_exec_run_process_files
+    invok_docekr_exec_run_process_files,
+    invok_docekr_exec_run_process_all_files
     )
 from typing import List
 
@@ -20,8 +21,7 @@ from models.SolarParams import SolarParams
 from models.Config import Config
 from models.Task import Task
 
-from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
-from apscheduler.schedulers.background import BackgroundScheduler
+
 
 
 # def run_process_files(config:Config, solardata: Solardata) -> List[Task]:
@@ -53,58 +53,58 @@ def process_files(config:Config, solarParams:SolarParams) :
                                         container_name=config.container_name)
 
 
-def check_status(ids: List[str], config:Config):
-    for id in ids:
-        response = invoke_docker_exec_get_task_status(
-            id, config.container_type, config.container_name)
-        # data = json.load(response)
-        print(f"response: {response}, id {id}, task_status:   ")
+# def check_status(ids: List[str], config:Config):
+#     for id in ids:
+#         response = invoke_docker_exec_get_task_status(
+#             id, config.container_type, config.container_name)
+#         # data = json.load(response)
+#         print(f"response: {response}, id {id}, task_status:   ")
 
 
-def combine_files_and_clean(config: Config) -> str:
-    """Combines all tmp result files into one and deleted tmp result files"""
-    task_id = invoke_docker_exec_combine_files(config)
-    return task_id
+# def combine_files_and_clean(config: Config) -> str:
+#     """Combines all tmp result files into one and deleted tmp result files"""
+#     task_id = invoke_docker_exec_combine_files(config)
+#     return task_id
 
 
-import threading
-import time
+# import threading
+# import time
 
-exitFlag = 0
-
-
-class taskThread (threading.Thread):
-    def __init__(self, threadID:int, name:str, task:Task, delay:int, config:Config):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.task = task
-        self.delay = delay
-        self.config = config
-
-    def run(self):
-      print ("Starting " + self.name)
-      check_status(self.name, self.task, 5, self.delay, self.config)
-      print ("Exiting " + self.name)
+# exitFlag = 0
 
 
-def check_status(threadName:str, task:Task, counter:int, delay:int, config:Config) -> None:
-    while counter:
-        if exitFlag:
-            break
-        response = invoke_docker_exec_get_task_status(task.task_id, config.container_type, config.container_name)
-        # parse response 
-        json_obj = json.loads(response.replace('None', "\'None\'").replace("\'","\""))
-        print(f"response: {json_obj}")
-        response_status = json_obj['task_status']
-        if response_status == "SUCCESS":
-            print("Task Success ")
-            break
+# class taskThread (threading.Thread):
+#     def __init__(self, threadID:int, name:str, task:Task, delay:int, config:Config):
+#         threading.Thread.__init__(self)
+#         self.threadID = threadID
+#         self.name = name
+#         self.task = task
+#         self.delay = delay
+#         self.config = config
+
+#     def run(self):
+#       print ("Starting " + self.name)
+#       check_status(self.name, self.task, 5, self.delay, self.config)
+#       print ("Exiting " + self.name)
+
+
+# def check_status(threadName:str, task:Task, counter:int, delay:int, config:Config) -> None:
+#     while counter:
+#         if exitFlag:
+#             break
+#         response = invoke_docker_exec_get_task_status(task.task_id, config.container_type, config.container_name)
+#         # parse response 
+#         json_obj = json.loads(response.replace('None', "\'None\'").replace("\'","\""))
+#         print(f"response: {json_obj}")
+#         response_status = json_obj['task_status']
+#         if response_status == "SUCCESS":
+#             print("Task Success ")
+#             break
         
-        # print (f"task id: {task.task_id}, task status: {task.task_status}, Time: {time.ctime(time.time())}")
-        time.sleep(delay)
+#         # print (f"task id: {task.task_id}, task status: {task.task_status}, Time: {time.ctime(time.time())}")
+#         time.sleep(delay)
         
-        counter -= 1
+#         counter -= 1
 
 
 
@@ -113,13 +113,15 @@ if __name__ == "__main__":
 
     solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
-    res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
-                                        solarParams_obj= solardata_parmas_obj,
-                                        container_type= config_params_obj.container_type, 
-                                        container_name=config_params_obj.container_name)
+    # work
+    # res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
+    #                                     solarParams_obj= solardata_parmas_obj,
+    #                                     container_type= config_params_obj.container_type, 
+    #                                     container_name=config_params_obj.container_name)
     # res = process_files(config=config_params_obj,solarParams=solardata_parmas_obj)
-    # res = invok_docekr_exec_run_process_all_files(config_str, solar_str, config_params.container_type, config_params.container_name)
+    res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
     print(f"res {res}")
+
 
 
     # files = config_json["files"][0]

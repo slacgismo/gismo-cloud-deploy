@@ -21,7 +21,6 @@ from project.solardata.utils import (
     connect_aws_client,
     connect_aws_resource,
     list_all_buckets_in_s3,
-    read_column_from_csv_from_s3,
     list_files_in_bucket
 )
 
@@ -104,18 +103,18 @@ def list_content_of_bucket():
     #     all_files.append(file.key)
     # return jsonify(all_files)
 
-@solardata_blueprint.route("/list_columns_name_of_file", methods=["POST"])
-@csrf.exempt
-def list_columns_name_of_file():
-    s3_client = connect_aws_client('s3')
-    request_data = request.get_json()
-    bucket_name = request_data['bucket_name']
-    file_path = request_data['file_path']
-    file_name = request_data['file_name']
-    df = read_column_from_csv_from_s3(bucket_name,file_path,file_name,s3_client)
-    column_names = list(df.columns.values)
-    print(df.head())
-    return jsonify(column_names)
+# @solardata_blueprint.route("/list_columns_name_of_file", methods=["POST"])
+# @csrf.exempt
+# def list_columns_name_of_file():
+#     s3_client = connect_aws_client('s3')
+#     request_data = request.get_json()
+#     bucket_name = request_data['bucket_name']
+#     file_path = request_data['file_path']
+#     file_name = request_data['file_name']
+#     df = read_column_from_csv_from_s3(bucket_name,file_path,file_name,s3_client)
+#     column_names = list(df.columns.values)
+#     print(df.head())
+#     return jsonify(column_names)
 
 # save results to s3
 @solardata_blueprint.route("/save_all_results_from_db_to_s3", methods=["POST"])

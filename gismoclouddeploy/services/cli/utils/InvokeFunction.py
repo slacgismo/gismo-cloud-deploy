@@ -60,10 +60,12 @@ def invok_docekr_exec_run_process_files(config_obj:Config  ,
 
 
 
-def invok_docekr_exec_run_process_all_files(config_params , 
-                                        solardata_params, 
+def invok_docekr_exec_run_process_all_files(config_obj:Config  , 
+                                        solarParams_obj: SolarParams, 
                                         container_type, 
                                         container_name):
+    solardata_params_str = solarParams_obj.parse_solardata_params_to_json_str()
+    config_params_str = config_obj.parse_config_to_json_str()
     if container_type == "docker":
         command = [ "docker", 
                     "exec",
@@ -72,8 +74,8 @@ def invok_docekr_exec_run_process_all_files(config_params ,
                     "python",
                     "app.py",
                     "process_all_files_in_bucket",
-                    f"{config_params}",
-                    f"{solardata_params}",
+                    f"{config_params_str}",
+                    f"{solardata_params_str}",
                     ]
         # print(f"command {command}")
         res = exec_docker_command(command)
@@ -94,8 +96,8 @@ def invok_docekr_exec_run_process_all_files(config_params ,
                     "python",
                     "app.py",
                     "process_all_files_in_bucket",
-                    f"{config_params}",
-                    f"{solardata_params}"
+                    f"{config_params_str}",
+                    f"{solardata_params_str}"
                 ]
         res = exec_docker_command(command)
         return res
