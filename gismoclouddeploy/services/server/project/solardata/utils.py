@@ -222,16 +222,17 @@ def process_solardata_tools(
                             ):
     if bucket_name is None or file_path_name is None or column_name is None or saved_bucket is None or solarParams is None:
         return False
-
+    error_message = ""
     s3_client = connect_aws_client("s3")
     try:
         df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
     except Exception as e:
+        error_message += f"read column and time error: {e}"
         print(f"read column and time error: {e}")
         return False
 
     solarParams.power_col = column_name
-    error_message = ""
+
 
     try:
         dh = solardatatools.DataHandler(df)
@@ -320,14 +321,7 @@ def process_solardata_tools(
         response = save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
         print(f"------ save solardata to S3 response: {response}")
 
-        # response = save_solardata_to_file(solardata.to_json(),saved_bucket,saved_file_path,saved_filename)
-        # print(f"---------------->")
-        # response_object = {
-        #     'status': 'success',
-        #     'solardata': solardata.to_json
-        # }
-       
-        # print(f"save response: {response}")
+
         return True
        
     except Exception as e:
