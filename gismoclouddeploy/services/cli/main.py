@@ -45,7 +45,7 @@ def run_process_files(number):
     else:
         if type(int(number)) == int:
             print(f"process first {number} files")
-            res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj,number, config_params_obj.container_type, config_params_obj.container_name)
+            res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
             print(f"response : {res}")
         else:
             print(f"error input {number}")
