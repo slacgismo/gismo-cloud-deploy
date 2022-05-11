@@ -119,8 +119,8 @@ if __name__ == "__main__":
     #                                     container_type= config_params_obj.container_type, 
     #                                     container_name=config_params_obj.container_name)
     # res = process_files(config=config_params_obj,solarParams=solardata_parmas_obj)
-    res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
-    print(f"res {res}")
+    # res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
+    # print(f"res {res}")
 
 
 
