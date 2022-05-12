@@ -44,4 +44,4 @@ spec:
                 name: aws-secret-access-key
                 key: aws-secret-access-key
           - name: AWS_DEFAULT_REGION
-            value: us-west-2
+            value: us-east-2
