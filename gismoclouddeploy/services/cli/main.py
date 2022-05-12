@@ -60,34 +60,32 @@ def check_nodes_status():
     nodes = []
     # check confition
     for node in response.items:
+        # print(node.metadata.labels['kubernetes.io/hostname'])
+        cluster = node.metadata.labels['alpha.eksctl.io/cluster-name']
+        nodegroup = node.metadata.labels['alpha.eksctl.io/nodegroup-name']
+        hostname = node.metadata.labels['kubernetes.io/hostname']
+        instance_type = node.metadata.labels['beta.kubernetes.io/instance-type']
+        region = node.metadata.labels['topology.kubernetes.io/region']
+        status = node.status.conditions[-1].status # only looks the last 
+        status_type = node.status.conditions[-1].type # only looks the last
+        node_obj = Node(cluster=cluster, 
+                        nodegroup = nodegroup, 
+                        hostname=hostname,
+                        instance_type = instance_type,
+                        region= region ,
+                        status = status,
+                        status_type = status_type
+                        )
 
-        nodes.append(node)
-    # print(nodes[-1].metadata.labels['kubernetes.io/hostname'])
-    print(nodes[-1])
-        # conditions = node.status.conditions
-        # if len(conditions) > 0 :
-        #     print(conditions[-1])
-        # for i in conditions:
-        #     status  = i.status
-        #     type = i.type
-        #     print(f"status: {type}, {status}")
-    # print("| Node Status | Node Name |")
-    # ret = v1.list_pod_for_all_namespaces(watch=False)
+        nodes.append(node_obj)
+        if bool(status) != True:
+            print(f"{hostname} is not ready status:{status}")
+            return False
+    for node in nodes:
+        print(f"{node.hostname} is ready")
+    return True
 
-    # for a in ret.items:
-    #        print(
-    #         "%s\t%s\t%s" %
-    #         (a.status.pod_ip,
-    #          a.metadata.namespace,
-    #          a.metadata.name)) 
-            # ret2 = v1.read_node_status(a.spec.node_name)
-            # rawData = (ret2.status.conditions)
-            # print(rawData)
-            # nodeStatus = (node.status.conditions)
-            # for i in nodeStatus:
-            #     status = i.status
-            #     type = i.type
-            #     print(f"status: {status}, {type}")
+
 
 def scale_node_number(min_nodes):
     # check if input is integer
@@ -116,6 +114,8 @@ def scale_node_number(min_nodes):
                                         nodes_max=min_nodes,
                                         nodes_min=min_nodes)
         print(f"scale up to {min_nodes}, res:{res}")
+        # check node status
+        # check_nodes_status()
     
 
 def check_environment():

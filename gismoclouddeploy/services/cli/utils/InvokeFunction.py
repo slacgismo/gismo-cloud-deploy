@@ -28,7 +28,7 @@ def invoke_eksctl_scale_node(cluster_name:str,
                 str(nodes_max),
                 "--nodes-min",
                 str(nodes_min) ]
-    print(f"command {command}")
+
     res = exec_docker_command(command)
     return res
  
