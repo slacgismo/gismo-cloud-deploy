@@ -10,6 +10,30 @@ def exec_docker_command(command):
     # print(result.returncode, result.stdout, result.stderr)
     return result.stdout
 
+def invoke_eksctl_scale_node(cluster_name:str,
+                            group_name:str,
+                            nodes:int,
+                            nodes_max:int,
+                            nodes_min:int):
+    command = [ "eksctl",
+                "scale",
+                "nodegroup",
+                "--cluster",
+                cluster_name,
+                "--name",
+                group_name,
+                "--nodes",
+                str(nodes),
+                "--nodes-max",
+                str(nodes_max),
+                "--nodes-min",
+                str(nodes_min) ]
+    print(f"command {command}")
+    res = exec_docker_command(command)
+    return res
+ 
+                
+    # eksctl scale nodegroup --cluster gcd-eks-cluster --name gcd-node-group-lt --nodes 0 --nodes-max 1 --nodes-min 0 
 
 def invok_docekr_exec_run_process_first_n_files(config_obj:Config  , 
                                         solarParams_obj: SolarParams, 
