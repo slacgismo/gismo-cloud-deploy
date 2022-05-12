@@ -14,9 +14,10 @@ import numbers
 from project.solardata.models.SolarData import SolarData 
 from project.solardata.models.SolarParams import SolarParams,make_solardata_params_from_str
 from project.solardata.models.Configure import Configure
+from project.solardata.models.WorkerStatus import WorkerStatus
 from io import StringIO
 import time
-
+import socket
 logger = get_task_logger(__name__)
 
 @shared_task()
@@ -83,21 +84,36 @@ def save_data_from_db_to_s3_task(bucket_name, file_path, file_name, delete_data)
 
 
 @shared_task(bind=True)
-def process_data_task(self, bucket_name,file_path_name, column_name,saved_bucket, saved_file_path, saved_filename,start_time,solar_params_str:str) -> str:
+def process_data_task(self,table_name, bucket_name,file_path_name, column_name,saved_bucket, saved_file_path, saved_filename,start_time,solar_params_str:str) -> str:
     response_object = {
         'status': 'success',
         'container_id': os.uname()[1]
     }
     solar_params_obj = make_solardata_params_from_str(solar_params_str)
-    print(f"solar_params_obj verbose {solar_params_obj.verbose}")
+    hostname = socket.gethostname()
+    host_ip = socket.gethostbyname(hostname)       
+
     # print("hello world here")
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
-        process_solardata_tools
+        process_solardata_tools,
+        put_item_to_dynamodb
     )
     app = create_app()
     with app.app_context():
+        start_status = WorkerStatus(host_name=hostname,
+                                    task_id=self.request.id, 
+                                    host_ip=host_ip, 
+                                    function_name="process_data_task",
+                                    action="idle-stop/busy-start", 
+                                    time=str(time.time()),
+                                    message="init process data task",
+                                    filename=file_path_name,
+                                    column_name = column_name
+                                    )
+        start_res = put_item_to_dynamodb(table_name, workerstatus=start_status)
+        print(f"task start res: {start_res}")
         process_solardata_tools(  
                             self.request.id,
                             bucket_name ,
@@ -109,14 +125,49 @@ def process_data_task(self, bucket_name,file_path_name, column_name,saved_bucket
                             saved_filename,
                             solar_params_obj
                             )
-        print("process solardata")
+
+        print("end of process solardata")
+        end_status = WorkerStatus(host_name=hostname,
+                                    task_id=self.request.id, 
+                                    host_ip=host_ip, 
+                                    function_name="process_data_task",
+                                    action="busy-stop/idle-start", 
+                                    time=str(time.time()),
+                                    message="end process data task",
+                                    filename=file_path_name,
+                                    column_name = column_name
+                                    )
+        end_status = put_item_to_dynamodb(table_name, workerstatus=end_status)
+        print(f"task e nd res: {end_status}")
         # return True
 
-@shared_task()
-def loop_tasks_status_task(delay,count,task_ids, bucket_name, source_folder,target_folder,target_filename):
+@shared_task(bind=True)
+def loop_tasks_status_task( self,
+                            delay,
+                            count,
+                            task_ids,
+                            bucket_name, 
+                            source_folder,
+                            target_folder,
+                            target_filename,
+                            table_name,
+                            saved_log_file_path,
+                            saved_log_file_name
+                            ):
     print(f"set delay: {delay}, count : {count}")
     counter = int(count)
-    
+    hostname = socket.gethostname()
+    host_ip = socket.gethostbyname(hostname)   
+    start_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip, function_name="loop_tasks_status_task", action="idle-stop/busy-start", time=str(time.time()),message="init loop_tasks_status_task")
+    from project import create_app
+    from project.solardata.models import SolarData
+    from project.solardata.utils import (
+        put_item_to_dynamodb
+    )
+    app = create_app()
+    with app.app_context():
+        start_res = put_item_to_dynamodb(table_name=table_name, workerstatus= start_status) 
+        print(f"task start res: {start_res}")
     while counter > 0:
         # check the task status
         time.sleep(int(delay))
@@ -133,12 +184,21 @@ def loop_tasks_status_task(delay,count,task_ids, bucket_name, source_folder,targ
             break 
         counter -= 1
         print(f"Time: {time.ctime(time.time())}")
-    print("------- start combine files---------")
+    print("------- start combine files, save logs , clean dynamodb items---------")
     from project import create_app
     from project.solardata.models import SolarData
-    from project.solardata.utils import combine_files_to_file
+    from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb
     app = create_app()
     with app.app_context():
+        end_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip, function_name="loop_tasks_status_task", action="busy-stop/idle-start", time=str(time.time()),message="end loop_tasks_status_task")
+        end_status = put_item_to_dynamodb(table_name=table_name, workerstatus = end_status)
         response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
+
+        save_res = save_logs_from_dynamodb_to_s3(table_name=table_name,
+                                        saved_bucket=bucket_name,
+                                        saved_file_path=saved_log_file_path,
+                                        saved_filename=saved_log_file_name )
+        remov_res = remove_all_items_from_dynamodb(table_name)
+        print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
         return response
     

@@ -65,7 +65,7 @@ def invok_docekr_exec_run_process_files(config_obj:Config  ,
                                         container_name:str):
     solardata_params_str = solarParams_obj.parse_solardata_params_to_json_str()
     config_params_str = config_obj.parse_config_to_json_str()
-
+    print(f"config_obj:{config_obj.dynamodb_tablename}")
     
     if container_type == "docker":
         command = [ "docker", 

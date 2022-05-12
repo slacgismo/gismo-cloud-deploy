@@ -12,6 +12,9 @@ class Config(object):
                  saved_tmp_path,
                  saved_target_path,
                  saved_target_filename,
+                 dynamodb_tablename,
+                 saved_logs_target_path,
+                 saved_logs_target_filename,
                  environment,
                  container_type,
                  container_name,
@@ -27,6 +30,9 @@ class Config(object):
         self.saved_tmp_path = saved_tmp_path
         self.saved_target_path = saved_target_path
         self.saved_target_filename = saved_target_filename
+        self.dynamodb_tablename = dynamodb_tablename
+        self.saved_logs_target_path = saved_logs_target_path
+        self.saved_logs_target_filename = saved_logs_target_filename
         self.environment = environment
         self.container_type = container_type
         self.container_name = container_name
@@ -47,11 +53,15 @@ class Config(object):
             saved_tmp_path = config_params["output"]["saved_tmp_path"],
             saved_target_path = config_params["output"]["saved__target_path"],
             saved_target_filename = config_params["output"]["saved__target_filename"],
+            dynamodb_tablename = config_params["output"]["dynamodb_tablename"],
+            saved_logs_target_path = config_params["output"]["saved_logs_target_path"],
+            saved_logs_target_filename = config_params["output"]["saved_logs_target_filename"],
             environment = config_params["general"]["environment"],
             container_type = config_params["general"]["container_type"],
             container_name = config_params["general"]["container_name"],
             interval_of_check_task_status = config_params["general"]["interval_of_check_task_status"],
             interval_of_exit_check_status = config_params["general"]["interval_of_exit_check_status"]
+
             )
         return config
 
@@ -65,7 +75,10 @@ class Config(object):
         str+= f" \"saved_bucket\":\"{self.saved_bucket}\"," 
         str+= f" \"saved_tmp_path\":\"{self.saved_tmp_path}\"," 
         str+= f" \"saved_target_path\":\"{self.saved_target_path}\","
-        str+= f" \"saved_target_filename\":\"{self.saved_target_filename}\","  
+        str+= f" \"saved_target_filename\":\"{self.saved_target_filename}\"," 
+        str+= f" \"dynamodb_tablename\":\"{self.dynamodb_tablename}\","
+        str+= f" \"saved_logs_target_path\":\"{self.saved_logs_target_path}\","
+        str+= f" \"saved_logs_target_filename\":\"{self.saved_logs_target_filename}\","
         str+= f" \"interval_of_check_task_status\":\"{self.interval_of_check_task_status}\","  
         str+= f" \"interval_of_exit_check_status\":\"{self.interval_of_exit_check_status}\""  
         str+="}"

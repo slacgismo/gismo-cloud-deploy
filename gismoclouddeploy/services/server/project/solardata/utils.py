@@ -1,3 +1,4 @@
+from fileinput import filename
 import re
 from tabnanny import verbose
 from tkinter import E
@@ -5,6 +6,7 @@ from unicodedata import name
 import pandas as pd
 from project.solardata.models.SolarParams import SolarParams
 from project.solardata.models.SolarData import SolarData
+from project.solardata.models.WorkerStatus import WorkerStatus
 from datetime import datetime
 import os
 from io import StringIO
@@ -13,6 +15,151 @@ from flask import current_app
 import solardatatools
 import time
 import socket
+from boto3.dynamodb.types import TypeDeserializer
+import uuid
+def save_logs_from_dynamodb_to_s3(table_name, saved_bucket, saved_file_path, saved_filename):
+
+    # step 1. get all item from dynamodb
+    all_items = retrive_all_item_from_dyanmodb(table_name)
+
+    # step 2 . delete data type
+
+    print("------")
+    print(all_items)
+    df = pd.json_normalize(all_items)
+    csv_buffer=StringIO()
+    df.to_csv(csv_buffer)
+    content = csv_buffer.getvalue()
+    try:
+        to_s3(saved_bucket,saved_file_path,saved_filename, content)
+    except Exception as e:
+        print(f"ERROR ---> {e}")
+        return False
+    return True
+
+def retrive_all_item_from_dyanmodb(table_name):
+    dynamo_client =  connect_aws_client('dynamodb')
+    deserializer = TypeDeserializer()
+    items = []
+    for item in scan_table(dynamo_client, TableName=table_name):
+        deserialized_document = {k: deserializer.deserialize(v) for k, v in item.items()}
+        print(deserialized_document)
+        items.append(deserialized_document)
+    return items
+
+def scan_table(dynamo_client, *, TableName, **kwargs):
+    """
+    Generates all the items in a DynamoDB table.
+
+    :param dynamo_client: A boto3 client for DynamoDB.
+    :param TableName: The name of the table to scan.
+
+    Other keyword arguments will be passed directly to the Scan operation.
+    See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/dynamodb.html#DynamoDB.Client.scan
+
+    """
+    paginator = dynamo_client.get_paginator("scan")
+
+    for page in paginator.paginate(TableName=TableName, **kwargs):
+        yield from page["Items"]
+
+
+def remove_all_items_from_dynamodb(table_name):
+    dynamodb_resource = connect_aws_resource('dynamodb')
+    table = dynamodb_resource.Table(table_name)
+    scan = table.scan()
+    with table.batch_writer() as batch:
+        for each in scan['Items']:
+            batch.delete_item(
+                Key={
+                    'host_ip': each['host_ip'],
+                    'timestamp':each['timestamp']
+                }
+            )
+    print("remove all items from db completed")
+
+def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
+    dynamodb_resource = connect_aws_resource('dynamodb')
+    table = dynamodb_resource.Table(table_name)    
+    response = table.put_item(
+    Item={
+            'host_name': workerstatus.host_name,
+            'host_ip': workerstatus.host_ip,
+            'task_id': workerstatus.task_id,
+            'function_name' : workerstatus.function_name,
+            'action' : workerstatus.action,
+            'timestamp': workerstatus.time,
+            'message': workerstatus.message,
+            'filename': workerstatus.filename,
+            'column_name':workerstatus.column_name
+        }
+    )
+
+    return response
+
+# def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
+#     dynamodb_resource = connect_aws_resource('dynamodb')
+#     table = dynamodb_resource.Table(table_name)    
+#     response = table.put_item(
+#     Item={
+#             'id':str(uuid.uuid4()),
+#             'host_name': workerstatus.host_name,
+#             'host_ip': workerstatus.host_ip,
+#             'task_id': workerstatus.task_id,
+#             'function_name' : workerstatus.function_name,
+#             'action' : workerstatus.action,
+#             'time': workerstatus.time,
+#             'message': workerstatus.message
+#         }
+#     )
+
+#     return response
+
+# def get_item_from_dynamodb_with_host_name(table_name,host_name):
+#     dynamodb_resource = connect_aws_resource('dynamodb')
+#     table = dynamodb_resource.Table(table_name)    
+
+
+#     response = table.get_item(
+#     Key={
+#             'id': host_name,
+#         }
+#     )
+#     return response
+
+# def create_dynamodb_table(table_name):
+#     dynamodb_client = connect_aws_client('dynamodb')
+#     ddb_exceptions = dynamodb_client.exceptions
+#     try:
+#         table = dynamodb_client.create_table(
+#             TableName='table_name',
+#             KeySchema=[
+#                 {
+#                     'AttributeName': 'host_name',
+#                     'KeyType': 'HASH' # Partition key
+#                 }
+#             ],
+#             AttributeDefinitions=[
+#                 {
+#                     'AttributeName': 'host_name',
+#                     # AttributeType defines the data type. 'S' is string type and 'N' is number type
+#                     'AttributeType': 'S' 
+#                 }
+        
+#             ],
+#             ProvisionedThroughput={
+#                 # ReadCapacityUnits set to 10 strongly consistent reads per second
+#                 'ReadCapacityUnits': 10,
+#                 'WriteCapacityUnits': 10 # WriteCapacityUnits set to 10 writes per second
+#             }
+#         )
+#         print("Creating table")
+#         waiter = dynamodb_client.get_waiter('table_exists')
+#         waiter.wait(TableName=table_name)
+#         print(f"{table_name} Table created")
+    
+#     except ddb_exceptions.ResourceInUseException:
+#         print("Table exists")
 
 def connect_aws_client(client_name):
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')

@@ -10,6 +10,9 @@ class Configure(object):
                  saved_bucket,
                  saved_tmp_path,
                  saved_target_path,
+                 dynamodb_tablename,
+                 saved_logs_target_path,
+                 saved_logs_target_filename,
                  saved_target_filename,
                  interval_of_check_task_status,
                  interval_of_exit_check_status,
@@ -23,22 +26,11 @@ class Configure(object):
         self.saved_tmp_path = saved_tmp_path
         self.saved_target_path = saved_target_path
         self.saved_target_filename = saved_target_filename
+        self.dynamodb_tablename = dynamodb_tablename
+        self.saved_logs_target_path = saved_logs_target_path
+        self.saved_logs_target_filename = saved_logs_target_filename
         self.interval_of_check_task_status = interval_of_check_task_status
         self.interval_of_exit_check_status = interval_of_exit_check_status
-
-    # def to_json(self):
-    #     return {
-    #         'files': self.id,
-    #         'bucket': self.task_id,
-    #         'process_all_files': self.bucket_name,
-    #         'column_names': self.file_path,
-    #         'saved_bucket': self.file_name,
-    #         'saved_tmp_path': self.column_name,
-    #         'saved_target_path': self.process_time,
-    #         'saved_target_filename': self.power_units,
-    #         'interval_of_check_task_status': self.length,
-    #         'interval_of_exit_check_status': self.capacity_estimate
-    #     }
 
 def make_configure_from_str(command_str:str) -> Configure:
     config_json = json.loads(command_str)
@@ -50,21 +42,30 @@ def make_configure_from_str(command_str:str) -> Configure:
     saved_bucket = config_json['saved_bucket']
     saved_tmp_path = config_json['saved_tmp_path']
     saved_target_path = config_json['saved_target_path']
+
+
+
     saved_target_filename= config_json['saved_target_filename']
+    dynamodb_tablename = config_json['dynamodb_tablename']
+    saved_logs_target_path = config_json['saved_logs_target_path']
+    saved_logs_target_filename = config_json['saved_logs_target_filename']
     interval_of_check_task_status = config_json['interval_of_check_task_status']
     interval_of_exit_check_status = config_json['interval_of_exit_check_status']
 
     config = Configure(
-        files,
-        bucket,
-        process_all_files,
-        column_names,
-        saved_bucket,
-        saved_tmp_path,
-        saved_target_path,
-        saved_target_filename,
-        interval_of_check_task_status,
-        interval_of_exit_check_status
+        files = files,
+        bucket = bucket,
+        process_all_files = process_all_files,
+        column_names= column_names,
+        saved_bucket= saved_bucket,
+        saved_tmp_path= saved_tmp_path,
+        saved_target_path = saved_target_path,
+        saved_target_filename = saved_target_filename,
+        dynamodb_tablename = dynamodb_tablename,
+        saved_logs_target_path = saved_logs_target_path,
+        saved_logs_target_filename = saved_logs_target_filename,
+        interval_of_check_task_status = interval_of_check_task_status,
+        interval_of_exit_check_status = interval_of_exit_check_status
     )
 
     return config

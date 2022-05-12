@@ -20,6 +20,9 @@ output:
   saved_tmp_path: "tmp"
   saved__target_path: "results"
   saved__target_filename: "04262022_results.csv"
+  dynamodb_tablename: "GCD-LOGS_TABLE" # pre-define in AWS us-east-2
+  saved_logs_target_path: "results"
+  saved_logs_target_filename: "logs.csv"
 
 
 solardata:
