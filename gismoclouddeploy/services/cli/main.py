@@ -80,7 +80,8 @@ from utils.sqs import(
     create_standard_queue,
     create_fifo_queue,
     receive_queue_message,
-    delete_queue_message
+    delete_queue_message,
+    configure_queue_long_polling
 )
 from utils.sns import(
     list_topics
@@ -126,7 +127,7 @@ def try_send_and_receive_queue_message():
         Message attributes: \n{json_msg}''')
     # receive message
     print("Receive message ---->")
-    messages = receive_queue_message(QUEUE_URL, sqs_client)
+    messages = receive_queue_message(QUEUE_URL, sqs_client, wait_time=20)
 
     for msg in messages['Messages']:
         msg_body = msg['Body']

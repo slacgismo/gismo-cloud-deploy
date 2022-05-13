@@ -6,7 +6,8 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 # SQS
 
-def create_standard_queue(queue_name, delay_seconds, visiblity_timeout,sqs_resource):
+
+def create_standard_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource):
     """
     Create a standard SQS queue
     """
@@ -21,7 +22,9 @@ def create_standard_queue(queue_name, delay_seconds, visiblity_timeout,sqs_resou
         raise
     else:
         return response
-def create_fifo_queue(queue_name, delay_seconds, visiblity_timeout,sqs_resource):
+
+
+def create_fifo_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource):
     """
     Create a First In First Out (FIFO) SQS queue
     """
@@ -39,6 +42,7 @@ def create_fifo_queue(queue_name, delay_seconds, visiblity_timeout,sqs_resource)
     else:
         return response
 
+
 def list_queues(sqs_resource):
     """
     Creates an iterable of all Queue resources in the collection.
@@ -52,10 +56,11 @@ def list_queues(sqs_resource):
         logger.exception('Could not list queues.')
         raise
     else:
-        
+
         return sqs_queues
 
-def get_queue(queue_name,sqs_client):
+
+def get_queue(queue_name, sqs_client):
     """
     Returns the URL of an existing Amazon SQS queue.
     """
@@ -68,7 +73,8 @@ def get_queue(queue_name,sqs_client):
     else:
         return response
 
-def delete_queue(queue_name,sqs_client):
+
+def delete_queue(queue_name, sqs_client):
     """
     Deletes the queue specified by the QueueUrl.
     """
@@ -82,7 +88,8 @@ def delete_queue(queue_name,sqs_client):
     else:
         return response
 
-def purge_queue(queue_url,sqs_client):
+
+def purge_queue(queue_url, sqs_client):
     """
     Deletes the messages in a specified queue
     """
@@ -94,8 +101,9 @@ def purge_queue(queue_url,sqs_client):
         raise
     else:
         return response
-        
-def send_queue_message(queue_url, msg_attributes, msg_body,sqs_client):
+
+
+def send_queue_message(queue_url, msg_attributes, msg_body, sqs_client):
     """
     Sends a message to the specified queue.
     """
@@ -109,12 +117,35 @@ def send_queue_message(queue_url, msg_attributes, msg_body,sqs_client):
     else:
         return response
 
-def receive_queue_message(queue_url,sqs_client):
+def enable_existing_queue_long_pulling(queue_url,msg_rcv_wait_time,sqs_client):
+    """
+    Configure queue to for long polling.
+    """
+    try:
+        response = sqs_client.set_queue_attributes(
+            QueueUrl=queue_url,
+            Attributes={'ReceiveMessageWaitTimeSeconds': msg_rcv_wait_time})
+    except ClientError:
+        logger.exception(f'Could not configure long polling on - {queue_url}.')
+        raise
+    else:
+        return response
+
+def receive_queue_message(queue_url, sqs_client, wait_time:int = 0):
     """
     Retrieves one or more messages (up to 10), from the specified queue.
     """
     try:
-        response = sqs_client.receive_message(QueueUrl=queue_url)
+        response = sqs_client.receive_message(QueueUrl=queue_url,
+                                              AttributeNames=[
+                                                  'SentTimestamp'
+                                              ],
+                                              MaxNumberOfMessages=1,
+                                              MessageAttributeNames=[
+                                                  'All'
+                                              ],
+                                              WaitTimeSeconds=wait_time
+                                              )
     except ClientError:
         logger.exception(
             f'Could not receive the message from the - {queue_url}.')
@@ -123,7 +154,7 @@ def receive_queue_message(queue_url,sqs_client):
         return response
 
 
-def delete_queue_message(queue_url, receipt_handle,sqs_client):
+def delete_queue_message(queue_url, receipt_handle, sqs_client):
     """
     Deletes the specified message from the specified queue.
     """
@@ -138,8 +169,7 @@ def delete_queue_message(queue_url, receipt_handle,sqs_client):
         return response
 
 
-def read_from_sqs_queue(queue_url,sqs_client):
-    
+def read_from_sqs_queue(queue_url, sqs_client):
 
     messages = sqs_client.receive_message(
         QueueUrl=queue_url,
@@ -147,3 +177,18 @@ def read_from_sqs_queue(queue_url,sqs_client):
     )
 
     return messages
+
+
+def configure_queue_long_polling(queue_url, msg_rcv_wait_time, sqs_client):
+    """
+    Configure queue to for long polling.
+    """
+    try:
+        response = sqs_client.set_queue_attributes(
+            QueueUrl=queue_url,
+            Attributes={'ReceiveMessageWaitTimeSeconds': msg_rcv_wait_time})
+    except ClientError:
+        logger.exception(f'Could not configure long polling on - {queue_url}.')
+        raise
+    else:
+        return response
