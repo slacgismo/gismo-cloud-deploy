@@ -210,6 +210,26 @@ def run_process_files(number):
     
     return 
 
+def publish_receive_sns():
+    print("publish sns")
+    public_message_to_sns()
+    print("receive sns")
+    print("Receive message ---->")
+    QUEUE_URL = SQS_URL
+    sqs_client = connect_aws_client('sqs')
+    messages = receive_queue_message(QUEUE_URL, sqs_client, wait_time=20)
+
+    for msg in messages['Messages']:
+        msg_body = msg['Body']
+        receipt_handle = msg['ReceiptHandle']
+
+        logger.info(f'The message body: {msg_body}')
+
+        logger.info('Deleting message from the queue...')
+
+        delete_queue_message(QUEUE_URL, receipt_handle, sqs_client)
+
+    logger.info(f'Received and deleted message(s) from {QUEUE_URL}.')
 
 # Parent Command
 @click.group()
@@ -249,7 +269,10 @@ def subscribesns():
     """"Try sqs"""
     subscribe_sns()
 
-
+@main.command()
+def publish_and_receive_sns():
+    """"Try sqs"""
+    publish_receive_sns()
 
 @main.command()
 def trysqs():
