@@ -1,6 +1,11 @@
 import boto3
 #  SNS
-
+from botocore.exceptions import ClientError
+import logging
+# logger config
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s: %(levelname)s: %(message)s')
 def create_sns_topic(name, sns_resource):
     """
     Creates a notification topic.
@@ -10,6 +15,7 @@ def create_sns_topic(name, sns_resource):
     """
 
     topic = sns_resource.create_topic(Name=name)
+    
     return topic
 
 def list_topics(sns_resource):
@@ -23,7 +29,7 @@ def list_topics(sns_resource):
     return topics_iter
 
 
-def publish_message_to_sns(message: str, topic_arn:str,sns_client):
+def publish_message(message: str, topic_arn:str,sns_client):
 
 
     message_id = sns_client.publish(
@@ -33,19 +39,31 @@ def publish_message_to_sns(message: str, topic_arn:str,sns_client):
 
     return message_id
 
-
-def subscribe(topic, protocol, endpoint):
+def delete_topic(topic_arn, sns_client):
     """
-    Subscribes an endpoint to the topic. Some endpoint types, such as email,
-    must be confirmed before their subscriptions are active. When a subscription
-    is not confirmed, its Amazon Resource Number (ARN) is set to
-    'PendingConfirmation'.
-
-    :param topic: The topic to subscribe to.
-    :param protocol: The protocol of the endpoint, such as 'sms' or 'email'.
-    :param endpoint: The endpoint that receives messages, such as a phone number
-                      or an email address.
-    :return: The newly added subscription.
+    Delete a SNS topic.
     """
-    subscription = topic.subscribe(Protocol=protocol, Endpoint=endpoint, ReturnSubscriptionArn=True)
-    return subscription
+    try:
+        response = sns_client.delete_topic(TopicArn=topic_arn)
+    except ClientError:
+        logger.exception(f'Could not delete a SNS topic.')
+        raise
+    else:
+        return response
+
+def sns_subscribe_sqs(topic:str, endpoint:str,sns_client):
+    """
+    Subscribe to a topic using endpoint as email OR SMS
+    """
+    try:
+        subscription = sns_client.subscribe(
+            TopicArn=topic,
+            Protocol="sqs",
+            Endpoint=endpoint,
+            ReturnSubscriptionArn=True)['SubscriptionArn']
+    except ClientError:
+        logger.exception(
+            "Couldn't subscribe {protocol} {endpoint} to topic {topic}.")
+        raise
+    else:
+        return subscription
