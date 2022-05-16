@@ -3,8 +3,8 @@ from models.WorkerStatus import WorkerStatus, make_worker_object_from_dataframe
 from datetime import datetime
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
-
-def process_df_for_gantt(df:pd)  :
+import plotly.express as px
+def process_df_for_gantt_separate_worker(df:pd)  :
     # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
     # print(result)
     workerstatus_list= make_worker_object_from_dataframe(df)
@@ -61,58 +61,14 @@ def process_df_for_gantt(df:pd)  :
                 info_dict[key_start] = worker.time
 
             worker_dict[host_ip][task_id] =info_dict
-    # for worker in workerstatus_list:
-    #     # print(worker.task_id)
-    #     task_id = worker.task_id
-    #     if task_id in worker_dict:
-            # if key_start in worker_dict[task_id]:
-            #     worker_dict[task_id][key_end] = worker.time
-            # else:
-            #     worker_dict[task_id][key_start] = worker.time
-            # # get duration from datetime
-            # end = pd.to_datetime( worker_dict[task_id][key_end])
-            # start= pd.to_datetime( worker_dict[task_id][key_start])
-            # worker_dict[task_id]['duration'] = int(round((end - start).total_seconds()))
-  
-            # # duration = float(worker_dict[task_id][key_end]) - float(worker_dict[task_id][key_start])
-            # # worker_dict[task_id]['duration'] = duration
-           
-    #     else:
-            # info_dict = {}
-            # if pd.isnull(worker.filename):
-            #     info_dict[key_task] = worker.function_name
-            # else:
-            #     info_dict[key_task] = worker.filename
-            # # print(info_dict['task'])
-            # info_dict[key_host_ip] = worker.host_ip
-            # if worker.action == "busy-stop/idle-start":
-            #     info_dict[key_end] = worker.time
-            # else:
-            #     info_dict[key_start] = worker.time
-            # worker_dict[worker.task_id] = info_dict
-    
-    # for key in worker_dict:
-    #     print(f" key :{key}")
 
-
-    return worker_dict
-
-# def addAnnot(df, fig):
-#     for i in df:
-#         x_pos = (i['Finish'] - i['Start'])/2 + i['Start']
-#         for j in fig['data']:
-#             if j['name'] == i['Label']:
-#                 y_pos = (j['y'][0] + j['y'][1] + j['y'][2] + j['y'][3])/4
-#         fig['layout']['annotations'] += tuple([dict(x=x_pos,y=y_pos,text=i['Label'],font={'color':'black'})])
-
-
-def process_logs():
+def process_logs_subplot():
     print('process_logs')
     df = pd.read_csv('logs.csv', index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
     df['timestamp'] = pd.to_datetime(df['timestamp'], 
                                   unit='s')
 
-    worker_dict = process_df_for_gantt(df)
+    worker_dict = process_df_for_gantt_separate_worker(df)
 
     # # # Show dataframe
     figures = []
@@ -145,3 +101,83 @@ def process_logs():
         )
     )
     figs.show()
+
+
+def process_df_for_gantt(df:pd)  :
+    # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
+    # print(result)
+    workerstatus_list= make_worker_object_from_dataframe(df)
+
+    # process timestamp into linear 
+    # find min
+    #combine task from
+    worker_dict={}
+    key_start = 'start'
+    key_end = 'end'
+    key_task = 'task'
+    key_host_ip = 'host_ip'
+
+    for worker in workerstatus_list:
+        # print(worker.task_id)
+        task_id = worker.task_id
+        if task_id in worker_dict:
+            if key_start in worker_dict[task_id]:
+                worker_dict[task_id][key_end] = worker.time
+            else:
+                worker_dict[task_id][key_start] = worker.time
+            # get duration from datetime
+            end = pd.to_datetime( worker_dict[task_id][key_end])
+            start= pd.to_datetime( worker_dict[task_id][key_start])
+            worker_dict[task_id]['duration'] = int(round((end - start).total_seconds()))
+  
+            # duration = float(worker_dict[task_id][key_end]) - float(worker_dict[task_id][key_start])
+            # worker_dict[task_id]['duration'] = duration
+           
+        else:
+            info_dict = {}
+            if pd.isnull(worker.filename):
+                info_dict[key_task] = worker.function_name
+            else:
+                info_dict[key_task] = worker.filename
+            # print(info_dict['task'])
+            info_dict[key_host_ip] = worker.host_ip
+            if worker.action == "busy-stop/idle-start":
+                info_dict[key_end] = worker.time
+            else:
+                info_dict[key_start] = worker.time
+            worker_dict[worker.task_id] = info_dict
+    
+    for key in worker_dict:
+        print(f" key :{key}")
+
+
+    return worker_dict
+
+# def addAnnot(df, fig):
+#     for i in df:
+#         x_pos = (i['Finish'] - i['Start'])/2 + i['Start']
+#         for j in fig['data']:
+#             if j['name'] == i['Label']:
+#                 y_pos = (j['y'][0] + j['y'][1] + j['y'][2] + j['y'][3])/4
+#         fig['layout']['annotations'] += tuple([dict(x=x_pos,y=y_pos,text=i['Label'],font={'color':'black'})])
+
+
+def process_logs():
+    print('process_logs')
+    df = pd.read_csv('logs.csv', index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
+    df['timestamp'] = pd.to_datetime(df['timestamp'], 
+                                  unit='s')
+
+    worker_dict = process_df_for_gantt(df)
+
+    # # # Show dataframe
+
+    gantt_list = []
+    for key , value in worker_dict.items():
+        print(f"start :{value['start']} end:{value['end']}")
+        item = dict(Task=value['host_ip'], Start=(value['start']), Finish=(value['end']), Resource=value['task'], Duration = value['duration'])
+        gantt_list.append(item)
+    gantt_df = pd.DataFrame(gantt_list)
+    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Resource", text="Duration")
+    fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
+    fig.show()
