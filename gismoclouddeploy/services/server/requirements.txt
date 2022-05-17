@@ -23,13 +23,13 @@ plotly==5.8.0
 kaleido
 
 boto3==1.21.19
-scipy
-numpy
-pandas
+scipy==1.8.0
+numpy==1.19.2
+pandas==1.4.2
 scikit-learn
 seaborn
 requests
-pvlib
+pvlib>=0.9.1
 cvxpy>=1.1.0
-Mosek
-solar-data-tools
+Mosek==9.3.20
+solar-data-tools==0.5.4

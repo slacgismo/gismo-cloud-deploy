@@ -20,6 +20,8 @@ import uuid
 import logging
 import plotly.express as px
 import io
+import plotly.io as pio
+
 
 from project.solardata.models.GanttObject import GanttObject
 
@@ -35,14 +37,13 @@ def process_df_for_gantt(df:pd)  :
 
     # process timestamp into linear 
     # find min
-   
-    
     #combine task from
     worker_dict={}
     key_start = 'start'
     key_end = 'end'
     key_task = 'task'
     key_host_ip = 'host_ip'
+    key_pid = 'pid'
     for worker in workerstatus_list:
         # print(worker.task_id)
         task_id = worker.task_id
@@ -51,20 +52,31 @@ def process_df_for_gantt(df:pd)  :
                 worker_dict[task_id][key_end] = worker.time
             else:
                 worker_dict[task_id][key_start] = worker.time
-            duration = float(worker_dict[task_id][key_start]) - float(worker_dict[task_id][key_end])
-            worker_dict[task_id]['duration'] = duration
+            # get duration from datetime
+            end = pd.to_datetime( worker_dict[task_id][key_end])
+            start= pd.to_datetime( worker_dict[task_id][key_start])
+            worker_dict[task_id]['duration'] = int(round((end - start).total_seconds()))
+  
+            # duration = float(worker_dict[task_id][key_end]) - float(worker_dict[task_id][key_start])
+            # worker_dict[task_id]['duration'] = duration
            
         else:
             info_dict = {}
-            info_dict['task'] =worker.filename
+            if pd.isnull(worker.filename):
+                info_dict[key_task] = worker.function_name
+            else:
+                info_dict[key_task] = worker.filename
+            # print(info_dict['task'])
             info_dict[key_host_ip] = worker.host_ip
+            info_dict[key_pid] = worker.pid
             if worker.action == "busy-stop/idle-start":
                 info_dict[key_end] = worker.time
             else:
                 info_dict[key_start] = worker.time
             worker_dict[worker.task_id] = info_dict
+    
     # for key in worker_dict:
-    #     print(f" key :{key} {worker_dict[key]}")
+    #     print(f" key --->:{key}")
 
 
     return worker_dict
@@ -78,29 +90,34 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
                                 file_path_name=str(file_path_name), 
                                 s3_client=s3_client)
     # process time 
-    min_start = df['timestamp'].min()
-    df['timestamp']  = df['timestamp'] - min_start
 
     # print(f"df {df.head()}")
     # process log file
     worker_dict = process_df_for_gantt(df)
+
     # plot df 
     gantt_list = []
     for key , value in worker_dict.items():
+        print(f"{value} ")
         print(f"start :{value['start']} end:{value['end']}")
-        item = dict(Task=value['task'], Start=(value['start']), Finish=(value['end']), Resource=value['host_ip'])
+        task = f"{value['host_ip']} : {value['pid']}"
+        label = f"{value['task']}: duration:{value['duration']}s"
+        item = dict(Task=task, 
+        Start=(value['start']), 
+        Finish=(value['end']), 
+        Resource=value['task'],
+        Label=label,
+        Host=value['host_ip'], 
+        Duration = value['duration'])
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
-    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Resource")
+    
+    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Host", text="Label")
     fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
-    fig.layout.xaxis.type = 'linear'
-    fig.data[0].x = gantt_df.delta.tolist()
-    # fig.update_layout(xaxis=dict(
-    #                   title='Timestamp', 
-    #                   tickformat = '%M:%S',
-    #               ))
-    image_name ="test.pdf"
-    fig.write_image( image_name, engine="kaleido") 
+
+    image_name ="test.png"
+    
+    pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600)
     print("success show fig")    
     # df = pd.DataFrame([
     #     dict(Task="Job A", Start='2009-01-01', Finish='2009-02-28'),
@@ -116,11 +133,11 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
     # print("success show fig")
     # # save to pdf
     # # warning, the ACL here is set to public-read
-    # img_data = open(  image_name, "rb")
-    # s3_client = connect_aws_client('s3')
+    img_data = open(  image_name, "rb")
+    s3_client = connect_aws_client('s3')
 
-    # s3_client.put_object(Bucket=bucket, Key=saved_image_name, Body=img_data, 
-    #                              ContentType="image/pdf")
+    s3_client.put_object(Bucket=bucket, Key=saved_image_name, Body=img_data, 
+                                 ContentType="image/png")
     # s3_client.Bucket(bucket).put_object(Key=saved_image_name, Body=img_data, 
     #                              ContentType="image/png", ACL="public-read")
 
@@ -205,69 +222,6 @@ def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
 
     return response
 
-# def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
-#     dynamodb_resource = connect_aws_resource('dynamodb')
-#     table = dynamodb_resource.Table(table_name)    
-#     response = table.put_item(
-#     Item={
-#             'id':str(uuid.uuid4()),
-#             'host_name': workerstatus.host_name,
-#             'host_ip': workerstatus.host_ip,
-#             'task_id': workerstatus.task_id,
-#             'function_name' : workerstatus.function_name,
-#             'action' : workerstatus.action,
-#             'time': workerstatus.time,
-#             'message': workerstatus.message
-#         }
-#     )
-
-#     return response
-
-# def get_item_from_dynamodb_with_host_name(table_name,host_name):
-#     dynamodb_resource = connect_aws_resource('dynamodb')
-#     table = dynamodb_resource.Table(table_name)    
-
-
-#     response = table.get_item(
-#     Key={
-#             'id': host_name,
-#         }
-#     )
-#     return response
-
-# def create_dynamodb_table(table_name):
-#     dynamodb_client = connect_aws_client('dynamodb')
-#     ddb_exceptions = dynamodb_client.exceptions
-#     try:
-#         table = dynamodb_client.create_table(
-#             TableName='table_name',
-#             KeySchema=[
-#                 {
-#                     'AttributeName': 'host_name',
-#                     'KeyType': 'HASH' # Partition key
-#                 }
-#             ],
-#             AttributeDefinitions=[
-#                 {
-#                     'AttributeName': 'host_name',
-#                     # AttributeType defines the data type. 'S' is string type and 'N' is number type
-#                     'AttributeType': 'S' 
-#                 }
-        
-#             ],
-#             ProvisionedThroughput={
-#                 # ReadCapacityUnits set to 10 strongly consistent reads per second
-#                 'ReadCapacityUnits': 10,
-#                 'WriteCapacityUnits': 10 # WriteCapacityUnits set to 10 writes per second
-#             }
-#         )
-#         print("Creating table")
-#         waiter = dynamodb_client.get_waiter('table_exists')
-#         waiter.wait(TableName=table_name)
-#         print(f"{table_name} Table created")
-    
-#     except ddb_exceptions.ResourceInUseException:
-#         print("Table exists")
 
 def connect_aws_client(client_name):
     AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
@@ -331,26 +285,27 @@ def check_aws_validity(key_id, secret):
         return False
 
 
-# def read_column_from_csv_from_s3(
-#     bucket_name=None,
-#     file_path=None,
-#     file_name=None,
-#     s3_client = None
-#     ):
-#     full_path = file_path + "/" + file_name
-#     if bucket_name is None or full_path is None or s3_client is None:
-#         return
+def read_column_from_csv_from_s3(
+    bucket_name=None,
+    file_path=None,
+    file_name=None,
+    s3_client = None
+    ):
+    full_path = file_path + "/" + file_name
+    if bucket_name is None or full_path is None or s3_client is None:
+        return
     
-#     response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
+    response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
 
-#     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
-#     if status == 200:
-#         print(f"Successful S3 get_object response. Status - {status}")
-#         result_df = pd.read_csv(response.get("Body"),nrows =1)
-#     else:
-#         print(f"Unsuccessful S3 get_object response. Status - {status}")
-#     return result_df
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        result_df = pd.read_csv(response.get("Body"),nrows =1)
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
 def read_all_csv_from_s3(
     bucket_name:str=None,
     file_path_name:str=None,
@@ -368,8 +323,11 @@ def read_all_csv_from_s3(
 
     if status == 200:
         print(f"Successful S3 get_object response. Status - {status}")
-        result_df = pd.read_csv(response.get("Body"),
-                                index_col=index_col)
+        # result_df = pd.read_csv(response.get("Body"),
+        #                         index_col=index_col)
+        result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
+        result_df['timestamp'] = pd.to_datetime(result_df['timestamp'], 
+                                  unit='s')
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df

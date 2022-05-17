@@ -178,9 +178,26 @@ def process_logs():
         print(f"{value} ")
         print(f"start :{value['start']} end:{value['end']}")
         task = f"{value['host_ip']} : {value['pid']}"
-        item = dict(Task=task, Start=(value['start']), Finish=(value['end']), Resource=value['task'], facet_row=value['host_ip'], Duration = value['duration'])
+        label = f"{value['task']}: duration:{value['duration']}s"
+        item = dict(Task=task, 
+        Start=(value['start']), 
+        Finish=(value['end']), 
+        Resource=value['task'],
+        Label=label,
+         Host=value['host_ip'], 
+         Duration = value['duration'])
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
-    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Resource", text="Duration")
+    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Host", text="Label")
     fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
-    fig.show()
+    # fig.show()
+    # image_name = "logs.png"
+    # fig.write_image( image_name, engine="kaleido")
+    # print("success show fig")
+    # # save to pdf
+    # # warning, the ACL here is set to public-read
+    # img_data = open(  image_name, "rb")
+    # s3_client = connect_aws_client('s3')
+
+    # s3_client.put_object(Bucket=bucket, Key=saved_image_name, Body=img_data, 
+    #                              ContentType="image/pdf")

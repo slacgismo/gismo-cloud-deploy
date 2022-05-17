@@ -126,7 +126,7 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
                                     column_name = column_name
                                     )
         start_res = put_item_to_dynamodb(table_name, workerstatus=start_status)
-        print(f"task start res: {start_res}")
+  
         process_solardata_tools(  
                             self.request.id,
                             bucket_name ,
@@ -152,7 +152,6 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
                                     column_name = column_name
                                     )
         end_status = put_item_to_dynamodb(table_name, workerstatus=end_status)
-        print(f"task e nd res: {end_status}")
         # return True
 
 @shared_task(bind=True)
@@ -173,7 +172,7 @@ def loop_tasks_status_task( self,
     hostname = socket.gethostname()
     host_ip = socket.gethostbyname(hostname)   
     pid = os.getpid()
-    print(f"pid --------------> {pid}")
+
     start_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip,pid = str(pid), function_name="loop_tasks_status_task", action="idle-stop/busy-start", time=str(time.time()),message="init loop_tasks_status_task")
     from project import create_app
     from project.solardata.models import SolarData
@@ -183,7 +182,7 @@ def loop_tasks_status_task( self,
     app = create_app()
     with app.app_context():
         start_res = put_item_to_dynamodb(table_name=table_name, workerstatus= start_status) 
-        print(f"task start res: {start_res}")
+    
     while counter > 0:
         # check the task status
         time.sleep(int(delay))
@@ -203,7 +202,7 @@ def loop_tasks_status_task( self,
     print("------- start combine files, save logs , clean dynamodb items---------")
     from project import create_app
     from project.solardata.models import SolarData
-    from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb
+    from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,plot_gantt_chart
     app = create_app()
     with app.app_context():
         end_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip,pid= str(pid), function_name="loop_tasks_status_task", action="busy-stop/idle-start", time=str(time.time()),message="end loop_tasks_status_task")
@@ -215,6 +214,9 @@ def loop_tasks_status_task( self,
                                         saved_file_path=saved_log_file_path,
                                         saved_filename=saved_log_file_name )
         remov_res = remove_all_items_from_dynamodb(table_name)
-        print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
+        saved_logs_file_path_name = saved_log_file_path+"/"+saved_log_file_name
+        saved_image_file_path = saved_log_file_path+"/"+"runtime.pdf"
+        plot_res = plot_gantt_chart(bucket=bucket_name,file_path_name=saved_logs_file_path_name,saved_image_name=saved_image_file_path)
+        print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}, plot_res: {plot_res}")
         return response
     
