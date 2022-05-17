@@ -28,6 +28,12 @@ from models.SolarParams import SolarParams
 from models.Config import Config
 from models.Task import Task
 
+from utils.aws_utils import (
+    connect_aws_resource,
+    connect_aws_client
+)
+
+from utils.taskThread import taskThread
 
 from utils.sqs import(
     send_queue_message,
@@ -36,7 +42,8 @@ from utils.sqs import(
     create_fifo_queue,
     receive_queue_message,
     delete_queue_message,
-    configure_queue_long_polling
+    configure_queue_long_polling,
+    purge_queue
 )
 from utils.sns import(
     list_topics,
@@ -53,44 +60,6 @@ SQS_URL='https://us-east-2.queue.amazonaws.com/041414866712/gcd-standard-queue'
 SQS_ARN='arn:aws:sqs:us-east-2:041414866712:gcd-standard-queue'
 SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
 
-def check_aws_validity(key_id, secret):
-    try:
-        client = boto3.client('s3', aws_access_key_id=key_id, aws_secret_access_key=secret)
-        response = client.list_buckets()
-        return True
-
-    except Exception as e:
-        if str(e)!="An error occurred (InvalidAccessKeyId) when calling the ListBuckets operation: The AWS Access Key Id you provided does not exist in our records.":
-            return True
-        return False
-
-def connect_aws_client(client_name):
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION')
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
-        client = boto3.client(
-            client_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
-        )
-        return client
-    raise Exception('AWS Validation Error')
-
-def connect_aws_resource(resource_name):
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION')
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
-        resource = boto3.resource(
-            resource_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
-        )
-        return resource
-    raise Exception('AWS Validation Error')
 
 
 
@@ -188,7 +157,12 @@ def run_process_files(number):
     solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
 
+    # step 1 . clear sqs
+    print("purge sqs")
+    sqs_client = connect_aws_client('sqs')
+    purge_res = purge_queue(queue_url=SQS_URL, sqs_client=sqs_client)
 
+    print(f"response from {purge_res}")
     if number is None:
         print("process default files in config.yaml")
         res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
@@ -211,10 +185,12 @@ def run_process_files(number):
             
         else:
             print(f"error input {number}")
-    
- 
-    
+
     return 
+
+
+
+
 
 def publish_receive_sns():
     print("publish sns")
@@ -238,45 +214,8 @@ def publish_receive_sns():
     logger.info(f'Received and deleted message(s) from {QUEUE_URL}.')
 
 
-import threading
-import time
 
 
-class taskThread (threading.Thread):
-    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str):
-        threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.name = name
-        self.wait_time = wait_time
-        self.counter = conuter
-        self.sqs_url = sqs_url
-
-
-
-    def run(self):
-      print ("Starting " + self.name)
-      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url)
-      print ("Exiting " + self.name)
-
-
-def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str) -> bool:
-    sqs_client = connect_aws_client('sqs')
-    while counter:
-        time.sleep(wait_time)
-        messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
-        print(f"waiting ....counter: {counter - wait_time} Time: {time.ctime(time.time())}")
-        counter -= int(wait_time)
-        if 'Messages' in messages :
-            for msg in messages['Messages']:
-                msg_body = msg['Body']
-                receipt_handle = msg['ReceiptHandle']
-                logger.info(f'The message body: {msg_body}')
-                logger.info('Deleting message from the queue...')
-                delete_queue_message(sqs_url, receipt_handle, sqs_client)
-            
-            logger.info(f'Received and deleted message(s) from {sqs_url}.')
-            return True
-    return True
 
        
 
@@ -351,11 +290,6 @@ def processlogs():
     from utils.process_log import process_logs
     process_logs()
 
-@main.command()
-@click.argument('text')
-def capitalize(text):
-	"""Capitalize Text"""
-	click.echo(text.upper())
 
 
 
