@@ -205,8 +205,14 @@ def run_process_files(number):
             print(f"process first {number} files")
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
             print(f"response : {res}")
+            # process long pulling
+            thread = taskThread(1,"sqs",60,2,SQS_URL)
+            thread.start()
+            
         else:
             print(f"error input {number}")
+    
+ 
     
     return 
 
@@ -231,10 +237,64 @@ def publish_receive_sns():
 
     logger.info(f'Received and deleted message(s) from {QUEUE_URL}.')
 
+
+import threading
+import time
+
+
+class taskThread (threading.Thread):
+    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str):
+        threading.Thread.__init__(self)
+        self.threadID = threadID
+        self.name = name
+        self.wait_time = wait_time
+        self.counter = conuter
+        self.sqs_url = sqs_url
+
+
+
+    def run(self):
+      print ("Starting " + self.name)
+      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url)
+      print ("Exiting " + self.name)
+
+
+def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str) -> bool:
+    sqs_client = connect_aws_client('sqs')
+    while counter:
+        time.sleep(wait_time)
+        messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
+        print(f"waiting ....counter: {counter - wait_time} Time: {time.ctime(time.time())}")
+        counter -= int(wait_time)
+        if 'Messages' in messages :
+            for msg in messages['Messages']:
+                msg_body = msg['Body']
+                receipt_handle = msg['ReceiptHandle']
+                logger.info(f'The message body: {msg_body}')
+                logger.info('Deleting message from the queue...')
+                delete_queue_message(sqs_url, receipt_handle, sqs_client)
+            
+            logger.info(f'Received and deleted message(s) from {sqs_url}.')
+            return True
+    return True
+
+       
+
+       
+
+
+def longpulling_thread():
+    print("long pulling")
+    thread = taskThread(1,"sqs",60,2,SQS_URL)
+    thread.start()
+
+
 # Parent Command
 @click.group()
 def main():
 	pass
+
+
 
 # Run files 
 @main.command()
@@ -243,6 +303,12 @@ def run_files(number):
     """ Run Process Files"""
     run_process_files(number)
 
+
+@main.command()
+def longpulling():
+    """Try thread"""
+    longpulling_thread()
+    
 @main.command()
 def listsns():
     """"Try SNS"""
@@ -290,6 +356,11 @@ def processlogs():
 def capitalize(text):
 	"""Capitalize Text"""
 	click.echo(text.upper())
+
+
+
+
+
 
 if __name__ == '__main__':
 	main()

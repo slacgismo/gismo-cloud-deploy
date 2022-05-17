@@ -219,9 +219,9 @@ def loop_tasks_status_task( self,
         plot_res = plot_gantt_chart(bucket=bucket_name,file_path_name=saved_logs_file_path_name,saved_image_name=saved_image_file_path)
         print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}, plot_res: {plot_res}")
         logger.info(f'End of all process publish message to SNS.')
-
-        SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
-        mesage_id = publish_message_sns(message="Task Completed", topic_arn= SNS_TOPIC)
-        logger.info(f'Send to SNS.----------> message: {mesage_id}')
+        if plot_res:
+            SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
+            mesage_id = publish_message_sns(message="Task Completed", topic_arn= SNS_TOPIC)
+            logger.info(f'Send to SNS.----------> message: {mesage_id}')
         return response
     

@@ -117,8 +117,7 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
 
     image_name ="test.png"
     
-    pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600)
-    print("success show fig")    
+    pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600) 
     # df = pd.DataFrame([
     #     dict(Task="Job A", Start='2009-01-01', Finish='2009-02-28'),
     #     dict(Task="Job B", Start='2009-03-05', Finish='2009-04-15'),
@@ -138,9 +137,7 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
 
     s3_client.put_object(Bucket=bucket, Key=saved_image_name, Body=img_data, 
                                  ContentType="image/png")
-    # s3_client.Bucket(bucket).put_object(Key=saved_image_name, Body=img_data, 
-    #                              ContentType="image/png", ACL="public-read")
-
+    return True
 def save_logs_from_dynamodb_to_s3(table_name, saved_bucket, saved_file_path, saved_filename):
 
     # step 1. get all item from dynamodb
