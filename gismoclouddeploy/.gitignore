@@ -79,3 +79,4 @@ override.tf.json
 .dev-sample
 *.lic
 env/
+.csv
