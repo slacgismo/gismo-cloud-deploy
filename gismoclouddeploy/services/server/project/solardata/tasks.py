@@ -202,7 +202,7 @@ def loop_tasks_status_task( self,
     print("------- start combine files, save logs , clean dynamodb items---------")
     from project import create_app
     from project.solardata.models import SolarData
-    from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,plot_gantt_chart
+    from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,plot_gantt_chart,publish_message_sns
     app = create_app()
     with app.app_context():
         end_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip,pid= str(pid), function_name="loop_tasks_status_task", action="busy-stop/idle-start", time=str(time.time()),message="end loop_tasks_status_task")
@@ -218,5 +218,10 @@ def loop_tasks_status_task( self,
         saved_image_file_path = saved_log_file_path+"/"+"runtime.pdf"
         plot_res = plot_gantt_chart(bucket=bucket_name,file_path_name=saved_logs_file_path_name,saved_image_name=saved_image_file_path)
         print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}, plot_res: {plot_res}")
+        logger.info(f'End of all process publish message to SNS.')
+
+        SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
+        mesage_id = publish_message_sns(message="Task Completed", topic_arn= SNS_TOPIC)
+        logger.info(f'Send to SNS.----------> message: {mesage_id}')
         return response
     

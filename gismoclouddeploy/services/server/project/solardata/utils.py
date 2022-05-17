@@ -652,3 +652,17 @@ def read_csv_from_s3(
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
+
+
+
+def publish_message_sns(message: str, topic_arn:str) -> str:
+
+    sns_client = connect_aws_client('sns')
+    message_id = sns_client.publish(
+        TopicArn=topic_arn,
+        Message=message,
+    )
+    logger.info(
+        f'Message published to topic - {topic_arn} with message Id - {message_id}.'
+    )
+    return message_id
