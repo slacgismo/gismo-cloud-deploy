@@ -81,8 +81,10 @@ def process_first_n_files( config_params_str:str,
     # track scheduler status start    
     configure_obj = make_configure_from_str(config_params_str)
     hostname = socket.gethostname()
-    host_ip = socket.gethostbyname(hostname)       
-    start_status = WorkerStatus(host_name=hostname,task_id="", host_ip=host_ip, function_name="process_first_n_files", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
+    host_ip = socket.gethostbyname(hostname)      
+    pid = os.getpid()
+    task_id = str(uuid.uuid4())
+    start_status = WorkerStatus(host_name=hostname,task_id=task_id, host_ip=host_ip,pid=pid, function_name="process_first_n_files", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
     start_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus = start_status)
     print(f"start_res {start_res}")
     #     busy-stop/idle-start
@@ -130,7 +132,7 @@ def process_first_n_files( config_params_str:str,
     # for id in task_ids:
     end_hostname = socket.gethostname()
     end_host_ip = socket.gethostbyname(hostname)   
-    end_status = WorkerStatus(host_name=end_hostname,task_id="", host_ip=end_host_ip, function_name="process_first_n_files", action="busy-stop/idle-start", time=str(time.time()),message="end process n files")
+    end_status = WorkerStatus(host_name=end_hostname,task_id=task_id, host_ip=end_host_ip, pid = pid,function_name="process_first_n_files", action="busy-stop/idle-start", time=str(time.time()),message="end process n files")
     end_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus=end_status)
     print(f"end_res {end_res}")
 # ***************************        

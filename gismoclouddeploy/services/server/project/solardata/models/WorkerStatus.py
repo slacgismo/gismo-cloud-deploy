@@ -6,6 +6,7 @@ class WorkerStatus(object):
                  host_name,
                  host_ip,
                  task_id,
+                 pid,
                  function_name,
                  action,
                  time,
@@ -17,6 +18,7 @@ class WorkerStatus(object):
         self.host_name = host_name
         self.host_ip = host_ip
         self.task_id = task_id
+        self.pid = pid
         self.function_name = function_name
         self.action = action
         self.time = time
@@ -31,6 +33,7 @@ class WorkerStatus(object):
             'host_name': self.host_name,
             'host_ip' : self.host_ip,
             'task_id': self.task_id,
+            'pid': self.pid,
             'function_name' : self.function_name,
             'action' : self.action,
             'time': self.time,
@@ -48,6 +51,7 @@ def make_worker_object_from_dataframe(dataframe):
         worker = WorkerStatus(host_name=row.host_name,
                         host_ip=row.host_ip,
                         task_id = row.task_id,
+                        pid = row.pid,
                         function_name = row.function_name,
                         action = row.action,
                         time = row.timestamp,

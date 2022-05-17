@@ -192,7 +192,8 @@ def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
     Item={
             'host_name': workerstatus.host_name,
             'host_ip': workerstatus.host_ip,
-            'task_id': workerstatus.task_id,
+            'task_id':str(workerstatus.task_id),
+            'pid': workerstatus.pid,
             'function_name' : workerstatus.function_name,
             'action' : workerstatus.action,
             'timestamp': workerstatus.time,

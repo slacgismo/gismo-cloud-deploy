@@ -113,9 +113,11 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
     )
     app = create_app()
     with app.app_context():
+        pid = os.getpid()
         start_status = WorkerStatus(host_name=hostname,
                                     task_id=self.request.id, 
                                     host_ip=host_ip, 
+                                    pid = str(pid),
                                     function_name="process_data_task",
                                     action="idle-stop/busy-start", 
                                     time=str(time.time()),
@@ -141,6 +143,7 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
         end_status = WorkerStatus(host_name=hostname,
                                     task_id=self.request.id, 
                                     host_ip=host_ip, 
+                                    pid = str(pid),
                                     function_name="process_data_task",
                                     action="busy-stop/idle-start", 
                                     time=str(time.time()),
@@ -165,11 +168,13 @@ def loop_tasks_status_task( self,
                             saved_log_file_path,
                             saved_log_file_name
                             ):
-    print(f"set delay: {delay}, count : {count}")
+    print(f"loop ---> set delay: {delay}, count : {count}, task_id: {self.request.id}")
     counter = int(count)
     hostname = socket.gethostname()
     host_ip = socket.gethostbyname(hostname)   
-    start_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip, function_name="loop_tasks_status_task", action="idle-stop/busy-start", time=str(time.time()),message="init loop_tasks_status_task")
+    pid = os.getpid()
+    print(f"pid --------------> {pid}")
+    start_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip,pid = str(pid), function_name="loop_tasks_status_task", action="idle-stop/busy-start", time=str(time.time()),message="init loop_tasks_status_task")
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
@@ -201,7 +206,7 @@ def loop_tasks_status_task( self,
     from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb
     app = create_app()
     with app.app_context():
-        end_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip, function_name="loop_tasks_status_task", action="busy-stop/idle-start", time=str(time.time()),message="end loop_tasks_status_task")
+        end_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip,pid= str(pid), function_name="loop_tasks_status_task", action="busy-stop/idle-start", time=str(time.time()),message="end loop_tasks_status_task")
         end_status = put_item_to_dynamodb(table_name=table_name, workerstatus = end_status)
         response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
 
