@@ -116,7 +116,7 @@ def process_df_for_gantt(df:pd)  :
     key_end = 'end'
     key_task = 'task'
     key_host_ip = 'host_ip'
-
+    key_pid = 'pid'
     for worker in workerstatus_list:
         # print(worker.task_id)
         task_id = worker.task_id
@@ -141,14 +141,15 @@ def process_df_for_gantt(df:pd)  :
                 info_dict[key_task] = worker.filename
             # print(info_dict['task'])
             info_dict[key_host_ip] = worker.host_ip
+            info_dict[key_pid] = worker.pid
             if worker.action == "busy-stop/idle-start":
                 info_dict[key_end] = worker.time
             else:
                 info_dict[key_start] = worker.time
             worker_dict[worker.task_id] = info_dict
     
-    for key in worker_dict:
-        print(f" key :{key}")
+    # for key in worker_dict:
+    #     print(f" key --->:{key}")
 
 
     return worker_dict
@@ -169,13 +170,15 @@ def process_logs():
                                   unit='s')
 
     worker_dict = process_df_for_gantt(df)
-
+    
     # # # Show dataframe
 
     gantt_list = []
     for key , value in worker_dict.items():
+        print(f"{value} ")
         print(f"start :{value['start']} end:{value['end']}")
-        item = dict(Task=value['host_ip'], Start=(value['start']), Finish=(value['end']), Resource=value['task'], Duration = value['duration'])
+        task = f"{value['host_ip']} : {value['pid']}"
+        item = dict(Task=task, Start=(value['start']), Finish=(value['end']), Resource=value['task'], facet_row=value['host_ip'], Duration = value['duration'])
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
     fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Resource", text="Duration")
