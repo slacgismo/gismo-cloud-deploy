@@ -38,3 +38,22 @@ class WorkerStatus(object):
             'filename': self.filename,
             'column_name': self.column_name
         }
+
+def make_worker_object_from_dataframe(dataframe):
+    worker_list = []
+    for row in dataframe.itertuples(index=True, name='Pandas'):
+        if row.task_id == "":
+            row.task_id = "scheduler"
+
+        worker = WorkerStatus(host_name=row.host_name,
+                        host_ip=row.host_ip,
+                        task_id = row.task_id,
+                        function_name = row.function_name,
+                        action = row.action,
+                        time = row.timestamp,
+                        message = row.message,
+                        filename = row.filename,
+                        column_name = row.column_name
+                        )
+        worker_list.append(worker)
+    return worker_list

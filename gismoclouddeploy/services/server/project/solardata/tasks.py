@@ -20,6 +20,17 @@ import time
 import socket
 logger = get_task_logger(__name__)
 
+
+@shared_task()
+def plot_gantt_chart_from_log_files_task(bucket, file_path_name, saved_image_name):
+    print(f"start process file from {bucket}, {file_path_name} to {saved_image_name} ")
+    from project import create_app
+    from project.solardata.utils import plot_gantt_chart
+    app = create_app()
+    with app.app_context():
+        res = plot_gantt_chart(bucket,file_path_name,saved_image_name)
+        print(res)
+
 @shared_task()
 def combine_files_to_file_task(bucket_name,source_folder,target_folder,target_filename):
     response_object = {

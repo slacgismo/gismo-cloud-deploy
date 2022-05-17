@@ -35,6 +35,7 @@ from project.solardata.tasks import (
     process_data_task,
     combine_files_to_file_task,
     loop_tasks_status_task,
+    plot_gantt_chart_from_log_files_task,
 )
 import uuid
 
@@ -43,7 +44,10 @@ celery = ext_celery.celery
 
 cli = FlaskGroup(create_app=create_app)
 
-
+# logger config
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s: %(levelname)s: %(message)s')
 
 
 @cli.command("combine_files")
@@ -144,22 +148,14 @@ def process_files( config_params_str:str,
                     ):
     # convert command str to json format and pass to object
     configure_obj = make_configure_from_str(config_params_str)
+    logger.info(f'''Start plot gantt chart''')
+    bucket = configure_obj.saved_bucket
+    log_file_path_name = configure_obj.saved_logs_target_path +"/"+ configure_obj.saved_logs_target_filename
+    save_file="results/runtime.pdf"
+    task = plot_gantt_chart_from_log_files_task.apply_async([bucket, log_file_path_name,save_file])
+    print(f"task {task}")
     # print(config_params_str)
-    # print(f"dynamo {configure_obj.dynamodb_tablename},  {configure_obj.saved_logs_target_filename}, {configure_obj.saved_logs_target_path}")
-    workerStatus = WorkerStatus(host_name="app",task_id="1231232132", host_ip="12.32.122.3", function_name="process", action="START", time=str(time.time()),message="this is test")
-    # put_item_to_dynamodb(configure_obj.dynamodb_tablename, info = workerStatus.to_json())
-    # put_item_to_dynamodb(configure_obj.dynamodb_tablename, info = workerStatus.to_json())
-    put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerStatus)
-    put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerStatus)
-    # res = get_item_from_dynamodb('GCD_LOGS')
-    # remove_all_items_from_dynamodb('GCD_LOGS')
-
-    res = save_logs_from_dynamodb_to_s3(table_name=configure_obj.dynamodb_tablename,
-                                        saved_bucket=configure_obj.saved_bucket,
-                                        saved_file_path=configure_obj.saved_logs_target_path,
-                                        saved_filename= configure_obj.saved_logs_target_filename )
-    res = retrive_all_item_from_dyanmodb(configure_obj.dynamodb_tablename)
-    print(f"res: {res}")
+    
     # task_ids = []
     # for file in configure_obj.files:
     #     for column in configure_obj.column_names:
