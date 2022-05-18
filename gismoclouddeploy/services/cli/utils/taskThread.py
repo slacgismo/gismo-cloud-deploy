@@ -2,6 +2,7 @@ import threading
 import time
 import logging
 # logger config
+import json
 from utils.aws_utils import(
     connect_aws_client,
 )
@@ -40,10 +41,14 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str) -> bool:
         counter -= int(wait_time)
         if 'Messages' in messages :
             for msg in messages['Messages']:
-                msg_body = msg['Body']
+                msg_body = json.loads(msg['Body'])
+                # msg_body = msg['Body']
                 receipt_handle = msg['ReceiptHandle']
-                logger.info(f'The message body: {msg_body}')
-                logger.info('Deleting message from the queue...')
+                Subject  = msg_body['Subject']
+                message_text = msg_body['Message']
+                logger.info(f'The subject : {Subject}')
+                logger.info(f'The message : {message_text}')
+                # logger.info('Deleting message from the queue...')
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
             
             logger.info(f'Received and deleted message(s) from {sqs_url}.')
