@@ -29,16 +29,16 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - redis
-      - db
+      # - db
 
-  db:
-    image: postgres:13-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_DB=flask_celery
-      - POSTGRES_USER=flask_celery
-      - POSTGRES_PASSWORD=flask_celery
+  # db:
+  #   image: postgres:13-alpine
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data/
+  #   environment:
+  #     - POSTGRES_DB=flask_celery
+  #     - POSTGRES_USER=flask_celery
+  #     - POSTGRES_PASSWORD=flask_celery
 
   redis:
     image: redis:6-alpine
@@ -64,7 +64,7 @@ services:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - redis
-      - db
+      # - db
 
 volumes:
   postgres_data:

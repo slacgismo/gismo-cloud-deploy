@@ -52,17 +52,18 @@ from utils.sns import(
     sns_subscribe_sqs
 )
 
+
+
+
 # logger config
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
-SQS_URL='https://us-east-2.queue.amazonaws.com/041414866712/gcd-standard-queue' 
-SQS_ARN='arn:aws:sqs:us-east-2:041414866712:gcd-standard-queue'
-SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
 
-
-
+SQS_URL = os.getenv('SQS_URL')
+SQS_ARN = os.getenv('SQS_ARN')
+SNS_TOPIC = os.getenv('SNS_TOPIC')
 
 def init_standard_sqs():
     QUEUE_NAME = 'gcd-standard-queue'
@@ -121,14 +122,8 @@ def try_send_and_receive_queue_message():
 
 
 def subscribe_sns():
-
     topic_arn = SNS_TOPIC
-    sqs_pro = "sqs",
     endpoint = SQS_ARN
-    #  topic.subscribe(
-    #     Protocol="sqs",
-    #     Endpoint=queue.attributes["QueueArn"],
-    # )
     logger.info('Subscribing to a SNS topic...')
     sns_client = connect_aws_client('sns')
     # Creates an email subscription
@@ -181,7 +176,8 @@ def run_process_files(number):
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
             print(f"response : {res}")
             # process long pulling
-            thread = taskThread(1,"sqs",60,2,SQS_URL,number)
+            total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
+            thread = taskThread(1,"sqs",60,2,SQS_URL,total_task_num)
             thread.start()
             
         else:
@@ -198,9 +194,8 @@ def publish_receive_sns():
     public_message_to_sns()
     print("receive sns")
     print("Receive message ---->")
-    QUEUE_URL = SQS_URL
     sqs_client = connect_aws_client('sqs')
-    messages = receive_queue_message(QUEUE_URL, sqs_client, wait_time=20)
+    messages = receive_queue_message(SQS_URL, sqs_client, wait_time=20)
 
     for msg in messages['Messages']:
         msg_body = msg['Body']
@@ -213,12 +208,6 @@ def publish_receive_sns():
         delete_queue_message(QUEUE_URL, receipt_handle, sqs_client)
 
     logger.info(f'Received and deleted message(s) from {QUEUE_URL}.')
-
-
-
-
-
-       
 
        
 

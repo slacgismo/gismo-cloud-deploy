@@ -84,7 +84,7 @@ def process_first_n_files( config_params_str:str,
     host_ip = socket.gethostbyname(hostname)      
     pid = os.getpid()
     temp_task_id = str(uuid.uuid4())
-    start_status = WorkerStatus(host_name=hostname,task_id=temp_task_id, host_ip=host_ip,pid=pid, function_name="process_first_n_files", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
+    start_status = WorkerStatus(host_name=hostname,task_id="process_first_n_files", host_ip=host_ip,pid=pid, function_name="process_first_n_files", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
     start_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus = start_status)
     # print(f"start_res {start_res}")
     #     busy-stop/idle-start
@@ -116,24 +116,24 @@ def process_first_n_files( config_params_str:str,
     for id in task_ids:
         print(id)
     # loop the task status in celery task
-    # loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, 
-    #                                                 configure_obj.interval_of_exit_check_status,
-    #                                                 task_ids,
-    #                                                 configure_obj.saved_bucket,
-    #                                                 configure_obj.saved_tmp_path,
-    #                                                 configure_obj.saved_target_path,
-    #                                                 configure_obj.saved_target_filename,
-    #                                                 configure_obj.dynamodb_tablename,
-    #                                                 configure_obj.saved_logs_target_path,
-    #                                                 configure_obj.saved_logs_target_filename
-    #                                                 ])
+    loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, 
+                                                    configure_obj.interval_of_exit_check_status,
+                                                    task_ids,
+                                                    configure_obj.saved_bucket,
+                                                    configure_obj.saved_tmp_path,
+                                                    configure_obj.saved_target_path,
+                                                    configure_obj.saved_target_filename,
+                                                    configure_obj.dynamodb_tablename,
+                                                    configure_obj.saved_logs_target_path,
+                                                    configure_obj.saved_logs_target_filename
+                                                    ])
 
-    # print(f"loop task: {loop_task}")
-    # # for id in task_ids:
-    # end_hostname = socket.gethostname()
-    # end_host_ip = socket.gethostbyname(hostname)   
-    # end_status = WorkerStatus(host_name=end_hostname,task_id=temp_task_id, host_ip=end_host_ip, pid = pid,function_name="process_first_n_files", action="busy-stop/idle-start", time=str(time.time()),message="end process n files")
-    # end_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus=end_status)
+    print(f"loop task: {loop_task}")
+    # for id in task_ids:
+    end_hostname = socket.gethostname()
+    end_host_ip = socket.gethostbyname(hostname)   
+    end_status = WorkerStatus(host_name=end_hostname,task_id="process_first_n_files", host_ip=end_host_ip, pid = pid,function_name="process_first_n_files", action="busy-stop/idle-start", time=str(time.time()),message="end process n files")
+    end_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus=end_status)
     # print(f"end_res {end_res}")
 # ***************************        
 # Process multiple files

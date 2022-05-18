@@ -95,7 +95,7 @@ def purge_queue(queue_url, sqs_client):
     """
     try:
         response = sqs_client.purge_queue(QueueUrl=queue_url)
-
+        logger.info(f"Purge QUEUE {queue_url} ")
     except ClientError:
         logger.exception(f'Could not purge the queue - {queue_url}.')
         raise

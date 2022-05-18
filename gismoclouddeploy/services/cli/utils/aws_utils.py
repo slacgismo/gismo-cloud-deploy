@@ -1,6 +1,13 @@
 import os
 import boto3
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
 
 def check_aws_validity(key_id, secret):
     try:
@@ -15,9 +22,7 @@ def check_aws_validity(key_id, secret):
 
 
 def connect_aws_client(client_name):
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION')
+
     if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
         client = boto3.client(
             client_name,
@@ -29,9 +34,6 @@ def connect_aws_client(client_name):
     raise Exception('AWS Validation Error')
 
 def connect_aws_resource(resource_name):
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION')
     if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
         resource = boto3.resource(
             resource_name,

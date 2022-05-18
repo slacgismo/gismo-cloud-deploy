@@ -3,12 +3,14 @@ import time
 import logging
 # logger config
 import json
+
 from utils.aws_utils import(
     connect_aws_client,
 )
 from utils.sqs import (
     receive_queue_message,
-    delete_queue_message
+    delete_queue_message,
+    purge_queue
 )
 from typing import List
 logger = logging.getLogger()
@@ -62,4 +64,6 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int) -> List
         if num_task_completed == int(num_task):
             logger.info("All task completed")
             return tasks
+    # purge queue at end of task
+    purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
     return tasks
