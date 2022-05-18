@@ -2,12 +2,12 @@ import os
 import boto3
 
 from dotenv import load_dotenv
-
 load_dotenv()
-
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
+
+
 
 def check_aws_validity(key_id, secret):
     try:
@@ -43,4 +43,8 @@ def connect_aws_resource(resource_name):
         )
         return resource
     raise Exception('AWS Validation Error')
-
+    
+def check_environment_is_aws():
+    my_user = os.environ.get("USER")
+    is_aws = True if "ec2" in my_user else False
+    return is_aws

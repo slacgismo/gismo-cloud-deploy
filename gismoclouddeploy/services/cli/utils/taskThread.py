@@ -6,6 +6,12 @@ import json
 
 from utils.aws_utils import(
     connect_aws_client,
+    check_environment_is_aws,
+
+)
+
+from utils.InvokeFunction import(
+    invoke_eksctl_scale_node
 )
 from utils.sqs import (
     receive_queue_message,
@@ -13,6 +19,14 @@ from utils.sqs import (
     purge_queue
 )
 from typing import List
+
+import subprocess
+
+from utils.eks_utils import (
+    scale_nodes_and_wait
+)
+
+
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
@@ -58,12 +72,22 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int) -> List
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 tasks.append(message_text)
                 num_task_completed += 1
-            logger.info(f'Received and deleted message(s) from {sqs_url}.')
+                if message_text == "Plot complete":
+                    logger.info("All task completed")
+                    if check_environment_is_aws():
+                        scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
+                logger.info(f'Received and deleted message(s) from {sqs_url}.')
             # return True
         print(f"num_task_completed {num_task_completed}, num_task:{num_task}")
-        if num_task_completed == int(num_task):
-            logger.info("All task completed")
-            return tasks
+        # if num_task_completed == int(num_task):
+        #     logger.info("All task completed")
+        #     if check_environment_is_aws():
+        #         scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
+
+        #     return tasks
     # purge queue at end of task
     purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
     return tasks
+
+
+    
