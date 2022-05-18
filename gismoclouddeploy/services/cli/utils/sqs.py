@@ -192,3 +192,20 @@ def configure_queue_long_polling(queue_url, msg_rcv_wait_time, sqs_client):
         raise
     else:
         return response
+
+def clean_previous_sqs_message(sqs_url:str, sqs_client:str, wait_time:int):
+    print("Receive previous message ---->")
+    messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
+    if 'Messages' in messages:
+        for msg in messages['Messages']:
+            msg_body = msg['Body']
+            receipt_handle = msg['ReceiptHandle']
+
+            logger.info(f'The message body: {msg_body}')
+
+            logger.info('Deleting message from the queue...')
+
+            delete_queue_message(sqs_url, receipt_handle, sqs_client)
+
+        logger.info(f'Received and deleted message(s) from {sqs_url}.')
+    print("No previous message ---->")

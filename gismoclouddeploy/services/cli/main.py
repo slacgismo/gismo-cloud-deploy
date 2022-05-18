@@ -42,6 +42,7 @@ from utils.sqs import(
     create_fifo_queue,
     receive_queue_message,
     delete_queue_message,
+    clean_previous_sqs_message,
     configure_queue_long_polling,
     purge_queue
 )
@@ -158,11 +159,11 @@ def run_process_files(number):
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
 
     # step 1 . clear sqs
-    print("purge sqs")
+    print("clean previous sqs")
     sqs_client = connect_aws_client('sqs')
-    purge_res = purge_queue(queue_url=SQS_URL, sqs_client=sqs_client)
-
-    print(f"response from {purge_res}")
+    # purge_res = purge_queue(queue_url=SQS_URL, sqs_client=sqs_client)
+    clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
+    # print(f"response from {purge_res}")
     if number is None:
         print("process default files in config.yaml")
         res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
@@ -180,7 +181,7 @@ def run_process_files(number):
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
             print(f"response : {res}")
             # process long pulling
-            thread = taskThread(1,"sqs",60,2,SQS_URL)
+            thread = taskThread(1,"sqs",60,2,SQS_URL,number)
             thread.start()
             
         else:

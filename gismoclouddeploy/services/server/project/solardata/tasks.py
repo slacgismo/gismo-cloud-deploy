@@ -19,7 +19,7 @@ from io import StringIO
 import time
 import socket
 logger = get_task_logger(__name__)
-
+SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
 
 @shared_task()
 def plot_gantt_chart_from_log_files_task(bucket, file_path_name, saved_image_name):
@@ -109,7 +109,8 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
     from project.solardata.models import SolarData
     from project.solardata.utils import (
         process_solardata_tools,
-        put_item_to_dynamodb
+        put_item_to_dynamodb,
+        publish_message_sns
     )
     app = create_app()
     with app.app_context():
@@ -153,6 +154,10 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
                                     )
         end_status = put_item_to_dynamodb(table_name, workerstatus=end_status)
         # return True
+        print("Send message ----- >")
+        mesage_id = publish_message_sns(message=file_path_name, subject=self.request.id, topic_arn= SNS_TOPIC)
+        logger.info(f'Send to SNS.----------> message: {mesage_id}')
+
 
 @shared_task(bind=True)
 def loop_tasks_status_task( self,
@@ -218,10 +223,10 @@ def loop_tasks_status_task( self,
         saved_image_file_path = saved_log_file_path+"/"+"runtime.pdf"
         plot_res = plot_gantt_chart(bucket=bucket_name,file_path_name=saved_logs_file_path_name,saved_image_name=saved_image_file_path)
         print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}, plot_res: {plot_res}")
-        logger.info(f'End of all process publish message to SNS.')
-        if plot_res:
-            SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
-            mesage_id = publish_message_sns(message="Task Completed", topic_arn= SNS_TOPIC)
-            logger.info(f'Send to SNS.----------> message: {mesage_id}')
+        # logger.info(f'End of all process publish message to SNS.')
+        # if plot_res:
+        #     SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
+        #     mesage_id = publish_message_sns(message="Task Completed", topic_arn= SNS_TOPIC)
+        #     logger.info(f'Send to SNS.----------> message: {mesage_id}')
         return response
     

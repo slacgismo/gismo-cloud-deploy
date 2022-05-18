@@ -10,30 +10,34 @@ from utils.sqs import (
     receive_queue_message,
     delete_queue_message
 )
-
+from typing import List
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
+import typing
 class taskThread (threading.Thread):
-    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str):
+    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.wait_time = wait_time
         self.counter = conuter
         self.sqs_url = sqs_url
+        self.num_task = num_task
 
 
 
     def run(self):
       print ("Starting " + self.name)
-      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url)
+      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task)
       print ("Exiting " + self.name)
 
 
-def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str) -> bool:
+def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int) -> List[str]:
     sqs_client = connect_aws_client('sqs')
+    tasks = []
+    num_task_completed = 0
     while counter:
         time.sleep(wait_time)
         messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
@@ -50,7 +54,12 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str) -> bool:
                 logger.info(f'The message : {message_text}')
                 # logger.info('Deleting message from the queue...')
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
-            
+                tasks.append(message_text)
+                num_task_completed += 1
             logger.info(f'Received and deleted message(s) from {sqs_url}.')
-            return True
-    return True
+            # return True
+        print(f"num_task_completed {num_task_completed}, num_task:{num_task}")
+        if num_task_completed == int(num_task):
+            logger.info("All task completed")
+            return tasks
+    return tasks

@@ -554,7 +554,7 @@ def process_solardata_tools(
         response = save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
         print(f"------ save solardata to S3 response: {response}")
 
-
+    
         return True
        
     except Exception as e:
@@ -653,11 +653,12 @@ def read_csv_from_s3(
 
 
 
-def publish_message_sns(message: str, topic_arn:str) -> str:
+def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
 
     sns_client = connect_aws_client('sns')
     message_id = sns_client.publish(
         TopicArn=topic_arn,
+        Subject = subject,
         Message=message,
     )
     logger.info(
