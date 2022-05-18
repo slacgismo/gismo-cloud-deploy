@@ -138,6 +138,7 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
     s3_client.put_object(Bucket=bucket, Key=saved_image_name, Body=img_data, 
                                  ContentType="image/png")
     return True
+    
 def save_logs_from_dynamodb_to_s3(table_name, saved_bucket, saved_file_path, saved_filename):
 
     # step 1. get all item from dynamodb
