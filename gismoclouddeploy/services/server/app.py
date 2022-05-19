@@ -150,12 +150,12 @@ def process_files( config_params_str:str,
                     ):
     # convert command str to json format and pass to object
     configure_obj = make_configure_from_str(config_params_str)
-    logger.info(f'''Start plot gantt chart''')
-    bucket = configure_obj.saved_bucket
-    log_file_path_name = configure_obj.saved_logs_target_path +"/"+ configure_obj.saved_logs_target_filename
-    save_file="results/runtime.pdf"
-    task = plot_gantt_chart_from_log_files_task.apply_async([bucket, log_file_path_name,save_file])
-    print(f"task {task}")
+    # logger.info(f'''Start plot gantt chart''')
+    # bucket = configure_obj.saved_bucket
+    # log_file_path_name = configure_obj.saved_logs_target_path +"/"+ configure_obj.saved_logs_target_filename
+    # save_file="results/runtime.pdf"
+    # task = plot_gantt_chart_from_log_files_task.apply_async([bucket, log_file_path_name,save_file])
+    # print(f"task {task}")
     # print(config_params_str)
     
     # task_ids = []

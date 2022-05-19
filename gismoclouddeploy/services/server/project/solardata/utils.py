@@ -21,7 +21,7 @@ import logging
 import plotly.express as px
 import io
 import plotly.io as pio
-
+from kubernetes import client, config
 
 from project.solardata.models.GanttObject import GanttObject
 
@@ -665,3 +665,15 @@ def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
         f'Message published to topic - {topic_arn} with message Id - {message_id}.'
     )
     return message_id
+
+def get_k8s_pod_name(container_name):
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    # print("Listing pods with their IPs:")
+    ret = v1.list_pod_for_all_namespaces(watch=False)
+    for i in ret.items:
+        # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+        podname = i.metadata.name.split("-")[0]
+        if podname == container_name:
+            # print(f"podname: {i.metadata.name}")
+            return i.metadata.name

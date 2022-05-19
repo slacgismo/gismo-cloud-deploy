@@ -114,6 +114,7 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
     )
     app = create_app()
     with app.app_context():
+
         pid = os.getpid()
         start_status = WorkerStatus(host_name=hostname,
                                     task_id=self.request.id, 
