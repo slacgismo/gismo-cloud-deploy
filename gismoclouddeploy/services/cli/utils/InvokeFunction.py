@@ -7,7 +7,7 @@ from models.Config import Config
 
 def exec_docker_command(command):
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
-    # print(result.returncode, result.stdout, result.stderr)
+    print(result.returncode, result.stdout, result.stderr)
     return result.stdout
 
 def invoke_eksctl_scale_node(cluster_name:str,

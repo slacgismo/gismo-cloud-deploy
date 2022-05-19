@@ -56,6 +56,10 @@ from utils.taskThread import (
     taskThread
 )
 
+from utils.aws_utils import (
+    check_environment_is_aws
+)
+
 from utils.sqs import(
     send_queue_message,
     list_queues,
@@ -178,9 +182,10 @@ def run_process_files(number):
     solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
     # step 1 . check node status
-    scale_nodes_and_wait(3, 60, 1)
-    # step 1.1 wait pod ready 
-    wait_container_ready( num_container=3, container_prefix="worker",counter=60, delay=1 )
+    if check_environment_is_aws():
+        scale_nodes_and_wait(3, 60, 1)
+        # step 1.1 wait pod ready 
+        wait_container_ready( num_container=3, container_prefix="worker",counter=60, delay=1 )
     # step 2 . clear sqs
     print("clean previous sqs")
     sqs_client = connect_aws_client('sqs')
@@ -203,14 +208,14 @@ def run_process_files(number):
         if type(int(number)) == int:
             print(f"process first {number} files")
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
-            print(f"response : {res}")
-            # process long pulling
-            total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
-            thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num)
-            thread.start()
+        #     print(f"response : {res}")
+        #     # process long pulling
+        #     total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
+        #     thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num)
+        #     thread.start()
             
-        else:
-            print(f"error input {number}")
+        # else:
+        #     print(f"error input {number}")
 
     return 
 
