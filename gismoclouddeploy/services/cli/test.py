@@ -110,10 +110,18 @@ v1= k8sclient.CoreV1Api()
 # v1 = client.CoreV1Api()
 # print("Listing pods with their IPs:")
 ret = v1.list_pod_for_all_namespaces(watch=False)
+pods = []
 for i in ret.items:
     # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+
     podname = i.metadata.name.split("-")[0]
-    print(i.metadata.name + " " + i.status.phase)
+    if podname == "worker" or podname == "webapp" :
+        pods.append(i)
+
+# print(pods[0].status.pod_ip)
+for pod in pods :
+    print(pod.metadata.name, pod.spec.node_name,pod.status.pod_ip )
+
 # config.load_incluster_config()
 # config.load_kube_config()
 # v1 = client.CoreV1Api()

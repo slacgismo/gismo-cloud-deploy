@@ -3,7 +3,7 @@ import time
 import logging
 # logger config
 import json
-
+from models.Config import Config
 from utils.aws_utils import(
     connect_aws_client,
     check_environment_is_aws,
@@ -26,6 +26,10 @@ from utils.eks_utils import (
     scale_nodes_and_wait
 )
 
+from utils.process_log import (
+    process_logs_from_s3
+)
+
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
@@ -33,7 +37,7 @@ logging.basicConfig(level=logging.INFO,
 
 import typing
 class taskThread (threading.Thread):
-    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int):
+    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
@@ -41,16 +45,17 @@ class taskThread (threading.Thread):
         self.counter = conuter
         self.sqs_url = sqs_url
         self.num_task = num_task
+        self.config_params_obj = config_params_obj
 
 
 
     def run(self):
       print ("Starting " + self.name)
-      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task)
+      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task, self.config_params_obj)
       print ("Exiting " + self.name)
 
 
-def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int) -> List[str]:
+def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_params_obj:Config) -> List[str]:
     sqs_client = connect_aws_client('sqs')
     tasks = []
     num_task_completed = 0
@@ -72,15 +77,24 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int) -> List
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 tasks.append(message_text)
                 num_task_completed += 1
-                if message_text == "Plot complete":
+                if message_text == "AllTaskCompleted":
                     logger.info("All task completed")
+                    s3_client = connect_aws_client("s3")
+                    logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
+                    process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
                     if check_environment_is_aws():
                         scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
+                    return True
                 logger.info(f'Received and deleted message(s) from {sqs_url}.')
-            # return True
-        print(f"num_task_completed {num_task_completed}, num_task:{num_task}")
+            print(f"num_task_completed {num_task_completed}, target num_task :{num_task}")
+           
+        
         # if num_task_completed == int(num_task):
         #     logger.info("All task completed")
+        #     # config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
+        #     s3_client = connect_aws_client("s3")
+        #     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
+        #     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
         #     if check_environment_is_aws():
         #         scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
 

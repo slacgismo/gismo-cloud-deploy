@@ -22,6 +22,7 @@ from project.solardata.utils import (
     read_csv_from_s3_with_column_and_time,
     put_item_to_dynamodb,
 
+
     remove_all_items_from_dynamodb,
     retrive_all_item_from_dyanmodb,
     save_logs_from_dynamodb_to_s3)
@@ -36,6 +37,7 @@ from project.solardata.tasks import (
     combine_files_to_file_task,
     loop_tasks_status_task,
     plot_gantt_chart_from_log_files_task,
+
 )
 import uuid
 
@@ -86,6 +88,7 @@ def process_first_n_files( config_params_str:str,
     temp_task_id = str(uuid.uuid4())
     start_status = WorkerStatus(host_name=hostname,task_id="process_first_n_files", host_ip=host_ip,pid=pid, function_name="process_first_n_files", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
     start_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus = start_status)
+   
     # print(f"start_res {start_res}")
     #     busy-stop/idle-start
     
@@ -150,6 +153,7 @@ def process_files( config_params_str:str,
                     ):
     # convert command str to json format and pass to object
     configure_obj = make_configure_from_str(config_params_str)
+
     # logger.info(f'''Start plot gantt chart''')
     # bucket = configure_obj.saved_bucket
     # log_file_path_name = configure_obj.saved_logs_target_path +"/"+ configure_obj.saved_logs_target_filename

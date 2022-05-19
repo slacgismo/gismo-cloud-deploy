@@ -77,6 +77,9 @@ from utils.sns import(
     sns_subscribe_sqs
 )
 
+from utils.process_log import(
+    process_logs_from_s3
+)
 
 
 # logger config
@@ -208,16 +211,18 @@ def run_process_files(number):
         if type(int(number)) == int:
             print(f"process first {number} files")
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
-        #     print(f"response : {res}")
-        #     # process long pulling
-        #     total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
-        #     thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num)
-        #     thread.start()
+            print(f"response : {res}")
+            # process long pulling
+            total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
+            thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num, config_params_obj=config_params_obj)
+            thread.start()
             
-        # else:
-        #     print(f"error input {number}")
+        else:
+            print(f"error input {number}")
 
     return 
+
+
 
 
 
@@ -287,6 +292,12 @@ def longpulling_thread():
     print("long pulling")
     thread = taskThread(1,"sqs",60,2,SQS_URL)
     thread.start()
+
+def process_logs_and_plot():
+    config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
+    s3_client = connect_aws_client("s3")
+    logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
+    process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
 
 
 # Parent Command
@@ -360,9 +371,8 @@ def trysqs():
 
 @main.command()
 def processlogs():
-    """"Try sqs"""
-    from utils.process_log import process_logs
-    process_logs()
+    """"Try logs"""
+    process_logs_and_plot()
 
 
 

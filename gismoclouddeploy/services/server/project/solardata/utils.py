@@ -21,7 +21,7 @@ import logging
 import plotly.express as px
 import io
 import plotly.io as pio
-from kubernetes import client, config
+
 
 from project.solardata.models.GanttObject import GanttObject
 
@@ -118,20 +118,7 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
     image_name ="test.png"
     
     pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600) 
-    # df = pd.DataFrame([
-    #     dict(Task="Job A", Start='2009-01-01', Finish='2009-02-28'),
-    #     dict(Task="Job B", Start='2009-03-05', Finish='2009-04-15'),
-    #     dict(Task="Job C", Start='2009-02-20', Finish='2009-05-30')
-    # ])
 
-    # fig = px.timeline(df, x_start="Start", x_end="Finish", y="Task")
-    # fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
-    # fig.show()
-    # image_name ="test.pdf"     
-    # fig.write_image( image_name, engine="kaleido")
-    # print("success show fig")
-    # # save to pdf
-    # # warning, the ACL here is set to public-read
     img_data = open(  image_name, "rb")
     s3_client = connect_aws_client('s3')
 
@@ -666,14 +653,3 @@ def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
     )
     return message_id
 
-def get_k8s_pod_name(container_name):
-    config.load_kube_config()
-    v1 = client.CoreV1Api()
-    # print("Listing pods with their IPs:")
-    ret = v1.list_pod_for_all_namespaces(watch=False)
-    for i in ret.items:
-        # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
-        podname = i.metadata.name.split("-")[0]
-        if podname == container_name:
-            # print(f"podname: {i.metadata.name}")
-            return i.metadata.name

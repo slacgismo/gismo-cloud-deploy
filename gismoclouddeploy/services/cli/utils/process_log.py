@@ -1,9 +1,16 @@
 import pandas as pd
 from models.WorkerStatus import WorkerStatus, make_worker_object_from_dataframe
 from datetime import datetime
+from utils.eks_utils import match_pod_ip_to_node_name
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
 import plotly.express as px
+import plotly.io as pio
+from utils.aws_utils import(
+    connect_aws_client,
+    read_all_csv_from_s3
+
+)
 def process_df_for_gantt_separate_worker(df:pd)  :
     # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
     # print(result)
@@ -149,7 +156,7 @@ def process_df_for_gantt(df:pd)  :
             worker_dict[worker.task_id] = info_dict
     
     # for key in worker_dict:
-    #     print(f" key --->:{key}")
+    #     print(f" v --->:{worker_dict[key]['host_ip']}")
 
 
     return worker_dict
@@ -163,41 +170,94 @@ def process_df_for_gantt(df:pd)  :
 #         fig['layout']['annotations'] += tuple([dict(x=x_pos,y=y_pos,text=i['Label'],font={'color':'black'})])
 
 
-def process_logs():
+def process_logs_from_local():
+
+
+
     print('process_logs')
     df = pd.read_csv('logs.csv', index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
     df['timestamp'] = pd.to_datetime(df['timestamp'], 
                                   unit='s')
-
+    # match pod id to node name
+    pods_name_prefix_set = ("worker", "webapp")
+    pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
     worker_dict = process_df_for_gantt(df)
-    
-    # # # Show dataframe
+    # atlter ip to host name
+
+
+    # # # # Show dataframe
 
     gantt_list = []
     for key , value in worker_dict.items():
-        print(f"{value} ")
-        print(f"start :{value['start']} end:{value['end']}")
-        task = f"{value['host_ip']} : {value['pid']}"
+        # print(f"{value} ")
+        # print(f"start :{value['start']} end:{value['end']}")
+        pod_ip = value['host_ip']
+        node_name = ""
+        # get node name
+        if pod_ip in pods_info_dict:
+            node_name = pods_info_dict[pod_ip]['NOD_NAME']
+
+        task = f"{node_name}: {value['host_ip']}: {value['pid']}"
         label = f"{value['task']}: duration:{value['duration']}s"
         item = dict(Task=task, 
         Start=(value['start']), 
         Finish=(value['end']), 
         Resource=value['task'],
+        Node = node_name,
         Label=label,
-         Host=value['host_ip'], 
-         Duration = value['duration'])
+        Host=value['host_ip'], 
+        Duration = value['duration'])
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
-    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Host", text="Label")
+    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Node", text="Label")
+    fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
+    fig.show()
+
+
+def process_logs_from_s3(bucket, logs_file_path_name, saved_image_name, s3_client):
+
+    df = read_all_csv_from_s3(bucket_name=bucket,
+                                file_path_name=str(logs_file_path_name), 
+                                s3_client=s3_client)
+
+
+    pods_name_prefix_set = ("worker", "webapp")
+    pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
+    worker_dict = process_df_for_gantt(df)
+    # atlter ip to host name
+
+
+    # # # # Show dataframe
+
+    gantt_list = []
+    for key , value in worker_dict.items():
+        # print(f"{value} ")
+        # print(f"start :{value['start']} end:{value['end']}")
+        pod_ip = value['host_ip']
+        node_name = ""
+        # get node name
+        if pod_ip in pods_info_dict:
+            node_name = pods_info_dict[pod_ip]['NOD_NAME']
+
+        task = f"{node_name}: {value['host_ip']}: {value['pid']}"
+        label = f"{value['task']}: duration:{value['duration']}s"
+        item = dict(Task=task, 
+        Start=(value['start']), 
+        Finish=(value['end']), 
+        Resource=value['task'],
+        Node = node_name,
+        Label=label,
+        Host=value['host_ip'], 
+        Duration = value['duration'])
+        gantt_list.append(item)
+    gantt_df = pd.DataFrame(gantt_list)
+    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Node", text="Label")
     fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
     # fig.show()
-    # image_name = "logs.png"
-    # fig.write_image( image_name, engine="kaleido")
-    # print("success show fig")
-    # # save to pdf
-    # # warning, the ACL here is set to public-read
-    # img_data = open(  image_name, "rb")
-    # s3_client = connect_aws_client('s3')
+    image_name ="test.png"
+    pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600) 
 
-    # s3_client.put_object(Bucket=bucket, Key=saved_image_name, Body=img_data, 
-    #                              ContentType="image/pdf")
+    img_data = open( image_name, "rb")
+    s3_client.put_object(Bucket=bucket, Key=saved_image_name, Body=img_data, 
+                                 ContentType="image/png")
+

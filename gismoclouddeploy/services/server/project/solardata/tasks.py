@@ -220,15 +220,11 @@ def loop_tasks_status_task( self,
                                         saved_file_path=saved_log_file_path,
                                         saved_filename=saved_log_file_name )
         remov_res = remove_all_items_from_dynamodb(table_name)
-        saved_logs_file_path_name = saved_log_file_path+"/"+saved_log_file_name
-        saved_image_file_path = saved_log_file_path+"/"+"runtime.pdf"
-        plot_res = plot_gantt_chart(bucket=bucket_name,file_path_name=saved_logs_file_path_name,saved_image_name=saved_image_file_path)
-        mesage_id = publish_message_sns(message="Plot complete", subject=self.request.id, topic_arn= SNS_TOPIC)
-        print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}, plot_res: {plot_res}, mesage_id:{mesage_id}")
-        # logger.info(f'End of all process publish message to SNS.')
-        # if plot_res:
-        #     SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
-        #     mesage_id = publish_message_sns(message="Task Completed", topic_arn= SNS_TOPIC)
-        #     logger.info(f'Send to SNS.----------> message: {mesage_id}')
+        print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
+        logger.info(f'End of all process publish message to SNS.')
+        SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
+        mesage_id = publish_message_sns(message="AllTaskCompleted",subject=self.request.id, topic_arn= SNS_TOPIC)
+        logger.info(f'Send to SNS.----------> message: {mesage_id}')
+
         return response
     
