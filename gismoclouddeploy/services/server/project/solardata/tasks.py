@@ -18,8 +18,44 @@ from project.solardata.models.WorkerStatus import WorkerStatus
 from io import StringIO
 import time
 import socket
+import inspect
+
 logger = get_task_logger(__name__)
 SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
+
+def track_logs( task_id:str,
+                function_name:str,
+                time:str, 
+                action:str, 
+                message:str,
+                process_file_name:str,
+                table_name:str,
+                column_name:str):
+
+
+    from project import create_app
+    from project.solardata.models import SolarData
+    from project.solardata.utils import (
+        put_item_to_dynamodb,
+    )
+    app = create_app()
+    with app.app_context():
+        hostname = socket.gethostname()
+        host_ip = socket.gethostbyname(hostname)      
+        pid = os.getpid()
+        start_status = WorkerStatus(  host_name=hostname,
+                                        task_id=task_id,
+                                        host_ip=host_ip, 
+                                        pid = str(pid),
+                                        function_name=function_name,
+                                        action=action, 
+                                        time=time,
+                                        message=message,
+                                        filename=process_file_name,
+                                        column_name = column_name
+                                        )
+        start_res = put_item_to_dynamodb(table_name=table_name, workerstatus=start_status)
+
 
 @shared_task()
 def plot_gantt_chart_from_log_files_task(bucket, file_path_name, saved_image_name):
@@ -74,10 +110,6 @@ def save_data_from_db_to_s3_task(bucket_name, file_path, file_name, delete_data)
     with app.app_context():
         solardatas = [solardata.to_json()
                       for solardata in SolarData.query.all()]
-        # logger.info(solardatas)
-
-        # convert josn to csv file and save to s3
-        # current_app.logger.info(all_datas)
         df = pd.json_normalize(solardatas)
         csv_buffer = StringIO()
         df.to_csv(csv_buffer)
@@ -101,10 +133,6 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
         'container_id': os.uname()[1]
     }
     solar_params_obj = make_solardata_params_from_str(solar_params_str)
-    hostname = socket.gethostname()
-    host_ip = socket.gethostbyname(hostname)       
-
-    # print("hello world here")
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
@@ -114,20 +142,15 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
     )
     app = create_app()
     with app.app_context():
-
-        pid = os.getpid()
-        start_status = WorkerStatus(host_name=hostname,
-                                    task_id=self.request.id, 
-                                    host_ip=host_ip, 
-                                    pid = str(pid),
-                                    function_name="process_data_task",
-                                    action="idle-stop/busy-start", 
-                                    time=str(time.time()),
-                                    message="init process data task",
-                                    filename=file_path_name,
-                                    column_name = column_name
-                                    )
-        start_res = put_item_to_dynamodb(table_name, workerstatus=start_status)
+        track_logs(task_id=self.request.id,
+                    function_name="process_data_task",
+                    time=str(time.time()),
+                    action="idle-stop/busy-start", 
+                    message="init process data task",
+                    table_name=table_name,
+                    process_file_name=file_path_name,
+                    column_name=column_name
+                    )
   
         process_solardata_tools(  
                             self.request.id,
@@ -142,19 +165,15 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
                             )
 
         print("end of process solardata")
-        end_status = WorkerStatus(host_name=hostname,
-                                    task_id=self.request.id, 
-                                    host_ip=host_ip, 
-                                    pid = str(pid),
-                                    function_name="process_data_task",
-                                    action="busy-stop/idle-start", 
-                                    time=str(time.time()),
-                                    message="end process data task",
-                                    filename=file_path_name,
-                                    column_name = column_name
-                                    )
-        end_status = put_item_to_dynamodb(table_name, workerstatus=end_status)
-        # return True
+        track_logs(task_id=self.request.id,
+                    function_name="process_data_task",
+                    action="busy-stop/idle-start",
+                    time=str(time.time()),
+                    message="end process data task",
+                    table_name=table_name,
+                    process_file_name=file_path_name,
+                    column_name=column_name
+                    )
         print("Send message ----- >")
         mesage_id = publish_message_sns(message=file_path_name, subject=self.request.id, topic_arn= SNS_TOPIC)
         logger.info(f'Send to SNS.----------> message: {mesage_id}')
@@ -175,19 +194,16 @@ def loop_tasks_status_task( self,
                             ):
     print(f"loop ---> set delay: {delay}, count : {count}, task_id: {self.request.id}")
     counter = int(count)
-    hostname = socket.gethostname()
-    host_ip = socket.gethostbyname(hostname)   
-    pid = os.getpid()
+    track_logs(task_id=self.request.id,
+                    function_name="loop_tasks_status_task",
+                    time=str(time.time()),
+                    action="idle-stop/busy-start", 
+                    message="init loop_tasks_status_task",
+                    table_name=table_name,
+                    process_file_name=None,
+                    column_name=None
+                    )
 
-    start_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip,pid = str(pid), function_name="loop_tasks_status_task", action="idle-stop/busy-start", time=str(time.time()),message="init loop_tasks_status_task")
-    from project import create_app
-    from project.solardata.models import SolarData
-    from project.solardata.utils import (
-        put_item_to_dynamodb
-    )
-    app = create_app()
-    with app.app_context():
-        start_res = put_item_to_dynamodb(table_name=table_name, workerstatus= start_status) 
     
     while counter > 0:
         # check the task status
@@ -211,10 +227,18 @@ def loop_tasks_status_task( self,
     from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,plot_gantt_chart,publish_message_sns
     app = create_app()
     with app.app_context():
-        end_status = WorkerStatus(host_name=hostname,task_id=self.request.id, host_ip=host_ip,pid= str(pid), function_name="loop_tasks_status_task", action="busy-stop/idle-start", time=str(time.time()),message="end loop_tasks_status_task")
-        end_status = put_item_to_dynamodb(table_name=table_name, workerstatus = end_status)
-        response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
 
+        track_logs(task_id=self.request.id,
+                    function_name="loop_tasks_status_task",
+                    time=str(time.time()),
+                    action="busy-stop/idle-start", 
+                    message="end loop_tasks_status_task",
+                    table_name=table_name,
+                    process_file_name=None,
+                    column_name=None
+                    )
+
+        response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
         save_res = save_logs_from_dynamodb_to_s3(table_name=table_name,
                                         saved_bucket=bucket_name,
                                         saved_file_path=saved_log_file_path,
@@ -222,7 +246,7 @@ def loop_tasks_status_task( self,
         remov_res = remove_all_items_from_dynamodb(table_name)
         print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
         logger.info(f'End of all process publish message to SNS.')
-        SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
+
         mesage_id = publish_message_sns(message="AllTaskCompleted",subject=self.request.id, topic_arn= SNS_TOPIC)
         logger.info(f'Send to SNS.----------> message: {mesage_id}')
 
