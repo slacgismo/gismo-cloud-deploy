@@ -8,6 +8,8 @@ from utils.InvokeFunction import (
 
 import logging 
 from typing import List
+import yaml
+from os import path
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
@@ -128,3 +130,21 @@ def match_pod_ip_to_node_name(pods_name_sets:set) -> dict:
     # for key, value in pods.items():
     #     print(key, value)
     return pods
+
+def replace_k8s_yaml_with_replicas(filename:str, replicas:int, app_name:str) -> bool:
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    with open(filename) as f:
+            dep = yaml.safe_load(f)
+            name=app_name
+            dep['spec']['replicas']= replicas
+            print(dep['spec']['replicas'])
+            try:
+                resp = apps_v1_api.replace_namespaced_deployment(name=name, 
+                    body=dep, namespace="default")
+                print("Replace created. status='%s'" % str(resp.status))
+                return True
+            except Exception as e:
+                print(f"no deplyment.yaml {e}")
+                return False
+                    

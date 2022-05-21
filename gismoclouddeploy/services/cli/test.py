@@ -53,12 +53,12 @@
 # from models.Node import Node
 # from concurrent.futures import thread
 # from distutils.command.config import config
-from kubernetes import client as k8sclient
-from kubernetes import config as k8sconfig
+# from kubernetes import client as k8sclient
+# from kubernetes import config as k8sconfig
 # import json
 # # from kubernetes import client as k8sclient
 # # from kubernetes import config as k8sconfig
-
+from kubernetes import client, config
 # from utils.ReadWriteIO import (read_yaml)
 # import io
 # import sys
@@ -101,30 +101,27 @@ from kubernetes import config as k8sconfig
 #     sns_subscribe_sqs
 # )
 
-k8sconfig.load_kube_config()
-v1= k8sclient.CoreV1Api()
 # response = v1k8.list_node()
 # nodes = []
 # check confition
 # config.load_kube_config()
 # v1 = client.CoreV1Api()
 # print("Listing pods with their IPs:")
-ret = v1.list_pod_for_all_namespaces(watch=False)
-pods = []
-for i in ret.items:
-    # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+# ret = v1.list_pod_for_all_namespaces(watch=False)
+# pods = []
+# for i in ret.items:
+#     # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
 
-    podname = i.metadata.name.split("-")[0]
-    if podname == "worker" or podname == "webapp" :
-        pods.append(i)
+#     podname = i.metadata.name.split("-")[0]
+#     if podname == "worker" or podname == "webapp" :
+#         pods.append(i)
 
-# print(pods[0].status.pod_ip)
-for pod in pods :
-    print(pod.metadata.name, pod.spec.node_name,pod.status.pod_ip )
+# # print(pods[0].status.pod_ip)
+# for pod in pods :
+#     print(pod.metadata.name, pod.spec.node_name,pod.status.pod_ip )
 
 # config.load_incluster_config()
-# config.load_kube_config()
-# v1 = client.CoreV1Api()
+
 # # res = v1.list_node()  
 # container_name = "webapp"
 # ret = v1.list_pod_for_all_namespaces(watch=False)
@@ -134,3 +131,25 @@ for pod in pods :
 #     if podname == container_name:
 #         # print(f"podname: {i.metadata.name}")
 #         print(i.metadata.name)
+from os import path
+import yaml
+"../../k8s/k8s-local/worker.deployment.yaml"
+def replace_k8s_yaml(filename):
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    with open(path.join(path.dirname(__file__), filename)) as f:
+            dep = yaml.safe_load(f)
+            name="worker"
+            dep['spec']['replicas']= 1
+            print(dep['spec']['replicas'])
+            try:
+                resp = apps_v1_api.replace_namespaced_deployment(name=name, 
+                    body=dep, namespace="default")
+                print("Replace created. status='%s'" % str(resp.status))
+                return True
+            except Exception as e:
+                print(f"no deplyment.yaml {e}")
+                return False
+                    
+           
+replace_k8s_yaml("../../k8s/k8s-local/worker.deployment.yaml")

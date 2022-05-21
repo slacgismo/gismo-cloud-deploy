@@ -116,7 +116,6 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
     fig.update_yaxes(autorange="reversed") # otherwise tasks are listed from the bottom up
 
     image_name ="test.png"
-    
     pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600) 
 
     img_data = open(  image_name, "rb")
