@@ -8,7 +8,7 @@ import plotly.express as px
 import plotly.io as pio
 from utils.aws_utils import(
     connect_aws_client,
-    read_all_csv_from_s3
+    read_all_csv_from_s3_and_parse_dates_from
 
 )
 def process_df_for_gantt_separate_worker(df:pd)  :
@@ -216,8 +216,9 @@ def process_logs_from_local():
 
 def process_logs_from_s3(bucket, logs_file_path_name, saved_image_name, s3_client):
 
-    df = read_all_csv_from_s3(bucket_name=bucket,
+    df = read_all_csv_from_s3_and_parse_dates_from(bucket_name=bucket,
                                 file_path_name=str(logs_file_path_name), 
+                                dates_column_name = "timestamp",
                                 s3_client=s3_client)
 
 
@@ -225,8 +226,7 @@ def process_logs_from_s3(bucket, logs_file_path_name, saved_image_name, s3_clien
     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
     worker_dict = process_df_for_gantt(df)
     # atlter ip to host name
-
-
+    # print(worker_dict)
     # # # # Show dataframe
 
     gantt_list = []

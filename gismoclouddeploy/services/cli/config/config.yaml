@@ -12,7 +12,7 @@ files_config:
   # files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv","PVO/PVOutput/10664.csv"]
   # files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv"]
   files: ["PVO/PVOutput/10059.csv"]
-  column_names: ["Power(W)"]
+  column_names: ["Power(W)","Po","(W)","WS_4"]
   # column_names: ["Power(W)","W"]
   # column_names: ["W"]
 output:

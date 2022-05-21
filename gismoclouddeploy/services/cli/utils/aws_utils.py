@@ -49,10 +49,11 @@ def check_environment_is_aws():
     is_aws = True if "ec2" in my_user else False
     return is_aws
 
-def read_all_csv_from_s3(
+def read_all_csv_from_s3_and_parse_dates_from(
     bucket_name:str=None,
     file_path_name:str=None,
     s3_client = None,
+    dates_column_name = None,
     index_col=0
     ):
 
@@ -65,8 +66,8 @@ def read_all_csv_from_s3(
             print(f"Successful S3 get_object response. Status - {status}")
             # result_df = pd.read_csv(response.get("Body"),
             #                         index_col=index_col)
-            result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
-            result_df['timestamp'] = pd.to_datetime(result_df['timestamp'], 
+            result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=[dates_column_name], infer_datetime_format=True)
+            result_df[dates_column_name] = pd.to_datetime(result_df[dates_column_name], 
                                     unit='s')
             return result_df
         else:

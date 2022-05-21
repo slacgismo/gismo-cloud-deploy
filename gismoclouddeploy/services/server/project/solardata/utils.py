@@ -1,3 +1,4 @@
+from ast import Str
 from fileinput import filename
 import re
 from tabnanny import verbose
@@ -21,7 +22,7 @@ import logging
 import plotly.express as px
 import io
 import plotly.io as pio
-
+from typing import Set
 
 from project.solardata.models.GanttObject import GanttObject
 
@@ -86,8 +87,9 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
     print(f"--->plot process file from {bucket}, {file_path_name} to {saved_image_name} ")
     # read log from csv
     s3_client = connect_aws_client('s3')
-    df = read_all_csv_from_s3(bucket_name=bucket,
+    df = read_all_csv_from_s3_and_parse_dates_from(bucket_name=bucket,
                                 file_path_name=str(file_path_name), 
+                                dates_column_name=['timestamp'],
                                 s3_client=s3_client)
     # process time 
 
@@ -271,15 +273,13 @@ def check_aws_validity(key_id, secret):
 
 def read_column_from_csv_from_s3(
     bucket_name=None,
-    file_path=None,
-    file_name=None,
+    file_path_name=None,
     s3_client = None
     ):
-    full_path = file_path + "/" + file_name
-    if bucket_name is None or full_path is None or s3_client is None:
+    if bucket_name is None or file_path_name is None or s3_client is None:
         return
     
-    response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
 
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
@@ -290,14 +290,15 @@ def read_column_from_csv_from_s3(
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
 
-def read_all_csv_from_s3(
+def read_all_csv_from_s3_and_parse_dates_from(
     bucket_name:str=None,
     file_path_name:str=None,
     s3_client = None,
+    dates_column_name = None,
     index_col=0
     ):
 
-    if bucket_name is None or file_path_name is None or s3_client is None :
+    if bucket_name is None or file_path_name is None or s3_client is None or dates_column_name is None :
         return
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
@@ -312,6 +313,7 @@ def read_all_csv_from_s3(
         result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
         result_df['timestamp'] = pd.to_datetime(result_df['timestamp'], 
                                   unit='s')
+        print(f"result df ---> {result_df}")
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
@@ -347,7 +349,7 @@ def read_csv_from_s3_with_column_name(
     file_path_name=None,
     column_name = None,
     s3_client = None,
-    # index_col=0,
+    #index_col=0,
     # parse_dates=[0],
     ):
 
@@ -361,12 +363,14 @@ def read_csv_from_s3_with_column_name(
     if status == 200:
         print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(response.get("Body"),
-                                # index_col=index_col,
+                                index_col=False,
                                 # parse_dates=parse_dates,
                                 usecols=[column_name])
+        # drop nan 
+        df  = result_df.dropna()
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
-    return result_df
+    return df
 
 def read_csv_from_s3_first_two_rows(
     bucket_name=None,
@@ -443,6 +447,10 @@ def process_solardata_tools(
         return False
     error_message = ""
     s3_client = connect_aws_client("s3")
+    # columns = read_column_from_csv_from_s3(bucket_name=bucket_name,file_path_name=file_path_name,s3_client=s3_client)
+    # for column in columns:
+    #     print(column)
+
     try:
         df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
     except Exception as e:
@@ -651,4 +659,73 @@ def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
         f'Message published to topic - {topic_arn} with message Id - {message_id}.'
     )
     return message_id
+
+
+def read_all_csv_from_s3(
+    bucket_name:str=None,
+    file_path_name:str=None,
+    s3_client = None,
+    index_col=0
+    ):
+
+    if bucket_name is None or file_path_name is None or s3_client is None  :
+        return
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+    except Exception as e:
+        print(f"error read  file: {file_path_name} error:{e}")
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        # result_df = pd.read_csv(response.get("Body"),
+        #                         index_col=index_col)
+        result_df = pd.read_csv(response.get("Body"), index_col=0,  infer_datetime_format=True)
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
+def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_name:str, s3_client) -> Set[set] :
+    '''
+    Find the match column name from key word. if matched column has no value inside, it will be skipped.
+    If this function find exactly match with key and column name , it return the the match column name in set.
+    If no exactly match key was found, it return the partial match key with longest data set.  
+    '''
+    all_df = read_all_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
+    total_columns = list(all_df.columns)
+    exact_column_set = set()
+    # find exactly match 
+    for column in total_columns:
+        # print(column)
+        for key in columns_key:
+            if key  ==  column:
+                # check 
+                exact_column_set.add(column)
+    logger.info(f"find exact match column name {exact_column_set}")
+    if len(exact_column_set) > 0 :
+        return  exact_column_set
+    # find partial 
+    logger.info(f"no exact match column name")
+    # get the max length fo match key
+    matched_column_set = set()
+    for column in total_columns:
+        for key in columns_key:
+            if  key in column:
+                matched_column_set.add(column)
+
+    max_count = 0
+    key_with_most_data = ""
+    for key in matched_column_set:
+        # check if column has value. 
+        tmp_df = all_df[key].dropna()
+        # print(f"key: {key},---> {len(tmp_df)}")
+        if max_count <= len(tmp_df):
+            max_count = len(tmp_df)
+            key_with_most_data = key
+
+    validated_column_set = set()
+    validated_column_set.add(key_with_most_data)
+    logger.info(f"find partial match column name {validated_column_set}")
+    # print(f"validated set{validated_column_set}")
+    return validated_column_set
 

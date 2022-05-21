@@ -21,11 +21,11 @@ from project.solardata.utils import (
     connect_aws_client,
     read_csv_from_s3_with_column_and_time,
     put_item_to_dynamodb,
-
-
+    find_matched_column_name_set,
     remove_all_items_from_dynamodb,
     retrive_all_item_from_dyanmodb,
     save_logs_from_dynamodb_to_s3)
+
 import click
 from celery.result import AsyncResult
 import time
@@ -50,6 +50,9 @@ cli = FlaskGroup(create_app=create_app)
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
+
+
+
 
 
 @cli.command("combine_files")
@@ -97,8 +100,12 @@ def process_first_n_files( config_params_str:str,
     task_ids = []
     files = list_files_in_bucket(configure_obj.bucket)
     n_files = files[0:int(first_n_files)]
+    s3_client = connect_aws_client('s3')
     for file in n_files:
-        for column in configure_obj.column_names:
+         # implement partial match 
+        matched_column_set = find_matched_column_name_set(bucket_name=configure_obj.bucket, columns_key=configure_obj.column_names, file_path_name=file['Key'],s3_client=s3_client)
+        for column in matched_column_set:
+       
             path, filename = os.path.split(file['Key'])
             prefix = path.replace("/", "-")
             temp_saved_filename = f"{prefix}-{filename}"
@@ -118,7 +125,7 @@ def process_first_n_files( config_params_str:str,
             task_ids.append(str(task_id)) 
     for id in task_ids:
         print(id)
-    # loop the task status in celery task
+    # # loop the task status in celery task
     loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, 
                                                     configure_obj.interval_of_exit_check_status,
                                                     task_ids,
