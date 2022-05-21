@@ -4,8 +4,7 @@ from flask import Flask
 from flask_celeryext import FlaskCeleryExt
 # from flask_migrate import Migrate
 # from flask_sqlalchemy import SQLAlchemy
-from flask_wtf.csrf import CSRFProtect  # new
-from flask_cors import CORS  # new
+
 from project.celery_utils import make_celery
 from project.config import config
 
@@ -14,8 +13,7 @@ from project.config import config
 # db = SQLAlchemy()
 # migrate = Migrate()
 ext_celery = FlaskCeleryExt(create_celery_app=make_celery)
-csrf = CSRFProtect()  # new
-cors = CORS()  # new
+
 
 
 def create_app(config_name=None):
@@ -32,9 +30,6 @@ def create_app(config_name=None):
     # db.init_app(app)
     # migrate.init_app(app, db)
     ext_celery.init_app(app)
-    csrf.init_app(app)  # new
-    cors.init_app(app, resources={r"*": {"origins": "*"}})  # new
-
 
     from project.solardata import solardata_blueprint
     app.register_blueprint(solardata_blueprint)

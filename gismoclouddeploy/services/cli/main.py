@@ -193,42 +193,42 @@ def run_process_files(number):
         # step 1.1 wait pod ready 
         wait_container_ready( num_container=3, container_prefix="worker",counter=60, delay=1 )
         # update k8s yaml
-    worker = path.join(path.dirname(__file__), "k8s/k8s-local/worker.deployment.yaml")
-    print(worker)
+    # worker = path.join(path.dirname(__file__), "k8s/k8s-local/worker.deployment.yaml")
+    # print(worker)
 
-    replace_k8s_yaml_with_replicas(filename=worker, replicas=5,app_name="worker")
+    # replace_k8s_yaml_with_replicas(filename=worker, replicas=5,app_name="worker")
     # # step 2 . clear sqs
-    # print("clean previous sqs")
-    # sqs_client = connect_aws_client('sqs')
-    # # purge_res = purge_queue(queue_url=SQS_URL, sqs_client=sqs_client)
-    # clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
+    print("clean previous sqs")
+    sqs_client = connect_aws_client('sqs')
+    # purge_res = purge_queue(queue_url=SQS_URL, sqs_client=sqs_client)
+    clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
 
 
-    # if number is None:
-    #     print("process default files in config.yaml")
-    #     res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
-    #                                     solarParams_obj= solardata_parmas_obj,
-    #                                     container_type= config_params_obj.container_type, 
-    #                                     container_name=config_params_obj.container_name)
-    #     print(f"response : {res}")
-    # elif number == "n":
-    #     print("process all files")
-    #     res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
-    #     print(f"response : {res}")
-    # else:
-    #     if type(int(number)) == int:
-    #         print(f"process first {number} files")
-    #         res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
-    #         print(f"response : {res}")
-    #         # process long pulling
-    #         total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
-    #         thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num, config_params_obj=config_params_obj)
-    #         thread.start()
+    if number is None:
+        print("process default files in config.yaml")
+        res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
+                                        solarParams_obj= solardata_parmas_obj,
+                                        container_type= config_params_obj.container_type, 
+                                        container_name=config_params_obj.container_name)
+        print(f"response : {res}")
+    elif number == "n":
+        print("process all files")
+        res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
+        print(f"response : {res}")
+    else:
+        if type(int(number)) == int:
+            print(f"process first {number} files")
+            res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
+            print(f"response : {res}")
+            # process long pulling
+            total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
+            thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num, config_params_obj=config_params_obj)
+            thread.start()
             
-    #     else:
-    #         print(f"error input {number}")
+        else:
+            print(f"error input {number}")
 
-    # return 
+    return 
 
 
 
