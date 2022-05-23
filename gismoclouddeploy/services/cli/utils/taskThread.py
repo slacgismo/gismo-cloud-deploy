@@ -37,7 +37,7 @@ logging.basicConfig(level=logging.INFO,
 
 import typing
 class taskThread (threading.Thread):
-    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config):
+    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
@@ -46,16 +46,14 @@ class taskThread (threading.Thread):
         self.sqs_url = sqs_url
         self.num_task = num_task
         self.config_params_obj = config_params_obj
-
-
-
+        self.delete_nodes_after_processing = delete_nodes_after_processing
     def run(self):
       print ("Starting " + self.name)
-      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task, self.config_params_obj)
+      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task, self.config_params_obj, self.delete_nodes_after_processing)
       print ("Exiting " + self.name)
 
 
-def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_params_obj:Config) -> List[str]:
+def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool) -> List[str]:
     sqs_client = connect_aws_client('sqs')
     tasks = []
     num_task_completed = 0
@@ -82,23 +80,13 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
                     s3_client = connect_aws_client("s3")
                     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
                     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
-                    if check_environment_is_aws():
+                    if check_environment_is_aws() and delete_nodes_after_processing:
+                        logger.info("Delete node after processing")
                         scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
                     return True
                 logger.info(f'Received and deleted message(s) from {sqs_url}.')
             print(f"num_task_completed {num_task_completed}, target num_task :{num_task}")
-           
         
-        # if num_task_completed == int(num_task):
-        #     logger.info("All task completed")
-        #     # config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
-        #     s3_client = connect_aws_client("s3")
-        #     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
-        #     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
-        #     if check_environment_is_aws():
-        #         scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
-
-        #     return tasks
     # purge queue at end of task
     purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
     return tasks

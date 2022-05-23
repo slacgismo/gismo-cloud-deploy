@@ -60,7 +60,8 @@ from utils.eks_utils import(
 )
 
 from utils.taskThread import (
-    taskThread
+    taskThread,
+    long_pulling_sqs
 )
 
 from utils.aws_utils import (
@@ -218,11 +219,12 @@ def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
 
 
 
-def run_process_files(number):
+def run_process_files(number,delete_nodes):
     # import parametes from yaml
     solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
     # step 1 . check node status from local or AWS
+
     if check_environment_is_aws():
 
         scale_nodes_and_wait(scale_node_num=config_params_obj.eks_nodes_number, counter=config_params_obj.scale_eks_nodes_wait_time, delay=1)
@@ -235,7 +237,7 @@ def run_process_files(number):
             # check webapp exist
             create_or_update_k8s(config_params_obj=config_params_obj,env="local")
             
-    # # step 2 . clear sqs
+    # # # step 2 . clear sqs
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client('sqs')
     clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
@@ -259,8 +261,9 @@ def run_process_files(number):
             print(f"response : {res}")
             # process long pulling
             total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
-            thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num, config_params_obj=config_params_obj)
+            thread = taskThread(1,"sqs",120,2,SQS_URL,total_task_num, config_params_obj=config_params_obj, delete_nodes_after_processing=delete_nodes)
             thread.start()
+
             
         else:
             print(f"error input {number}")
@@ -357,9 +360,12 @@ def main():
 @click.option('--number','-n',
             help="Process the first n files in bucket, if number=n, run all files in the bucket", 
             default= None)
-def run_files(number):
+@click.option('--deletenodes','-delete',
+            help="Process the first n files in bucket, if number=n, run all files in the bucket", 
+            default= True)
+def run_files(number,deletenodes):
     """ Run Process Files"""
-    run_process_files(number)
+    run_process_files(number, deletenodes)
 
 @main.command()
 @click.argument('min_nodes')
