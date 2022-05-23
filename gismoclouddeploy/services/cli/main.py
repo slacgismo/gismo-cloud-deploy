@@ -227,7 +227,7 @@ def run_process_files(number,delete_nodes):
 
     if check_environment_is_aws():
 
-        scale_nodes_and_wait(scale_node_num=config_params_obj.eks_nodes_number, counter=config_params_obj.scale_eks_nodes_wait_time, delay=1)
+        scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1)
         # step 1.1 wait pod ready 
         create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
         # wait_container_ready( num_container=config_params_obj.eks_nodes_number, container_prefix="worker",counter=60, delay=1 )

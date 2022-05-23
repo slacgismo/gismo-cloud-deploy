@@ -25,6 +25,7 @@ def num_container_ready(container_prefix:str) -> int:
         if podname == container_prefix:
             # print("%s\t%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, i.status.phase))
             if i.status.phase == "Running":
+                print("%s\t%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, i.status.phase))
                 num_container_running += 1
 
     return num_container_running
@@ -40,7 +41,7 @@ def wait_container_ready(num_container:str, container_prefix:str, counter: int, 
         time.sleep(delay)
     return False
 
-def scale_nodes_and_wait(scale_node_num:str, counter:int, delay:int) -> bool:
+def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int) -> bool:
     
     num_nodes = num_of_nodes_ready()
     print(f"scale node {scale_node_num}, current node number: {num_nodes}")
