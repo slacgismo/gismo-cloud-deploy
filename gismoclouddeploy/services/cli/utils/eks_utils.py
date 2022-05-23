@@ -23,7 +23,7 @@ def num_container_ready(container_prefix:str) -> int:
     for i in ret.items:
         podname = i.metadata.name.split("-")[0]
         if podname == container_prefix:
-            print("%s\t%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, i.status.phase))
+            # print("%s\t%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, i.status.phase))
             if i.status.phase == "Running":
                 num_container_running += 1
 
