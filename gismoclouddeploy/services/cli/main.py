@@ -90,7 +90,7 @@ from utils.process_log import(
 )
 
 from os import path
-
+from halo import Halo
 
 # logger config
 logger = logging.getLogger()
@@ -224,10 +224,16 @@ def run_process_files(number,delete_nodes):
     solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
     # step 1 . check node status from local or AWS
+    spinner = Halo(text='Loading', spinner='dots')
+    # spinner.start()
 
+    # # Run time consuming work here
+    # # You can also change properties for spinner as and when you want
+
+    # spinner.stop()
     if check_environment_is_aws():
 
-        scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1)
+        scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1, spinner = spinner)
         # step 1.1 wait pod ready 
         create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
         # wait_container_ready( num_container=config_params_obj.eks_nodes_number, container_prefix="worker",counter=60, delay=1 )
@@ -245,10 +251,12 @@ def run_process_files(number,delete_nodes):
 
     if number is None:
         logger.info(" ========= Process default files in config.yam ========= ")  
+        spinner.start()
         res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
                                         solarParams_obj= solardata_parmas_obj,
                                         container_type= config_params_obj.container_type, 
                                         container_name=config_params_obj.container_name)
+        spinner.stop()
         print(f"response : {res}")
     elif number == "n":
         logger.info(" ========= Process all files in bucket ========= ")
@@ -257,7 +265,9 @@ def run_process_files(number,delete_nodes):
     else:
         if type(int(number)) == int:
             logger.info(f" ========= Process first {number} in bucket ========= ")
+            spinner.start()
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
+            spinner.stop()
             print(f"response : {res}")
             # process long pulling
             total_task_num = int(number) + 1  # extra task for save results , logs and plot logs
