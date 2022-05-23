@@ -10,6 +10,13 @@ def exec_docker_command(command):
     print(result.returncode, result.stdout, result.stderr)
     return result.stdout
 
+
+def invoke_kubectl_apply(folder:str = "../k8s/k8s-local"):
+    command = [ "kubectl", 'apply', '-f', f'{folder}' ]
+
+    res = exec_docker_command(command)
+    return res
+
 def invoke_eksctl_scale_node(cluster_name:str,
                             group_name:str,
                             nodes:int,

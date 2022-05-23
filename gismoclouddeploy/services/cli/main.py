@@ -1,5 +1,6 @@
 
 from ast import Constant
+from asyncore import file_dispatcher
 import click
 import boto3
 import time
@@ -29,7 +30,9 @@ from utils.InvokeFunction import (
     invok_docekr_exec_run_process_files,
     invok_docekr_exec_run_process_all_files,
     invok_docekr_exec_run_process_first_n_files,
-    invoke_eksctl_scale_node
+    invoke_eksctl_scale_node,
+    get_k8s_pod_name,
+    invoke_kubectl_apply
     )
 from typing import List
 import plotly.express as px
@@ -50,7 +53,10 @@ from utils.eks_utils import(
     scale_node_number,
     scale_nodes_and_wait,
     wait_container_ready,
-    replace_k8s_yaml_with_replicas
+    replace_k8s_yaml_with_replicas,
+    create_k8s_from_yaml,
+    create_k8s_svc_from_yaml,
+    num_container_ready
 )
 
 from utils.taskThread import (
@@ -181,43 +187,74 @@ def list_sns():
 
 
 
+def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
+    ''' Read worker config, if the replicas of woker is between from config.yaml and k8s/k8s-aws or k8s/k8s-local
+        Update the replicas number
+    '''
+    k8s_path = ""
+    if env == "local":
+        k8s_path = "./k8s/k8s-local"
+    else:
+        k8s_path = "./k8s/k8s-aws"
+
+    logger.info(" ========= Check K8s is status ========= ")
+
+    worker_pod= get_k8s_pod_name("worker")
+    if worker_pod is None:
+        logger.info(f" ========= Worker is found,  Apply K8s from {k8s_path} ========= ")
+        response  = invoke_kubectl_apply(k8s_path)
+        logger.info(response)
+
+    logger.info(" ========= Check Worker Setting from config.yaml ========= ")
+    current_woker_replicas = num_container_ready(container_prefix = "worker")
+    replace_k8s_yaml_with_replicas(file_path=k8s_path, file_name="worker.deployment.yaml", 
+                                    new_replicas=int(config_params_obj.worker_replicas),
+                                    curr_replicas=int(current_woker_replicas),
+                                    app_name="worker")
+    wait_container_ready(num_container=int(config_params_obj.worker_replicas), container_prefix="worker",counter=60, delay=1 )
+
+
+
+
 
 
 def run_process_files(number):
     # import parametes from yaml
     solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
-    # step 1 . check node status
+    # step 1 . check node status from local or AWS
     if check_environment_is_aws():
-        scale_nodes_and_wait(3, 60, 1)
-        # step 1.1 wait pod ready 
-        wait_container_ready( num_container=3, container_prefix="worker",counter=60, delay=1 )
-        # update k8s yaml
-    # worker = path.join(path.dirname(__file__), "k8s/k8s-local/worker.deployment.yaml")
-    # print(worker)
 
-    # replace_k8s_yaml_with_replicas(filename=worker, replicas=5,app_name="worker")
+        scale_nodes_and_wait(scale_node_num=config_params_obj.eks_nodes_number, counter=config_params_obj.scale_eks_nodes_wait_time, delay=1)
+        # step 1.1 wait pod ready 
+        create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
+        # wait_container_ready( num_container=config_params_obj.eks_nodes_number, container_prefix="worker",counter=60, delay=1 )
+    else:
+        # local 
+        if config_params_obj.container_type == "kubernetes":
+            # check webapp exist
+            create_or_update_k8s(config_params_obj=config_params_obj,env="local")
+            
     # # step 2 . clear sqs
-    print("clean previous sqs")
+    logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client('sqs')
-    # purge_res = purge_queue(queue_url=SQS_URL, sqs_client=sqs_client)
     clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
 
 
     if number is None:
-        print("process default files in config.yaml")
+        logger.info(" ========= Process default files in config.yam ========= ")  
         res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
                                         solarParams_obj= solardata_parmas_obj,
                                         container_type= config_params_obj.container_type, 
                                         container_name=config_params_obj.container_name)
         print(f"response : {res}")
     elif number == "n":
-        print("process all files")
+        logger.info(" ========= Process all files in bucket ========= ")
         res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
         print(f"response : {res}")
     else:
         if type(int(number)) == int:
-            print(f"process first {number} files")
+            logger.info(f" ========= Process first {number} in bucket ========= ")
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
             print(f"response : {res}")
             # process long pulling

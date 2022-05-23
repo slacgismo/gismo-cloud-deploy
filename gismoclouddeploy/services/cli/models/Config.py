@@ -20,6 +20,11 @@ class Config(object):
                  container_name,
                  interval_of_check_task_status,
                  interval_of_exit_check_status,
+                 worker_replicas,
+                 interval_of_check_sqs_in_second,
+                 interval_of_total_wait_time_of_sqs,
+                 eks_nodes_number,
+                 scale_eks_nodes_wait_time 
                  ):
 
         self.files = files
@@ -38,6 +43,13 @@ class Config(object):
         self.container_name = container_name
         self.interval_of_check_task_status = interval_of_check_task_status
         self.interval_of_exit_check_status = interval_of_exit_check_status
+        self.worker_replicas = worker_replicas
+        self.interval_of_check_sqs_in_second = interval_of_check_sqs_in_second
+        self.interval_of_total_wait_time_of_sqs = interval_of_total_wait_time_of_sqs
+        self.eks_nodes_number = eks_nodes_number
+        self.scale_eks_nodes_wait_time = scale_eks_nodes_wait_time
+
+
 
     
     def import_config_from_yaml(file):
@@ -60,9 +72,14 @@ class Config(object):
             container_type = config_params["general"]["container_type"],
             container_name = config_params["general"]["container_name"],
             interval_of_check_task_status = config_params["general"]["interval_of_check_task_status"],
-            interval_of_exit_check_status = config_params["general"]["interval_of_exit_check_status"]
-
-            )
+            interval_of_exit_check_status = config_params["general"]["interval_of_exit_check_status"],
+            worker_replicas= config_params["k8s_config"]["worker_replicas"],
+            interval_of_check_sqs_in_second= config_params["aws_config"]["interval_of_check_sqs_in_second"],
+            interval_of_total_wait_time_of_sqs= config_params["aws_config"]["interval_of_total_wait_time_of_sqs"],
+            eks_nodes_number = config_params["aws_config"]["eks_nodes_number"],
+            scale_eks_nodes_wait_time =  config_params["aws_config"]["scale_eks_nodes_wait_time"],
+            
+        )
         return config
 
     def parse_config_to_json_str(self):

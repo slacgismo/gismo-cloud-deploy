@@ -1,20 +1,27 @@
 # process file 
 general:
   environment: "local"  # "local" , "AWS"
-  container_type: "docker"  # "docker" , "kubernetes"
-  container_name: "web"     # "web" . "webapp"
+  container_type: "kubernetes"  # "docker" , "kubernetes"
+  container_name: "webapp"     # "web" . "webapp"
   interval_of_check_task_status: "1" # in second
   interval_of_exit_check_status: "60" # in second. If the task status didn't update after this period. stop check status 
+
+aws_config:
+  eks_nodes_number: "3"
+  scale_eks_nodes_wait_time : "80" # in second  
+  interval_of_check_sqs_in_second: "2" # in second
+  interval_of_total_wait_time_of_sqs: "360" # in second. 
+
+
+k8s_config:
+  worker_replicas: "3"
 
 files_config:
   bucket: "pv.insight.nrel"
   process_all_files : "False" # If true, this program will run all files in this bucket. The files parameters will be ignored.
-  # files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv","PVO/PVOutput/10664.csv"]
-  # files: ["PVO/PVOutput/10059.csv","PVO/PVOutput/10010.csv"]
   files: ["PVO/PVOutput/10059.csv"]
-  column_names: ["Power(W)","Po","(W)","WS_4"]
-  # column_names: ["Power(W)","W"]
-  # column_names: ["W"]
+  column_names: ["Power(W)","Po","(W)"]
+
 output:
   saved_bucket: "pv.insight.test"
   saved_tmp_path: "tmp"
@@ -47,5 +54,4 @@ solardata:
   extra_cols: "None"
   daytime_threshold: "0.1"
   units: "W"
-  # solver: "None"
   solver: "MOSEK"

@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: back-api
+  name: redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: back-api
+      app: redis
   template:
     metadata:
       labels:
-        app: back-api
+        app: redis
     spec:
       containers:
-        - name: back-api
+        - name: redis
           image: redis:latest
           ports:
             - containerPort: 6379

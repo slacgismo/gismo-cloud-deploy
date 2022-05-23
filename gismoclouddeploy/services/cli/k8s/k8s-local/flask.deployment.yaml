@@ -28,7 +28,7 @@ spec:
           - name: CELERY_BROKER_URL
             value: "amqp://admin:admin@rabbitmq-service:5672/"
           - name: CELERY_RESULT_BACKEND
-            value: "redis://back-api:6379/0"
+            value: "redis://redis:6379/0"
           - name: DATABASE_URL
             value: "postgresql://sample:pleasechangeme@postgres-services/flask_celery"
           - name: SECRET_KEY

@@ -83,7 +83,7 @@ def num_of_nodes_ready():
     return num_of_node_ready
 
 
-def scale_node_number(min_nodes):
+def scale_node_number(min_nodes:int):
     # check if input is integer
     # assert(type(min_nodes) is int, f"Input {min_nodes} is not an")
     try: 
@@ -131,20 +131,68 @@ def match_pod_ip_to_node_name(pods_name_sets:set) -> dict:
     #     print(key, value)
     return pods
 
-def replace_k8s_yaml_with_replicas(filename:str, replicas:int, app_name:str) -> bool:
+def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:int, app_name:str, curr_replicas:int) -> bool:
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
-    with open(filename) as f:
-            dep = yaml.safe_load(f)
-            name=app_name
-            dep['spec']['replicas']= replicas
-            print(dep['spec']['replicas'])
-            try:
-                resp = apps_v1_api.replace_namespaced_deployment(name=name, 
-                    body=dep, namespace="default")
-                print("Replace created. status='%s'" % str(resp.status))
-                return True
-            except Exception as e:
-                print(f"no deplyment.yaml {e}")
-                return False
-                    
+    full_path_name = file_path + "/" + file_name
+    try:
+        with open(full_path_name) as f:
+                dep = yaml.safe_load(f)
+                name=app_name
+                # origin_replica = dep['spec']['replicas']
+                print(f"curr_replicas replcia {curr_replicas}, new_replicas: {new_replicas} ")
+                if curr_replicas != new_replicas:
+                   
+                    dep['spec']['replicas']= int(new_replicas)
+                    logger.info(f" ========= Update {app_name} replicas from {curr_replicas} to {new_replicas} ========= ")
+                    try:
+                        resp = apps_v1_api.replace_namespaced_deployment(name=name, 
+                            body=dep, namespace="default")
+                        print("Replace created. status='%s'" % str(resp.status))
+                        return True
+                    except Exception as e:
+                        print(f"no deplyment.yaml {e}")
+                        return False
+    except Exception as e:
+        print(f"no {full_path_name} was foud  {e}")
+        return False
+
+def create_k8s_from_yaml(file_path:str, file_name:str, app_name:str) -> bool:
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    full_path_name = file_path +"/" +file_name
+    try:
+        with open(full_path_name) as f:
+                dep = yaml.safe_load(f)
+                logger.info(f" ========= Create {app_name} app_name:{app_name} ========= ")
+                try:
+                    resp = apps_v1_api.create_namespaced_deployment( 
+                        body=dep, namespace="default")
+                    print("Created. status='%s'" % str(resp.status))
+                    return True
+                except Exception as e:
+                    print(f"no deplyment.yaml {e}")
+                    return False
+    except Exception as e:
+        print(f"openf file {full_path_name} failed: {e}")
+        return False
+        
+def create_k8s_svc_from_yaml(file_path:str, file_name:str, namspace:str = "default") -> bool:
+    config.load_kube_config()
+    apps_v1_api = client.CoreV1Api()
+    full_path_name = file_path +"/" +file_name
+    try:
+        with open(full_path_name) as f:
+                dep = yaml.safe_load(f)
+                logger.info(f" ========= Create service : to {namspace} ========= ")
+                try:
+                    resp = apps_v1_api.create_namespaced_service(
+                        body=dep, namespace="default")
+                    print("Created. status='%s'" % str(resp.status))
+                    return True
+                except Exception as e:
+                    print(f"no deplyment.yaml {e}")
+                    return False
+    except Exception as e:
+        print(f"openf file {full_path_name} failed: {e}")
+        return False
