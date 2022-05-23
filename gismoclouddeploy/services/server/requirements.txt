@@ -19,10 +19,10 @@ kaleido==0.2.1
 
 
 boto3==1.21.19
-scipy==1.8.0
+scipy==1.7.3
 numpy==1.19.2
-pandas==1.4.2
-scikit-learn==1.1.1
+pandas==1.3.5
+scikit-learn==1.0.2
 seaborn==0.11.2
 requests==2.26.0
 pvlib==0.9.1

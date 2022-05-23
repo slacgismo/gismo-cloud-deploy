@@ -173,10 +173,16 @@ def public_message_to_sns():
     message = 'This is a test message on topic.'
     subject = 'This is a message subject on topic.'
     logger.info(f'Publishing message to topic - {topic_arn}...')
-    message_id = publish_message( message = message, topic_arn=topic_arn, sns_client=sns_client)
-    logger.info(
-        f'Message published to topic - {topic_arn} with message Id - {message_id}.'
-    )
+    try:
+        message_res = publish_message( message = message, topic_arn=topic_arn, sns_client=sns_client)
+        messageid = message_res['MessageId']
+        logger.info(
+            f'Message published to topic - {topic_arn} with message Id - {messageid}.'
+        )
+    except Exception as e:
+        logger.error(f"publich message failed {e}")
+    
+
 
 def list_sns():
     # topic= create_sns_topic('gismo-cloud-deploy-sns')

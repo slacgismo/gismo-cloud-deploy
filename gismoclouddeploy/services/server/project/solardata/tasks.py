@@ -192,7 +192,7 @@ def loop_tasks_status_task( self,
                             saved_log_file_path,
                             saved_log_file_name
                             ):
-    print(f"loop ---> set delay: {delay}, count : {count}, task_id: {self.request.id}")
+    # print(f"loop ---> set delay: {delay}, count : {count}, task_id: {self.request.id}")
     counter = int(count)
     track_logs(task_id=self.request.id,
                     function_name="loop_tasks_status_task",

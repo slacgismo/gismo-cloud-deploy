@@ -1,5 +1,6 @@
 from ast import Str
 from fileinput import filename
+from glob import escape
 import re
 from tabnanny import verbose
 from tkinter import E
@@ -134,8 +135,6 @@ def save_logs_from_dynamodb_to_s3(table_name, saved_bucket, saved_file_path, sav
 
     # step 2 . delete data type
 
-    print("------")
-    print(all_items)
     df = pd.json_normalize(all_items)
     csv_buffer=StringIO()
     df.to_csv(csv_buffer)
@@ -153,7 +152,7 @@ def retrive_all_item_from_dyanmodb(table_name):
     items = []
     for item in scan_table(dynamo_client, TableName=table_name):
         deserialized_document = {k: deserializer.deserialize(v) for k, v in item.items()}
-        print(deserialized_document)
+        # print(deserialized_document)
         items.append(deserialized_document)
     return items
 
@@ -175,6 +174,7 @@ def scan_table(dynamo_client, *, TableName, **kwargs):
 
 
 def remove_all_items_from_dynamodb(table_name):
+
     dynamodb_resource = connect_aws_resource('dynamodb')
     table = dynamodb_resource.Table(table_name)
     scan = table.scan()
@@ -284,7 +284,7 @@ def read_column_from_csv_from_s3(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
+        # print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(response.get("Body"),nrows =1)
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
@@ -307,7 +307,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
+        # print(f"Successful S3 get_object response. Status - {status}")
         # result_df = pd.read_csv(response.get("Body"),
         #                         index_col=index_col)
         result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
@@ -452,14 +452,14 @@ def process_solardata_tools(
     #     print(column)
 
     try:
-        df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
+        # df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
+        df = read_csv_from_s3_first_three_rows(bucket_name,file_path_name,s3_client)
     except Exception as e:
         error_message += f"read column and time error: {e}"
         print(f"read column and time error: {e}")
         return False
 
     solarParams.power_col = column_name
-
 
     try:
         dh = solardatatools.DataHandler(df)
@@ -487,9 +487,7 @@ def process_solardata_tools(
                         units = solarParams.units,
                         solver = solarParams.solver
                         )
-       
         length=float("{:.2f}".format(dh.num_days))
-        print(f"length {length}")
         if dh.num_days >= 365:
             length = float("{:.2f}".format(dh.num_days / 365))
 
@@ -544,9 +542,9 @@ def process_solardata_tools(
                             inverter_clipping = (inverter_clipping),
                             normal_quality_scores=(normal_quality_scores),
                             )
-        print(f"results solarData to json ---> :{solarData.to_json()} ")
+        # logger.info(f"results solarData to json ---> :{solarData.to_json()} ")
         response = save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
-        print(f"------ save solardata to S3 response: {response}")
+        # logger.info(f" ------ save solardata to S3 response: {response}  ------- ")
 
     
         return True
@@ -559,14 +557,15 @@ def process_solardata_tools(
 
 
 def save_solardata_to_file(solardata, saved_bucket, saved_file_path, saved_filename):
-    print("----------->")
-    print(f"save_bucket:{saved_bucket},saved_file_path: {saved_file_path},saved_filename :{saved_filename} ")
+   
+   
     df = pd.json_normalize(solardata)
     csv_buffer=StringIO()
     df.to_csv(csv_buffer)
     content = csv_buffer.getvalue()
     try:
         to_s3(saved_bucket,saved_file_path,saved_filename, content)
+        logger.info(f"save_bucket:{saved_bucket},saved_file_path: {saved_file_path},saved_filename :{saved_filename} success")
     except Exception as e:
         print(f"ERROR ---> {e}")
         return False
@@ -581,7 +580,7 @@ def combine_files_to_file(bucket_name, source_folder, target_folder, target_file
     filter_files = list_files_in_folder_of_bucket(bucket_name,source_folder,s3_client)
  
     if not filter_files:
-        print("No tmp file in folder")
+        logger.warning("No tmp file in folder")
         return False
     contents = []
     for file in filter_files:
@@ -650,15 +649,23 @@ def read_csv_from_s3(
 def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
 
     sns_client = connect_aws_client('sns')
-    message_id = sns_client.publish(
-        TopicArn=topic_arn,
-        Subject = subject,
-        Message=message,
-    )
-    logger.info(
-        f'Message published to topic - {topic_arn} with message Id - {message_id}.'
-    )
-    return message_id
+    try:
+        message_res = sns_client.publish(
+            TopicArn=topic_arn,
+            Subject = subject,
+            Message=message,
+        )
+        message_id = message_res['MessageId']
+        logger.info(
+            f'Message published to topic - {topic_arn} with message Id - {message_id}.'
+        )
+        return message_id
+    except Exception as e:
+        logger.error(
+            f'publish message fail : {e}'
+        )
+
+
 
 
 def read_all_csv_from_s3(

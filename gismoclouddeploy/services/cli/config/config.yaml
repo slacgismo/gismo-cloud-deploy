@@ -1,8 +1,8 @@
 # process file 
 general:
   environment: "local"  # "local" , "AWS"
-  container_type: "kubernetes"  # "docker" , "kubernetes"
-  container_name: "webapp"     # "web" . "webapp"
+  container_type: "docker"  # "docker" , "kubernetes"
+  container_name: "web"     # "web" . "webapp"
   interval_of_check_task_status: "1" # in second
   interval_of_exit_check_status: "60" # in second. If the task status didn't update after this period. stop check status 
 
