@@ -83,7 +83,7 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
                     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
                     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
                     if check_environment_is_aws():
-                        scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
+                        scale_nodes_and_wait(scale_node_num=0, counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1)
                     return True
                 logger.info(f'Received and deleted message(s) from {sqs_url}.')
             print(f"num_task_completed {num_task_completed}, target num_task :{num_task}")
