@@ -447,13 +447,10 @@ def process_solardata_tools(
         return False
     error_message = ""
     s3_client = connect_aws_client("s3")
-    # columns = read_column_from_csv_from_s3(bucket_name=bucket_name,file_path_name=file_path_name,s3_client=s3_client)
-    # for column in columns:
-    #     print(column)
 
     try:
-        # df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
-        df = read_csv_from_s3_first_three_rows(bucket_name,file_path_name,s3_client)
+        df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
+        # df = read_csv_from_s3_first_three_rows(bucket_name,file_path_name,s3_client)
     except Exception as e:
         error_message += f"read column and time error: {e}"
         print(f"read column and time error: {e}")
