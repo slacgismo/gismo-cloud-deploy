@@ -71,14 +71,10 @@ def run_process_files(number,delete_nodes):
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
     # step 1 . check node status from local or AWS
     # spinner = Halo(text='Loading', spinner='dots')
-    # spinner.start()
 
-    # # Run time consuming work here
-    # # You can also change properties for spinner as and when you want
-
-    # spinner.stop()
     if check_environment_is_aws():
-
+        config_params_obj.container_type = "kubernetes"
+        config_params_obj.container_name = "webapp"
         scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1)
         # step 1.1 wait pod ready 
         create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
