@@ -15,35 +15,16 @@ services:
     # so if we change code on the host, code in the docker container will also be changed
     volumes:
       - ./server:/app
-    ports:
-      - 5010:5000
     env_file:
       - ./server/.env/.dev-sample
     environment:
       - FLASK_APP=app
       - FLASK_ENV=development
       - FLASK_CONFIG=development
-      - DATABASE_URL=postgresql://flask_celery:flask_celery@db/flask_celery
-      - SECRET_KEY=my_precious
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - redis
-      - db
-
-  db:
-    # image: postgres:13-alpine
-    build:
-      context:  ./db
-      dockerfile: Dockerfile
-    image: postgres:13-alpine
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
-    environment:
-      - POSTGRES_DB=flask_celery
-      - POSTGRES_USER=flask_celery
-      - POSTGRES_PASSWORD=flask_celery
-
   redis:
     image: redis:6-alpine
 
@@ -62,13 +43,7 @@ services:
       - FLASK_APP=app
       - FLASK_ENV=development
       - FLASK_CONFIG=development
-      - DATABASE_URL=postgresql://flask_celery:flask_celery@db/flask_celery
-      - SECRET_KEY=my_precious
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - redis
-      - db
-
-volumes:
-  postgres_data:
