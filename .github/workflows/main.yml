@@ -35,4 +35,4 @@ jobs:
           echo Add other actions to build,
           echo test, and deploy your project.
       - name: Build the stack
-        run: ../gismoclouddeploy/services/docker-compose build
+        run: docker-compose -f gismoclouddeploy/services/docker-compose.yml build
