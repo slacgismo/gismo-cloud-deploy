@@ -34,7 +34,8 @@ from utils.taskThread import (
 )
 
 from utils.aws_utils import (
-    check_environment_is_aws
+    check_environment_is_aws,
+    list_files_in_bucket
 )
 
 from utils.sqs import(
@@ -69,7 +70,7 @@ def run_process_files(number,delete_nodes):
     solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
     # step 1 . check node status from local or AWS
-    spinner = Halo(text='Loading', spinner='dots')
+    # spinner = Halo(text='Loading', spinner='dots')
     # spinner.start()
 
     # # Run time consuming work here
@@ -78,7 +79,7 @@ def run_process_files(number,delete_nodes):
     # spinner.stop()
     if check_environment_is_aws():
 
-        scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1, spinner = spinner)
+        scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1)
         # step 1.1 wait pod ready 
         create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
         # wait_container_ready( num_container=config_params_obj.eks_nodes_number, container_prefix="worker",counter=60, delay=1 )
@@ -93,7 +94,7 @@ def run_process_files(number,delete_nodes):
     sqs_client = connect_aws_client('sqs')
     clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
 
-    # total_task_num = 0
+    total_task_num = 0
     if number == 'f':
         logger.info(" ========= Process default files in config.yam ========= ")  
 
@@ -101,21 +102,25 @@ def run_process_files(number,delete_nodes):
                                         solarParams_obj= solardata_parmas_obj,
                                         container_type= config_params_obj.container_type, 
                                         container_name=config_params_obj.container_name)
+        total_task_num = len(config_params_obj.files) + 1
     elif number == "n":
-        logger.info(" ========= Process all files in bucket ========= ")
+        all_files = list_files_in_bucket(config_params_obj.bucket)
+        number_files = len(all_files)
+        logger.info(f" ========= Process all {number_files} files in bucket ========= ")
         res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
-
+        total_task_num = len(all_files) + 1
 
     else:
         if type(int(number)) == int:
             logger.info(f" ========= Process first {number} files in bucket ========= ")
             res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
-            
+            total_task_num = int(number) + 1
+           
         else:
             print(f"error input {number}")
             return 
     # log pulling 
-    thread = taskThread(1,"sqs",120, 2 ,SQS_URL,0, config_params_obj=config_params_obj, delete_nodes_after_processing=delete_nodes)
+    thread = taskThread(1,"sqs",120, 2 ,SQS_URL,total_task_num, config_params_obj=config_params_obj, delete_nodes_after_processing=delete_nodes)
     thread.start()
     return 
 

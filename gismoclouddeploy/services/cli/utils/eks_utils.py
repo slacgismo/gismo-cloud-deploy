@@ -45,7 +45,7 @@ def wait_container_ready(num_container:str, container_prefix:str, counter: int, 
         time.sleep(delay)
     return False
 
-def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int, spinner:Halo) -> bool:
+def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int) -> bool:
     
     num_nodes = num_of_nodes_ready()
     print(f"scale node {scale_node_num}, current node number: {num_nodes}")
@@ -54,9 +54,8 @@ def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int, spinner:Hal
         return True 
     # num_node is not equal ,
     logger.info(f"scale node num: {scale_node_num}")
-    spinner.start()
     scale_node_number(scale_node_num)
-    spinner.stop()
+
     while counter:
         num_nodes = num_of_nodes_ready()
         print(f"waiting {scale_node_num} ready , current num_nodes:{num_nodes}  ....counter: {counter} Time: {time.ctime(time.time())}")

@@ -77,4 +77,19 @@ def read_all_csv_from_s3_and_parse_dates_from(
         print(f"error read  file: {file_path_name} error:{e}")
     
 
-    
+def list_files_in_bucket(bucket_name):
+    """ Get filename and size from S3 , remove non csv file """
+    s3_client = connect_aws_client('s3')
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    files = response['Contents']
+    filterFiles =[]
+    for file in files:
+        split_tup = os.path.splitext(file['Key'])
+        file_extension = split_tup[1]
+        if file_extension == ".csv":
+            obj = {
+                'Key': file['Key'],
+                'Size': file['Size'],
+            }
+            filterFiles.append(obj)
+    return  filterFiles
