@@ -67,3 +67,12 @@ def sns_subscribe_sqs(topic:str, endpoint:str,sns_client):
         raise
     else:
         return subscription
+
+def list_sns(sns_resource):
+    # topic= create_sns_topic('gismo-cloud-deploy-sns')
+    # list_topic= list_topics()
+    for topic in list_topics(sns_resource):
+        print(topic)
+    # print(f"start sns {list_topic}")
+
+

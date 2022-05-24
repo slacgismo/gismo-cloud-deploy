@@ -2,15 +2,18 @@ import time
 import logging
 from kubernetes import client, config
 from utils.aws_utils import check_environment_is_aws
-from utils.InvokeFunction import (
-    invoke_eksctl_scale_node,
-)
+
 
 import logging 
 from typing import List
 import yaml
 from os import path
 from halo import Halo
+from models.Config import Config
+from utils.InvokeFunction import (
+    invoke_kubectl_apply,
+    invoke_eksctl_scale_node,
+    get_k8s_pod_name)
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
@@ -200,3 +203,32 @@ def create_k8s_svc_from_yaml(file_path:str, file_name:str, namspace:str = "defau
     except Exception as e:
         print(f"openf file {full_path_name} failed: {e}")
         return False
+    
+def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
+    ''' Read worker config, if the replicas of woker is between from config.yaml and k8s/k8s-aws or k8s/k8s-local
+        Update the replicas number
+    '''
+    k8s_path = ""
+    if env == "local":
+        k8s_path = "./k8s/k8s-local"
+    else:
+        k8s_path = "./k8s/k8s-aws"
+
+    logger.info(" ========= Check K8s is status ========= ")
+
+    worker_pod= get_k8s_pod_name("worker")
+    if worker_pod is None:
+        logger.info(f" ========= Worker is found,  Apply K8s from {k8s_path} ========= ")
+        response  = invoke_kubectl_apply(k8s_path)
+        logger.info(response)
+
+    logger.info(" ========= Check Worker Setting from config.yaml ========= ")
+    current_woker_replicas = num_container_ready(container_prefix = "worker")
+    replace_k8s_yaml_with_replicas(file_path=k8s_path, file_name="worker.deployment.yaml", 
+                                    new_replicas=int(config_params_obj.worker_replicas),
+                                    curr_replicas=int(current_woker_replicas),
+                                    app_name="worker")
+    wait_container_ready(num_container=int(config_params_obj.worker_replicas), container_prefix="worker",counter=60, delay=1 )
+
+
+

@@ -183,69 +183,6 @@ def invok_docekr_exec_run_process_all_files(config_obj:Config  ,
         print("no docker image or container found")
 
 
-# def invok_docekr_exec_run_process_file( bucket_name, 
-#                                         file_path,
-#                                         file_name, 
-#                                         column_name, 
-#                                         solardata_params, 
-#                                         saved_bucket,
-#                                         saved_file_path,
-#                                         saved_filename,
-#                                         container_type, 
-#                                         container_name):
-#     # convert solardata objec into str and pass to command line
- 
-
-
-#     if container_type == "docker":
-#         command = [ "docker", 
-#                     "exec",
-#                     "-it",
-#                     container_name,
-#                     "python",
-#                     "app.py",
-#                     "process_a_file",
-#                     f"{bucket_name}",
-#                     f"{file_path}",
-#                     f"{file_name}",
-#                     f"{column_name}",
-#                     f"{solardata_params}",
-#                     f"{saved_bucket}",
-#                     f"{saved_file_path}",
-#                     f"{saved_filename}",
-#                     ]
-#         print(f"command {command}")
-#         res = exec_docker_command(command)
-#         return res
-        
-#     elif container_type == "kubernetes":
-#         # get pod name
-       
-#         pod_name = get_k8s_pod_name(container_name)
-#         # print(f" k8s pod_name: {pod_name}")
-#         # print(f"pod_name: {pod_name}")
-#         command = [ "kubectl", 
-#                     "exec",
-#                     pod_name,
-#                     "--stdin",
-#                     "--tty",
-#                     "--",
-#                     "python",
-#                     "app.py",
-#                     "process_a_file",
-#                     f"{bucket_name}",
-#                     f"{file_path}",
-#                     f"{file_name}",
-#                     f"{column_name}",
-#                     f"{solardata_params}",
-#                     f"{saved_bucket}",
-#                     f"{saved_file_path}",
-#                     f"{saved_filename}"
-#                 ]
-#         res = exec_docker_command(command)
-#         return res
-#     else :
-#         print("no docker image or container found")
 
 
 

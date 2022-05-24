@@ -83,12 +83,14 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
                     if check_environment_is_aws() and delete_nodes_after_processing:
                         logger.info("Delete node after processing")
                         scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
-                    return True
+                    try:
+                        purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
+                    except Exception as e:
+                        logger.error(f"Cannot purge queue :{e}")
+                    return tasks
                 logger.info(f'Received and deleted message(s) from {sqs_url}.')
             print(f"num_task_completed {num_task_completed}, target num_task :{num_task}")
         
-    # purge queue at end of task
-    purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
     return tasks
 
 

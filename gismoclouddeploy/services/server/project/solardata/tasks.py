@@ -1,24 +1,16 @@
 
-from flask import jsonify
-from celery.signals import task_postrun
-import requests
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
 import os
-import boto3
 import pandas as pd
 import solardatatools
-import asyncio
-import numbers
-from project.solardata.models.SolarData import SolarData 
 from project.solardata.models.SolarParams import SolarParams,make_solardata_params_from_str
 from project.solardata.models.Configure import Configure
 from project.solardata.models.WorkerStatus import WorkerStatus
 from io import StringIO
 import time
 import socket
-import inspect
 
 logger = get_task_logger(__name__)
 SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"

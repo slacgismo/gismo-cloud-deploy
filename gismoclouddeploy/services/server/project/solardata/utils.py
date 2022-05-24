@@ -698,8 +698,9 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
     If this function find exactly match with key and column name , it return the the match column name in set.
     If no exactly match key was found, it return the partial match key with longest data set.  
     '''
-    all_df = read_all_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
-    total_columns = list(all_df.columns)
+    # all_df = read_all_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
+    total_columns = read_column_from_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
+    # total_columns = list(all_df.columns)
     exact_column_set = set()
     # find exactly match 
     for column in total_columns:
@@ -708,11 +709,11 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
             if key  ==  column:
                 # check 
                 exact_column_set.add(column)
-    logger.info(f"find exact match column name {exact_column_set}")
+    # logger.info(f"find exact match column name {exact_column_set}")
     if len(exact_column_set) > 0 :
         return  exact_column_set
     # find partial 
-    logger.info(f"no exact match column name")
+    # logger.info(f"no exact match column name, use parital match")
     # get the max length fo match key
     matched_column_set = set()
     for column in total_columns:
@@ -724,7 +725,7 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
     key_with_most_data = ""
     for key in matched_column_set:
         # check if column has value. 
-        tmp_df = all_df[key].dropna()
+        tmp_df = read_csv_from_s3_with_column_name(bucket_name=bucket_name,file_path_name=file_path_name, column_name=key,s3_client=s3_client)
         # print(f"key: {key},---> {len(tmp_df)}")
         if max_count <= len(tmp_df):
             max_count = len(tmp_df)
