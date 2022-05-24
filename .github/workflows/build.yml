@@ -10,7 +10,7 @@ jobs:
         run: ./gismoclouddeploy/docker-compose build
 
 
-name: Deploy to ECR
+# name: Deploy to ECR
 
 # on:
  
