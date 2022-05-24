@@ -137,31 +137,31 @@ def match_pod_ip_to_node_name(pods_name_sets:set) -> dict:
     #     print(key, value)
     return pods
 
-def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:int, app_name:str, curr_replicas:int) -> bool:
-    config.load_kube_config()
-    apps_v1_api = client.AppsV1Api()
-    full_path_name = file_path + "/" + file_name
-    try:
-        with open(full_path_name) as f:
-                dep = yaml.safe_load(f)
-                name=app_name
-                # origin_replica = dep['spec']['replicas']
-                print(f"curr_replicas replcia {curr_replicas}, new_replicas: {new_replicas} ")
-                if curr_replicas != new_replicas:
+# def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:int, app_name:str, curr_replicas:int) -> bool:
+#     config.load_kube_config()
+#     apps_v1_api = client.AppsV1Api()
+#     full_path_name = file_path + "/" + file_name
+#     try:
+#         with open(full_path_name) as f:
+#                 dep = yaml.safe_load(f)
+#                 name=app_name
+#                 # origin_replica = dep['spec']['replicas']
+#                 print(f"curr_replicas replcia {curr_replicas}, new_replicas: {new_replicas} ")
+#                 if curr_replicas != new_replicas:
                    
-                    dep['spec']['replicas']= int(new_replicas)
-                    logger.info(f" ========= Update {app_name} replicas from {curr_replicas} to {new_replicas} ========= ")
-                    try:
-                        resp = apps_v1_api.replace_namespaced_deployment(name=name, 
-                            body=dep, namespace="default")
-                        print("Replace created. status='%s'" % str(resp.status))
-                        return True
-                    except Exception as e:
-                        print(f"no deplyment.yaml {e}")
-                        return False
-    except Exception as e:
-        print(f"no {full_path_name} was foud  {e}")
-        return False
+#                     dep['spec']['replicas']= int(new_replicas)
+#                     logger.info(f" ========= Update {app_name} replicas from {curr_replicas} to {new_replicas} ========= ")
+#                     try:
+#                         resp = apps_v1_api.replace_namespaced_deployment(name=name, 
+#                             body=dep, namespace="default")
+#                         print("Replace created. status='%s'" % str(resp.status))
+#                         return True
+#                     except Exception as e:
+#                         print(f"no deplyment.yaml {e}")
+#                         return False
+#     except Exception as e:
+#         print(f"no {full_path_name} was foud  {e}")
+#         return False
 
 def create_k8s_from_yaml(file_path:str, file_name:str, app_name:str) -> bool:
     config.load_kube_config()
@@ -183,25 +183,7 @@ def create_k8s_from_yaml(file_path:str, file_name:str, app_name:str) -> bool:
         print(f"openf file {full_path_name} failed: {e}")
         return False
         
-def create_k8s_svc_from_yaml(file_path:str, file_name:str, namspace:str = "default") -> bool:
-    config.load_kube_config()
-    apps_v1_api = client.CoreV1Api()
-    full_path_name = file_path +"/" +file_name
-    try:
-        with open(full_path_name) as f:
-                dep = yaml.safe_load(f)
-                logger.info(f" ========= Create service : to {namspace} ========= ")
-                try:
-                    resp = apps_v1_api.create_namespaced_service(
-                        body=dep, namespace="default")
-                    print("Created. status='%s'" % str(resp.status))
-                    return True
-                except Exception as e:
-                    print(f"no deplyment.yaml {e}")
-                    return False
-    except Exception as e:
-        print(f"openf file {full_path_name} failed: {e}")
-        return False
+
     
 def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
     ''' Read worker config, if the replicas of woker is between from config.yaml and k8s/k8s-aws or k8s/k8s-local
@@ -216,18 +198,70 @@ def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
     logger.info(" ========= Check K8s is status ========= ")
 
     worker_pod= get_k8s_pod_name("worker")
-    if worker_pod is None:
-        logger.info(f" ========= Worker is found,  Apply K8s from {k8s_path} ========= ")
+    webapp_pod= get_k8s_pod_name("webapp")
+    if worker_pod is None or webapp_pod is None:
+        logger.info(f" ========= Worker or Webapp is none found,  apply K8s from {k8s_path} ========= ")
         response  = invoke_kubectl_apply(k8s_path)
         logger.info(response)
-
+        # check default woker number
+        worker_setting = read_k8s_yml(file_path=k8s_path, file_name="worker.deployment.yaml" )
+        worker_default_replicas = worker_setting['spec']['replicas']
+        wait_container_ready(num_container=worker_default_replicas, container_prefix="worker", counter=60, delay=1)
     logger.info(" ========= Check Worker Setting from config.yaml ========= ")
+
     current_woker_replicas = num_container_ready(container_prefix = "worker")
     replace_k8s_yaml_with_replicas(file_path=k8s_path, file_name="worker.deployment.yaml", 
                                     new_replicas=int(config_params_obj.worker_replicas),
                                     curr_replicas=int(current_woker_replicas),
                                     app_name="worker")
-    wait_container_ready(num_container=int(config_params_obj.worker_replicas), container_prefix="worker",counter=60, delay=1 )
+  
+def read_k8s_yml(file_path:str, file_name:str):  
+    config.load_kube_config()
+    full_path_name = file_path +"/" +file_name
+    try:
+        with open(full_path_name) as f:
+            dep = yaml.safe_load(f)
+            return dep
+    except Exception as e:
+        logger.error(f"cannot open yaml file: {e}")
+        return False
 
 
+def create_k8s_svc_from_yaml(file_path:str, file_name:str, namspace:str = "default") -> bool:
+    try:
+        file_setting = read_k8s_yml(file_path = file_path, file_name =file_name)
+    except Exception as e:
+        return False
+    config.load_kube_config()
+    apps_v1_api = client.CoreV1Api()
+    try:
+        resp = apps_v1_api.create_namespaced_service(
+            body=file_setting, namespace=namspace)
+        print("Created. status='%s'" % str(resp.status))
+        return True
+    except Exception as e:
+        logger.error(f"create k8s deployment error: {e}")
 
+    
+def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:int, app_name:str, curr_replicas:int) -> bool:
+    try:
+        file_setting = read_k8s_yml(file_path = file_path, file_name =file_name)
+    except Exception as e:
+        return False
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+
+    # origin_replica = dep['spec']['replicas']
+    print(f"curr_replicas replcia {curr_replicas}, new_replicas: {new_replicas} ")
+    if curr_replicas != new_replicas:     
+        file_setting['spec']['replicas']= int(new_replicas)
+        logger.info(f" ========= Update {app_name} replicas from {curr_replicas} to {new_replicas} ========= ")
+        try:
+            resp = apps_v1_api.replace_namespaced_deployment(name=app_name, 
+                body=file_setting, namespace="default")
+            print("Replace created. status='%s'" % str(resp.status))
+            wait_container_ready(num_container=new_replicas, container_prefix=app_name,counter=60, delay=1 )
+            return True
+        except Exception as e:
+            print(f"no deplyment.yaml {e}")
+            return False

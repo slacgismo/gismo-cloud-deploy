@@ -224,9 +224,9 @@ def process_all_files(config_params_str:str,solardata_params_str:str):
     print(f"Process all files in {configure_obj.bucket}")
     task_ids = []
     files = list_files_in_bucket(configure_obj.bucket)
-    n_files = files[0:int(5)]
+    # n_files = files[0:int(5)]
     s3_client = connect_aws_client('s3')
-    for file in n_files:
+    for file in files:
          # implement partial match 
         matched_column_set = find_matched_column_name_set(bucket_name=configure_obj.bucket, columns_key=configure_obj.column_names, file_path_name=file['Key'],s3_client=s3_client)
         for column in matched_column_set:
