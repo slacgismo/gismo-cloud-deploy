@@ -18,7 +18,6 @@ from project.solardata.utils import (
     find_matched_column_name_set)
 
 import click
-from celery.result import AsyncResult
 import time
 import os 
 from project.solardata.tasks import (
@@ -218,11 +217,11 @@ def process_all_files(config_params_str:str,solardata_params_str:str):
     hostname = socket.gethostname()
     host_ip = socket.gethostbyname(hostname)      
     pid = os.getpid()
-    temp_task_id = str(uuid.uuid4())
-    start_status = WorkerStatus(host_name=hostname,task_id="process_first_n_files", host_ip=host_ip,pid=pid, function_name="process_first_n_files", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
+
+    start_status = WorkerStatus(host_name=hostname,task_id="process_all_files_in_bucket", host_ip=host_ip,pid=pid, function_name="process_all_files_in_bucket", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
     start_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus = start_status)
    
-    print(f"Process all files in bucket")
+    print(f"Process all files in {configure_obj.bucket}")
     task_ids = []
     files = list_files_in_bucket(configure_obj.bucket)
     n_files = files[0:int(5)]
@@ -268,7 +267,7 @@ def process_all_files(config_params_str:str,solardata_params_str:str):
     # for id in task_ids:
     end_hostname = socket.gethostname()
     end_host_ip = socket.gethostbyname(hostname)   
-    end_status = WorkerStatus(host_name=end_hostname,task_id="process_first_n_files", host_ip=end_host_ip, pid = pid,function_name="process_first_n_files", action="busy-stop/idle-start", time=str(time.time()),message="end process n files")
+    end_status = WorkerStatus(host_name=end_hostname,task_id="process_all_files_in_bucket", host_ip=end_host_ip, pid = pid,function_name="process_all_files_in_bucket", action="busy-stop/idle-start", time=str(time.time()),message="end process n files")
     end_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus=end_status)
 
     return 
