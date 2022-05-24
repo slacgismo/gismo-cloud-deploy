@@ -91,7 +91,7 @@ def run_process_files(number,delete_nodes):
     clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
 
     total_task_num = 0
-    if number == 'f':
+    if number is None:
         logger.info(" ========= Process default files in config.yam ========= ")  
 
         res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
