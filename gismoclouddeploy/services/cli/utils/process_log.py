@@ -7,7 +7,6 @@ import plotly.figure_factory as ff
 import plotly.express as px
 import plotly.io as pio
 from utils.aws_utils import(
-    connect_aws_client,
     read_all_csv_from_s3_and_parse_dates_from
 
 )

@@ -1,18 +1,20 @@
 
+from cmath import log
 import click
 
+from models.Node import Node
 
 import logging
 
 import click
-from models.Node import Node
+
 from kubernetes import client, config
 
 import os
-from utils.InvokeFunction import (
-    invok_docekr_exec_run_process_files,
-    invok_docekr_exec_run_process_all_files,
-    invok_docekr_exec_run_process_first_n_files,
+from utils.invoke_function import (
+    invoke_docekr_exec_run_process_files,
+    invoke_docekr_exec_run_process_all_files,
+    invoke_docekr_exec_run_process_first_n_files,
     )
 from models.SolarParams import SolarParams
 from models.Config import Config
@@ -65,10 +67,19 @@ SNS_TOPIC = os.getenv('SNS_TOPIC')
 
 
 
-def run_process_files(number,delete_nodes):
-    # import parametes from yaml
-    solardata_parmas_obj = SolarParams.import_solar_params_from_yaml("./config/config.yaml")
-    config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
+def run_process_files(number,delete_nodes,configfile):
+
+
+    try:
+        solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/{configfile}")
+        config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
+    except Exception as e:
+        logger.error(f" ================================== ERROR =========================================")
+        logger.error(f" ========= Could not find {configfile} Apply ./config/config.yaml file instead ====")
+        logger.error(f" ==================================================================================")
+        solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/config.yaml")
+        config_params_obj = Config.import_config_from_yaml(f"./config/config.yaml")
+
     # step 1 . check node status from local or AWS
     # spinner = Halo(text='Loading', spinner='dots')
 
@@ -80,37 +91,49 @@ def run_process_files(number,delete_nodes):
         create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
 
     else:
-        # local 
+        # local env
         if config_params_obj.container_type == "kubernetes":
-            # check webapp exist
+            # check if k8s and webapp exist
             create_or_update_k8s(config_params_obj=config_params_obj,env="local")
-            
+
     # # # step 2 . clear sqs
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client('sqs')
-    clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2)
+    clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1)
 
     total_task_num = 0
     if number is None:
         logger.info(" ========= Process default files in config.yam ========= ")  
+        try:
+            res = invoke_docekr_exec_run_process_files(config_obj = config_params_obj,
+                                            solarParams_obj= solardata_parmas_obj,
+                                            container_type= config_params_obj.container_type, 
+                                            container_name=config_params_obj.container_name)
+            total_task_num = len(config_params_obj.files) + 1
+        except Exception as e:
+            logger.error(f"Process default files failed :{e}")
+            return 
 
-        res = invok_docekr_exec_run_process_files(config_obj = config_params_obj,
-                                        solarParams_obj= solardata_parmas_obj,
-                                        container_type= config_params_obj.container_type, 
-                                        container_name=config_params_obj.container_name)
-        total_task_num = len(config_params_obj.files) + 1
     elif number == "n":
         all_files = list_files_in_bucket(config_params_obj.bucket)
         number_files = len(all_files)
-        logger.info(f" ========= Process all {number_files} files in bucket ========= ")
-        res = invok_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
         total_task_num = len(all_files) + 1
-
+        logger.info(f" ========= Process all {number_files} files in bucket ========= ")
+        try:
+            res = invoke_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
+        except Exception as e:
+            logger.error(f"Process all files failed :{e}")
+            return     
     else:
         if type(int(number)) == int:
             logger.info(f" ========= Process first {number} files in bucket ========= ")
-            res = invok_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
             total_task_num = int(number) + 1
+            try:
+                res = invoke_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
+           
+            except Exception as e:
+                logger.error(f"Process first {number} files failed :{e}")
+                return   
            
         else:
             print(f"error input {number}")
@@ -131,8 +154,6 @@ def check_nodes_status():
     nodes = []
     # check confition
     for node in response.items:
-
-        # print(node.metadata.labels['kubernetes.io/hostname'])
         cluster = node.metadata.labels['alpha.eksctl.io/cluster-name']
         nodegroup = node.metadata.labels['alpha.eksctl.io/nodegroup-name']
         hostname = node.metadata.labels['kubernetes.io/hostname']
@@ -171,19 +192,21 @@ def process_logs_and_plot():
 def main():
 	pass
 
-
-
 # Run files 
 @main.command()
 @click.option('--number','-n',
             help="Process the first n files in bucket, if number=n, run all files in the bucket", 
             default= None)
 @click.option('--deletenodes','-delete',
-            help="Process the first n files in bucket, if number=n, run all files in the bucket", 
+            help="Enbale or disable delet nodes after process, default is Ture. Set False to disable ", 
             default= True)
-def run_files(number,deletenodes):
+@click.option('--configfile','-f',
+            help="Assign config files, Default files is config.yaml under /config" , 
+            default= "config.yaml")
+
+def run_files(number,deletenodes, configfile):
     """ Run Process Files"""
-    run_process_files(number, deletenodes)
+    run_process_files(number, deletenodes,configfile)
 
 @main.command()
 @click.argument('min_nodes')
@@ -201,8 +224,6 @@ def check_nodes():
 def processlogs():
     """"Try logs"""
     process_logs_and_plot()
-
-
 
 if __name__ == '__main__':
 	main()

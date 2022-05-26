@@ -125,51 +125,56 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
         'container_id': os.uname()[1]
     }
     solar_params_obj = make_solardata_params_from_str(solar_params_str)
+    message = "init process_data_task"
+    track_logs(task_id=self.request.id,
+                        function_name="process_data_task",
+                        time=str(time.time()),
+                        action="idle-stop/busy-start", 
+                        message=message,
+                        table_name=table_name,
+                        process_file_name=file_path_name,
+                        column_name=column_name
+                        )
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
         process_solardata_tools,
-        put_item_to_dynamodb,
         publish_message_sns
     )
     app = create_app()
     with app.app_context():
-        track_logs(task_id=self.request.id,
-                    function_name="process_data_task",
-                    time=str(time.time()),
-                    action="idle-stop/busy-start", 
-                    message="init process data task",
-                    table_name=table_name,
-                    process_file_name=file_path_name,
-                    column_name=column_name
-                    )
-  
-        process_solardata_tools(  
-                            self.request.id,
-                            bucket_name ,
-                            file_path_name,
-                            column_name,
-                            start_time,
-                            saved_bucket,
-                            saved_file_path,
-                            saved_filename,
-                            solar_params_obj
-                            )
+        try:
+            process_solardata_tools(  
+                                task_id= self.request.id,
+                                bucket_name=bucket_name ,
+                                file_path_name=file_path_name,
+                                column_name=column_name,
+                                start_time=start_time,
+                                saved_bucket=saved_bucket,
+                                saved_file_path= saved_file_path,
+                                saved_filename=saved_filename,
+                                solar_params_obj=solar_params_obj
+                                )
 
-        print("end of process solardata")
-        track_logs(task_id=self.request.id,
-                    function_name="process_data_task",
-                    action="busy-stop/idle-start",
-                    time=str(time.time()),
-                    message="end process data task",
-                    table_name=table_name,
-                    process_file_name=file_path_name,
-                    column_name=column_name
-                    )
-        print("Send message ----- >")
-        mesage_id = publish_message_sns(message=file_path_name, subject=self.request.id, topic_arn= SNS_TOPIC)
-        logger.info(f'Send to SNS.----------> message: {mesage_id}')
+            
+            mesage_id = publish_message_sns(message=file_path_name, subject=self.request.id, topic_arn= SNS_TOPIC)
+            logger.info(f'Send to SNS.----------> message: {mesage_id}')
+            message = "end of process data task"
+            logger.info(f"{message}")
+        except Exception as e:
+            message = f"filename: {file_path_name},column: {column_name},error:{e}"
+            mesage_id = publish_message_sns(message=message,subject="ProcessFileError", topic_arn= SNS_TOPIC)
+            logger.info(f'Error: {e} Send to SNS.----------> message: {mesage_id}')
 
+        track_logs(task_id=self.request.id,
+            function_name="process_data_task",
+            action="busy-stop/idle-start",
+            time=str(time.time()),
+            message=message,
+            table_name=table_name,
+            process_file_name=file_path_name,
+            column_name=column_name
+            )
 
 @shared_task(bind=True)
 def loop_tasks_status_task( self,
@@ -184,7 +189,6 @@ def loop_tasks_status_task( self,
                             saved_log_file_path,
                             saved_log_file_name
                             ):
-    # print(f"loop ---> set delay: {delay}, count : {count}, task_id: {self.request.id}")
     counter = int(count)
     track_logs(task_id=self.request.id,
                     function_name="loop_tasks_status_task",
@@ -229,18 +233,20 @@ def loop_tasks_status_task( self,
                     process_file_name=None,
                     column_name=None
                     )
+        try:
+            response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
+            save_res = save_logs_from_dynamodb_to_s3(table_name=table_name,
+                                            saved_bucket=bucket_name,
+                                            saved_file_path=saved_log_file_path,
+                                            saved_filename=saved_log_file_name )
+            remov_res = remove_all_items_from_dynamodb(table_name)
+            print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
+            logger.info(f'End of all process publish message to SNS.')
 
-        response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
-        save_res = save_logs_from_dynamodb_to_s3(table_name=table_name,
-                                        saved_bucket=bucket_name,
-                                        saved_file_path=saved_log_file_path,
-                                        saved_filename=saved_log_file_name )
-        remov_res = remove_all_items_from_dynamodb(table_name)
-        print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
-        logger.info(f'End of all process publish message to SNS.')
-
-        mesage_id = publish_message_sns(message="AllTaskCompleted",subject=self.request.id, topic_arn= SNS_TOPIC)
-        logger.info(f'Send to SNS.----------> message: {mesage_id}')
-
-        return response
+            mesage_id = publish_message_sns(message="AllTaskCompleted",subject="AllTaskCompleted", topic_arn= SNS_TOPIC)
+            logger.info(f'Send to SNS.----------> message: {mesage_id}')
+            return response
+        except Exception as e:
+            mesage_id = publish_message_sns(message=f"{e}",subject="Error", topic_arn= SNS_TOPIC)
+            logger.info(f'Error: {e} Send to SNS.----------> message: {mesage_id}')
     

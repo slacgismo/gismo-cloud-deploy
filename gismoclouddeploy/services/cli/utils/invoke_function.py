@@ -7,6 +7,8 @@ from models.Config import Config
 
 def exec_docker_command(command):
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+    if result.returncode != 0: 
+        raise Exception( f'Invalid result: { result.returncode } { result.stderr}')
     print(result.returncode, result.stdout, result.stderr)
     return result.stdout
 
@@ -40,9 +42,9 @@ def invoke_eksctl_scale_node(cluster_name:str,
     return res
  
                 
-    # eksctl scale nodegroup --cluster gcd-eks-cluster --name gcd-node-group-lt --nodes 0 --nodes-max 1 --nodes-min 0 
+# eksctl scale nodegroup --cluster gcd-eks-cluster --name gcd-node-group-lt --nodes 0 --nodes-max 1 --nodes-min 0 
 
-def invok_docekr_exec_run_process_first_n_files(config_obj:Config  , 
+def invoke_docekr_exec_run_process_first_n_files(config_obj:Config  , 
                                         solarParams_obj: SolarParams, 
                                         first_n_files:int,
                                         container_type:str, 
@@ -63,9 +65,6 @@ def invok_docekr_exec_run_process_first_n_files(config_obj:Config  ,
                     f"{solardata_params_str}",
                     f"{first_n_files}"
                     ]
-        # print(f"command {command}")
-        res = exec_docker_command(command)
-        return res
         
     elif container_type == "kubernetes":
         # get pod name
@@ -84,13 +83,14 @@ def invok_docekr_exec_run_process_first_n_files(config_obj:Config  ,
                     f"{solardata_params_str}",
                     f"{first_n_files}"
                 ]
+    try:
         res = exec_docker_command(command)
         return res
-    else :
-        print("no docker image or container found")
+    except Exception as e:
+        raise e
 
 
-def invok_docekr_exec_run_process_files(config_obj:Config  , 
+def invoke_docekr_exec_run_process_files(config_obj:Config  , 
                                         solarParams_obj: SolarParams, 
                                         container_type:str, 
                                         container_name:str):
@@ -109,9 +109,6 @@ def invok_docekr_exec_run_process_files(config_obj:Config  ,
                     f"{config_params_str}",
                     f"{solardata_params_str}",
                     ]
-        # print(f"command {command}")
-        res = exec_docker_command(command)
-        return res
         
     elif container_type == "kubernetes":
         # get pod name
@@ -131,14 +128,14 @@ def invok_docekr_exec_run_process_files(config_obj:Config  ,
                     f"{config_params_str}",
                     f"{solardata_params_str}"
                 ]
+    try:
         res = exec_docker_command(command)
         return res
-    else :
-        print("no docker image or container found")
+    except Exception as e:
+        raise e
 
 
-
-def invok_docekr_exec_run_process_all_files(config_obj:Config  , 
+def invoke_docekr_exec_run_process_all_files(config_obj:Config  , 
                                         solarParams_obj: SolarParams, 
                                         container_type, 
                                         container_name):
@@ -155,9 +152,6 @@ def invok_docekr_exec_run_process_all_files(config_obj:Config  ,
                     f"{config_params_str}",
                     f"{solardata_params_str}",
                     ]
-        # print(f"command {command}")
-        res = exec_docker_command(command)
-        return res
         
     elif container_type == "kubernetes":
         # get pod name
@@ -177,10 +171,11 @@ def invok_docekr_exec_run_process_all_files(config_obj:Config  ,
                     f"{config_params_str}",
                     f"{solardata_params_str}"
                 ]
+    try:
         res = exec_docker_command(command)
         return res
-    else :
-        print("no docker image or container found")
+    except Exception as e:
+        raise e
 
 
 
@@ -262,42 +257,6 @@ def invoke_docker_exec_combine_files(config:Config) -> str:
         r2 = res.replace("\'","\"")
         print(f"res here--->: {r2}")
         return res
-
-
-
-def invok_docekr_exec_hi(container_type,container_name):
-    if container_type == "docker":
-        command = [ "docker", 
-                    "exec",
-                    "-it",
-                    container_name,
-                    "python",
-                    "app.py",
-                    "hi",
-                    ]
-        res = exec_docker_command(command)
-        return res
-        
-    elif container_type == "kubernetes":
-        # get pod name
-       
-        pod_name = get_k8s_pod_name(container_name)
-        # print(f" k8s pod_name: {pod_name}")
-        # print(f"pod_name: {pod_name}")
-        command = [ "kubectl", 
-                    "exec",
-                    pod_name,
-                    "--stdin",
-                    "--tty",
-                    "--",
-                    "python",
-                    "app.py",
-                    "hi"
-                ]
-        res = exec_docker_command(command)
-        return res
-    else :
-        print("no docker image or container found")
 
 
 

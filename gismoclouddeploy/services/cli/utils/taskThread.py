@@ -10,7 +10,7 @@ from utils.aws_utils import(
 
 )
 
-from utils.InvokeFunction import(
+from utils.invoke_function import(
     invoke_eksctl_scale_node
 )
 from utils.sqs import (
@@ -20,7 +20,6 @@ from utils.sqs import (
 )
 from typing import List
 
-import subprocess
 
 from utils.eks_utils import (
     scale_nodes_and_wait
@@ -59,7 +58,7 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
     num_task_completed = 0
     while counter:
         time.sleep(wait_time)
-        messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
+        messages = receive_queue_message(sqs_url, sqs_client, MaxNumberOfMessages=1,wait_time=wait_time)
         print(f"waiting ....counter: {counter - wait_time} Time: {time.ctime(time.time())}")
         counter -= int(wait_time)
         if 'Messages' in messages :
@@ -67,16 +66,16 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
                 msg_body = json.loads(msg['Body'])
                 # msg_body = msg['Body']
                 receipt_handle = msg['ReceiptHandle']
-                Subject  = msg_body['Subject']
+                subject  = msg_body['Subject']
                 message_text = msg_body['Message']
-                logger.info(f'The subject : {Subject}')
+                logger.info(f'The subject : {subject}')
                 logger.info(f'The message : {message_text}')
                 # logger.info('Deleting message from the queue...')
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 tasks.append(message_text)
                 num_task_completed += 1
-                if message_text == "AllTaskCompleted":
-                    logger.info("All task completed")
+                if subject == "AllTaskCompleted" or subject == "Error":
+                    logger.info(f"subject:{subject} message: {message_text}")
                     s3_client = connect_aws_client("s3")
                     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
                     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)

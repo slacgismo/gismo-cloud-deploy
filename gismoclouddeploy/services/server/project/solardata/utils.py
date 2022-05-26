@@ -143,8 +143,7 @@ def save_logs_from_dynamodb_to_s3(table_name, saved_bucket, saved_file_path, sav
         to_s3(saved_bucket,saved_file_path,saved_filename, content)
     except Exception as e:
         print(f"ERROR ---> {e}")
-        return False
-    return True
+        raise e
 
 def retrive_all_item_from_dyanmodb(table_name):
     dynamo_client =  connect_aws_client('dynamodb')
@@ -174,19 +173,21 @@ def scan_table(dynamo_client, *, TableName, **kwargs):
 
 
 def remove_all_items_from_dynamodb(table_name):
-
-    dynamodb_resource = connect_aws_resource('dynamodb')
-    table = dynamodb_resource.Table(table_name)
-    scan = table.scan()
-    with table.batch_writer() as batch:
-        for each in scan['Items']:
-            batch.delete_item(
-                Key={
-                    'host_ip': each['host_ip'],
-                    'timestamp':each['timestamp']
-                }
-            )
-    print("remove all items from db completed")
+    try:
+        dynamodb_resource = connect_aws_resource('dynamodb')
+        table = dynamodb_resource.Table(table_name)
+        scan = table.scan()
+        with table.batch_writer() as batch:
+            for each in scan['Items']:
+                batch.delete_item(
+                    Key={
+                        'host_ip': each['host_ip'],
+                        'timestamp':each['timestamp']
+                    }
+                )
+        print("remove all items from db completed")
+    except Exception as e:
+        raise e
 
 def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
     dynamodb_resource = connect_aws_resource('dynamodb')
@@ -268,7 +269,7 @@ def check_aws_validity(key_id, secret):
     except Exception as e:
         if str(e)!="An error occurred (InvalidAccessKeyId) when calling the ListBuckets operation: The AWS Access Key Id you provided does not exist in our records.":
             return True
-        return False
+        raise e
 
 
 def read_column_from_csv_from_s3(
@@ -453,8 +454,8 @@ def process_solardata_tools(
         # df = read_csv_from_s3_first_three_rows(bucket_name,file_path_name,s3_client)
     except Exception as e:
         error_message += f"read column and time error: {e}"
-        print(f"read column and time error: {e}")
-        return False
+        logger.error(f"read column and time error: {e}")
+        raise e
 
     solarParams.power_col = column_name
 
@@ -544,11 +545,12 @@ def process_solardata_tools(
         # logger.info(f" ------ save solardata to S3 response: {response}  ------- ")
 
     
-        return True
+        return response
        
     except Exception as e:
         error_message += str(e)
-        return False
+        logger.error(f"Run solar data tools error {e}")
+        raise e
     
     
 
@@ -564,8 +566,8 @@ def save_solardata_to_file(solardata, saved_bucket, saved_file_path, saved_filen
         to_s3(saved_bucket,saved_file_path,saved_filename, content)
         logger.info(f"save_bucket:{saved_bucket},saved_file_path: {saved_file_path},saved_filename :{saved_filename} success")
     except Exception as e:
-        print(f"ERROR ---> {e}")
-        return False
+        print(f"save to s3 error ---> {e}")
+        raise e
 
 def combine_files_to_file(bucket_name, source_folder, target_folder, target_filename):
     """ 
@@ -578,7 +580,7 @@ def combine_files_to_file(bucket_name, source_folder, target_folder, target_file
  
     if not filter_files:
         logger.warning("No tmp file in folder")
-        return False
+        raise Exception('No tmp file error')
     contents = []
     for file in filter_files:
          df = read_csv_from_s3(bucket_name,file, s3_client)
@@ -594,8 +596,8 @@ def combine_files_to_file(bucket_name, source_folder, target_folder, target_file
         for file in filter_files:
            delete_files_from_buckett(bucket_name,file,s3_client)
     except Exception as e:
-        print(f"ERROR ---> {e}")
-        return False
+        print(f"save to s3 error or delete files error ---> {e}")
+        raise e
 
 
 def delete_files_from_buckett(bucket_name, full_path, s3_client):
@@ -603,8 +605,8 @@ def delete_files_from_buckett(bucket_name, full_path, s3_client):
         s3_client.delete_object(Bucket=bucket_name, Key=full_path)
         print(f"Deleted {full_path} success!!")
     except Exception as e:
-        print(f"ERROR ---> {e}")
-        return False
+        print(f"Delete file error ---> {e}")
+        raise e
 
 
 def list_files_in_folder_of_bucket(bucket_name, file_path, s3_client):

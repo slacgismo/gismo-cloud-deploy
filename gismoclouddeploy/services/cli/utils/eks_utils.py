@@ -10,7 +10,7 @@ import yaml
 from os import path
 from halo import Halo
 from models.Config import Config
-from utils.InvokeFunction import (
+from utils.invoke_function import (
     invoke_kubectl_apply,
     invoke_eksctl_scale_node,
     get_k8s_pod_name)
@@ -177,11 +177,11 @@ def create_k8s_from_yaml(file_path:str, file_name:str, app_name:str) -> bool:
                     print("Created. status='%s'" % str(resp.status))
                     return True
                 except Exception as e:
-                    print(f"no deplyment.yaml {e}")
-                    return False
+                    print(f"no deplyment.yaml {file_name}")
+                    raise e
     except Exception as e:
         print(f"openf file {full_path_name} failed: {e}")
-        return False
+        raise e
         
 
     
@@ -204,16 +204,22 @@ def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
         response  = invoke_kubectl_apply(k8s_path)
         logger.info(response)
         # check default woker number
-        worker_setting = read_k8s_yml(file_path=k8s_path, file_name="worker.deployment.yaml" )
+        try:
+            worker_setting = read_k8s_yml(file_path=k8s_path, file_name="worker.deployment.yaml" )
+        except Exception as e:
+            raise e
         worker_default_replicas = worker_setting['spec']['replicas']
         wait_container_ready(num_container=worker_default_replicas, container_prefix="worker", counter=60, delay=1)
     logger.info(" ========= Check Worker Setting from config.yaml ========= ")
 
     current_woker_replicas = num_container_ready(container_prefix = "worker")
-    replace_k8s_yaml_with_replicas(file_path=k8s_path, file_name="worker.deployment.yaml", 
-                                    new_replicas=int(config_params_obj.worker_replicas),
-                                    curr_replicas=int(current_woker_replicas),
-                                    app_name="worker")
+    try:
+        replace_k8s_yaml_with_replicas(file_path=k8s_path, file_name="worker.deployment.yaml", 
+                                        new_replicas=int(config_params_obj.worker_replicas),
+                                        curr_replicas=int(current_woker_replicas),
+                                        app_name="worker")
+    except Exception as e:
+        raise e
   
 def read_k8s_yml(file_path:str, file_name:str):  
     config.load_kube_config()
@@ -224,14 +230,14 @@ def read_k8s_yml(file_path:str, file_name:str):
             return dep
     except Exception as e:
         logger.error(f"cannot open yaml file: {e}")
-        return False
+        raise e
 
 
 def create_k8s_svc_from_yaml(file_path:str, file_name:str, namspace:str = "default") -> bool:
     try:
         file_setting = read_k8s_yml(file_path = file_path, file_name =file_name)
     except Exception as e:
-        return False
+        raise e
     config.load_kube_config()
     apps_v1_api = client.CoreV1Api()
     try:
@@ -241,13 +247,13 @@ def create_k8s_svc_from_yaml(file_path:str, file_name:str, namspace:str = "defau
         return True
     except Exception as e:
         logger.error(f"create k8s deployment error: {e}")
-
+        raise e
     
 def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:int, app_name:str, curr_replicas:int) -> bool:
     try:
         file_setting = read_k8s_yml(file_path = file_path, file_name =file_name)
     except Exception as e:
-        return False
+        raise e
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
 
@@ -264,4 +270,4 @@ def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:in
             return True
         except Exception as e:
             print(f"no deplyment.yaml {e}")
-            return False
+            raise e

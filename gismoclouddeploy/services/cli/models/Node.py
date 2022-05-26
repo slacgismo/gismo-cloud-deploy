@@ -16,4 +16,3 @@ class Node(object):
         self.region = region
         self.status = status
         self.status_type = status_type
-

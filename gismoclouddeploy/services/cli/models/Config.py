@@ -1,6 +1,10 @@
 from urllib3 import Retry
-from utils.ReadWriteIO import read_yaml
+from utils.read_wirte_io import read_yaml
+import logging
 
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s: %(levelname)s: %(message)s')
 class Config(object):
 
     def __init__(self,
@@ -52,35 +56,41 @@ class Config(object):
 
 
     
-    def import_config_from_yaml(file):
-        config_params = read_yaml(file)
-
-        config = Config(
-            
-            files = config_params["files_config"]["files"],
-            process_all_files = config_params["files_config"]["process_all_files"],
-            bucket = config_params["files_config"]["bucket"],
-            column_names = config_params["files_config"]["column_names"],
-            saved_bucket = config_params["output"]["saved_bucket"],
-            saved_tmp_path = config_params["output"]["saved_tmp_path"],
-            saved_target_path = config_params["output"]["saved__target_path"],
-            saved_target_filename = config_params["output"]["saved__target_filename"],
-            dynamodb_tablename = config_params["output"]["dynamodb_tablename"],
-            saved_logs_target_path = config_params["output"]["saved_logs_target_path"],
-            saved_logs_target_filename = config_params["output"]["saved_logs_target_filename"],
-            environment = config_params["general"]["environment"],
-            container_type = config_params["general"]["container_type"],
-            container_name = config_params["general"]["container_name"],
-            interval_of_check_task_status = config_params["general"]["interval_of_check_task_status"],
-            interval_of_exit_check_status = config_params["general"]["interval_of_exit_check_status"],
-            worker_replicas= config_params["k8s_config"]["worker_replicas"],
-            interval_of_check_sqs_in_second= config_params["aws_config"]["interval_of_check_sqs_in_second"],
-            interval_of_total_wait_time_of_sqs= config_params["aws_config"]["interval_of_total_wait_time_of_sqs"],
-            eks_nodes_number = config_params["aws_config"]["eks_nodes_number"],
-            scale_eks_nodes_wait_time =  config_params["aws_config"]["scale_eks_nodes_wait_time"],
-            
-        )
-        return config
+    def import_config_from_yaml(file:str):
+        try:
+            config_params = read_yaml(filename=file)
+        except Exception as e:
+            logger.error(f"{file} file didn't exist: {e}" )
+            raise e
+        try:
+            config = Config(
+                files = config_params["files_config"]["files"],
+                process_all_files = config_params["files_config"]["process_all_files"],
+                bucket = config_params["files_config"]["bucket"],
+                column_names = config_params["files_config"]["column_names"],
+                saved_bucket = config_params["output"]["saved_bucket"],
+                saved_tmp_path = config_params["output"]["saved_tmp_path"],
+                saved_target_path = config_params["output"]["saved__target_path"],
+                saved_target_filename = config_params["output"]["saved__target_filename"],
+                dynamodb_tablename = config_params["output"]["dynamodb_tablename"],
+                saved_logs_target_path = config_params["output"]["saved_logs_target_path"],
+                saved_logs_target_filename = config_params["output"]["saved_logs_target_filename"],
+                environment = config_params["general"]["environment"],
+                container_type = config_params["general"]["container_type"],
+                container_name = config_params["general"]["container_name"],
+                interval_of_check_task_status = config_params["general"]["interval_of_check_task_status"],
+                interval_of_exit_check_status = config_params["general"]["interval_of_exit_check_status"],
+                worker_replicas= config_params["k8s_config"]["worker_replicas"],
+                interval_of_check_sqs_in_second= config_params["aws_config"]["interval_of_check_sqs_in_second"],
+                interval_of_total_wait_time_of_sqs= config_params["aws_config"]["interval_of_total_wait_time_of_sqs"],
+                eks_nodes_number = config_params["aws_config"]["eks_nodes_number"],
+                scale_eks_nodes_wait_time =  config_params["aws_config"]["scale_eks_nodes_wait_time"],
+                
+            )
+            return config
+        except Exception as e:  
+            logger.error(f"solardata parameters format in {file} file is incorrect: {e}" )
+            raise e
 
     def parse_config_to_json_str(self):
 

@@ -1,6 +1,8 @@
 import boto3
 from botocore.exceptions import ClientError
 import logging
+import json
+import time
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
@@ -131,7 +133,7 @@ def enable_existing_queue_long_pulling(queue_url,msg_rcv_wait_time,sqs_client):
     else:
         return response
 
-def receive_queue_message(queue_url, sqs_client, wait_time:int = 0):
+def receive_queue_message(queue_url:str, sqs_client,MaxNumberOfMessages:int = 1,  wait_time:int = 0):
     """
     Retrieves one or more messages (up to 10), from the specified queue.
     """
@@ -140,7 +142,7 @@ def receive_queue_message(queue_url, sqs_client, wait_time:int = 0):
                                               AttributeNames=[
                                                   'SentTimestamp'
                                               ],
-                                              MaxNumberOfMessages=1,
+                                              MaxNumberOfMessages=MaxNumberOfMessages,
                                               MessageAttributeNames=[
                                                   'All'
                                               ],
@@ -193,19 +195,47 @@ def configure_queue_long_polling(queue_url, msg_rcv_wait_time, sqs_client):
     else:
         return response
 
-def clean_previous_sqs_message(sqs_url:str, sqs_client:str, wait_time:int):
+# def clean_previous_sqs_message(sqs_url:str, sqs_client:str, wait_time:int):
+#     # print("Receive previous message ---->")
+#     messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
+#     if 'Messages' in messages:
+#         for msg in messages['Messages']:
+#             msg_body = msg['Body']
+#             receipt_handle = msg['ReceiptHandle']
+
+#             logger.info(f'The message body: {msg_body}')
+
+#             # logger.info('Deleting message from the queue...')
+
+#             # delete_queue_message(sqs_url, receipt_handle, sqs_client)
+
+#             logger.info(f'Received and deleted message(s) from {sqs_url}.')
+#     logger.info("Clean previous message completed")
+
+def clean_previous_sqs_message(sqs_url:str, sqs_client:str, wait_time:int, counter:int, delay:int):
     # print("Receive previous message ---->")
-    messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
-    if 'Messages' in messages:
-        for msg in messages['Messages']:
-            msg_body = msg['Body']
-            receipt_handle = msg['ReceiptHandle']
 
-            logger.info(f'The message body: {msg_body}')
+    while counter:
+        messages = receive_queue_message(queue_url=sqs_url,MaxNumberOfMessages=1 ,sqs_client=sqs_client, wait_time=wait_time)
+        # print(messages)
+        if 'Messages' in messages:
+            for msg in messages['Messages']:
+                msg_body = msg['Body']
+                receipt_handle = msg['ReceiptHandle']
+                message_id = msg['MessageId']
+                logger.info(f'The message body: {msg_body}')
 
-            # logger.info('Deleting message from the queue...')
+                # logger.info('Deleting message from the queue...')
 
-            delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                delete_queue_message(sqs_url, receipt_handle, sqs_client)
 
-            logger.info(f'Received and deleted message(s) from {sqs_url}.')
-    logger.info("Clean previous message completed")
+                logger.info(f'Received and deleted message(s) from {sqs_url}.')
+                print(receipt_handle)
+        else:
+            logger.info("Clean previous message completed")
+            return
+
+        counter -= 1
+        time.sleep(delay)
+
+    

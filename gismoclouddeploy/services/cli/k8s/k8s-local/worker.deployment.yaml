@@ -29,10 +29,6 @@ spec:
             value: "amqp://admin:admin@rabbitmq-service:5672/"
           - name: CELERY_RESULT_BACKEND
             value: "redis://redis:6379/0"
-          - name: DATABASE_URL
-            value: "postgresql://sample:pleasechangeme@postgres-services/flask_celery"
-          - name: SECRET_KEY
-            value: my_precious
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
@@ -43,5 +39,5 @@ spec:
               secretKeyRef:
                 name: aws-secret-access-key
                 key: aws-secret-access-key 
-          - name: AWS_DEFAULT_REGION
+          - name: AWS_DEFAULT_REGIONku
             value: us-east-2
