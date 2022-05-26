@@ -1,6 +1,8 @@
+import imp
 import os
 import boto3
 import pandas as pd
+from typing import List
 from dotenv import load_dotenv
 load_dotenv()
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
@@ -44,7 +46,7 @@ def connect_aws_resource(resource_name):
         return resource
     raise Exception('AWS Validation Error')
     
-def check_environment_is_aws():
+def check_environment_is_aws() -> bool:
     my_user = os.environ.get("USER")
     is_aws = True if "ec2" in my_user else False
     return is_aws
@@ -52,9 +54,9 @@ def check_environment_is_aws():
 def read_all_csv_from_s3_and_parse_dates_from(
     bucket_name:str=None,
     file_path_name:str=None,
-    s3_client = None,
-    dates_column_name = None,
-    index_col=0
+    s3_client:'botocore.client.S3' = None,
+    dates_column_name:str = None,
+    index_col:int=0
     ):
 
     if bucket_name is None or file_path_name is None or s3_client is None :
@@ -77,7 +79,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
         print(f"error read  file: {file_path_name} error:{e}")
         raise e
 
-def list_files_in_bucket(bucket_name):
+def list_files_in_bucket(bucket_name:str) -> List[str]:
     """ Get filename and size from S3 , remove non csv file """
     s3_client = connect_aws_client('s3')
     response = s3_client.list_objects_v2(Bucket=bucket_name)

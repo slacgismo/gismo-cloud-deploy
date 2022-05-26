@@ -213,10 +213,10 @@ def process_logs_from_local():
     fig.show()
 
 
-def process_logs_from_s3(bucket, logs_file_path_name, saved_image_name, s3_client):
+def process_logs_from_s3(bucket:str, logs_file_path_name:str, saved_image_name:str, s3_client:'botocore.client.S3'):
 
     df = read_all_csv_from_s3_and_parse_dates_from(bucket_name=bucket,
-                                file_path_name=str(logs_file_path_name), 
+                                file_path_name=logs_file_path_name, 
                                 dates_column_name = "timestamp",
                                 s3_client=s3_client)
 

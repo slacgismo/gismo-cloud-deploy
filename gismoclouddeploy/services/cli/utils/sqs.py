@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO,
 # SQS
 
 
-def create_standard_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource):
+def create_standard_queue(queue_name:str, delay_seconds:int, visiblity_timeout:int, sqs_resource:'botocore.resource.SQS'):
     """
     Create a standard SQS queue
     """
@@ -62,7 +62,7 @@ def list_queues(sqs_resource):
         return sqs_queues
 
 
-def get_queue(queue_name, sqs_client):
+def get_queue(queue_name:str, sqs_client:'botocore.client.SQS'):
     """
     Returns the URL of an existing Amazon SQS queue.
     """
@@ -76,7 +76,7 @@ def get_queue(queue_name, sqs_client):
         return response
 
 
-def delete_queue(queue_name, sqs_client):
+def delete_queue(queue_name:str, sqs_client:'botocore.client.SQS'):
     """
     Deletes the queue specified by the QueueUrl.
     """
@@ -119,7 +119,7 @@ def send_queue_message(queue_url, msg_attributes, msg_body, sqs_client):
     else:
         return response
 
-def enable_existing_queue_long_pulling(queue_url,msg_rcv_wait_time,sqs_client):
+def enable_existing_queue_long_pulling(queue_url:str,msg_rcv_wait_time:int,sqs_client:'botocore.client.SQS'):
     """
     Configure queue to for long polling.
     """
@@ -156,7 +156,7 @@ def receive_queue_message(queue_url:str, sqs_client,MaxNumberOfMessages:int = 1,
         return response
 
 
-def delete_queue_message(queue_url, receipt_handle, sqs_client):
+def delete_queue_message(queue_url:str, receipt_handle:str, sqs_client:'botocore.client.SQS'):
     """
     Deletes the specified message from the specified queue.
     """
@@ -171,7 +171,7 @@ def delete_queue_message(queue_url, receipt_handle, sqs_client):
         return response
 
 
-def read_from_sqs_queue(queue_url, sqs_client):
+def read_from_sqs_queue(queue_url:str, sqs_client:'botocore.client.SQS'):
 
     messages = sqs_client.receive_message(
         QueueUrl=queue_url,
@@ -181,7 +181,7 @@ def read_from_sqs_queue(queue_url, sqs_client):
     return messages
 
 
-def configure_queue_long_polling(queue_url, msg_rcv_wait_time, sqs_client):
+def configure_queue_long_polling(queue_url:str, msg_rcv_wait_time:int, sqs_client:'botocore.client.SQS'):
     """
     Configure queue to for long polling.
     """
@@ -195,24 +195,9 @@ def configure_queue_long_polling(queue_url, msg_rcv_wait_time, sqs_client):
     else:
         return response
 
-# def clean_previous_sqs_message(sqs_url:str, sqs_client:str, wait_time:int):
-#     # print("Receive previous message ---->")
-#     messages = receive_queue_message(sqs_url, sqs_client, wait_time=wait_time)
-#     if 'Messages' in messages:
-#         for msg in messages['Messages']:
-#             msg_body = msg['Body']
-#             receipt_handle = msg['ReceiptHandle']
 
-#             logger.info(f'The message body: {msg_body}')
 
-#             # logger.info('Deleting message from the queue...')
-
-#             # delete_queue_message(sqs_url, receipt_handle, sqs_client)
-
-#             logger.info(f'Received and deleted message(s) from {sqs_url}.')
-#     logger.info("Clean previous message completed")
-
-def clean_previous_sqs_message(sqs_url:str, sqs_client:str, wait_time:int, counter:int, delay:int):
+def clean_previous_sqs_message(sqs_url:str, sqs_client:'botocore.client.SQS', wait_time:int, counter:int, delay:int):
     # print("Receive previous message ---->")
 
     while counter:

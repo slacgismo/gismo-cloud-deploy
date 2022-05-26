@@ -35,7 +35,7 @@ logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
-import typing
+
 class taskThread (threading.Thread):
     def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool, dlq_url:str):
         threading.Thread.__init__(self)
@@ -54,7 +54,29 @@ class taskThread (threading.Thread):
       print ("Exiting " + self.name)
 
 
-def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool, dlq_url:str) -> List[str]:
+def send_mesage_to_DLQ(subject:str, message:str, dlq_url:str,sqs_client:'botocore.client.SQS'):
+     #  move message to deal letter queue
+    MSG_ATTRIBUTES = {
+        'Title': {
+            'DataType': 'String',
+            'StringValue': subject
+        }
+    }
+    MSG_BODY = message
+    try:
+        dlq_res = send_queue_message(queue_url=dlq_url, msg_attributes= MSG_ATTRIBUTES, msg_body=MSG_BODY, sqs_client=sqs_client)
+        logger.info(f" ==== DLG  ========\n {dlq_res}")
+    except Exception as e:
+        raise e
+
+
+def long_pulling_sqs(counter:int,
+                        wait_time:int,
+                        sqs_url:str,
+                        num_task:int, 
+                        config_params_obj:Config, 
+                        delete_nodes_after_processing:bool,
+                        dlq_url:str) -> List[str]:
     sqs_client = connect_aws_client('sqs')
     tasks = []
     num_task_completed = 0
@@ -77,22 +99,11 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
                 tasks.append(message_text)
                 num_task_completed += 1
                 if subject == "ProcessFileError" or subject == "Error":
-                    #  move message to deal letter queue
-                    
-                    MSG_ATTRIBUTES = {
-                        'Title': {
-                            'DataType': 'String',
-                            'StringValue': subject
-                        }
-                    }
-                    MSG_BODY = message_text
-                    try:
-                        dlq_res = send_queue_message(queue_url=dlq_url, msg_attributes= MSG_ATTRIBUTES, msg_body=MSG_BODY, sqs_client=sqs_client)
-                        logger.info(f" ============ DLG  {dlq_res}")
-                    except Exception as e:
-                        raise e
+
+                    send_mesage_to_DLQ(subject=subject, message=message_text, dlq_url=dlq_url, sqs_client=sqs_client)
 
                 if subject == "AllTaskCompleted" or subject == "Error":
+
                     logger.info(f"subject:{subject} message: {message_text}")
                     s3_client = connect_aws_client("s3")
                     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename

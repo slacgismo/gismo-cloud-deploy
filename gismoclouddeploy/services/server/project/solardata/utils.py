@@ -16,7 +16,7 @@ import solardatatools
 import time
 import socket
 from boto3.dynamodb.types import TypeDeserializer
-
+from typing import List
 import logging
 import plotly.express as px
 
@@ -73,10 +73,6 @@ def process_df_for_gantt(df:pd)  :
                 info_dict[key_start] = worker.time
             worker_dict[worker.task_id] = info_dict
     
-    # for key in worker_dict:
-    #     print(f" key --->:{key}")
-
-
     return worker_dict
 
 def plot_gantt_chart(bucket,file_path_name,saved_image_name):
@@ -544,7 +540,7 @@ def save_solardata_to_file(solardata, saved_bucket, saved_file_path, saved_filen
         print(f"save to s3 error ---> {e}")
         raise e
 
-def combine_files_to_file(bucket_name, source_folder, target_folder, target_filename):
+def combine_files_to_file(bucket_name:str, source_folder:str, target_folder:str, target_filename:str) -> None:
     """ 
     Combine all files in sorce folder and save into target folder and target file.
     After the process is completed, all files in source folder will be deleted.
@@ -584,7 +580,7 @@ def delete_files_from_buckett(bucket_name, full_path, s3_client):
         raise e
 
 
-def list_files_in_folder_of_bucket(bucket_name, file_path, s3_client):
+def list_files_in_folder_of_bucket(bucket_name:str, file_path:str, s3_client:'botocore.client.S3') -> List[str]:
     """ Get filename from a folder of the bucket , remove non csv file """
     
     response = s3_client.list_objects_v2(Bucket=bucket_name)
@@ -645,8 +641,8 @@ def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
 def read_all_csv_from_s3(
     bucket_name:str=None,
     file_path_name:str=None,
-    s3_client = None,
-    index_col=0
+    s3_client:'botocore.client.S3' = None,
+    index_col:int=0
     ):
 
     if bucket_name is None or file_path_name is None or s3_client is None  :
@@ -666,7 +662,7 @@ def read_all_csv_from_s3(
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
 
-def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_name:str, s3_client) -> Set[set] :
+def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_name:str, s3_client:'botocore.client.S3') -> Set[set] :
     '''
     Find the match column name from key word. if matched column has no value inside, it will be skipped.
     If this function find exactly match with key and column name , it return the the match column name in set.
