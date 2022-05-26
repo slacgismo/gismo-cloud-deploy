@@ -179,7 +179,21 @@ Push images to ECR
 $ make push-server
 $ make push-worker
 ```
+### Testing
+### Test cli 
 
+#### Test docker image
+Run pytest in docker image
+
+```bash
+$ docker-compose exec web pytest 
+```
+
+Get test coverage in docker image
+
+```bash
+$ docker-compose exec web pytest --cov=.
+```
 
 ### System diagram
 ![System diagram](./Solar-data-tools-AWS.png)
