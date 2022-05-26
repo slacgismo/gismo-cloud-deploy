@@ -1,3 +1,4 @@
+import re
 import time
 import logging
 from kubernetes import client, config
@@ -7,7 +8,7 @@ from utils.aws_utils import check_environment_is_aws
 import logging 
 from typing import List
 import yaml
-from os import path
+
 from halo import Halo
 from models.Config import Config
 from utils.invoke_function import (
@@ -27,22 +28,24 @@ def num_container_ready(container_prefix:str) -> int:
     for i in ret.items:
         podname = i.metadata.name.split("-")[0]
         if podname == container_prefix:
-            # print("%s\t%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, i.status.phase))
-            if i.status.phase == "Running":
-                print("%s\t%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name, i.status.phase))
+            logger.info(f"{i.metadata.name}: {i.status.container_statuses[-1].state}")
+            if i.status.container_statuses[-1].ready:
                 num_container_running += 1
-
     return num_container_running
+
 
 def wait_container_ready(num_container:str, container_prefix:str, counter: int, delay:int) -> bool:
     cunrrent_num_container = 0
+    print(counter)
     while counter:
         cunrrent_num_container = num_container_ready(container_prefix = container_prefix)
         if cunrrent_num_container == num_container:
             logger.info(f"{num_container} pods are running")
             return True
         counter -= delay
+        logger.info(f"waiting ....counter: {counter - delay} Time: {time.ctime(time.time())}")
         time.sleep(delay)
+        
     return False
 
 def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int) -> bool:
@@ -137,31 +140,6 @@ def match_pod_ip_to_node_name(pods_name_sets:set) -> dict:
     #     print(key, value)
     return pods
 
-# def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:int, app_name:str, curr_replicas:int) -> bool:
-#     config.load_kube_config()
-#     apps_v1_api = client.AppsV1Api()
-#     full_path_name = file_path + "/" + file_name
-#     try:
-#         with open(full_path_name) as f:
-#                 dep = yaml.safe_load(f)
-#                 name=app_name
-#                 # origin_replica = dep['spec']['replicas']
-#                 print(f"curr_replicas replcia {curr_replicas}, new_replicas: {new_replicas} ")
-#                 if curr_replicas != new_replicas:
-                   
-#                     dep['spec']['replicas']= int(new_replicas)
-#                     logger.info(f" ========= Update {app_name} replicas from {curr_replicas} to {new_replicas} ========= ")
-#                     try:
-#                         resp = apps_v1_api.replace_namespaced_deployment(name=name, 
-#                             body=dep, namespace="default")
-#                         print("Replace created. status='%s'" % str(resp.status))
-#                         return True
-#                     except Exception as e:
-#                         print(f"no deplyment.yaml {e}")
-#                         return False
-#     except Exception as e:
-#         print(f"no {full_path_name} was foud  {e}")
-#         return False
 
 def create_k8s_from_yaml(file_path:str, file_name:str, app_name:str) -> bool:
     config.load_kube_config()
@@ -196,21 +174,47 @@ def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
         k8s_path = "./k8s/k8s-aws"
 
     logger.info(" ========= Check K8s is status ========= ")
+  
+            
 
     worker_pod= get_k8s_pod_name("worker")
     webapp_pod= get_k8s_pod_name("webapp")
-    if worker_pod is None or webapp_pod is None:
+    redis= get_k8s_pod_name("redis")
+    rabbitmq= get_k8s_pod_name("rabbitmq")
+    print(f"{worker_pod}, {webapp_pod},{redis}, {rabbitmq}")
+    if worker_pod is None or webapp_pod is None or redis is None or rabbitmq is None:
         logger.info(f" ========= Worker or Webapp is none found,  apply K8s from {k8s_path} ========= ")
-        response  = invoke_kubectl_apply(k8s_path)
-        logger.info(response)
-        # check default woker number
         try:
             worker_setting = read_k8s_yml(file_path=k8s_path, file_name="worker.deployment.yaml" )
         except Exception as e:
             raise e
+            
         worker_default_replicas = worker_setting['spec']['replicas']
-        wait_container_ready(num_container=worker_default_replicas, container_prefix="worker", counter=60, delay=1)
-    logger.info(" ========= Check Worker Setting from config.yaml ========= ")
+        # invoke kubectl apply -f .(folder)
+        response  = invoke_kubectl_apply(k8s_path)
+        logger.info(response)
+        # check rabbitmq
+        is_rabbitmq_pod_ready = wait_container_ready(num_container=1, container_prefix="rabbitmq", counter=60, delay=1)
+        if is_rabbitmq_pod_ready is False:
+            logger.error("Waiting redis pod ready over time")
+            raise Exception("Waiting over time") 
+        # check redis
+        is_redis_pod_ready = wait_container_ready(num_container=1, container_prefix="redis", counter=60, delay=1)
+        if is_redis_pod_ready is False:
+            logger.error("Waiting redis pod ready over time")
+            raise Exception("Waiting over time") 
+        # check webapp
+        is_webapp_pod_ready = wait_container_ready(num_container=1, container_prefix="webapp", counter=60, delay=1)
+        if is_webapp_pod_ready is False:
+            logger.error("Waiting webapp pod ready over time")
+            raise Exception("Waiting over time") 
+        # check worker 
+        is_worker_pod_ready = wait_container_ready(num_container=worker_default_replicas, container_prefix="worker", counter=60, delay=1)
+        if is_worker_pod_ready is False:
+            logger.error("Waiting worker pod ready over time")
+            raise Exception("Waiting over time") 
+ 
+    logger.info(" ========= Compare k8s Worker Setting with config.yaml ========= ")
 
     current_woker_replicas = num_container_ready(container_prefix = "worker")
     try:
@@ -218,6 +222,7 @@ def create_or_update_k8s(config_params_obj:Config, env:str = "local"):
                                         new_replicas=int(config_params_obj.worker_replicas),
                                         curr_replicas=int(current_woker_replicas),
                                         app_name="worker")
+
     except Exception as e:
         raise e
   
@@ -249,6 +254,7 @@ def create_k8s_svc_from_yaml(file_path:str, file_name:str, namspace:str = "defau
         logger.error(f"create k8s deployment error: {e}")
         raise e
     
+    
 def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:int, app_name:str, curr_replicas:int) -> bool:
     try:
         file_setting = read_k8s_yml(file_path = file_path, file_name =file_name)
@@ -266,8 +272,10 @@ def replace_k8s_yaml_with_replicas(file_path:str, file_name:str, new_replicas:in
             resp = apps_v1_api.replace_namespaced_deployment(name=app_name, 
                 body=file_setting, namespace="default")
             print("Replace created. status='%s'" % str(resp.status))
-            wait_container_ready(num_container=new_replicas, container_prefix=app_name,counter=60, delay=1 )
+            is_ready = wait_container_ready(num_container=new_replicas, container_prefix=app_name,counter=60, delay=1 )
+            if is_ready is False:
+                raise Exception("Wait over time")
             return True
         except Exception as e:
-            print(f"no deplyment.yaml {e}")
+            print(f"no deplyment.yaml or wait over time{e}")
             raise e

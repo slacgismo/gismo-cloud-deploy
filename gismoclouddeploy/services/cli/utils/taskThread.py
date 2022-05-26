@@ -61,7 +61,7 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
     while counter:
         time.sleep(wait_time)
         messages = receive_queue_message(sqs_url, sqs_client, MaxNumberOfMessages=1,wait_time=wait_time)
-        print(f"waiting ....counter: {counter - wait_time} Time: {time.ctime(time.time())}")
+        logger.info(f"waiting ....counter: {counter - wait_time} Time: {time.ctime(time.time())}")
         counter -= int(wait_time)
         if 'Messages' in messages :
             for msg in messages['Messages']:

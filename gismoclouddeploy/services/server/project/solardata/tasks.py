@@ -3,10 +3,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
 import os
-
-
 from project.solardata.models.SolarParams import make_solardata_params_from_str
-
 from project.solardata.models.WorkerStatus import WorkerStatus
 
 import time
@@ -117,8 +114,11 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
             logger.info(f'Error: {e} ')
 
         # send message
-        mesage_id = publish_message_sns(message=message,subject=subject, topic_arn= SNS_TOPIC)
-        logger.info(f' Send to SNS.----------> message: {mesage_id}')
+        try:
+            mesage_id = publish_message_sns(message=message,subject=subject, topic_arn=SNS_TOPIC)
+            logger.info(f' Send to SNS.----------> message: {mesage_id}')
+        except Exception as e:
+            raise e
 
         track_logs(task_id=self.request.id,
             function_name="process_data_task",
@@ -209,6 +209,9 @@ def loop_tasks_status_task( self,
             message=f"Loop task error:{e}"
             logger.info(f'Error: {message} ')
 
-        mesage_id = publish_message_sns(message=message,subject=subject, topic_arn= SNS_TOPIC)
-        logger.info(f'End task,Send to SNS.----------> message: {mesage_id}')
+        try:
+            mesage_id = publish_message_sns(message=message,subject=subject, topic_arn=SNS_TOPIC)
+            logger.info(f' Send to SNS.----------> message: {mesage_id}')
+        except Exception as e:
+            raise e
     

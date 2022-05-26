@@ -48,7 +48,6 @@ def make_worker_object_from_dataframe(dataframe):
         task_id = row.task_id
         if pd.isnull(row.task_id):
             task_id = "scheduler"
-        # print(row.timestamp, row.host_ip)
         worker = WorkerStatus(host_name=row.host_name,
                         host_ip=row.host_ip,
                         task_id = task_id,

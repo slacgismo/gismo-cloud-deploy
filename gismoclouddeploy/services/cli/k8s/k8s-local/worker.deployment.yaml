@@ -30,7 +30,7 @@ spec:
           - name: CELERY_RESULT_BACKEND
             value: "redis://redis:6379/0"
           - name: SNS_TOPIC
-            value: SNS_TOPIC
+            value: arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
@@ -41,5 +41,5 @@ spec:
               secretKeyRef:
                 name: aws-secret-access-key
                 key: aws-secret-access-key 
-          - name: AWS_DEFAULT_REGIONku
+          - name: AWS_DEFAULT_REGION
             value: us-east-2

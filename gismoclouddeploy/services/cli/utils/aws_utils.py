@@ -75,7 +75,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
        
     except Exception as e:
         print(f"error read  file: {file_path_name} error:{e}")
-    
+        raise e
 
 def list_files_in_bucket(bucket_name):
     """ Get filename and size from S3 , remove non csv file """

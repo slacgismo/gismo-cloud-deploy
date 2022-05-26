@@ -89,13 +89,21 @@ def run_process_files(number,delete_nodes,configfile):
         config_params_obj.container_name = "webapp"
         scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1)
         # create or update k8s setting based on yaml files
-        create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
+        try:
+            create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
+        except Exception as e:
+            logger.error(f"Create or update k8s error :{e}")
+            return 
 
     else:
         # local env
         if config_params_obj.container_type == "kubernetes":
             # check if k8s and webapp exist
-            create_or_update_k8s(config_params_obj=config_params_obj,env="local")
+            try:
+                create_or_update_k8s(config_params_obj=config_params_obj,env="local")
+            except Exception as e:
+                logger.error(f"Create or update k8s error :{e}")
+                return 
 
     # # # step 2 . clear sqs
     logger.info(" ========= Clean previous SQS ========= ")
