@@ -25,8 +25,6 @@ import io
 import plotly.io as pio
 from typing import Set
 
-from project.solardata.models.GanttObject import GanttObject
-
 # logger config
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
@@ -373,31 +371,7 @@ def read_csv_from_s3_with_column_name(
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return df
 
-def read_csv_from_s3_first_two_rows(
-    bucket_name=None,
-    file_path_name=None,
-    s3_client = None,
-    index_col=0,
-    parse_dates=[0],
-    usecols=[1,3],
-    ):
 
-    if bucket_name is None or file_path_name is None or s3_client is None :
-        return
-    
-    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
-
-    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-
-    if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
-        result_df = pd.read_csv(response.get("Body"),
-                                index_col=index_col,
-                                parse_dates=parse_dates,
-                                usecols=usecols)
-    else:
-        print(f"Unsuccessful S3 get_object response. Status - {status}")
-    return result_df
 
 def read_csv_from_s3_first_three_rows(
     bucket_name=None,
@@ -451,7 +425,6 @@ def process_solardata_tools(
 
     try:
         df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
-        # df = read_csv_from_s3_first_three_rows(bucket_name,file_path_name,s3_client)
     except Exception as e:
         error_message += f"read column and time error: {e}"
         logger.error(f"read column and time error: {e}")
@@ -698,7 +671,10 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
     If no exactly match key was found, it return the partial match key with longest data set.  
     '''
     # all_df = read_all_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
-    total_columns = read_column_from_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
+    try:
+        total_columns = read_column_from_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
+    except Exception as e:
+        raise e
     # total_columns = list(all_df.columns)
     exact_column_set = set()
     # find exactly match 
@@ -724,7 +700,10 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
     key_with_most_data = ""
     for key in matched_column_set:
         # check if column has value. 
-        tmp_df = read_csv_from_s3_with_column_name(bucket_name=bucket_name,file_path_name=file_path_name, column_name=key,s3_client=s3_client)
+        try:
+            tmp_df = read_csv_from_s3_with_column_name(bucket_name=bucket_name,file_path_name=file_path_name, column_name=key,s3_client=s3_client)
+        except Exception as e:
+            raise e
         # print(f"key: {key},---> {len(tmp_df)}")
         if max_count <= len(tmp_df):
             max_count = len(tmp_df)

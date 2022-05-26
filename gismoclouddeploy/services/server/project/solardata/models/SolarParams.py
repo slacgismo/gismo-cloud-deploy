@@ -50,19 +50,7 @@ class SolarParams(object):
         self.units = units
         self.solver = solver
     
-    # def to_json(self):
-    #         return {
-    #             'files': self.id,
-    #             'bucket': self.task_id,
-    #             'process_all_files': self.bucket_name,
-    #             'column_names': self.file_path,
-    #             'saved_bucket': self.file_name,
-    #             'saved_tmp_path': self.column_name,
-    #             'saved_target_path': self.process_time,
-    #             'saved_target_filename': self.power_units,
-    #             'interval_of_check_task_status': self.length,
-    #             'interval_of_exit_check_status': self.capacity_estimate
-    #         }
+
 def make_solardata_params_from_str(command_str:str) -> SolarParams:
     solar_params_json = json.loads(command_str)
     power_col  = str(solar_params_json['power_col'])

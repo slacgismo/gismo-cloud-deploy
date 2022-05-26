@@ -3,17 +3,17 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
 import os
-import pandas as pd
-import solardatatools
-from project.solardata.models.SolarParams import SolarParams,make_solardata_params_from_str
-from project.solardata.models.Configure import Configure
+
+
+from project.solardata.models.SolarParams import make_solardata_params_from_str
+
 from project.solardata.models.WorkerStatus import WorkerStatus
-from io import StringIO
+
 import time
 import socket
 
 logger = get_task_logger(__name__)
-SNS_TOPIC = "arn:aws:sns:us-east-2:041414866712:gismo-cloud-deploy-sns"
+SNS_TOPIC = os.environ.get('SNS_TOPIC')
 
 def track_logs( task_id:str,
                 function_name:str,
