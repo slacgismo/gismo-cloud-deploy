@@ -52,7 +52,7 @@ SNS_TOPIC=<your-sns-topic>
 $ kubectl create secret generic aws-access-key-id --from-literal aws-access-key-id=<your AWS access key>
 ```
 ```bash
-$ kubectl create secret generic aws-secret-key --from-literal aws-secret-access-key =<your AWS secret key>
+$ kubectl create secret generic aws-secret-key --from-literal aws-secret-access-key=<your AWS secret key>
 ```
 
 4. Create and activate python virtual environment.
