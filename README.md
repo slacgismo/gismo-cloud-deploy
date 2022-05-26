@@ -181,6 +181,13 @@ $ make push-worker
 ```
 ### Testing
 ### Test cli 
+Run pytest coverage in cli
+
+```bash
+$ cd ./gismoclouddeploy/services/cli
+$ pytest --cov=.
+```
+
 
 #### Test docker image
 Run pytest in docker image
