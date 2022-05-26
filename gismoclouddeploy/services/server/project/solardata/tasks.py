@@ -61,10 +61,7 @@ def plot_gantt_chart_from_log_files_task(bucket, file_path_name, saved_image_nam
 
 @shared_task()
 def combine_files_to_file_task(bucket_name,source_folder,target_folder,target_filename):
-    response_object = {
-        'status': 'success',
-        'container_id': os.uname()[1]
-    }
+
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import combine_files_to_file
@@ -73,68 +70,16 @@ def combine_files_to_file_task(bucket_name,source_folder,target_folder,target_fi
         response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
         return response
 
-@shared_task()
-def read_all_datas_from_solardata():
-    response_object = {
-        'status': 'success',
-        'container_id': os.uname()[1]
-    }
-    from project import create_app
-    from project.solardata.models import SolarData
 
-    app = create_app()
-    with app.app_context():
-        solardata = [solardata.to_json()
-                     for solardata in SolarData.query.all()]
-        return solardata
-
-
-@shared_task()
-def save_data_from_db_to_s3_task(bucket_name, file_path, file_name, delete_data):
-    response_object = {
-        'status': 'success',
-        'container_id': os.uname()[1]
-    }
-    from project import create_app
-    from project.solardata.models import SolarData
-    from project.solardata.utils import to_s3
-    app = create_app()
-    with app.app_context():
-        solardatas = [solardata.to_json()
-                      for solardata in SolarData.query.all()]
-        df = pd.json_normalize(solardatas)
-        csv_buffer = StringIO()
-        df.to_csv(csv_buffer)
-        content = csv_buffer.getvalue()
-        try:
-            logger.info(bucket_name, file_path, file_name)
-            to_s3(bucket_name, file_path, file_name, content)
-        except Exception as e:
-            response_object = {
-                'status': 'failed',
-                'container_id': os.uname()[1],
-                'error': str(e)
-            }
-        return response_object
 
 
 @shared_task(bind=True)
 def process_data_task(self,table_name, bucket_name,file_path_name, column_name,saved_bucket, saved_file_path, saved_filename,start_time,solar_params_str:str) -> str:
-    response_object = {
-        'status': 'success',
-        'container_id': os.uname()[1]
-    }
     solar_params_obj = make_solardata_params_from_str(solar_params_str)
+    task_id = self.request.id
+    subject = task_id
     message = "init process_data_task"
-    track_logs(task_id=self.request.id,
-                        function_name="process_data_task",
-                        time=str(time.time()),
-                        action="idle-stop/busy-start", 
-                        message=message,
-                        table_name=table_name,
-                        process_file_name=file_path_name,
-                        column_name=column_name
-                        )
+
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
@@ -144,27 +89,36 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
     app = create_app()
     with app.app_context():
         try:
+            track_logs(task_id=self.request.id,
+                        function_name="process_data_task",
+                        time=str(time.time()),
+                        action="idle-stop/busy-start", 
+                        message=message,
+                        table_name=table_name,
+                        process_file_name=file_path_name,
+                        column_name=column_name
+                        )
             process_solardata_tools(  
-                                task_id= self.request.id,
-                                bucket_name=bucket_name ,
-                                file_path_name=file_path_name,
-                                column_name=column_name,
-                                start_time=start_time,
-                                saved_bucket=saved_bucket,
-                                saved_file_path= saved_file_path,
-                                saved_filename=saved_filename,
-                                solar_params_obj=solar_params_obj
-                                )
-
+                            task_id =self.request.id,
+                            bucket_name=bucket_name ,
+                            file_path_name=file_path_name,
+                            column_name=column_name,
+                            start_time=start_time,
+                            saved_bucket=saved_bucket,
+                            saved_file_path=saved_file_path,
+                            saved_filename=saved_filename,
+                            solarParams=solar_params_obj 
+                            )
             
-            mesage_id = publish_message_sns(message=file_path_name, subject=self.request.id, topic_arn= SNS_TOPIC)
-            logger.info(f'Send to SNS.----------> message: {mesage_id}')
             message = "end of process data task"
-            logger.info(f"{message}")
         except Exception as e:
-            message = f"filename: {file_path_name},column: {column_name},error:{e}"
-            mesage_id = publish_message_sns(message=message,subject="ProcessFileError", topic_arn= SNS_TOPIC)
-            logger.info(f'Error: {e} Send to SNS.----------> message: {mesage_id}')
+            subject = "ProcessFileError"
+            message = f"task_id: {task_id} filename: {file_path_name},column: {column_name},error:{e}"
+            logger.info(f'Error: {e} ')
+
+        # send message
+        mesage_id = publish_message_sns(message=message,subject=subject, topic_arn= SNS_TOPIC)
+        logger.info(f' Send to SNS.----------> message: {mesage_id}')
 
         track_logs(task_id=self.request.id,
             function_name="process_data_task",
@@ -190,11 +144,14 @@ def loop_tasks_status_task( self,
                             saved_log_file_name
                             ):
     counter = int(count)
-    track_logs(task_id=self.request.id,
+    task_id = self.request.id
+    subject = task_id
+    message = "init loop_tasks_status_task"
+    track_logs(task_id=task_id,
                     function_name="loop_tasks_status_task",
                     time=str(time.time()),
                     action="idle-stop/busy-start", 
-                    message="init loop_tasks_status_task",
+                    message=message,
                     table_name=table_name,
                     process_file_name=None,
                     column_name=None
@@ -217,23 +174,26 @@ def loop_tasks_status_task( self,
             break 
         counter -= 1
         print(f"Time: {time.ctime(time.time())}")
-    print("------- start combine files, save logs , clean dynamodb items---------")
+
+    logger.info("------- start combine files, save logs , clean dynamodb items---------")
+    
     from project import create_app
     from project.solardata.models import SolarData
-    from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,plot_gantt_chart,publish_message_sns
+    from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,publish_message_sns
     app = create_app()
     with app.app_context():
-
-        track_logs(task_id=self.request.id,
+        message = "end loop_tasks_status_task"
+        try:
+            track_logs(task_id=self.request.id,
                     function_name="loop_tasks_status_task",
                     time=str(time.time()),
                     action="busy-stop/idle-start", 
-                    message="end loop_tasks_status_task",
+                    message=message,
                     table_name=table_name,
                     process_file_name=None,
                     column_name=None
                     )
-        try:
+       
             response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
             save_res = save_logs_from_dynamodb_to_s3(table_name=table_name,
                                             saved_bucket=bucket_name,
@@ -241,12 +201,14 @@ def loop_tasks_status_task( self,
                                             saved_filename=saved_log_file_name )
             remov_res = remove_all_items_from_dynamodb(table_name)
             print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
-            logger.info(f'End of all process publish message to SNS.')
+            subject = "AllTaskCompleted"
+            message="AllTaskCompleted"
 
-            mesage_id = publish_message_sns(message="AllTaskCompleted",subject="AllTaskCompleted", topic_arn= SNS_TOPIC)
-            logger.info(f'Send to SNS.----------> message: {mesage_id}')
-            return response
         except Exception as e:
-            mesage_id = publish_message_sns(message=f"{e}",subject="Error", topic_arn= SNS_TOPIC)
-            logger.info(f'Error: {e} Send to SNS.----------> message: {mesage_id}')
+            subject = "Error"
+            message=f"Loop task error:{e}"
+            logger.info(f'Error: {message} ')
+
+        mesage_id = publish_message_sns(message=message,subject=subject, topic_arn= SNS_TOPIC)
+        logger.info(f'End task,Send to SNS.----------> message: {mesage_id}')
     

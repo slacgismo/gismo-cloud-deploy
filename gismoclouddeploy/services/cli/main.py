@@ -7,7 +7,7 @@ from models.Node import Node
 import logging
 
 import click
-
+import time
 from kubernetes import client, config
 
 import os
@@ -43,6 +43,8 @@ from utils.aws_utils import (
 from utils.sqs import(
 
     clean_previous_sqs_message,
+    receive_queue_message,
+    delete_queue_message
 )
 
 from utils.process_log import(
@@ -60,10 +62,9 @@ logging.basicConfig(level=logging.INFO,
 from dotenv import load_dotenv
 load_dotenv()
 
-SQS_URL = os.getenv('SQS_URL')
-SQS_ARN = os.getenv('SQS_ARN')
-SNS_TOPIC = os.getenv('SNS_TOPIC')
-
+SQS_URL = os.getenv('SQS_URL') # aws standard url 
+SNS_TOPIC = os.getenv('SNS_TOPIC') # aws sns
+DLQ_URL = os.getenv('DLQ_URL') # dead letter queue url
 
 
 
@@ -139,7 +140,7 @@ def run_process_files(number,delete_nodes,configfile):
             print(f"error input {number}")
             return 
     # log pulling 
-    thread = taskThread(1,"sqs",120, 2 ,SQS_URL,total_task_num, config_params_obj=config_params_obj, delete_nodes_after_processing=delete_nodes)
+    thread = taskThread(1,"sqs",120, 2 ,SQS_URL,total_task_num, config_params_obj=config_params_obj, delete_nodes_after_processing=delete_nodes, dlq_url=DLQ_URL)
     thread.start()
     return 
 
@@ -186,6 +187,34 @@ def process_logs_and_plot():
     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
 
+def print_dlq(empty):
+    logger.info("Read DLQ")
+    sqs_client = connect_aws_client('sqs')
+    counter = 60
+    while counter:
+        messages = receive_queue_message(queue_url=DLQ_URL,MaxNumberOfMessages=1 ,sqs_client=sqs_client, wait_time=1)
+        print(messages)
+        if 'Messages' in messages:
+            for msg in messages['Messages']:
+                msg_body = msg['Body']
+                receipt_handle = msg['ReceiptHandle']
+                message_id = msg['MessageId']
+                logger.info(f'The message body: {msg_body}')
+
+                # logger.info('Deleting message from the queue...')
+                if empty:
+                    delete_queue_message(DLQ_URL, receipt_handle, sqs_client)
+
+                logger.info(f'Received and deleted message(s) from {DLQ_URL}.')
+                print(receipt_handle)
+        else:
+            logger.info("Clean previous message completed")
+            return
+
+        counter -= 1
+        time.sleep(1)
+
+
 
 # Parent Command
 @click.group()
@@ -224,6 +253,15 @@ def check_nodes():
 def processlogs():
     """"Try logs"""
     process_logs_and_plot()
+
+@main.command()
+@click.option('--empty','-e',
+            help=" Empty DLQ after receive message", 
+            default= False)
+def read_dlq(empty):
+    """Increate or decrease nodes number"""
+    print_dlq(empty)
+
 
 if __name__ == '__main__':
 	main()

@@ -16,7 +16,8 @@ from utils.invoke_function import(
 from utils.sqs import (
     receive_queue_message,
     delete_queue_message,
-    purge_queue
+    purge_queue,
+    send_queue_message
 )
 from typing import List
 
@@ -36,7 +37,7 @@ logging.basicConfig(level=logging.INFO,
 
 import typing
 class taskThread (threading.Thread):
-    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool):
+    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool, dlq_url:str):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
@@ -46,13 +47,14 @@ class taskThread (threading.Thread):
         self.num_task = num_task
         self.config_params_obj = config_params_obj
         self.delete_nodes_after_processing = delete_nodes_after_processing
+        self.dlq_url = dlq_url
     def run(self):
       print ("Starting " + self.name)
-      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task, self.config_params_obj, self.delete_nodes_after_processing)
+      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task, self.config_params_obj, self.delete_nodes_after_processing, self.dlq_url)
       print ("Exiting " + self.name)
 
 
-def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool) -> List[str]:
+def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool, dlq_url:str) -> List[str]:
     sqs_client = connect_aws_client('sqs')
     tasks = []
     num_task_completed = 0
@@ -74,11 +76,29 @@ def long_pulling_sqs(counter:int,wait_time:int,sqs_url:str,num_task:int, config_
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 tasks.append(message_text)
                 num_task_completed += 1
+                if subject == "ProcessFileError" or subject == "Error":
+                    #  move message to deal letter queue
+                    
+                    MSG_ATTRIBUTES = {
+                        'Title': {
+                            'DataType': 'String',
+                            'StringValue': subject
+                        }
+                    }
+                    MSG_BODY = message_text
+                    try:
+                        dlq_res = send_queue_message(queue_url=dlq_url, msg_attributes= MSG_ATTRIBUTES, msg_body=MSG_BODY, sqs_client=sqs_client)
+                        logger.info(f" ============ DLG  {dlq_res}")
+                    except Exception as e:
+                        raise e
+
                 if subject == "AllTaskCompleted" or subject == "Error":
                     logger.info(f"subject:{subject} message: {message_text}")
                     s3_client = connect_aws_client("s3")
                     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
+
                     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
+
                     if check_environment_is_aws() and delete_nodes_after_processing:
                         logger.info("Delete node after processing")
                         scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
