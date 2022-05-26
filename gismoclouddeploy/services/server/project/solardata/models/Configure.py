@@ -5,7 +5,6 @@ class Configure(object):
     def __init__(self,
                  files,
                  bucket,
-                 process_all_files,
                  column_names,
                  saved_bucket,
                  saved_tmp_path,
@@ -20,7 +19,6 @@ class Configure(object):
 
         self.files = files
         self.bucket = bucket
-        self.process_all_files = process_all_files
         self.column_names = column_names
         self.saved_bucket = saved_bucket
         self.saved_tmp_path = saved_tmp_path
@@ -37,7 +35,6 @@ def make_configure_from_str(command_str:str) -> Configure:
     files  = json.loads(config_json["files"].replace("\'", "\""))
     
     bucket = config_json['bucket']
-    process_all_files = config_json['process_all_files']
     column_names = json.loads(config_json["column_names"].replace("\'", "\""))
     saved_bucket = config_json['saved_bucket']
     saved_tmp_path = config_json['saved_tmp_path']
@@ -55,7 +52,6 @@ def make_configure_from_str(command_str:str) -> Configure:
     config = Configure(
         files = files,
         bucket = bucket,
-        process_all_files = process_all_files,
         column_names= column_names,
         saved_bucket= saved_bucket,
         saved_tmp_path= saved_tmp_path,

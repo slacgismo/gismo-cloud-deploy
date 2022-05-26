@@ -1,10 +1,8 @@
 from ast import Str
-from fileinput import filename
-from glob import escape
-import re
-from tabnanny import verbose
-from tkinter import E
-from unicodedata import name
+
+
+
+
 import pandas as pd
 from project.solardata.models.SolarParams import SolarParams
 from project.solardata.models.SolarData import SolarData
@@ -18,10 +16,10 @@ import solardatatools
 import time
 import socket
 from boto3.dynamodb.types import TypeDeserializer
-import uuid
+
 import logging
 import plotly.express as px
-import io
+
 import plotly.io as pio
 from typing import Set
 
@@ -419,10 +417,13 @@ def process_solardata_tools(
                             solarParams: SolarParams = None
                             ):
     if bucket_name is None or file_path_name is None or column_name is None or saved_bucket is None or solarParams is None:
-        return False
+        raise Exception('Input error')
     error_message = ""
-    s3_client = connect_aws_client("s3")
-
+    try:
+        s3_client = connect_aws_client("s3")
+    except Exception as e:
+        logger.error(f"Connect to AWS error: {e}")
+        raise e
     try:
         df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
     except Exception as e:
@@ -489,7 +490,7 @@ def process_solardata_tools(
         host_ip = socket.gethostbyname(hostname)
 
 
-        # print(f"file: {file_path_name},column_name:{column_name} , process_time {process_time}, hostname: {hostname}, host_ip: {host_ip}, start_time: {start_time_date}, end_time: {end_time_date}, process_time: {process_time}")
+        # save process result to s3 file
         solarData = SolarData(task_id=task_id,
                             hostname= hostname,
                             host_ip = host_ip,
@@ -513,9 +514,8 @@ def process_solardata_tools(
                             inverter_clipping = (inverter_clipping),
                             normal_quality_scores=(normal_quality_scores),
                             )
-        # logger.info(f"results solarData to json ---> :{solarData.to_json()} ")
+
         response = save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
-        # logger.info(f" ------ save solardata to S3 response: {response}  ------- ")
 
     
         return response
@@ -526,16 +526,18 @@ def process_solardata_tools(
         raise e
     
     
+    
 
 
 def save_solardata_to_file(solardata, saved_bucket, saved_file_path, saved_filename):
    
    
-    df = pd.json_normalize(solardata)
-    csv_buffer=StringIO()
-    df.to_csv(csv_buffer)
-    content = csv_buffer.getvalue()
+
     try:
+        df = pd.json_normalize(solardata)
+        csv_buffer=StringIO()
+        df.to_csv(csv_buffer)
+        content = csv_buffer.getvalue()
         to_s3(saved_bucket,saved_file_path,saved_filename, content)
         logger.info(f"save_bucket:{saved_bucket},saved_file_path: {saved_file_path},saved_filename :{saved_filename} success")
     except Exception as e:
@@ -553,7 +555,7 @@ def combine_files_to_file(bucket_name, source_folder, target_folder, target_file
  
     if not filter_files:
         logger.warning("No tmp file in folder")
-        raise Exception('No tmp file error')
+        raise Exception('Error: No saved tmp file found ')
     contents = []
     for file in filter_files:
          df = read_csv_from_s3(bucket_name,file, s3_client)
@@ -704,7 +706,6 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
             tmp_df = read_csv_from_s3_with_column_name(bucket_name=bucket_name,file_path_name=file_path_name, column_name=key,s3_client=s3_client)
         except Exception as e:
             raise e
-        # print(f"key: {key},---> {len(tmp_df)}")
         if max_count <= len(tmp_df):
             max_count = len(tmp_df)
             key_with_most_data = key
@@ -712,6 +713,5 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
     validated_column_set = set()
     validated_column_set.add(key_with_most_data)
     logger.info(f"find partial match column name {validated_column_set}")
-    # print(f"validated set{validated_column_set}")
     return validated_column_set
 

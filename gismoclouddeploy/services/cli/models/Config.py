@@ -10,7 +10,6 @@ class Config(object):
     def __init__(self,
                  files,
                  bucket,
-                 process_all_files,
                  column_names,
                  saved_bucket,
                  saved_tmp_path,
@@ -33,7 +32,6 @@ class Config(object):
 
         self.files = files
         self.bucket = bucket
-        self.process_all_files = process_all_files
         self.column_names = column_names
         self.saved_bucket = saved_bucket
         self.saved_tmp_path = saved_tmp_path
@@ -65,7 +63,6 @@ class Config(object):
         try:
             config = Config(
                 files = config_params["files_config"]["files"],
-                process_all_files = config_params["files_config"]["process_all_files"],
                 bucket = config_params["files_config"]["bucket"],
                 column_names = config_params["files_config"]["column_names"],
                 saved_bucket = config_params["output"]["saved_bucket"],
@@ -96,7 +93,6 @@ class Config(object):
 
         str = "{" 
         str+= f" \"bucket\":\"{self.bucket}\"," 
-        str+= f" \"process_all_files\":\"{self.process_all_files}\"," 
         str+= f" \"files\":\"{self.files}\"," 
         str+= f" \"column_names\":\"{self.column_names}\"," 
         str+= f" \"saved_bucket\":\"{self.saved_bucket}\"," 
