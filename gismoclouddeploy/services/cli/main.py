@@ -193,7 +193,6 @@ def print_dlq(empty):
     counter = 60
     while counter:
         messages = receive_queue_message(queue_url=DLQ_URL,MaxNumberOfMessages=1 ,sqs_client=sqs_client, wait_time=1)
-        print(messages)
         if 'Messages' in messages:
             for msg in messages['Messages']:
                 msg_body = msg['Body']
@@ -208,7 +207,7 @@ def print_dlq(empty):
                 logger.info(f'Received and deleted message(s) from {DLQ_URL}.')
                 print(receipt_handle)
         else:
-            logger.info("Clean previous message completed")
+            logger.info("Clean DLQ message completed")
             return
 
         counter -= 1
