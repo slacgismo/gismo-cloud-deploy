@@ -68,7 +68,12 @@ DLQ_URL = os.getenv('DLQ_URL') # dead letter queue url
 
 
 
-def import_config_from_yaml(configfile):
+def import_config_from_yaml(configfile:str) -> Config:
+    """
+    Read yaml and 
+    :param configfile: config file name
+    :return: Config obj.
+    """
     try:
         config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
     except Exception as e:
@@ -77,7 +82,12 @@ def import_config_from_yaml(configfile):
 
 
 def run_process_files(number,delete_nodes,configfile):
-
+    """
+    Proccess files in S3 bucket
+    :param number: number of first n files in bucket
+    :param delete_nodes: delete node after process files
+    :param configfile: config file name
+    """
 
     try:
         solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/{configfile}")
@@ -164,7 +174,9 @@ def run_process_files(number,delete_nodes,configfile):
 
 
 def check_nodes_status():
-    # print("check node status")
+    """
+    Check EKS node status
+    """
     config.load_kube_config()
     v1 = client.CoreV1Api()
     response = v1.list_node()
@@ -189,10 +201,10 @@ def check_nodes_status():
 
         nodes.append(node_obj)
         if bool(status) != True:
-            print(f"{hostname} is not ready status:{status}")
+            logger.info(f"{hostname} is not ready status:{status}")
             return False
     for node in nodes:
-        print(f"{node.hostname} is ready")
+        logger.info(f"{node.hostname} is ready")
     return True
 
 
