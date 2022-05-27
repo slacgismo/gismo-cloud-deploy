@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import imp
 import os
 import boto3
@@ -24,7 +25,8 @@ def check_aws_validity(key_id, secret):
 
 
 def connect_aws_client(client_name):
-
+    logger.info(f" access key :=---{AWS_ACCESS_KEY_ID}")
+    logger.info(f" secret access key :=---{AWS_SECRET_ACCESS_KEY}")
     if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
         client = boto3.client(
             client_name,

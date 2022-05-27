@@ -6,12 +6,11 @@ metadata:
   region: us-east-2
   tags:
     project: pvinsight
-    creator: Jimmy
     manage: eksctl
 
 
 nodeGroups:
-  - name: gcd-node-group-lt
+  - name: gcd-nodegroup
     instanceType: t2.xlarge
     desiredCapacity: 2
     volumeSize: 80
@@ -20,5 +19,4 @@ nodeGroups:
       allow: true # will use ~/.ssh/id_rsa.pub as the default ssh key
     tags:
       project: pvinsight
-      creator: Jimmy
       manage: eksctl

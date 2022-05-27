@@ -102,7 +102,8 @@ def run_process_files(number,delete_nodes,configfile):
     # step 1 . check node status from local or AWS
     # spinner = Halo(text='Loading', spinner='dots')
 
-    if check_environment_is_aws():
+    if config_params_obj.environment == "AWS":
+        logger.info(" ============ Running on AWS ===============")
         config_params_obj.container_type = "kubernetes"
         config_params_obj.container_name = "webapp"
         scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1, config_params_obj = config_params_obj)
@@ -271,8 +272,13 @@ def run_files(number,deletenodes, configfile):
             default= "config.yaml")
 def nodes_scale(min_nodes,configfile):
     """Increate or decrease nodes number"""
-    config_obj = import_config_from_yaml(configfile)
-    scale_node_number(min_nodes=min_nodes, cluster_name=config_obj.cluster_name, nodegroup_name=config_obj.nodegroup_name)
+    logger.info(f"Scale nodes {min_nodes}")
+    try:
+        config_obj = import_config_from_yaml(configfile)
+    except Exception as e:
+        return logger.error(e)
+    scale_nodes_and_wait(scale_node_num=min_nodes, counter=80,delay=1,config_params_obj=config_obj)
+
 
 @main.command()
 def check_nodes():

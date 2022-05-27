@@ -9,8 +9,8 @@ general:
 
 aws_config:
   cluster_name: "gcd-eks-cluster"
-  nodegroup_name: "gcd-node-group-lt"
-  eks_nodes_number: "3"
+  nodegroup_name: "gcd-nodegroup"
+  eks_nodes_number: "1"
   scale_eks_nodes_wait_time : "80" # in second  
   interval_of_check_sqs_in_second: "2" # in second
   interval_of_total_wait_time_of_sqs: "360" # in second. 

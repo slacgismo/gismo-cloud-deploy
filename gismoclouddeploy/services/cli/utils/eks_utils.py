@@ -104,9 +104,7 @@ def scale_node_number(min_nodes:int, cluster_name:str,nodegroup_name:str):
         print(f"Error: input {min_nodes} is not a integer")
         return False
 
-    # return if running in AWS
-    if check_environment_is_aws() != True:
-        return False
+
     if int(min_nodes) == 0 :
      
         res = invoke_eksctl_scale_node(cluster_name=cluster_name,
