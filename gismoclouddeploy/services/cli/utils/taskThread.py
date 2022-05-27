@@ -112,7 +112,7 @@ def long_pulling_sqs(counter:int,
 
                     if check_environment_is_aws() and delete_nodes_after_processing:
                         logger.info("Delete node after processing")
-                        scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1)
+                        scale_nodes_and_wait(scale_node_num=0, counter=60, delay=1, config_params_obj = config_params_obj)
                     try:
                         purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
                     except Exception as e:

@@ -2,12 +2,16 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: basic-cluster
+  name: gcd-eks-cluster
   region: us-east-2
+  tags:
+    project: pvinsight
+    creator: Jimmy
+    manage: eksctl
 
 
 nodeGroups:
-  - name: ng-1
+  - name: gcd-node-group-lt
     instanceType: t2.xlarge
     desiredCapacity: 2
     volumeSize: 80

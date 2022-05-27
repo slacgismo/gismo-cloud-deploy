@@ -6,7 +6,10 @@ general:
   interval_of_check_task_status: "1" # in second
   interval_of_exit_check_status: "60" # in second. If the task status didn't update after this period. stop check status 
 
+
 aws_config:
+  cluster_name: "gcd-eks-cluster"
+  nodegroup_name: "gcd-node-group-lt"
   eks_nodes_number: "3"
   scale_eks_nodes_wait_time : "80" # in second  
   interval_of_check_sqs_in_second: "2" # in second

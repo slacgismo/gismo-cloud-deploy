@@ -4,7 +4,7 @@ import logging
 from kubernetes import client, config
 from utils.aws_utils import check_environment_is_aws
 
-
+from models.Config import Config
 import logging 
 from typing import List
 import yaml
@@ -48,7 +48,7 @@ def wait_container_ready(num_container:str, container_prefix:str, counter: int, 
         
     return False
 
-def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int) -> bool:
+def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int, config_params_obj:Config) -> bool:
     
     num_nodes = num_of_nodes_ready()
     print(f"scale node {scale_node_num}, current node number: {num_nodes}")
@@ -57,7 +57,9 @@ def scale_nodes_and_wait(scale_node_num:int, counter:int, delay:int) -> bool:
         return True 
     # num_node is not equal ,
     logger.info(f"scale node num: {scale_node_num}")
-    scale_node_number(scale_node_num)
+    scale_node_number  (min_nodes=scale_node_num,
+                        cluster_name =config_params_obj.cluster_name,
+                        nodegroup_name =  config_params_obj.nodegroup_name  )
 
     while counter:
         num_nodes = num_of_nodes_ready()
@@ -92,9 +94,10 @@ def num_of_nodes_ready():
     return num_of_node_ready
 
 
-def scale_node_number(min_nodes:int):
+def scale_node_number(min_nodes:int, cluster_name:str,nodegroup_name:str):
     # check if input is integer
     # assert(type(min_nodes) is int, f"Input {min_nodes} is not an")
+    # gcd-node-group-lt
     try: 
         node = int(min_nodes)
     except Exception as e:
@@ -106,15 +109,15 @@ def scale_node_number(min_nodes:int):
         return False
     if int(min_nodes) == 0 :
      
-        res = invoke_eksctl_scale_node(cluster_name="gcd-eks-cluster",
-                                        group_name="gcd-node-group-lt",
+        res = invoke_eksctl_scale_node(cluster_name=cluster_name,
+                                        group_name=nodegroup_name,
                                         nodes=0,
                                         nodes_max=1,
                                         nodes_min=0)
         print(f"scale down to {min_nodes}, res: {res}")
     else:
-        res = invoke_eksctl_scale_node(cluster_name="gcd-eks-cluster",
-                                        group_name="gcd-node-group-lt",
+        res = invoke_eksctl_scale_node(cluster_name=cluster_name,
+                                        group_name=nodegroup_name,
                                         nodes=min_nodes,
                                         nodes_max=min_nodes,
                                         nodes_min=min_nodes)

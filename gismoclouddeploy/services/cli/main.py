@@ -68,6 +68,14 @@ DLQ_URL = os.getenv('DLQ_URL') # dead letter queue url
 
 
 
+def import_config_from_yaml(configfile):
+    try:
+        config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
+    except Exception as e:
+        raise Exception(f"Impor Config Rrror {e}")
+    return config_params_obj
+
+
 def run_process_files(number,delete_nodes,configfile):
 
 
@@ -87,7 +95,7 @@ def run_process_files(number,delete_nodes,configfile):
     if check_environment_is_aws():
         config_params_obj.container_type = "kubernetes"
         config_params_obj.container_name = "webapp"
-        scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1)
+        scale_nodes_and_wait(scale_node_num=int(config_params_obj.eks_nodes_number), counter=int(config_params_obj.scale_eks_nodes_wait_time), delay=1, config_params_obj = config_params_obj)
         # create or update k8s setting based on yaml files
         try:
             create_or_update_k8s(config_params_obj=config_params_obj,env="aws")
@@ -246,9 +254,13 @@ def run_files(number,deletenodes, configfile):
 
 @main.command()
 @click.argument('min_nodes')
-def nodes_scale(min_nodes):
+@click.option('--configfile','-f',
+            help="Assign config files, Default files is config.yaml under /config" , 
+            default= "config.yaml")
+def nodes_scale(min_nodes,configfile):
     """Increate or decrease nodes number"""
-    scale_node_number(min_nodes)
+    config_obj = import_config_from_yaml(configfile)
+    scale_node_number(min_nodes=min_nodes, cluster_name=config_obj.cluster_name, nodegroup_name=config_obj.nodegroup_name)
 
 @main.command()
 def check_nodes():

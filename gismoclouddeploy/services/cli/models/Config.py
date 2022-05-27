@@ -15,6 +15,7 @@ class Config(object):
                  saved_tmp_path,
                  saved_target_path,
                  saved_target_filename,
+
                  dynamodb_tablename,
                  saved_logs_target_path,
                  saved_logs_target_filename,
@@ -27,7 +28,9 @@ class Config(object):
                  interval_of_check_sqs_in_second,
                  interval_of_total_wait_time_of_sqs,
                  eks_nodes_number,
-                 scale_eks_nodes_wait_time 
+                 scale_eks_nodes_wait_time,
+                 cluster_name,
+                 nodegroup_name,
                  ):
 
         self.files = files
@@ -50,7 +53,8 @@ class Config(object):
         self.interval_of_total_wait_time_of_sqs = interval_of_total_wait_time_of_sqs
         self.eks_nodes_number = eks_nodes_number
         self.scale_eks_nodes_wait_time = scale_eks_nodes_wait_time
-
+        self.cluster_name = cluster_name
+        self.nodegroup_name = nodegroup_name
 
 
     
@@ -69,6 +73,7 @@ class Config(object):
                 saved_tmp_path = config_params["output"]["saved_tmp_path"],
                 saved_target_path = config_params["output"]["saved__target_path"],
                 saved_target_filename = config_params["output"]["saved__target_filename"],
+               
                 dynamodb_tablename = config_params["output"]["dynamodb_tablename"],
                 saved_logs_target_path = config_params["output"]["saved_logs_target_path"],
                 saved_logs_target_filename = config_params["output"]["saved_logs_target_filename"],
@@ -80,6 +85,8 @@ class Config(object):
                 worker_replicas= config_params["k8s_config"]["worker_replicas"],
                 interval_of_check_sqs_in_second= config_params["aws_config"]["interval_of_check_sqs_in_second"],
                 interval_of_total_wait_time_of_sqs= config_params["aws_config"]["interval_of_total_wait_time_of_sqs"],
+                cluster_name  =  config_params["aws_config"]["cluster_name"],
+                nodegroup_name  =  config_params["aws_config"]["nodegroup_name"],
                 eks_nodes_number = config_params["aws_config"]["eks_nodes_number"],
                 scale_eks_nodes_wait_time =  config_params["aws_config"]["scale_eks_nodes_wait_time"],
                 
