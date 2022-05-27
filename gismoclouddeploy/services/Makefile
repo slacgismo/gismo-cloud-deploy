@@ -13,3 +13,15 @@ push-server:
 push-worker:
 	docker image tag worker 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
 	docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+
+.PHONY: create-cluster
+create-cluster:
+	@echo "Create Cluster from cluster.yaml"
+	# eksctl create cluster -f ./services/cli/k8s/eks/cluster.yaml
+.PHONY: delete-cluster
+create-cluster:
+	@echo "Create Cluster from cluster.yaml"
+	# eksctl delete cluster -f ./services/cli/k8s/eks/cluster.yaml
+
+.PHONY: get-cluster
+	eksctl get cluster 
