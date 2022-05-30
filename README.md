@@ -52,7 +52,7 @@ SNS_TOPIC=<your-sns-topic>
 $ kubectl create secret generic aws-access-key-id --from-literal aws-access-key-id=<your AWS access key>
 ```
 ```bash
-$ kubectl create secret generic aws-secret-key --from-literal aws-secret-access-key=<your AWS secret key>
+$ kubectl create secret generic aws-secret-access-key --from-literal aws-secret-access-key=<your AWS secret key>
 ```
 
 4. Create and activate python virtual environment.
@@ -202,6 +202,16 @@ Get test coverage in docker image
 $ docker-compose exec web pytest --cov=.
 ```
 
+
+### EKS Setting
+method 1
+eksctl create iamidentitymapping --cluster  <clusterName> --region=<region> --arn arn:aws:iam::123456:role/testing --group system:masters --username admin
+method 2
+kubectl edit configmap aws-auth -n kube-system
+mapUsers: |
+  - userarn: arn:aws:iam::[account_id]:root
+    groups:
+    - system:masters
 ### System diagram
 ![System diagram](./Solar-data-tools-AWS.png)
 
@@ -222,3 +232,5 @@ We use [Semantic Versioning](http://semver.org/) for versioning. For the version
 ## License
 
 This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICENSE) file for details
+
+

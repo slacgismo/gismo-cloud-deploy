@@ -132,8 +132,8 @@ sample=#
 6. Use kubectl create secrets. 
 
 ~~~
-kubectl create secret generic aws-access-key-id --form-literal  aws-access-key-id=<your AWS access key>
-kubectl create secret generic aws-secret-key --form-literal aws-secret-key =<your AWS secret key>
+kubectl create secret generic aws-access-key-id --from-literal  aws-access-key-id=<your AWS access key>
+kubectl create secret generic aws-secret-access-key --from-literal aws-secret-access-key =<your AWS secret key>
 
 ~~~
 ## Setup AWS EKS 
