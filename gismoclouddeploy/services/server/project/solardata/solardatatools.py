@@ -4,15 +4,15 @@ import solardatatools
 import socket
 from datetime import datetime
 from project.solardata.utils import (
-    read_csv_from_s3_with_column_and_time,
     save_solardata_to_file
 )
 
+from project.solardata.aws_utils import(
+    read_csv_from_s3_with_column_and_time,
+)
 
 from project.solardata.aws_utils import(
     connect_aws_client,
-    connect_aws_resource,
-    check_aws_validity
 )
 import logging
 import time

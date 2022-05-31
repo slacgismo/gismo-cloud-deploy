@@ -2,6 +2,7 @@
 import boto3
 from flask import current_app
 import os
+import pandas as pd
 def connect_aws_client(client_name:str):
     AWS_ACCESS_KEY_ID = current_app.config["AWS_ACCESS_KEY_ID"]
     AWS_SECRET_ACCESS_KEY = current_app.config["AWS_SECRET_ACCESS_KEY"]
@@ -42,3 +43,163 @@ def check_aws_validity(key_id, secret):
             return True
         raise e
 
+
+def to_s3(bucket,file_path,filename, content) -> None:
+    s3_client = connect_aws_client('s3')
+    k = file_path+"/"+filename
+    s3_client.put_object(Bucket=bucket, Key=k, Body=content)
+
+def read_column_from_csv_from_s3(
+    bucket_name=None,
+    file_path_name=None,
+    s3_client = None
+    ):
+    if bucket_name is None or file_path_name is None or s3_client is None:
+        return
+    
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        result_df = pd.read_csv(response.get("Body"),nrows =1)
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
+
+def read_csv_from_s3_with_column_name(
+    bucket_name:str=None,
+    file_path_name:str=None,
+    column_name:str = None,
+    s3_client:str = None,
+    ):
+
+    if bucket_name is None or file_path_name is None or s3_client is None or column_name is None :
+        return
+    
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        result_df = pd.read_csv(response.get("Body"),
+                                index_col=False,
+                                # parse_dates=parse_dates,
+                                usecols=[column_name])
+        # drop nan 
+        df  = result_df.dropna()
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return df
+
+
+def read_all_csv_from_s3_and_parse_dates_from(
+    bucket_name:str=None,
+    file_path_name:str=None,
+    s3_client = None,
+    dates_column_name = None,
+    index_col=0
+    ):
+
+    if bucket_name is None or file_path_name is None or s3_client is None or dates_column_name is None :
+        return
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+    except Exception as e:
+        print(f"error read  file: {file_path_name} error:{e}")
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
+        result_df['timestamp'] = pd.to_datetime(result_df['timestamp'], 
+                                  unit='s')
+        print(f"result df ---> {result_df}")
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
+
+
+def read_csv_from_s3_with_column_and_time(
+    bucket_name:str=None,
+    file_path_name:str=None,
+    column_name:str = None,
+    s3_client:'botocore.client.S3' = None,
+    index_col:int=0,
+    parse_dates=[0],
+    ):
+    '''
+    Read csv file from s3 bucket 
+    :param : bucket_name
+    :param : file_path_name
+    :param : column_name
+    :param : s3_client , botocore.client.S3
+    :param : index_col, column of index
+    :param : parse_dates, column of time
+    :return: dataframe.
+    '''
+
+    if bucket_name is None or file_path_name is None or s3_client is None or column_name is None :
+        return
+    
+    response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        result_df = pd.read_csv(response.get("Body"),
+                                index_col=index_col,
+                                parse_dates=parse_dates,
+                                usecols=['Time',column_name])
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
+
+def read_all_csv_from_s3(
+    bucket_name:str=None,
+    file_path_name:str=None,
+    s3_client:'botocore.client.S3' = None,
+    index_col:int=0
+    ):
+
+    if bucket_name is None or file_path_name is None or s3_client is None  :
+        return
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
+    except Exception as e:
+        print(f"error read  file: {file_path_name} error:{e}")
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        # result_df = pd.read_csv(response.get("Body"),
+        #                         index_col=index_col)
+        result_df = pd.read_csv(response.get("Body"), index_col=0,  infer_datetime_format=True)
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
+
+
+
+def read_csv_from_s3(
+    bucket_name:str=None,
+    full_path:str = None,
+    s3_client:str = None
+    ):
+    if bucket_name is None or full_path is None or s3_client is None:
+        return
+    
+    response = s3_client.get_object(Bucket=bucket_name, Key=full_path)
+
+    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+
+    if status == 200:
+        print(f"Successful S3 get_object response. Status - {status}")
+        result_df = pd.read_csv(response.get("Body"),nrows =1)
+    else:
+        print(f"Unsuccessful S3 get_object response. Status - {status}")
+    return result_df
