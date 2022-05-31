@@ -6,9 +6,9 @@ import pandas as pd
 from typing import List
 from dotenv import load_dotenv
 load_dotenv()
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-AWS_DEFAULT_REGION = os.getenv('AWS_DEFAULT_REGION')
+AWS_ACCESS_KEY_ID = os.getenv('aws_access')
+AWS_SECRET_ACCESS_KEY = os.getenv('aws_secret_key')
+AWS_DEFAULT_REGION = os.getenv('aww_region')
 
 
 
