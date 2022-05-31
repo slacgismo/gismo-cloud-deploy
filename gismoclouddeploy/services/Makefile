@@ -30,7 +30,7 @@ get-cluster:
 	eksctl get cluster 
 
 
-.PHONY rollout
+.PHONY: rollout
 rollout:
 	@echo "Rollout kubernetes images"
 	kubectl rollout restart deployment/worker
