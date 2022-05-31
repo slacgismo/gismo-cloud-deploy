@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: worker
-  replicas: 3
+  replicas: 1
   template: # template for the pods
     metadata:
       labels:
@@ -34,12 +34,12 @@ spec:
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
-                name: aws-access-key-id
+                name: aws-credentials
                 key: aws-access-key-id
           - name: AWS_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                name: aws-secret-access-key
+                name: aws-credentials
                 key: aws-secret-access-key
           - name: AWS_DEFAULT_REGION
             value: us-east-2
