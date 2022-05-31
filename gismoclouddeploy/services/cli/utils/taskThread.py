@@ -37,20 +37,32 @@ logging.basicConfig(level=logging.INFO,
 
 
 class taskThread (threading.Thread):
-    def __init__(self, threadID:int, name:str, conuter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool, dlq_url:str):
+    def __init__(self, threadID:int, name:str, counter:int, wait_time:int, sqs_url:str, num_task:int, config_params_obj:Config, delete_nodes_after_processing:bool, dlq_url:str, key_id:str, secret_key:str, aws_region:str):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.name = name
         self.wait_time = wait_time
-        self.counter = conuter
+        self.counter = counter
         self.sqs_url = sqs_url
         self.num_task = num_task
         self.config_params_obj = config_params_obj
         self.delete_nodes_after_processing = delete_nodes_after_processing
         self.dlq_url = dlq_url
+        self.key_id = key_id
+        self.secret_key = secret_key
+        self.aws_region = aws_region 
     def run(self):
       print ("Starting " + self.name)
-      long_pulling_sqs(self.counter, self.wait_time, self.sqs_url, self.num_task, self.config_params_obj, self.delete_nodes_after_processing, self.dlq_url)
+      long_pulling_sqs( counter=self.counter, 
+                        wait_time=self.wait_time, 
+                        sqs_url=self.sqs_url, 
+                        num_task=self.num_task, 
+                        config_params_obj= self.config_params_obj,
+                         delete_nodes_after_processing=self.delete_nodes_after_processing, 
+                         dlq_url = self.dlq_url, 
+                         key_id=self.key_id,
+                         secret_key=self.secret_key,
+                         aws_region=self.aws_region)
       print ("Exiting " + self.name)
 
 
@@ -76,8 +88,12 @@ def long_pulling_sqs(counter:int,
                         num_task:int, 
                         config_params_obj:Config, 
                         delete_nodes_after_processing:bool,
-                        dlq_url:str) -> List[str]:
-    sqs_client = connect_aws_client('sqs')
+                        dlq_url:str,
+                        key_id:str,
+                        secret_key:str,
+                        aws_region:str,
+                        ) -> List[str]:
+    sqs_client = connect_aws_client(client_name='sqs',key_id=key_id, secret=secret_key, region=aws_region)
     tasks = []
     num_task_completed = 0
     while counter:
@@ -105,7 +121,7 @@ def long_pulling_sqs(counter:int,
                 if subject == "AllTaskCompleted" or subject == "Error":
 
                     logger.info(f"subject:{subject} message: {message_text}")
-                    s3_client = connect_aws_client("s3")
+                    s3_client = connect_aws_client(client_name='s3',key_id=key_id, secret=secret_key, region=aws_region)
                     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
 
                     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)

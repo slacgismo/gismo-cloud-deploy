@@ -6,9 +6,9 @@ import pandas as pd
 from typing import List
 from dotenv import load_dotenv
 load_dotenv()
-AWS_ACCESS_KEY_ID = os.getenv('aws_access_key')
-AWS_SECRET_ACCESS_KEY = os.getenv('aws_secret_key')
-AWS_DEFAULT_REGION = os.getenv('aws_region')
+# AWS_ACCESS_KEY_ID = os.getenv('aws_access_key')
+# AWS_SECRET_ACCESS_KEY = os.getenv('aws_secret_key')
+# AWS_DEFAULT_REGION = os.getenv('aws_region')
 
 
 
@@ -24,25 +24,25 @@ def check_aws_validity(key_id, secret):
         return False
 
 
-def connect_aws_client(client_name):
+def connect_aws_client(client_name,key_id,secret, region):
 
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
+    if check_aws_validity(key_id,secret) :
         client = boto3.client(
             client_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
+            region_name=region,
+            aws_access_key_id=key_id,
+            aws_secret_access_key= secret
         )
         return client
     raise Exception('AWS Validation Error')
 
-def connect_aws_resource(resource_name):
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
+def connect_aws_resource(resource_name,key_id,secret,region):
+    if check_aws_validity(key_id,secret) :
         resource = boto3.resource(
             resource_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
+            region_name=region,
+            aws_access_key_id=key_id,
+            aws_secret_access_key= secret
         )
         return resource
     raise Exception('AWS Validation Error')
@@ -80,9 +80,9 @@ def read_all_csv_from_s3_and_parse_dates_from(
         print(f"error read  file: {file_path_name} error:{e}")
         raise e
 
-def list_files_in_bucket(bucket_name:str) -> List[str]:
+def list_files_in_bucket(bucket_name:str, key_id:str, secret_key:str, aws_region:str) -> List[str]:
     """ Get filename and size from S3 , remove non csv file """
-    s3_client = connect_aws_client('s3')
+    s3_client = connect_aws_client(client_name='s3', key_id=key_id, secret=secret_key, region=aws_region)
     response = s3_client.list_objects_v2(Bucket=bucket_name)
     files = response['Contents']
     filterFiles =[]

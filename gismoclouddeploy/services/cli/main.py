@@ -54,17 +54,22 @@ from utils.process_log import(
 from os import path
 from halo import Halo
 
+from dotenv import load_dotenv
+load_dotenv()
+AWS_ACCESS_KEY_ID = os.getenv('aws_access_key')
+AWS_SECRET_ACCESS_KEY = os.getenv('aws_secret_key')
+AWS_DEFAULT_REGION = os.getenv('aws_region')
+SQS_URL = os.getenv('SQS_URL') # aws standard url 
+SNS_TOPIC = os.getenv('SNS_TOPIC') # aws sns
+DLQ_URL = os.getenv('DLQ_URL') # dead letter queue url
+
 # logger config
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
-from dotenv import load_dotenv
-load_dotenv()
 
-SQS_URL = os.getenv('SQS_URL') # aws standard url 
-SNS_TOPIC = os.getenv('SNS_TOPIC') # aws sns
-DLQ_URL = os.getenv('DLQ_URL') # dead letter queue url
+
 
 
 
@@ -126,7 +131,10 @@ def run_process_files(number,delete_nodes,configfile):
 
     # # # step 2 . clear sqs
     logger.info(" ========= Clean previous SQS ========= ")
-    sqs_client = connect_aws_client('sqs')
+    sqs_client = connect_aws_client(client_name='sqs',
+                                    key_id=AWS_ACCESS_KEY_ID, 
+                                    secret=AWS_SECRET_ACCESS_KEY,
+                                    region=AWS_DEFAULT_REGION)
     clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1)
 
     total_task_num = 0
@@ -143,7 +151,7 @@ def run_process_files(number,delete_nodes,configfile):
             return 
 
     elif number == "n":
-        all_files = list_files_in_bucket(config_params_obj.bucket)
+        all_files = list_files_in_bucket(bucket_name=config_params_obj.bucket,key_id=AWS_ACCESS_KEY_ID, secret_key=AWS_SECRET_ACCESS_KEY,aws_region=AWS_DEFAULT_REGION)
         number_files = len(all_files)
         total_task_num = len(all_files) + 1
         logger.info(f" ========= Process all {number_files} files in bucket ========= ")
@@ -167,9 +175,23 @@ def run_process_files(number,delete_nodes,configfile):
             print(f"error input {number}")
             return 
     # log pulling 
-    thread = taskThread(1,"sqs",120, 2 ,SQS_URL,total_task_num, config_params_obj=config_params_obj, delete_nodes_after_processing=delete_nodes, dlq_url=DLQ_URL)
+    thread = taskThread(threadID=1,
+                        name="sqs",
+                        counter=120, 
+                        wait_time=2 ,
+                        sqs_url=SQS_URL,
+                        num_task=total_task_num, 
+                        config_params_obj=config_params_obj,
+                        delete_nodes_after_processing=delete_nodes, 
+                        dlq_url=DLQ_URL,
+                        key_id=AWS_ACCESS_KEY_ID,
+                        secret_key=AWS_SECRET_ACCESS_KEY,
+                        aws_region=AWS_DEFAULT_REGION
+                        )
     thread.start()
     return 
+
+
 
 
 
@@ -212,13 +234,20 @@ def check_nodes_status():
 
 def process_logs_and_plot():
     config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
-    s3_client = connect_aws_client("s3")
+    s3_client = connect_aws_client(client_name="s3",key_id=AWS_ACCESS_KEY_ID, 
+                                    secret=AWS_SECRET_ACCESS_KEY,
+                                    region=AWS_DEFAULT_REGION)
+
+
     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
 
 def print_dlq(empty):
     logger.info("Read DLQ")
-    sqs_client = connect_aws_client('sqs')
+    sqs_client = connect_aws_client(client_name='sqs',
+                                    key_id=AWS_ACCESS_KEY_ID, 
+                                    secret=AWS_SECRET_ACCESS_KEY,
+                                    region=AWS_DEFAULT_REGION)
     counter = 60
     while counter:
         messages = receive_queue_message(queue_url=DLQ_URL,MaxNumberOfMessages=1 ,sqs_client=sqs_client, wait_time=1)
@@ -247,6 +276,7 @@ def print_dlq(empty):
 # Parent Command
 @click.group()
 def main():
+
 	pass
 
 # Run files 
