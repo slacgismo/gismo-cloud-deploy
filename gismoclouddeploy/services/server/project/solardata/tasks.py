@@ -43,7 +43,7 @@ def track_logs( task_id:str,
                                         filename=process_file_name,
                                         column_name = column_name
                                         )
-        start_res = put_item_to_dynamodb(table_name=table_name, workerstatus=start_status)
+        put_item_to_dynamodb(table_name=table_name, workerstatus=start_status)
 
 
 @shared_task()

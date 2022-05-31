@@ -1,6 +1,9 @@
 from ast import Str
 
-
+from project.solardata.aws_utils import(
+    connect_aws_client,
+    connect_aws_resource
+)
 
 
 import pandas as pd
@@ -29,8 +32,7 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
 def process_df_for_gantt(df:pd)  :
-    # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
-    # print(result)
+
     workerstatus_list= make_worker_object_from_dataframe(df)
 
     # process timestamp into linear 
@@ -54,9 +56,6 @@ def process_df_for_gantt(df:pd)  :
             end = pd.to_datetime( worker_dict[task_id][key_end])
             start= pd.to_datetime( worker_dict[task_id][key_start])
             worker_dict[task_id]['duration'] = int(round((end - start).total_seconds()))
-  
-            # duration = float(worker_dict[task_id][key_end]) - float(worker_dict[task_id][key_start])
-            # worker_dict[task_id]['duration'] = duration
            
         else:
             info_dict = {}
@@ -86,7 +85,6 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
                                 s3_client=s3_client)
     # process time 
 
-    # print(f"df {df.head()}")
     # process log file
     worker_dict = process_df_for_gantt(df)
 
@@ -202,33 +200,6 @@ def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
     return response
 
 
-def connect_aws_client(client_name):
-    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
-    AWS_DEFAULT_REGION = os.environ.get('AWS_DEFAULT_REGION')
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
-        client = boto3.client(
-            client_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
-        )
-        return client
-    raise Exception('AWS Validation Error')
-    
-def connect_aws_resource(resource_name):
-    AWS_ACCESS_KEY_ID = current_app.config["AWS_ACCESS_KEY_ID"]
-    AWS_SECRET_ACCESS_KEY = current_app.config["AWS_SECRET_ACCESS_KEY"]
-    AWS_DEFAULT_REGION = current_app.config["AWS_DEFAULT_REGION"]
-    if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
-        resource = boto3.resource(
-            resource_name,
-            region_name=AWS_DEFAULT_REGION,
-            aws_access_key_id=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key= AWS_SECRET_ACCESS_KEY
-        )
-        return resource
-    raise Exception('AWS Validation Error')
 
 def list_all_buckets_in_s3():
     s3_client = connect_aws_client('s3')
@@ -252,16 +223,7 @@ def list_files_in_bucket(bucket_name):
             filterFiles.append(obj)
     return  filterFiles
 
-def check_aws_validity(key_id, secret):
-    try:
-        client = boto3.client('s3', aws_access_key_id=key_id, aws_secret_access_key=secret)
-        response = client.list_buckets()
-        return True
 
-    except Exception as e:
-        if str(e)!="An error occurred (InvalidAccessKeyId) when calling the ListBuckets operation: The AWS Access Key Id you provided does not exist in our records.":
-            return True
-        raise e
 
 
 def read_column_from_csv_from_s3(
@@ -277,7 +239,6 @@ def read_column_from_csv_from_s3(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        # print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(response.get("Body"),nrows =1)
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
@@ -300,9 +261,6 @@ def read_all_csv_from_s3_and_parse_dates_from(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        # print(f"Successful S3 get_object response. Status - {status}")
-        # result_df = pd.read_csv(response.get("Body"),
-        #                         index_col=index_col)
         result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=['timestamp'], infer_datetime_format=True)
         result_df['timestamp'] = pd.to_datetime(result_df['timestamp'], 
                                   unit='s')
@@ -312,13 +270,23 @@ def read_all_csv_from_s3_and_parse_dates_from(
     return result_df
 
 def read_csv_from_s3_with_column_and_time(
-    bucket_name=None,
-    file_path_name=None,
-    column_name = None,
-    s3_client = None,
-    index_col=0,
+    bucket_name:str=None,
+    file_path_name:str=None,
+    column_name:str = None,
+    s3_client:'botocore.client.S3' = None,
+    index_col:int=0,
     parse_dates=[0],
     ):
+    '''
+    Read csv file from s3 bucket 
+    :param : bucket_name
+    :param : file_path_name
+    :param : column_name
+    :param : s3_client , botocore.client.S3
+    :param : index_col, column of index
+    :param : parse_dates, column of time
+    :return: dataframe.
+    '''
 
     if bucket_name is None or file_path_name is None or s3_client is None or column_name is None :
         return
@@ -338,12 +306,10 @@ def read_csv_from_s3_with_column_and_time(
     return result_df
 
 def read_csv_from_s3_with_column_name(
-    bucket_name=None,
-    file_path_name=None,
-    column_name = None,
-    s3_client = None,
-    #index_col=0,
-    # parse_dates=[0],
+    bucket_name:str=None,
+    file_path_name:str=None,
+    column_name:str = None,
+    s3_client:str = None,
     ):
 
     if bucket_name is None or file_path_name is None or s3_client is None or column_name is None :
@@ -537,13 +503,15 @@ def read_all_csv_from_s3(
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
 
+
+
 def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_name:str, s3_client:'botocore.client.S3') -> Set[set] :
     '''
     Find the match column name from key word. if matched column has no value inside, it will be skipped.
     If this function find exactly match with key and column name , it return the the match column name in set.
     If no exactly match key was found, it return the partial match key with longest data set.  
     '''
-    # all_df = read_all_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
+
     try:
         total_columns = read_column_from_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
     except Exception as e:
@@ -557,11 +525,10 @@ def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_nam
             if key  ==  column:
                 # check 
                 exact_column_set.add(column)
-    # logger.info(f"find exact match column name {exact_column_set}")
+
     if len(exact_column_set) > 0 :
         return  exact_column_set
     # find partial 
-    # logger.info(f"no exact match column name, use parital match")
     # get the max length fo match key
     matched_column_set = set()
     for column in total_columns:
