@@ -80,9 +80,9 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import (
-        process_solardata_tools,
         publish_message_sns
     )
+    from project.solardata.solardatatools import process_solardata_tools
     app = create_app()
     with app.app_context():
         try:

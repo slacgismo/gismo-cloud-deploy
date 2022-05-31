@@ -399,134 +399,8 @@ def to_s3(bucket,file_path,filename, content):
     s3_client.put_object(Bucket=bucket, Key=k, Body=content)
 
 
-
-
-def process_solardata_tools(  
-                            task_id:str = None,
-                            bucket_name:str = None,
-                            file_path_name:str = None,
-                            column_name:str = None,
-                            start_time:str = None, 
-                            saved_bucket:str = None,
-                            saved_file_path:str = None,
-                            saved_filename:str = None,
-                            solarParams: SolarParams = None
-                            ):
-    if bucket_name is None or file_path_name is None or column_name is None or saved_bucket is None or solarParams is None:
-        raise Exception('Input error')
-    error_message = ""
-    try:
-        s3_client = connect_aws_client("s3")
-    except Exception as e:
-        logger.error(f"Connect to AWS error: {e}")
-        raise e
-    try:
-        df = read_csv_from_s3_with_column_and_time(bucket_name,file_path_name,column_name,s3_client)
-    except Exception as e:
-        error_message += f"read column and time error: {e}"
-        logger.error(f"read column and time error: {e}")
-        raise e
-
-    solarParams.power_col = column_name
-
-    try:
-        dh = solardatatools.DataHandler(df)
-        print(f"run pipeline solarParams.verbose: {solarParams.verbose}, solver: {solarParams.solver}")
-        dh.run_pipeline(power_col=column_name,
-                        min_val= solarParams.min_val,
-                        max_val = solarParams.max_val,
-                        zero_night = solarParams.zero_night, 
-                        interp_day = solarParams.interp_day,
-                        fix_shifts = solarParams.fix_shifts,
-                        density_lower_threshold = solarParams.density_lower_threshold,
-                        density_upper_threshold = solarParams.density_upper_threshold,
-                        linearity_threshold = solarParams.linearity_threshold,
-                        clear_day_smoothness_param = solarParams.clear_day_smoothness_param,
-                        clear_day_energy_param = solarParams.clear_day_energy_param,
-                        verbose = solarParams.verbose,
-                        start_day_ix = solarParams.start_day_ix,
-                        end_day_ix = solarParams.end_day_ix,
-                        c1 = solarParams.c1,
-                        c2 = solarParams.c2,
-                        solar_noon_estimator = solarParams.solar_noon_estimator,
-                        correct_tz = solarParams.correct_tz,
-                        extra_cols = solarParams.extra_cols,
-                        daytime_threshold = solarParams.daytime_threshold,
-                        units = solarParams.units,
-                        solver = solarParams.solver
-                        )
-        length=float("{:.2f}".format(dh.num_days))
-        if dh.num_days >= 365:
-            length = float("{:.2f}".format(dh.num_days / 365))
-
-        capacity_estimate = float("{:.2f}".format(dh.capacity_estimate))
-
-        power_units = str(dh.power_units)
-        if power_units == "W":
-            capacity_estimate =float("{:.2f}".format( dh.capacity_estimate / 1000))
-        data_sampling = int(dh.data_sampling)
-
-        if dh.raw_data_matrix.shape[0] >1440:
-            data_sampling = int(dh.data_sampling * 60)
-
-        data_quality_score =  float("{:.1f}".format( dh.data_quality_score * 100 ))
-        data_clearness_score = float("{:.1f}".format( dh.data_clearness_score * 100 ))
-        time_shifts = bool(dh.time_shifts)
-        num_clip_points = int( dh.num_clip_points )
-        tz_correction = int(dh.tz_correction)
-        inverter_clipping = bool(dh.inverter_clipping)
-        normal_quality_scores = bool(dh.normal_quality_scores)
-        capacity_changes = bool(dh.capacity_changes)
-        end_time = time.time() 
-        process_time =float(end_time)  - float(start_time)
-        end_time_date = datetime.fromtimestamp(end_time)
-        start_time_date = datetime.fromtimestamp(start_time)
-
-        hostname = socket.gethostname()
-        host_ip = socket.gethostbyname(hostname)
-
-
-        # save process result to s3 file
-        solarData = SolarData(task_id=task_id,
-                            hostname= hostname,
-                            host_ip = host_ip,
-                            stat_time = start_time_date,
-                            end_time = end_time_date,
-                            bucket_name=(bucket_name),
-                            file_path_name = (file_path_name),
-                            column_name=(column_name),
-                            process_time=(process_time),
-                            length=(length),
-                            power_units=(power_units),
-                            capacity_estimate=(capacity_estimate),
-                            data_sampling=(data_sampling),
-                            data_quality_score = (data_quality_score),
-                            data_clearness_score = (data_clearness_score),
-                            error_message=(error_message),
-                            time_shifts=(time_shifts),
-                            capacity_changes=(capacity_changes),
-                            num_clip_points=(num_clip_points),
-                            tz_correction =(tz_correction),
-                            inverter_clipping = (inverter_clipping),
-                            normal_quality_scores=(normal_quality_scores),
-                            )
-
-        response = save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
-
     
-        return response
-       
-    except Exception as e:
-        error_message += str(e)
-        logger.error(f"Run solar data tools error {e}")
-        raise e
-    
-    
-    
-
-
-def save_solardata_to_file(solardata, saved_bucket, saved_file_path, saved_filename):
-   
+def save_solardata_to_file(solardata:SolarData, saved_bucket:str, saved_file_path:str, saved_filename:str) -> bool:
    
 
     try:
@@ -536,6 +410,7 @@ def save_solardata_to_file(solardata, saved_bucket, saved_file_path, saved_filen
         content = csv_buffer.getvalue()
         to_s3(saved_bucket,saved_file_path,saved_filename, content)
         logger.info(f"save_bucket:{saved_bucket},saved_file_path: {saved_file_path},saved_filename :{saved_filename} success")
+        return True
     except Exception as e:
         print(f"save to s3 error ---> {e}")
         raise e
@@ -596,9 +471,9 @@ def list_files_in_folder_of_bucket(bucket_name:str, file_path:str, s3_client:'bo
 
 
 def read_csv_from_s3(
-    bucket_name=None,
-    full_path = None,
-    s3_client = None
+    bucket_name:str=None,
+    full_path:str = None,
+    s3_client:str = None
     ):
     if bucket_name is None or full_path is None or s3_client is None:
         return
