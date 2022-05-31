@@ -8,6 +8,7 @@ from models.Config import Config
 def exec_docker_command(command):
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
     if result.returncode != 0: 
+        print(result.returncode, result.stdout, result.stderr)
         raise Exception( f'Invalid result: { result.returncode } { result.stderr}')
     print(result.returncode, result.stdout, result.stderr)
     return result.stdout
