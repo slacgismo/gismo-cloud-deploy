@@ -6,9 +6,9 @@ import pandas as pd
 from typing import List
 from dotenv import load_dotenv
 load_dotenv()
-AWS_ACCESS_KEY_ID = os.getenv('aws_access')
+AWS_ACCESS_KEY_ID = os.getenv('aws_access_key')
 AWS_SECRET_ACCESS_KEY = os.getenv('aws_secret_key')
-AWS_DEFAULT_REGION = os.getenv('aww_region')
+AWS_DEFAULT_REGION = os.getenv('aws_region')
 
 
 
@@ -25,8 +25,7 @@ def check_aws_validity(key_id, secret):
 
 
 def connect_aws_client(client_name):
-    logger.info(f" access key :=---{AWS_ACCESS_KEY_ID}")
-    logger.info(f" secret access key :=---{AWS_SECRET_ACCESS_KEY}")
+
     if check_aws_validity(AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY) :
         client = boto3.client(
             client_name,
