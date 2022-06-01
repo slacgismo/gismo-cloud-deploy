@@ -313,10 +313,15 @@ def nodes_scale(min_nodes,configfile):
     """Increate or decrease nodes number"""
     logger.info(f"Scale nodes {min_nodes}")
     try:
-        config_obj = import_config_from_yaml(configfile)
+        # config_obj = import_config_from_yaml(configfile)
+        config_params_obj = Config.import_config_from_yaml(file = f"./config/{configfile}",
+                                                            aws_access_key=AWS_ACCESS_KEY_ID,
+                                                            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                                                            aws_region=AWS_DEFAULT_REGION,
+                                                            sns_topic=SNS_TOPIC)
     except Exception as e:
         return logger.error(e)
-    scale_nodes_and_wait(scale_node_num=min_nodes, counter=80,delay=1,config_params_obj=config_obj)
+    scale_nodes_and_wait(scale_node_num=min_nodes, counter=80,delay=1,config_params_obj=config_params_obj)
 
 
 @main.command()

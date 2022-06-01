@@ -115,11 +115,11 @@ The optional command `-d False` will disable deleting the eks nodes action after
 ### Configuration files
 
 Under `gismoclouddeploy/services/cli` folder, developers can modify parametes of the cli command tool.
-1). The `general` configuration contains all the environement variables setting.
-2). The `file-config` configuration contains all the config setting of run multiple files.
-3). The `solardata` configuration contains all the parametes of solar-data-tools algorithm.
-4). The `aws_config` configuration contains basic eks setting.Developer can defined number of nodes in EKS.
-5). The `k8s_config` configuration contains basic kubernetes setting. Developers can define the replicas of worker in this files instead of modifying the `worker.deployment.yaml`.
+1. The `general` configuration contains all the environement variables setting.
+2. The `file-config` configuration contains all the config setting of run multiple files.
+3. The `solardata` configuration contains all the parametes of solar-data-tools algorithm.
+4. The `aws_config` configuration contains basic eks setting.Developer can defined number of nodes in EKS.
+5. The `k8s_config` configuration contains basic kubernetes setting. Developers can define the replicas of worker in this files instead of modifying the `worker.deployment.yaml`.
 
 ### Kubernetes yaml files
 All kubernetes deployment and service files are listed under `gismoclouddeploy/services/cli/k8s/k8s-aws` and `gismoclouddeploy/services/cli/k8s/k8s-local` folder. Developers can modify as their need.
