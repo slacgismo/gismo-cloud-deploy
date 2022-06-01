@@ -327,7 +327,7 @@ def check_nodes():
 
 @main.command()
 def processlogs():
-    """"Try logs"""
+    """ Porcess logs.csv file"""
     process_logs_and_plot()
 
 @main.command()
@@ -335,7 +335,7 @@ def processlogs():
             help=" Empty DLQ after receive message", 
             default= False)
 def read_dlq(empty):
-    """Increate or decrease nodes number"""
+    """Read messages from dlq """
     print_dlq(empty)
 
 

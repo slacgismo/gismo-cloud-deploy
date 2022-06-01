@@ -46,15 +46,6 @@ SQS_ARN=<your-sqs-arn>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
-3. Set up aws credential key for kubernetes usage. 
-
-```bash
-$ kubectl create secret generic aws-access-key-id --from-literal aws-access-key-id=<your AWS access key>
-```
-```bash
-$ kubectl create secret generic aws-secret-access-key --from-literal aws-secret-access-key=<your AWS secret key>
-```
-
 4. Create and activate python virtual environment.
    
 ```bash
@@ -65,7 +56,7 @@ $ source ./venv/bin/activate
 5. Install python dependencise packages.
 
 ```bash
-$ pip install -r requirements.txt
+(venv)$ pip install -r requirements.txt
 ```
 
 6. Under virutal environemnt, run process files command.
@@ -78,16 +69,45 @@ $ pip install -r requirements.txt
 
 The make command supports the following subcommands:
 
-Process files command.
+#### Process files command
 
 ```bash
-(venv)$ python3 main.py run-files -n <number | n >
+(venv)$ python3 main.py run-files [ --number | -n ] [0 ~ number] [ --deletenodes | -d ] [ True | False ] [ --configfile | -f ] [filename]
 ```
 If processfile command with no option command `-n` . The program will process the defined files in `config.yaml` files.
 
-The process file command with option command`-n` followed with `number` will process the first `number` files in defined bucket.
+The process file command with option command`-n` followed with `integer number` will process the first `number` files in defined bucket.
+If `number=0`, it processes all files in the buckets.
 
-The process file command with option command `-n` followed with `n` will process the all files in defined bucket.
+The option command `[ --deletenodes | -d ] [ True | False ]` will enable or disable deleting the eks nodes action after processing the files.
+If `[ --deletenodes | -d ]` is not assigned, the default value is `True`. The program will delete all eks nodes after processing.
+
+The option command `[ --configfile | -f ] [filename]` allows users to import configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
+If this option command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
+
+Examples:
+
+```bash
+(venv)$ python3 main.py run-files -n 1 -d False -f test_config.yaml
+```
+
+#### Other support command
+
+- python3 main.py --help
+- python3 main.py nodes-scale [integer_number]
+- python3 main.py check-nodes
+- python3 main.py read-dlq  [-e] [ True | False ]
+- python3 main.py processlogs
+
+
+The `nodes-scale` command allows developers to scale up or down the eks nodes.
+The `check-nodes` command allows developers to check current nodes number.
+The `read-dlq` command allows developers to check current nodes number. The `-e [ True | False ]` option commmand enables or disables deleting messages after invoking this command.
+The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
+
+
+The above command invokes function to process the first `1` file in the bucket defined in `gismoclouddeploy/services/cli/config/test_config.yaml` file.
+The optional command `-d False` will disable deleting the eks nodes action after processing the files.
 
 ### Configuration files
 
@@ -101,11 +121,63 @@ Under `gismoclouddeploy/services/cli` folder, developers can modify parametes of
 ### Kubernetes yaml files
 All kubernetes deployment and service files are listed under `gismoclouddeploy/services/cli/k8s/k8s-aws` and `gismoclouddeploy/services/cli/k8s/k8s-local` folder. Developers can modify as their need.
 
+### EKS configration yaml files
+The create cluster command will create a eks cluster based on the configuration file in `gismoclouddeploy/services/cli/k8s/eks/cluster.yaml`.
+```bash
+$ make create-cluster
+```
+
+If user create cluster throug the `create-cluster` command based on the `cluster.yaml`. 
+It's recommended to delete cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.  
+```bash
+$ make delete-cluster
+```
+### Build and push images on AWS.
+The AWS EKS hosts services based on the ECR images. In order to build new images to be used by Kubernetes, developers have to build and test images by docker-compose command. If the images are verified, developers can push images to ECR.
+The EC2 basion instance has pre-installed `docker` and `docker-compose` command.
+
+1. Build `worker` and `webapp` images through `docker-compose` command.
+
+```bash
+$ cd gismoclouddeploy/services
+$ docker-compose build
+```
+2. Login to ECR and get validation
+   
+```bash
+$ make ecr-validation
+```
+
+3. push `worker` and `webapp` to ECR
+```bash
+$ make push-worker
+$ make push-server
+```
+
+4. Apply new images to kubernetes.
+Check k8s status by command:
+
+```bash
+kubectl get all
+```
+
+If no k8s config files had been apply, please apply k8s yaml files by command:
+
+```bash
+$ cd gismoclouddeploy/services/cli/k8s/k8s-aws
+$ kubectl apply -f .
+```
+
+If 'worker' and 'webapp' images had been applied. Developer can rollout and restart image by command:
+
+```bash
+$ make rollout
+```
 
 
 ### Setup, build and push image in the local machine
 
-The AWS EKS hosts services based on the ECR images. In order to build new images to be used by Kubernetes, developers have to build and test images by docker-compose command. If the images are verified, developers can push images to ECR.
+
 #### local Installation
 1. Download git repository
 
