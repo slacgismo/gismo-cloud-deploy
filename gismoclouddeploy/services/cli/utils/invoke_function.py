@@ -3,11 +3,16 @@ from kubernetes import client, config
 from models.Config import Config
 from models.SolarParams import SolarParams 
 from models.Config import Config
-
+import logging
+logger = logging.getLogger()
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s: %(levelname)s: %(message)s')
 
 def exec_docker_command(command):
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
+
     if result.returncode != 0: 
+        print(result.returncode, result.stdout, result.stderr)
         raise Exception( f'Invalid result: { result.returncode } { result.stderr}')
     print(result.returncode, result.stdout, result.stderr)
     return result.stdout

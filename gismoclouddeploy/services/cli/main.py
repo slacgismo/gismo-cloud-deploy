@@ -25,9 +25,7 @@ from utils.aws_utils import (
 )
 
 from utils.eks_utils import(
-    scale_node_number,
     scale_nodes_and_wait,
-
     create_or_update_k8s
 )
 
@@ -36,8 +34,8 @@ from utils.taskThread import (
 )
 
 from utils.aws_utils import (
-    check_environment_is_aws,
-    list_files_in_bucket
+    list_files_in_bucket,
+    check_aws_validity
 )
 
 from utils.sqs import(
@@ -93,7 +91,14 @@ def run_process_files(number,delete_nodes,configfile):
     :param delete_nodes: delete node after process files
     :param configfile: config file name
     """
-
+    # check aws credential
+     
+    try:
+        check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
+    except Exception as e:
+        logger.error("AWS credential failed")
+        return 
+    #convert yaml and aws credentials to json and pass into kubernetes
     try:
         solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/{configfile}")
         config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
@@ -102,7 +107,11 @@ def run_process_files(number,delete_nodes,configfile):
         logger.error(f" ========= Could not find {configfile} Apply ./config/config.yaml file instead ====")
         logger.error(f" ==================================================================================")
         solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/config.yaml")
-        config_params_obj = Config.import_config_from_yaml(f"./config/config.yaml")
+        config_params_obj = Config.import_config_from_yaml(file = f"./config/config.yaml",
+                                                            aws_access_key=AWS_ACCESS_KEY_ID,
+                                                            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                                                            aws_region=AWS_DEFAULT_REGION,
+                                                            sns_topic=SNS_TOPIC)
 
     # step 1 . check node status from local or AWS
     # spinner = Halo(text='Loading', spinner='dots')

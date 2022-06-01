@@ -73,18 +73,17 @@ def process_first_n_files( config_params_str:str,
                     ):
     # track scheduler status start    
     configure_obj = make_configure_from_str(config_params_str)
+
     hostname = socket.gethostname()
     host_ip = socket.gethostbyname(hostname)      
     pid = os.getpid()
-    temp_task_id = str(uuid.uuid4())
     start_status = WorkerStatus(host_name=hostname,task_id="process_first_n_files", host_ip=host_ip,pid=pid, function_name="process_first_n_files", action="idle-stop/busy-start", time=str(time.time()),message="init process n files")
     start_res = put_item_to_dynamodb(configure_obj.dynamodb_tablename, workerstatus = start_status)
    
-    # print(f"start_res {start_res}")
-    #     busy-stop/idle-start
+
     
 
-    print(f"Process first {first_n_files} files")
+    logger.info(f"Process first {first_n_files} files")
     task_ids = []
     files = list_files_in_bucket(configure_obj.bucket)
     n_files = files[0:int(first_n_files)]

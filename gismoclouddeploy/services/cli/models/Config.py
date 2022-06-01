@@ -15,7 +15,6 @@ class Config(object):
                  saved_tmp_path,
                  saved_target_path,
                  saved_target_filename,
-
                  dynamodb_tablename,
                  saved_logs_target_path,
                  saved_logs_target_filename,
@@ -31,6 +30,11 @@ class Config(object):
                  scale_eks_nodes_wait_time,
                  cluster_name,
                  nodegroup_name,
+                 aws_access_key,
+                 aws_secret_access_key,
+                 aws_region,
+                 sns_topic,
+
                  ):
 
         self.files = files
@@ -55,10 +59,18 @@ class Config(object):
         self.scale_eks_nodes_wait_time = scale_eks_nodes_wait_time
         self.cluster_name = cluster_name
         self.nodegroup_name = nodegroup_name
+        self.aws_access_key = aws_access_key
+        self.aws_secret_access_key = aws_secret_access_key
+        self.aws_region = aws_region
+        self.sns_topic = sns_topic
 
 
     
-    def import_config_from_yaml(file:str):
+    def import_config_from_yaml(file:str, 
+                                aws_access_key:str,
+                                aws_secret_access_key:str,
+                                aws_region:str,
+                                sns_topic:str):
         try:
             config_params = read_yaml(filename=file)
         except Exception as e:
@@ -89,7 +101,11 @@ class Config(object):
                 nodegroup_name  =  config_params["aws_config"]["nodegroup_name"],
                 eks_nodes_number = config_params["aws_config"]["eks_nodes_number"],
                 scale_eks_nodes_wait_time =  config_params["aws_config"]["scale_eks_nodes_wait_time"],
-                
+                # aws credentail from environment in main
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region,
+                sns_topic = sns_topic
             )
             return config
         except Exception as e:  
@@ -110,6 +126,10 @@ class Config(object):
         str+= f" \"saved_logs_target_path\":\"{self.saved_logs_target_path}\","
         str+= f" \"saved_logs_target_filename\":\"{self.saved_logs_target_filename}\","
         str+= f" \"interval_of_check_task_status\":\"{self.interval_of_check_task_status}\","  
-        str+= f" \"interval_of_exit_check_status\":\"{self.interval_of_exit_check_status}\""  
+        str+= f" \"interval_of_exit_check_status\":\"{self.interval_of_exit_check_status}\","
+        str+= f" \"aws_access_key\":\"{self.aws_access_key}\","  
+        str+= f" \"aws_secret_access_key\":\"{self.aws_secret_access_key}\","   
+        str+= f" \"aws_region\":\"{self.aws_region}\","   
+        str+= f" \"sns_topic\":\"{self.sns_topic}\""     
         str+="}"
         return str
