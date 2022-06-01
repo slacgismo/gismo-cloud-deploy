@@ -104,7 +104,7 @@ The `nodes-scale` command allows developers to scale up or down the eks nodes.
 
 The `check-nodes` command allows developers to check current nodes number.
 
-The `read-dlq` command allows developers to check current nodes number. The `-e [ True | False ]` option commmand enables or disables deleting messages after invoking this command.
+The `read-dlq` command allows developers to check current nodes number. The `-e [ True | False ]` option commmand enables or disables deleting messages after invoking this command.The default value is `False`.
 
 The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
 
