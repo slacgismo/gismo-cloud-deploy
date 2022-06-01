@@ -10,7 +10,7 @@ from project.solardata.aws_utils import(
     read_csv_from_s3
 )
 
-
+from botocore.errorfactory import ClientError
 import pandas as pd
 from project.solardata.models.SolarParams import SolarParams
 from project.solardata.models.SolarData import SolarData
@@ -135,12 +135,25 @@ def save_logs_from_dynamodb_to_s3(table_name:str,
     dynamo_client =  connect_aws_client(client_name='dynamodb', key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
     all_items = retrive_all_item_from_dyanmodb(table_name=table_name,dynamo_client =dynamo_client)
 
-    # step 2 . delete data type
-
     df = pd.json_normalize(all_items)
     csv_buffer=StringIO()
     df.to_csv(csv_buffer)
     content = csv_buffer.getvalue()
+    # remove preivous logs.csv
+    s3_client =  connect_aws_client(client_name='s3', key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
+    logs_full_path_name= saved_file_path +"/" +saved_filename
+    try:
+        s3_client.delete_object(
+            Bucket=saved_bucket,
+            Key=logs_full_path_name
+        )
+        logger.info("remove previous logs.csv file")
+    except Exception as e:
+        logger.info("no logs.csv file")
+    
+
+
+
     try:
         to_s3(bucket=saved_bucket,
         file_path=saved_file_path, 
@@ -149,7 +162,7 @@ def save_logs_from_dynamodb_to_s3(table_name:str,
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region)
     except Exception as e:
-        print(f"ERROR ---> {e}")
+        logger.error(f"ERROR ---> {e}")
         raise e
 
 def retrive_all_item_from_dyanmodb(table_name:str, dynamo_client):
