@@ -100,10 +100,13 @@ Examples:
 - python3 main.py processlogs
 
 
-- The `nodes-scale` command allows developers to scale up or down the eks nodes.
-- The `check-nodes` command allows developers to check current nodes number.
-- The `read-dlq` command allows developers to check current nodes number. The `-e [ True | False ]` option commmand enables or disables deleting messages after invoking this command.
-- The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
+The `nodes-scale` command allows developers to scale up or down the eks nodes.
+
+The `check-nodes` command allows developers to check current nodes number.
+
+The `read-dlq` command allows developers to check current nodes number. The `-e [ True | False ]` option commmand enables or disables deleting messages after invoking this command.
+
+The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
 
 
 The above command invokes function to process the first `1` file in the bucket defined in `gismoclouddeploy/services/cli/config/test_config.yaml` file.
