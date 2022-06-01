@@ -70,17 +70,17 @@ logging.basicConfig(level=logging.INFO,
 
 
 
-def import_config_from_yaml(configfile:str) -> Config:
-    """
-    Read yaml and 
-    :param configfile: config file name
-    :return: Config obj.
-    """
-    try:
-        config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
-    except Exception as e:
-        raise Exception(f"Impor Config Rrror {e}")
-    return config_params_obj
+# def import_config_from_yaml(configfile:str) -> Config:
+#     """
+#     Read yaml and 
+#     :param configfile: config file name
+#     :return: Config obj.
+#     """
+#     try:
+#         config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
+#     except Exception as e:
+#         raise Exception(f"Impor Config Rrror {e}")
+#     return config_params_obj
 
 
 def run_process_files(number,delete_nodes,configfile):
@@ -242,7 +242,11 @@ def check_nodes_status():
 
 
 def process_logs_and_plot():
-    config_params_obj = Config.import_config_from_yaml("./config/config.yaml")
+    config_params_obj = Config.import_config_from_yaml(f"./config/config.yaml",                                                     aws_access_key=AWS_ACCESS_KEY_ID,
+                                                            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                                                            aws_region=AWS_DEFAULT_REGION,
+                                                            sns_topic=SNS_TOPIC)
+
     s3_client = connect_aws_client(client_name="s3",key_id=AWS_ACCESS_KEY_ID, 
                                     secret=AWS_SECRET_ACCESS_KEY,
                                     region=AWS_DEFAULT_REGION)
@@ -250,8 +254,14 @@ def process_logs_and_plot():
 
     logs_full_path_name = config_params_obj.saved_logs_target_path + "/" + config_params_obj.saved_logs_target_filename
     process_logs_from_s3(config_params_obj.saved_bucket, logs_full_path_name, "results/runtime.png", s3_client)
+    logger.info(f"Success process logs from {config_params_obj.saved_logs_target_filename}")
 
 def print_dlq(empty):
+    try:
+        check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
+    except Exception as e:
+        logger.error("AWS credential failed")
+        return 
     logger.info("Read DLQ")
     sqs_client = connect_aws_client(client_name='sqs',
                                     key_id=AWS_ACCESS_KEY_ID, 
