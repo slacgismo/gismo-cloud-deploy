@@ -140,49 +140,6 @@ def invoke_docekr_exec_run_process_files(config_obj:Config  ,
         raise e
 
 
-def invoke_docekr_exec_run_process_all_files(config_obj:Config  , 
-                                        solarParams_obj: SolarParams, 
-                                        container_type, 
-                                        container_name):
-    solardata_params_str = solarParams_obj.parse_solardata_params_to_json_str()
-    config_params_str = config_obj.parse_config_to_json_str()
-    if container_type == "docker":
-        command = [ "docker", 
-                    "exec",
-                    "-it",
-                    container_name,
-                    "python",
-                    "app.py",
-                    "process_all_files_in_bucket",
-                    f"{config_params_str}",
-                    f"{solardata_params_str}",
-                    ]
-        
-    elif container_type == "kubernetes":
-        # get pod name
-       
-        pod_name = get_k8s_pod_name(container_name)
-        # print(f" k8s pod_name: {pod_name}")
-        # print(f"pod_name: {pod_name}")
-        command = [ "kubectl", 
-                    "exec",
-                    pod_name,
-                    "--stdin",
-                    "--tty",
-                    "--",
-                    "python",
-                    "app.py",
-                    "process_all_files_in_bucket",
-                    f"{config_params_str}",
-                    f"{solardata_params_str}"
-                ]
-    try:
-        res = exec_docker_command(command)
-        return res
-    except Exception as e:
-        raise e
-
-
 
 
 

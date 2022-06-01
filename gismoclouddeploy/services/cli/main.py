@@ -13,7 +13,6 @@ from kubernetes import client, config
 import os
 from utils.invoke_function import (
     invoke_docekr_exec_run_process_files,
-    invoke_docekr_exec_run_process_all_files,
     invoke_docekr_exec_run_process_first_n_files,
     )
 from models.SolarParams import SolarParams
@@ -158,21 +157,17 @@ def run_process_files(number,delete_nodes,configfile):
         except Exception as e:
             logger.error(f"Process default files failed :{e}")
             return 
-
-    elif number == "n":
-        all_files = list_files_in_bucket(bucket_name=config_params_obj.bucket,key_id=AWS_ACCESS_KEY_ID, secret_key=AWS_SECRET_ACCESS_KEY,aws_region=AWS_DEFAULT_REGION)
-        number_files = len(all_files)
-        total_task_num = len(all_files) + 1
-        logger.info(f" ========= Process all {number_files} files in bucket ========= ")
-        try:
-            res = invoke_docekr_exec_run_process_all_files( config_params_obj,solardata_parmas_obj, config_params_obj.container_type, config_params_obj.container_name)
-        except Exception as e:
-            logger.error(f"Process all files failed :{e}")
-            return     
     else:
         if type(int(number)) == int:
-            logger.info(f" ========= Process first {number} files in bucket ========= ")
-            total_task_num = int(number) + 1
+            total_task_num = 0
+            if int(number) == 0 :
+                all_files = list_files_in_bucket(bucket_name=config_params_obj.bucket,key_id=AWS_ACCESS_KEY_ID, secret_key=AWS_SECRET_ACCESS_KEY,aws_region=AWS_DEFAULT_REGION)
+                number_files = len(all_files)
+                total_task_num = len(all_files) + 1
+                logger.info(f" ========= Process all {number_files} files in bucket ========= ")
+            else :
+                logger.info(f" ========= Process first {number} files in bucket ========= ")
+                total_task_num = int(number) + 1
             try:
                 res = invoke_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
            
@@ -291,7 +286,7 @@ def main():
 # Run files 
 @main.command()
 @click.option('--number','-n',
-            help="Process the first n files in bucket, if number=n, run all files in the bucket", 
+            help="Process the first n files in bucket, if number=0, run all files in the bucket", 
             default= None)
 @click.option('--deletenodes','-delete',
             help="Enbale or disable delet nodes after process, default is Ture. Set False to disable ", 
