@@ -99,12 +99,17 @@ def run_process_files(number,delete_nodes,configfile):
         return 
     #convert yaml and aws credentials to json and pass into kubernetes
     try:
-        solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/{configfile}")
-        config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
+        # solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/{configfile}")
+        config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}",                                                     aws_access_key=AWS_ACCESS_KEY_ID,
+                                                            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                                                            aws_region=AWS_DEFAULT_REGION,
+                                                            sns_topic=SNS_TOPIC)
     except Exception as e:
-        logger.error(f" ================================== ERROR =========================================")
-        logger.error(f" ========= Could not find {configfile} Apply ./config/config.yaml file instead ====")
-        logger.error(f" ==================================================================================")
+
+        logger.error(f" ================================== ERROR ========================================= ")
+        logger.error(f" ========= Could not find {configfile} {e}========================================= ")
+        logger.error   ("======== Apply ./config/config.yaml file instead ================================ ")
+        logger.error(f" ================================================================================== ")
         solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(f"./config/config.yaml")
         config_params_obj = Config.import_config_from_yaml(file = f"./config/config.yaml",
                                                             aws_access_key=AWS_ACCESS_KEY_ID,

@@ -11,12 +11,8 @@ metadata:
 
 nodeGroups:
   - name: gcd-nodegroup
-    instanceType: t2.xlarge
-    desiredCapacity: 2
-    volumeSize: 80
-    privateNetworking: true
-    ssh:
-      allow: true # will use ~/.ssh/id_rsa.pub as the default ssh key
+    instanceType: t2.large
+    desiredCapacity: 1
     tags:
       project: pvinsight
       manage: eksctl
