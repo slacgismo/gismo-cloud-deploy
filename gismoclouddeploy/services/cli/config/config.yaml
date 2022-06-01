@@ -1,6 +1,10 @@
 # process file 
 general:
+<<<<<<< HEAD
   environment: "local"  # "local" , "AWS"
+=======
+  environment: "AWS"  # "local" , "AWS"
+>>>>>>> ebe6e5b315d01cf03868d287c17afcb6fe0bdd4d
   container_type: "kubernetes"  # "docker" , "kubernetes"
   container_name: "webapp"     # "web" . "webapp"
   interval_of_check_task_status: "1" # in second
