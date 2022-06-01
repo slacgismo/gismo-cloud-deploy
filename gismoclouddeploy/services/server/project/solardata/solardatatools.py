@@ -29,7 +29,10 @@ def process_solardata_tools(
                             saved_bucket:str = None,
                             saved_file_path:str = None,
                             saved_filename:str = None,
-                            solarParams: SolarParams = None
+                            solarParams: SolarParams = None,
+                            aws_access_key:str=None,
+                            aws_secret_access_key:str=None,
+                            aws_region:str= None 
                             ) -> str:
 
     '''
@@ -49,7 +52,7 @@ def process_solardata_tools(
         raise Exception('Input error')
     error_message = ""
     try:
-        s3_client = connect_aws_client("s3")
+        s3_client = connect_aws_client(client_name="s3", key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
     except Exception as e:
         logger.error(f"Connect to AWS error: {e}")
         raise e
@@ -144,7 +147,13 @@ def process_solardata_tools(
                             normal_quality_scores=normal_quality_scores,
                             )
 
-        save_solardata_to_file(solarData.to_json(),saved_bucket,saved_file_path,saved_filename)
+        save_solardata_to_file(solardata=solarData.to_json(),
+                                saved_bucket=saved_bucket,
+                                saved_file_path=saved_file_path,
+                                saved_filename=saved_filename,
+                                aws_access_key=aws_access_key,
+                                aws_secret_access_key=aws_secret_access_key,
+                                aws_region=aws_region)
 
         return f"Success process file {file_path_name}: column :{column_name}"
        

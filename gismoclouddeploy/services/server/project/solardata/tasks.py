@@ -19,7 +19,11 @@ def track_logs( task_id:str,
                 message:str,
                 process_file_name:str,
                 table_name:str,
-                column_name:str):
+                column_name:str,
+                aws_access_key:str,
+                aws_secret_access_key:str,
+                aws_region:str
+                ):
 
 
     from project import create_app
@@ -43,7 +47,12 @@ def track_logs( task_id:str,
                                         filename=process_file_name,
                                         column_name = column_name
                                         )
-        put_item_to_dynamodb(table_name=table_name, workerstatus=start_status)
+        put_item_to_dynamodb(table_name=table_name, 
+                            workerstatus=start_status,
+                            aws_access_key=aws_access_key,
+                            aws_secret_access_key=aws_secret_access_key,
+                            aws_region=aws_region
+                            )
 
 
 @shared_task()
@@ -71,7 +80,19 @@ def combine_files_to_file_task(bucket_name,source_folder,target_folder,target_fi
 
 
 @shared_task(bind=True)
-def process_data_task(self,table_name, bucket_name,file_path_name, column_name,saved_bucket, saved_file_path, saved_filename,start_time,solar_params_str:str) -> str:
+def process_data_task(self,table_name:str,
+                     bucket_name:str,
+                     file_path_name:str, 
+                     column_name:str,
+                     saved_bucket:str,
+                     saved_file_path:str, 
+                     saved_filename:str,
+                     start_time:str,
+                     solar_params_str:str,
+                     aws_access_key:str,
+                     aws_secret_access_key:str,
+                     aws_region:str,
+                     sns_topic:str) -> str:
     solar_params_obj = make_solardata_params_from_str(solar_params_str)
     task_id = self.request.id
     subject = task_id
@@ -93,7 +114,10 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
                         message=message,
                         table_name=table_name,
                         process_file_name=file_path_name,
-                        column_name=column_name
+                        column_name=column_name,
+                        aws_access_key=aws_access_key,
+                        aws_secret_access_key=aws_secret_access_key,
+                        aws_region=aws_region
                         )
             process_solardata_tools(  
                             task_id =self.request.id,
@@ -104,7 +128,10 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
                             saved_bucket=saved_bucket,
                             saved_file_path=saved_file_path,
                             saved_filename=saved_filename,
-                            solarParams=solar_params_obj 
+                            solarParams=solar_params_obj,
+                            aws_access_key=aws_access_key,
+                            aws_secret_access_key=aws_secret_access_key,
+                            aws_region=aws_region 
                             )
             
             message = "end of process data task"
@@ -115,7 +142,12 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
 
         # send message
         try:
-            mesage_id = publish_message_sns(message=message,subject=subject, topic_arn=SNS_TOPIC)
+            mesage_id = publish_message_sns(message=message,
+                                            subject=subject, 
+                                            topic_arn=sns_topic,
+                                            aws_access_key=aws_access_key,
+                                            aws_secret_access_key=aws_secret_access_key,
+                                            aws_region=aws_region)
             logger.info(f' Send to SNS.----------> message: {mesage_id}')
         except Exception as e:
             raise e
@@ -127,7 +159,10 @@ def process_data_task(self,table_name, bucket_name,file_path_name, column_name,s
             message=message,
             table_name=table_name,
             process_file_name=file_path_name,
-            column_name=column_name
+            column_name=column_name,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region
             )
 
 @shared_task(bind=True)
@@ -141,7 +176,11 @@ def loop_tasks_status_task( self,
                             target_filename,
                             table_name,
                             saved_log_file_path,
-                            saved_log_file_name
+                            saved_log_file_name,
+                            aws_access_key:str,
+                            aws_secret_access_key:str,
+                            aws_region:str,
+                            sns_topic:str
                             ):
     counter = int(count)
     task_id = self.request.id
@@ -154,7 +193,10 @@ def loop_tasks_status_task( self,
                     message=message,
                     table_name=table_name,
                     process_file_name=None,
-                    column_name=None
+                    column_name=None,
+                    aws_access_key=aws_access_key,
+                    aws_secret_access_key=aws_secret_access_key,
+                    aws_region=aws_region
                     )
 
     
@@ -191,16 +233,35 @@ def loop_tasks_status_task( self,
                     message=message,
                     table_name=table_name,
                     process_file_name=None,
-                    column_name=None
+                    column_name=None,
+                    aws_access_key=aws_access_key,
+                    aws_secret_access_key=aws_secret_access_key,
+                    aws_region=aws_region
                     )
        
-            response = combine_files_to_file(bucket_name, source_folder, target_folder, target_filename)
+            response = combine_files_to_file(bucket_name=bucket_name,
+                                             source_folder=source_folder,
+                                            target_folder=target_folder, 
+                                            target_filename=target_filename,
+                                            aws_access_key=aws_access_key,
+                                            aws_secret_access_key=aws_secret_access_key,
+                                            aws_region=aws_region)
+
+            
             save_res = save_logs_from_dynamodb_to_s3(table_name=table_name,
                                             saved_bucket=bucket_name,
                                             saved_file_path=saved_log_file_path,
-                                            saved_filename=saved_log_file_name )
-            remov_res = remove_all_items_from_dynamodb(table_name)
-            print(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
+                                            saved_filename=saved_log_file_name,
+                                           aws_access_key=aws_access_key,
+                                           aws_secret_access_key=aws_secret_access_key,
+                                           aws_region=aws_region)
+
+            remov_res = remove_all_items_from_dynamodb( table_name=table_name,
+                                                        aws_access_key=aws_access_key,
+                                                        aws_secret_access_key=aws_secret_access_key,
+                                                        aws_region=aws_region)
+
+            logger.info(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
             subject = "AllTaskCompleted"
             message="AllTaskCompleted"
 
@@ -210,7 +271,12 @@ def loop_tasks_status_task( self,
             logger.info(f'Error: {message} ')
 
         try:
-            mesage_id = publish_message_sns(message=message,subject=subject, topic_arn=SNS_TOPIC)
+            mesage_id = publish_message_sns(message=message,
+                                            subject=subject, 
+                                            topic_arn=sns_topic,
+                                            aws_access_key=aws_access_key,
+                                            aws_secret_access_key=aws_secret_access_key,
+                                            aws_region=aws_region)
             logger.info(f' Send to SNS.----------> message: {mesage_id}')
         except Exception as e:
             raise e

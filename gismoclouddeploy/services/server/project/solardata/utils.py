@@ -123,10 +123,17 @@ def plot_gantt_chart(bucket,file_path_name,saved_image_name):
                                  ContentType="image/png")
     return True
     
-def save_logs_from_dynamodb_to_s3(table_name, saved_bucket, saved_file_path, saved_filename):
+def save_logs_from_dynamodb_to_s3(table_name:str, 
+                                    saved_bucket:str, 
+                                    saved_file_path:str, 
+                                    saved_filename:str,
+                                    aws_access_key:str,
+                                    aws_secret_access_key:str, 
+                                    aws_region:str):
 
     # step 1. get all item from dynamodb
-    all_items = retrive_all_item_from_dyanmodb(table_name)
+    dynamo_client =  connect_aws_client(client_name='dynamodb', key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
+    all_items = retrive_all_item_from_dyanmodb(table_name=table_name,dynamo_client =dynamo_client)
 
     # step 2 . delete data type
 
@@ -135,13 +142,18 @@ def save_logs_from_dynamodb_to_s3(table_name, saved_bucket, saved_file_path, sav
     df.to_csv(csv_buffer)
     content = csv_buffer.getvalue()
     try:
-        to_s3(saved_bucket,saved_file_path,saved_filename, content)
+        to_s3(bucket=saved_bucket,
+        file_path=saved_file_path, 
+        filename=saved_filename, 
+        content=content,aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region)
     except Exception as e:
         print(f"ERROR ---> {e}")
         raise e
 
-def retrive_all_item_from_dyanmodb(table_name):
-    dynamo_client =  connect_aws_client('dynamodb')
+def retrive_all_item_from_dyanmodb(table_name:str, dynamo_client):
+    
     deserializer = TypeDeserializer()
     items = []
     for item in scan_table(dynamo_client, TableName=table_name):
@@ -167,9 +179,9 @@ def scan_table(dynamo_client, *, TableName, **kwargs):
         yield from page["Items"]
 
 
-def remove_all_items_from_dynamodb(table_name):
+def remove_all_items_from_dynamodb(table_name:str, aws_access_key:str, aws_secret_access_key:str, aws_region:str):
     try:
-        dynamodb_resource = connect_aws_resource('dynamodb')
+        dynamodb_resource = connect_aws_resource(resource_name='dynamodb',key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
         table = dynamodb_resource.Table(table_name)
         scan = table.scan()
         with table.batch_writer() as batch:
@@ -184,8 +196,15 @@ def remove_all_items_from_dynamodb(table_name):
     except Exception as e:
         raise e
 
-def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
-    dynamodb_resource = connect_aws_resource('dynamodb')
+def put_item_to_dynamodb(table_name:str, 
+                        workerstatus:WorkerStatus, 
+                        aws_access_key:str, 
+                        aws_secret_access_key:str, 
+                        aws_region:str):
+    dynamodb_resource = connect_aws_resource( resource_name='dynamodb',
+                                                key_id=aws_access_key,
+                                                secret=aws_secret_access_key,
+                                                region=aws_region)
     table = dynamodb_resource.Table(table_name)    
     response = table.put_item(
     Item={
@@ -207,9 +226,15 @@ def put_item_to_dynamodb(table_name:str, workerstatus:WorkerStatus):
 
 
 
-def list_files_in_bucket(bucket_name):
+def list_files_in_bucket( bucket_name:str, 
+                            aws_access_key:str, 
+                            aws_secret_access_key:str, 
+                            aws_region:str):
     """ Get filename and size from S3 , remove non csv file """
-    s3_client = connect_aws_client('s3')
+    s3_client = connect_aws_client(client_name='s3',
+                                    key_id=aws_access_key,
+                                    secret=aws_secret_access_key,
+                                    region=aws_region)
     response = s3_client.list_objects_v2(Bucket=bucket_name)
     files = response['Contents']
     filterFiles =[]
@@ -230,7 +255,13 @@ def list_files_in_bucket(bucket_name):
 
 
     
-def save_solardata_to_file(solardata:SolarData, saved_bucket:str, saved_file_path:str, saved_filename:str) -> bool:
+def save_solardata_to_file(solardata:SolarData,
+                            saved_bucket:str, 
+                            saved_file_path:str, 
+                            saved_filename:str,
+                            aws_access_key:str,
+                            aws_secret_access_key:str,
+                            aws_region:str) -> bool:
    
 
     try:
@@ -238,20 +269,33 @@ def save_solardata_to_file(solardata:SolarData, saved_bucket:str, saved_file_pat
         csv_buffer=StringIO()
         df.to_csv(csv_buffer)
         content = csv_buffer.getvalue()
-        to_s3(saved_bucket,saved_file_path,saved_filename, content)
+        to_s3( bucket=saved_bucket,
+               file_path=saved_file_path,
+               filename=saved_filename, 
+                content=content,
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region)
+
         logger.info(f"save_bucket:{saved_bucket},saved_file_path: {saved_file_path},saved_filename :{saved_filename} success")
         return True
     except Exception as e:
         print(f"save to s3 error ---> {e}")
         raise e
 
-def combine_files_to_file(bucket_name:str, source_folder:str, target_folder:str, target_filename:str) -> None:
+def combine_files_to_file(  bucket_name:str, 
+                            source_folder:str, 
+                            target_folder:str, 
+                            target_filename:str,
+                            aws_access_key:str,
+                            aws_secret_access_key:str,
+                            aws_region:str) -> None:
     """ 
     Combine all files in sorce folder and save into target folder and target file.
     After the process is completed, all files in source folder will be deleted.
     """
     print("combine files ---->")
-    s3_client = connect_aws_client('s3')
+    s3_client = connect_aws_client(client_name='s3',key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
     filter_files = list_files_in_folder_of_bucket(bucket_name,source_folder,s3_client)
  
     if not filter_files:
@@ -266,7 +310,13 @@ def combine_files_to_file(bucket_name:str, source_folder:str, target_folder:str,
     frame.to_csv(csv_buffer)
     content = csv_buffer.getvalue()
     try:
-        to_s3(bucket_name,target_folder,target_filename, content)
+        to_s3( bucket=bucket_name,
+                file_path=target_folder,
+                filename=target_filename, 
+                content=content,
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region)
         print(f"Save to {target_filename} success!!")
         # delete files 
         for file in filter_files:
@@ -302,9 +352,9 @@ def list_files_in_folder_of_bucket(bucket_name:str, file_path:str, s3_client:'bo
 
 
 
-def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
+def publish_message_sns(message: str, subject:str, topic_arn:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
 
-    sns_client = connect_aws_client('sns')
+    sns_client = connect_aws_client(client_name='sns',key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
     try:
         message_res = sns_client.publish(
             TopicArn=topic_arn,
@@ -328,7 +378,11 @@ def publish_message_sns(message: str, subject:str, topic_arn:str) -> str:
 
 
 
-def find_matched_column_name_set(columns_key:Str, bucket_name:str, file_path_name:str, s3_client:'botocore.client.S3') -> Set[set] :
+def find_matched_column_name_set(columns_key:Str,
+                                 bucket_name:str, 
+                                 file_path_name:str, 
+                                 s3_client:'botocore.client.S3',
+                                 ) -> Set[set] :
     '''
     Find the match column name from key word. if matched column has no value inside, it will be skipped.
     If this function find exactly match with key and column name , it return the the match column name in set.
