@@ -300,6 +300,7 @@ def run_files(number,deletenodes, configfile):
     click.echo(f"delete  {deletenodes}")
     run_process_files(number, deletenodes,configfile)
 
+# scale nodes
 @main.command()
 @click.argument('min_nodes')
 @click.option('--configfile','-f',
@@ -320,17 +321,19 @@ def nodes_scale(min_nodes,configfile):
     scale_nodes_and_wait(scale_node_num=min_nodes, counter=80,delay=1,config_params_obj=config_params_obj)
 
 
+# check nodes
 @main.command()
 def check_nodes():
     """ Check nodes status """
     check_nodes_status()
 
-
+# process logs
 @main.command()
 def processlogs():
-    """ Porcess logs.csv file"""
+    """ Porcess logs.csv file on AWS"""
     process_logs_and_plot()
 
+# Read DLQ
 @main.command()
 @click.option('--empty','-e', is_flag = True,
             help=" Empty DLQ after receive message")
@@ -338,9 +341,6 @@ def read_dlq(empty):
     """Read messages from dlq """
     print_dlq(empty)
 
-@main.command()
-def cli():
-    print("Hello World")
 
 if __name__ == '__main__':
 	main()
