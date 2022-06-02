@@ -281,7 +281,6 @@ def print_dlq(empty):
 # Parent Command
 @click.group()
 def main():
-
 	pass
 
 # Run files 
@@ -297,7 +296,6 @@ def main():
 
 def run_files(number,deletenodes, configfile):
     """ Run Process Files"""
-    click.echo(f"delete  {deletenodes}")
     run_process_files(number, deletenodes,configfile)
 
 # scale nodes
