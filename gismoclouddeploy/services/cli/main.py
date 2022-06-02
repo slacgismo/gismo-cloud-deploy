@@ -289,15 +289,15 @@ def main():
 @click.option('--number','-n',
             help="Process the first n files in bucket, if number=0, run all files in the bucket", 
             default= None)
-@click.option('--deletenodes','-d',
-            help="Enbale or disable delet nodes after process, default is Ture. Set False to disable ", 
-            default= True)
+@click.option('--deletenodes','-d',  is_flag = True,
+            help="Enbale or disable delet nodes after process, default is Ture. Set False to disable ")
 @click.option('--configfile','-f',
             help="Assign config files, Default files is config.yaml under /config" , 
             default= "config.yaml")
 
 def run_files(number,deletenodes, configfile):
     """ Run Process Files"""
+    click.echo(f"delete  {deletenodes}")
     run_process_files(number, deletenodes,configfile)
 
 @main.command()
@@ -332,13 +332,12 @@ def processlogs():
     process_logs_and_plot()
 
 @main.command()
-@click.option('--empty','-e',
-            help=" Empty DLQ after receive message", 
-            default= False)
+@click.option('--empty','-e', is_flag = True,
+            help=" Empty DLQ after receive message")
 def read_dlq(empty):
     """Read messages from dlq """
     print_dlq(empty)
-    
+
 @main.command()
 def cli():
     print("Hello World")
