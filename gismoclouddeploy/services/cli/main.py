@@ -69,20 +69,6 @@ logging.basicConfig(level=logging.INFO,
 
 
 
-
-# def import_config_from_yaml(configfile:str) -> Config:
-#     """
-#     Read yaml and 
-#     :param configfile: config file name
-#     :return: Config obj.
-#     """
-#     try:
-#         config_params_obj = Config.import_config_from_yaml(f"./config/{configfile}")
-#     except Exception as e:
-#         raise Exception(f"Impor Config Rrror {e}")
-#     return config_params_obj
-
-
 def run_process_files(number,delete_nodes,configfile):
     """
     Proccess files in S3 bucket
@@ -183,7 +169,7 @@ def run_process_files(number,delete_nodes,configfile):
         else:
             print(f"error input {number}")
             return 
-    # log pulling 
+    # long pulling 
     thread = taskThread(threadID=1,
                         name="sqs",
                         counter=120, 
@@ -352,7 +338,10 @@ def processlogs():
 def read_dlq(empty):
     """Read messages from dlq """
     print_dlq(empty)
-
+    
+@main.command()
+def cli():
+    print("Hello World")
 
 if __name__ == '__main__':
 	main()
