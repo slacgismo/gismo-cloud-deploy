@@ -183,14 +183,14 @@ sudo ./aws/install
 Use the console to add a user to your new group, and then use "aws configure" to input the credentials
 9. Install kubectl.
 ~~~
-export RELEASE=<enter default eks version number here. Eg 1.21.0>
+export RELEASE=<enter default eks version number here. Eg 1.22.0>
 curl -LO https://storage.googleapis.com/kubernetes-release/release/v$RELEASE/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
 ~~~
 10.  Check the version 
 ~~~
-kubectl version --client"
+kubectl version --client
 ~~~
 11.  Start your cluster!
 ~~~
