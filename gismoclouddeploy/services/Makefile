@@ -19,7 +19,7 @@ create-cluster:
 	eksctl create cluster -f ./cli/k8s/eks/cluster.yaml
 
 .PHONY: delete-cluster
-create-cluster:
+delete-cluster:
 	@echo "Create Cluster from cluster.yaml"
 	eksctl delete cluster -f ./cli/k8s/eks/cluster.yaml
 
