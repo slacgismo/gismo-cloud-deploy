@@ -102,8 +102,6 @@ def process_first_n_files( config_params_str:str,
         n_files = files[0:int(first_n_files)]
         logger.info(f"Process first {first_n_files} files")
         
-    for file in n_files:
-        print(file['Key'])
 
     s3_client = connect_aws_client(client_name='s3',
                                     key_id=configure_obj.aws_access_key,
