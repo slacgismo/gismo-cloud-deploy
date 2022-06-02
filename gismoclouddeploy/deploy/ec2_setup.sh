@@ -1,6 +1,12 @@
 #!/bin/bash
 #
 # Install script for Amazon EC2 instance 
+set -o errexit
+# fail exit if one of your pipe command fails
+set -o pipefail
+# exits if any of your variables is not set
+set -o nounset
+
 
 # install git 
 yum update -y 
