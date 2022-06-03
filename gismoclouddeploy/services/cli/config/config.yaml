@@ -4,7 +4,7 @@ general:
   container_type: "docker"  # "docker" , "kubernetes"
   container_name: "web"     # "web" . "webapp"
   interval_of_check_task_status: "1" # in second
-  interval_of_exit_check_status: "60" # in second. If the task status didn't update after this period. stop check status 
+  interval_of_exit_check_status: "600" # in second. If the task status didn't update after this period. stop check individual status 
 
 
 aws_config:

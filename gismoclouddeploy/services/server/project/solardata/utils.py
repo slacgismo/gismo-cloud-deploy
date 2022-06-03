@@ -136,7 +136,6 @@ def save_logs_from_dynamodb_to_s3(table_name:str,
     # step 1. get all item from dynamodb
     dynamo_client =  connect_aws_client(client_name='dynamodb', key_id=aws_access_key,secret=aws_secret_access_key,region=aws_region)
     all_items = retrive_all_item_from_dyanmodb(table_name=table_name,dynamo_client =dynamo_client)
-
     df = pd.json_normalize(all_items)
     csv_buffer=StringIO()
     df.to_csv(csv_buffer)

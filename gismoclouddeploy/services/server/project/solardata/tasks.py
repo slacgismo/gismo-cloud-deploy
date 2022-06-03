@@ -9,8 +9,10 @@ from project.solardata.models.WorkerStatus import WorkerStatus
 import time
 import socket
 
+
+
 logger = get_task_logger(__name__)
-SNS_TOPIC = os.environ.get('SNS_TOPIC')
+
 
 def track_logs( task_id:str,
                 function_name:str,
@@ -47,6 +49,7 @@ def track_logs( task_id:str,
                                         filename=process_file_name,
                                         column_name = column_name
                                         )
+
         put_item_to_dynamodb(table_name=table_name, 
                             workerstatus=start_status,
                             aws_access_key=aws_access_key,
@@ -97,6 +100,7 @@ def process_data_task(self,table_name:str,
     task_id = self.request.id
     subject = task_id
     message = "init process_data_task"
+    # self.update_state(state='STARTED', meta ={'start': i})
 
     from project import create_app
     from project.solardata.models import SolarData
@@ -107,9 +111,12 @@ def process_data_task(self,table_name:str,
     app = create_app()
     with app.app_context():
         try:
-            track_logs(task_id=self.request.id,
+            process_file_task_id = str(self.request.id)
+        
+            startime = str(time.time())
+            track_logs(task_id=process_file_task_id,
                         function_name="process_data_task",
-                        time=str(time.time()),
+                        time=startime,
                         action="idle-stop/busy-start", 
                         message=message,
                         table_name=table_name,
@@ -119,8 +126,9 @@ def process_data_task(self,table_name:str,
                         aws_secret_access_key=aws_secret_access_key,
                         aws_region=aws_region
                         )
+            self.update_state(state='PROGRESS', meta = {'start':startime})
             process_solardata_tools(  
-                            task_id =self.request.id,
+                            task_id =process_file_task_id,
                             bucket_name=bucket_name ,
                             file_path_name=file_path_name,
                             column_name=column_name,
@@ -139,20 +147,8 @@ def process_data_task(self,table_name:str,
             subject = "ProcessFileError"
             message = f"task_id: {task_id} filename: {file_path_name},column: {column_name},error:{e}"
             logger.info(f'Error: {e} ')
-
-        # send message
-        try:
-            mesage_id = publish_message_sns(message=message,
-                                            subject=subject, 
-                                            topic_arn=sns_topic,
-                                            aws_access_key=aws_access_key,
-                                            aws_secret_access_key=aws_secret_access_key,
-                                            aws_region=aws_region)
-            logger.info(f' Send to SNS.----------> message: {mesage_id}')
-        except Exception as e:
-            raise e
-
-        track_logs(task_id=self.request.id,
+            
+        track_logs(task_id=process_file_task_id,
             function_name="process_data_task",
             action="busy-stop/idle-start",
             time=str(time.time()),
@@ -165,10 +161,30 @@ def process_data_task(self,table_name:str,
             aws_region=aws_region
             )
 
+        # send message
+        try:
+            mesage_id = publish_message_sns(message=message,
+                                            subject=subject, 
+                                            topic_arn=sns_topic,
+                                            aws_access_key=aws_access_key,
+                                            aws_secret_access_key=aws_secret_access_key,
+                                            aws_region=aws_region)
+            logger.info(f' Send to SNS.----------> message: {mesage_id}')
+        except Exception as e:
+            logger.error("Publish SNS Error")
+            raise e
+        logger.info(f"=============process_file_task_id end:{process_file_task_id}")
+
+        if subject == "ProcessFileError":
+            self.update_state(state='FAILED', meta = {'start':startime})
+            return
+            
+        self.update_state(state='SUCCESS', meta = {'start':startime})
+
 @shared_task(bind=True)
 def loop_tasks_status_task( self,
                             delay,
-                            count,
+                            interval_of_timeout,
                             task_ids,
                             bucket_name, 
                             source_folder,
@@ -182,13 +198,14 @@ def loop_tasks_status_task( self,
                             aws_region:str,
                             sns_topic:str
                             ):
-    counter = int(count)
+    interval_of_max_timeout = int(interval_of_timeout)
     task_id = self.request.id
     subject = task_id
+    startime = str(time.time())
     message = "init loop_tasks_status_task"
     track_logs(task_id=task_id,
                     function_name="loop_tasks_status_task",
-                    time=str(time.time()),
+                    time=startime,
                     action="idle-stop/busy-start", 
                     message=message,
                     table_name=table_name,
@@ -198,24 +215,37 @@ def loop_tasks_status_task( self,
                     aws_secret_access_key=aws_secret_access_key,
                     aws_region=aws_region
                     )
+    self.update_state(state='PROGRESS', meta = {'start':startime})
 
-    
-    while counter > 0:
-        # check the task status
-        time.sleep(int(delay))
-        num_completed_task =0
-        for id in task_ids:
+    while len(task_ids) > 0 :
+        for id in task_ids[:]:     
             res = AsyncResult(str(id))
             status = str(res.status)
-           
-            if status != "PENDING":
-                print(f"completed schedulers: id: {res.task_id} \n task status: {res.status}")
-                num_completed_task += 1
-        if num_completed_task == len(task_ids):
-            print(f"num_success_task: {num_completed_task}")
-            break 
-        counter -= 1
-        print(f"Time: {time.ctime(time.time())}")
+
+            if res.info is None:
+                logger.info("no info")
+            elif 'start' in res.info :
+                star_time = res.info['start']
+                curr_time = time.time()
+                duration  = int(curr_time - float(star_time))
+                # logger.info(f" stask id: {res.task_id} \n task status: {res.status} duration: {duration} s")
+                # if the duration of task is over timeout stop 
+                if duration >= interval_of_max_timeout :
+                    logger.warning(f"Timeout remove {id}")
+                    task_ids.remove(id)
+                      
+            else: 
+                logger.info("no start key in info")
+                
+            
+            # if tasks success or failed remove check
+            if status == "SUCCESS" or status == "FAILED" :
+                logger.info(f"completed schedulers: id: {res.task_id} \n task status: {res.status} ")
+                # delete id from task_ids
+                task_ids.remove(id)
+        time.sleep(int(delay))
+
+
 
     logger.info("------- start combine files, save logs , clean dynamodb items---------")
     

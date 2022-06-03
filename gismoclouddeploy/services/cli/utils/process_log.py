@@ -1,3 +1,4 @@
+from asyncio.log import logger
 import pandas as pd
 from models.WorkerStatus import WorkerStatus, make_worker_object_from_dataframe
 from datetime import datetime
@@ -135,17 +136,13 @@ def process_df_for_gantt(df:pd)  :
             end = pd.to_datetime( worker_dict[task_id][key_end])
             start= pd.to_datetime( worker_dict[task_id][key_start])
             worker_dict[task_id]['duration'] = int(round((end - start).total_seconds()))
-  
-            # duration = float(worker_dict[task_id][key_end]) - float(worker_dict[task_id][key_start])
-            # worker_dict[task_id]['duration'] = duration
-           
+
         else:
             info_dict = {}
             if pd.isnull(worker.filename):
                 info_dict[key_task] = worker.function_name
             else:
                 info_dict[key_task] = worker.filename
-            # print(info_dict['task'])
             info_dict[key_host_ip] = worker.host_ip
             info_dict[key_pid] = worker.pid
             if worker.action == "busy-stop/idle-start":
@@ -153,20 +150,9 @@ def process_df_for_gantt(df:pd)  :
             else:
                 info_dict[key_start] = worker.time
             worker_dict[worker.task_id] = info_dict
-    
-    # for key in worker_dict:
-    #     print(f" v --->:{worker_dict[key]['host_ip']}")
 
 
     return worker_dict
-
-# def addAnnot(df, fig):
-#     for i in df:
-#         x_pos = (i['Finish'] - i['Start'])/2 + i['Start']
-#         for j in fig['data']:
-#             if j['name'] == i['Label']:
-#                 y_pos = (j['y'][0] + j['y'][1] + j['y'][2] + j['y'][3])/4
-#         fig['layout']['annotations'] += tuple([dict(x=x_pos,y=y_pos,text=i['Label'],font={'color':'black'})])
 
 
 def process_logs_from_local():
@@ -197,15 +183,20 @@ def process_logs_from_local():
             node_name = pods_info_dict[pod_ip]['NOD_NAME']
 
         task = f"{node_name}: {value['host_ip']}: {value['pid']}"
-        label = f"{value['task']}: duration:{value['duration']}s"
-        item = dict(Task=task, 
-        Start=(value['start']), 
-        Finish=(value['end']), 
-        Resource=value['task'],
-        Node = node_name,
-        Label=label,
-        Host=value['host_ip'], 
-        Duration = value['duration'])
+        try:
+            label = f"{value['task']}: duration:{value['duration']}s"
+
+            item = dict(Task=task, 
+            Start=(value['start']), 
+            Finish=(value['end']), 
+            Resource=value['task'],
+            Node = node_name,
+            Label=label,
+            Host=value['host_ip'], 
+            Duration = value['duration'])
+        except Exception as e:
+            logger.info(f"skip task {key}")
+            continue
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
     fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Node", text="Label")
@@ -230,7 +221,6 @@ def process_logs_from_s3(bucket:str, logs_file_path_name:str, saved_image_name:s
 
     gantt_list = []
     for key , value in worker_dict.items():
-        # print(f"{value} ")
         # print(f"start :{value['start']} end:{value['end']}")
         pod_ip = value['host_ip']
         node_name = ""
@@ -239,7 +229,8 @@ def process_logs_from_s3(bucket:str, logs_file_path_name:str, saved_image_name:s
             node_name = pods_info_dict[pod_ip]['NOD_NAME']
 
         task = f"{node_name}: {value['host_ip']}: {value['pid']}"
-        label = f"{value['task']}: duration:{value['duration']}s"
+        if 'duration' in value:
+            label = f"{value['task']}: duration:{value['duration']}s"
         item = dict(Task=task, 
         Start=(value['start']), 
         Finish=(value['end']), 

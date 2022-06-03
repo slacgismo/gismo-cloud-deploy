@@ -84,7 +84,7 @@ def read_csv_from_s3_with_column_name(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
+        # print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(response.get("Body"),
                                 index_col=False,
                                 # parse_dates=parse_dates,
@@ -150,7 +150,7 @@ def read_csv_from_s3_with_column_and_time(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
+        # print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(response.get("Body"),
                                 index_col=index_col,
                                 parse_dates=parse_dates,
@@ -176,7 +176,7 @@ def read_all_csv_from_s3(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
+        # print(f"Successful S3 get_object response. Status - {status}")
         # result_df = pd.read_csv(response.get("Body"),
         #                         index_col=index_col)
         result_df = pd.read_csv(response.get("Body"), index_col=0,  infer_datetime_format=True)
@@ -199,7 +199,7 @@ def read_csv_from_s3(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        print(f"Successful S3 get_object response. Status - {status}")
+        # print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(response.get("Body"),nrows =1)
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")

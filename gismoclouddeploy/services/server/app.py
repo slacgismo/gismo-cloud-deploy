@@ -1,8 +1,6 @@
 
 from cmath import log
 import logging
-from tkinter import E
-
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 
@@ -135,9 +133,9 @@ def process_first_n_files( config_params_str:str,
                     configure_obj.sns_topic
                     ])
             task_ids.append(str(task_id)) 
-    for id in task_ids:
-        print(id)
-    # # loop the task status in celery task
+
+  
+    # loop the task status in celery task
     loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, 
                                                     configure_obj.interval_of_exit_check_status,
                                                     task_ids,
