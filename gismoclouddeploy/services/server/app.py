@@ -95,6 +95,8 @@ def process_first_n_files( config_params_str:str,
                                  aws_access_key=configure_obj.aws_access_key,
                                  aws_secret_access_key=configure_obj.aws_secret_access_key,
                                  aws_region=configure_obj.aws_region)
+    
+    # first_n_files == 0 process all file
     n_files = files
     logger.info(f"Process all files in {configure_obj.bucket}")
 
