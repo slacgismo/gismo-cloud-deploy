@@ -10,6 +10,8 @@ from project.solardata.aws_utils import(
     read_csv_from_s3
 )
 
+from project.solardata.models.Configure import Configure
+
 from botocore.errorfactory import ClientError
 import pandas as pd
 from project.solardata.models.SolarParams import SolarParams
@@ -443,3 +445,27 @@ def find_matched_column_name_set(columns_key:Str,
     logger.info(f"find partial match column name {validated_column_set}")
     return validated_column_set
 
+def get_process_filenamef_base_on_command(first_n_files:str,configure_obj:Configure, s3_client:'botocore.client.S3') -> List[str] :
+    n_files = []
+    files_dict = list_files_in_bucket(bucket_name=configure_obj.bucket,
+                                 aws_access_key=configure_obj.aws_access_key,
+                                 aws_secret_access_key=configure_obj.aws_secret_access_key,
+                                 aws_region=configure_obj.aws_region)
+    
+    if first_n_files == "None":
+        logger.info("Process defined files")
+        n_files = configure_obj.files
+    else:
+        try:
+            if int(first_n_files) == 0:
+                logger.info(f"Process all files in {configure_obj.bucket}")
+                for file in files_dict:
+                    n_files.append(file['Key'])
+            else:
+                logger.info(f"Process first {first_n_files} files")
+                for file in files_dict[0:int(first_n_files)]:
+                    n_files.append(file['Key'])
+        except Exception as e:
+            logger.error(f"Input {first_n_files} is not an integer")
+            raise e 
+    return n_files

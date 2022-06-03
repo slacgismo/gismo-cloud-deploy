@@ -137,13 +137,17 @@ def run_process_files(number,delete_nodes,configfile):
     clean_previous_sqs_message(sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1)
 
     total_task_num = 0
+
+
     if number is None:
         logger.info(" ========= Process default files in config.yam ========= ")  
         try:
-            res = invoke_docekr_exec_run_process_files(config_obj = config_params_obj,
-                                            solarParams_obj= solardata_parmas_obj,
-                                            container_type= config_params_obj.container_type, 
-                                            container_name=config_params_obj.container_name)
+            # res = invoke_docekr_exec_run_process_files(config_obj = config_params_obj,
+            #                                 solarParams_obj= solardata_parmas_obj,
+            #                                 container_type= config_params_obj.container_type, 
+            #                                 container_name=config_params_obj.container_name)
+            res = invoke_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
+           
             total_task_num = len(config_params_obj.files) + 1
         except Exception as e:
             logger.error(f"Process default files failed :{e}")
