@@ -47,7 +47,15 @@ $ ssh -i <pem-file> ec2-user@<host-ip>
 ```bash
 $ aws configure
 ```
-3. Check if aws credentials vaild by listing aws s3 bucket command.
+
+~~~
+AWS Access Key ID : 
+AWS Secret Access Key: 
+Default region name: 
+Default output format [None]: 
+~~~
+
+1. Check if aws credentials vaild by listing aws s3 bucket command.
 ``` bash
 $ aws s3 ls
 ```
