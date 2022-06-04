@@ -145,8 +145,8 @@ def process_data_task(self,table_name:str,
             message = "end of process data task"
         except Exception as e:
             subject = "ProcessFileError"
-            message = f"task_id: {task_id} filename: {file_path_name},column: {column_name},error:{e}"
-            logger.info(f'Error: {e} ')
+            message = f"error:{e}"
+            logger.error(f'Error: {file_path_name} {column_name} :  {message} ')
             
         track_logs(task_id=process_file_task_id,
             function_name="process_data_task",
@@ -169,11 +169,11 @@ def process_data_task(self,table_name:str,
                                             aws_access_key=aws_access_key,
                                             aws_secret_access_key=aws_secret_access_key,
                                             aws_region=aws_region)
-            logger.info(f' Send to SNS.----------> message: {mesage_id}')
+            logger.info(f' Send to SNS, message: {mesage_id}')
         except Exception as e:
             logger.error("Publish SNS Error")
             raise e
-        logger.info(f"=============process_file_task_id end:{process_file_task_id}")
+        
 
         if subject == "ProcessFileError":
             self.update_state(state='FAILED', meta = {'start':startime})

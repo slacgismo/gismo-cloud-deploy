@@ -221,24 +221,29 @@ def process_logs_from_s3(bucket:str, logs_file_path_name:str, saved_image_name:s
 
     gantt_list = []
     for key , value in worker_dict.items():
+        # print(value)
         # print(f"start :{value['start']} end:{value['end']}")
-        pod_ip = value['host_ip']
-        node_name = ""
-        # get node name
-        if pod_ip in pods_info_dict:
-            node_name = pods_info_dict[pod_ip]['NOD_NAME']
+        try:
+            pod_ip = value['host_ip']
+            node_name = ""
+            # get node name
+            if pod_ip in pods_info_dict:
+                node_name = pods_info_dict[pod_ip]['NOD_NAME']
 
-        task = f"{node_name}: {value['host_ip']}: {value['pid']}"
-        if 'duration' in value:
-            label = f"{value['task']}: duration:{value['duration']}s"
-        item = dict(Task=task, 
-        Start=(value['start']), 
-        Finish=(value['end']), 
-        Resource=value['task'],
-        Node = node_name,
-        Label=label,
-        Host=value['host_ip'], 
-        Duration = value['duration'])
+            task = f"{node_name}: {value['host_ip']}: {value['pid']}"
+            if 'duration' in value:
+                label = f"{value['task']}: duration:{value['duration']}s"
+            item = dict(Task=task, 
+            Start=(value['start']), 
+            Finish=(value['end']), 
+            Resource=value['task'],
+            Node = node_name,
+            Label=label,
+            Host=value['host_ip'], 
+            Duration = value['duration'])
+        except Exception as e:
+            logger.warning(f"Missing Key {e} in {value}")
+            continue
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
     fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task",color="Node", text="Label")

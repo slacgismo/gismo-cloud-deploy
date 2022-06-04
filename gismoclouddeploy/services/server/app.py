@@ -1,6 +1,8 @@
 
 from cmath import log
 import logging
+
+from pyparsing import col
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 
@@ -20,6 +22,8 @@ from project.solardata.utils import (
 import click
 import time
 import os 
+
+import re
 from project.solardata.tasks import (
 
     process_data_task,
@@ -74,22 +78,6 @@ def process_first_n_files( config_params_str:str,
     # track scheduler status start    
     configure_obj = make_configure_from_str(config_params_str)
 
-    hostname = socket.gethostname()
-    host_ip = socket.gethostbyname(hostname)      
-    pid = os.getpid()
-    start_status = WorkerStatus(host_name=hostname,task_id="process_first_n_files", 
-                                host_ip=host_ip,pid=pid, 
-                                function_name="process_first_n_files", 
-                                action="idle-stop/busy-start", 
-                                time=str(time.time()),
-                                message="init process n files")
-                                
-    put_item_to_dynamodb(configure_obj.dynamodb_tablename,
-                                     workerstatus = start_status,
-                                    aws_access_key=configure_obj.aws_access_key,
-                                    aws_secret_access_key=configure_obj.aws_secret_access_key,
-                                    aws_region=configure_obj.aws_region)
-
 
     s3_client = connect_aws_client(client_name='s3',
                                     key_id=configure_obj.aws_access_key,
@@ -103,7 +91,7 @@ def process_first_n_files( config_params_str:str,
     except Exception as e:
         logger.error(f"Get filenames error: {e}")
         return 
-
+    
     for file in n_files:
          # implement partial match 
         matched_column_set = find_matched_column_name_set(bucket_name=configure_obj.bucket, 
@@ -114,7 +102,9 @@ def process_first_n_files( config_params_str:str,
        
             path, filename = os.path.split(file)
             prefix = path.replace("/", "-")
-            temp_saved_filename = f"{prefix}-{filename}"
+            # remove special characters
+            postfix = re.sub(r'[\\/*?:"<>|()]',"",column)
+            temp_saved_filename = f"{prefix}-{postfix}-{filename}"
             start_time = time.time()
     
             task_id = process_data_task.apply_async([
@@ -152,17 +142,7 @@ def process_first_n_files( config_params_str:str,
                                                     configure_obj.sns_topic
                                                     ])
 
-    print(f"loop task: {loop_task}")
-    # for id in task_ids:
-    end_hostname = socket.gethostname()
-    end_host_ip = socket.gethostbyname(hostname)   
-    end_status = WorkerStatus(host_name=end_hostname,task_id="process_first_n_files", host_ip=end_host_ip, pid = pid,function_name="process_first_n_files", action="busy-stop/idle-start", time=str(time.time()),message="end process n files")
-    put_item_to_dynamodb(configure_obj.dynamodb_tablename, 
-                                    workerstatus=end_status,
-                                    aws_access_key=configure_obj.aws_access_key,
-                                    aws_secret_access_key=configure_obj.aws_secret_access_key,
-                                    aws_region=configure_obj.aws_region
-                                    )
+  
 
 
 

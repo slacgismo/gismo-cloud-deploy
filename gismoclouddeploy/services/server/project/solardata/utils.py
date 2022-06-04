@@ -240,15 +240,8 @@ def put_item_to_dynamodb(table_name:str,
 
 
 
-def list_files_in_bucket( bucket_name:str, 
-                            aws_access_key:str, 
-                            aws_secret_access_key:str, 
-                            aws_region:str):
+def list_files_in_bucket( bucket_name:str, s3_client:'botocore.client.S3'):
     """ Get filename and size from S3 , remove non csv file """
-    s3_client = connect_aws_client(client_name='s3',
-                                    key_id=aws_access_key,
-                                    secret=aws_secret_access_key,
-                                    region=aws_region)
     response = s3_client.list_objects_v2(Bucket=bucket_name)
     files = response['Contents']
     filterFiles =[]
@@ -402,54 +395,32 @@ def find_matched_column_name_set(columns_key:Str,
     If this function find exactly match with key and column name , it return the the match column name in set.
     If no exactly match key was found, it return the partial match key with longest data set.  
     '''
-
     try:
         total_columns = read_column_from_csv_from_s3(bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client)
     except Exception as e:
         raise e
-    # total_columns = list(all_df.columns)
-    exact_column_set = set()
-    # find exactly match 
-    for column in total_columns:
-        # print(column)
-        for key in columns_key:
-            if key  ==  column:
-                # check 
-                exact_column_set.add(column)
-
-    if len(exact_column_set) > 0 :
-        return  exact_column_set
-    # find partial 
-    # get the max length fo match key
     matched_column_set = set()
     for column in total_columns:
         for key in columns_key:
             if  key in column:
                 matched_column_set.add(column)
-
-    max_count = 0
-    key_with_most_data = ""
+    validated_column_set = set()
     for key in matched_column_set:
         # check if column has value. 
         try:
             tmp_df = read_csv_from_s3_with_column_name(bucket_name=bucket_name,file_path_name=file_path_name, column_name=key,s3_client=s3_client)
         except Exception as e:
             raise e
-        if max_count <= len(tmp_df):
-            max_count = len(tmp_df)
-            key_with_most_data = key
-
-    validated_column_set = set()
-    validated_column_set.add(key_with_most_data)
-    logger.info(f"find partial match column name {validated_column_set}")
+        if len(tmp_df) == 0:
+            logger.info(f" ==== > {key} has no value === ")
+            continue
+        validated_column_set.add(key)
     return validated_column_set
+
 
 def get_process_filenamef_base_on_command(first_n_files:str,configure_obj:Configure, s3_client:'botocore.client.S3') -> List[str] :
     n_files = []
-    files_dict = list_files_in_bucket(bucket_name=configure_obj.bucket,
-                                 aws_access_key=configure_obj.aws_access_key,
-                                 aws_secret_access_key=configure_obj.aws_secret_access_key,
-                                 aws_region=configure_obj.aws_region)
+    files_dict = list_files_in_bucket(bucket_name=configure_obj.bucket, s3_client=s3_client)
     
     if first_n_files == "None":
         logger.info("Process defined files")
