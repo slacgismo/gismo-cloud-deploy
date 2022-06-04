@@ -22,8 +22,8 @@ k8s_config:
 files_config:
   bucket: "pv.insight.nrel"
   files: ["PVO/PVOutput/10059.csv"]
-  column_names: ["Power(W)","WS_5"] # partial match
-  # column_names: ["WS_5_Humidity"] 
+  column_names: ["Power(W)","(W)"] # partial match
+  # column_names: ["WS_5_Humidity"] # still work , I need check if this is corect.
 output:
   saved_bucket: "pv.insight.test"
   saved_tmp_path: "tmp"

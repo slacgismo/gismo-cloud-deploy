@@ -1,15 +1,16 @@
 
+from cmath import log
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
 import os
 from project.solardata.models.SolarParams import make_solardata_params_from_str
 from project.solardata.models.WorkerStatus import WorkerStatus
-
+from project.solardata.models.SNSSubjectsAlert import SNSSubjectsAlert
 import time
 import socket
 
-
+import json
 
 logger = get_task_logger(__name__)
 
@@ -144,7 +145,7 @@ def process_data_task(self,table_name:str,
             
             message = "end of process data task"
         except Exception as e:
-            subject = "ProcessFileError"
+            subject = SNSSubjectsAlert.PROCESS_FILE_ERROR.name
             message = f"error:{e}"
             logger.error(f'Error: {file_path_name} {column_name} :  {message} ')
             
@@ -175,7 +176,7 @@ def process_data_task(self,table_name:str,
             raise e
         
 
-        if subject == "ProcessFileError":
+        if subject == SNSSubjectsAlert.PROCESS_FILE_ERROR.name:
             self.update_state(state='FAILED', meta = {'start':startime})
             return
             
@@ -216,46 +217,66 @@ def loop_tasks_status_task( self,
                     aws_region=aws_region
                     )
     self.update_state(state='PROGRESS', meta = {'start':startime})
-
-    while len(task_ids) > 0 :
-        for id in task_ids[:]:     
-            res = AsyncResult(str(id))
-            status = str(res.status)
-
-            if res.info is None:
-                logger.info("no info")
-            elif 'start' in res.info :
-                star_time = res.info['start']
-                curr_time = time.time()
-                duration  = int(curr_time - float(star_time))
-                # logger.info(f" stask id: {res.task_id} \n task status: {res.status} duration: {duration} s")
-                # if the duration of task is over timeout stop 
-                if duration >= interval_of_max_timeout :
-                    logger.warning(f"Timeout remove {id}")
-                    task_ids.remove(id)
-                      
-            else: 
-                logger.info("no start key in info")
-                
-            
-            # if tasks success or failed remove check
-            if status == "SUCCESS" or status == "FAILED" :
-                logger.info(f"completed schedulers: id: {res.task_id} \n task status: {res.status} ")
-                # delete id from task_ids
-                task_ids.remove(id)
-        time.sleep(int(delay))
-
-
-
-    logger.info("------- start combine files, save logs , clean dynamodb items---------")
     
     from project import create_app
     from project.solardata.models import SolarData
     from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,publish_message_sns
     app = create_app()
     with app.app_context():
+
+        while len(task_ids) > 0 :
+            for id in task_ids[:]:     
+                res = AsyncResult(str(id))
+                status = str(res.status)
+                if res.info is None:
+                    logger.info("no info")
+                else:
+                    try:
+                        star_time = res.info['start']
+                        curr_time = time.time()
+                        duration  = int(curr_time - float(star_time))
+                        logger.info(f"waiting {id} \n duration: {duration} {interval_of_max_timeout} {status}")
+                        # if the duration of task is over timeout stop 
+                        if duration >= int(interval_of_max_timeout) :
+                            # remove id to avoid duplicated sns message
+                            task_ids.remove(id)
+                            try:
+                                data = {}
+                                data['task_id'] = f"{id}"
+                                mesage_id = publish_message_sns(message=json.dumps(data),
+                                                    subject=SNSSubjectsAlert.TIMEOUT.name, 
+                                                    topic_arn=sns_topic,
+                                                    aws_access_key=aws_access_key,
+                                                    aws_secret_access_key=aws_secret_access_key,
+                                                    aws_region=aws_region)
+                            except Exception as e:
+                                logger.error(f"SYSTEM error :{e}")
+                                raise e
+                            logger.warning(f"====== Timeout {id} durtaion: {duration} send sns timeout alert ====== ")
+
+                    except Exception as e:
+                        logger.info("no start key in info")    
+                    
+                
+                # if tasks success or failed remove check
+                if status == "SUCCESS" or status == "FAILED" or status == "REVOKED" :
+                    logger.info(f"completed schedulers: id: {res.task_id} \n task status: {res.status} ")
+                    # delete id from task_ids
+                    task_ids.remove(id)
+            time.sleep(int(delay))
+
+
+
+        logger.info("------- start combine files, save logs , clean dynamodb items---------")
+    
+    # from project import create_app
+    # from project.solardata.models import SolarData
+    # from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,publish_message_sns
+    # app = create_app()
+    # with app.app_context():
         message = "end loop_tasks_status_task"
         try:
+            
             track_logs(task_id=self.request.id,
                     function_name="loop_tasks_status_task",
                     time=str(time.time()),
@@ -292,11 +313,11 @@ def loop_tasks_status_task( self,
                                                         aws_region=aws_region)
 
             logger.info(f"remov_res: {remov_res} save_res: {save_res}, response: {response}")
-            subject = "AllTaskCompleted"
-            message="AllTaskCompleted"
+            subject = SNSSubjectsAlert.All_TASKS_COMPLETED.name
+            message= SNSSubjectsAlert.All_TASKS_COMPLETED.name
 
         except Exception as e:
-            subject = "Error"
+            subject = SNSSubjectsAlert.SYSTEM_ERROR.name
             message=f"Loop task error:{e}"
             logger.info(f'Error: {message} ')
 

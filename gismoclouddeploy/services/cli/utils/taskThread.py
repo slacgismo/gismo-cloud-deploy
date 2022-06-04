@@ -1,17 +1,22 @@
+from cmath import log
 import threading
 import time
 import logging
+import json
 # logger config
 import json
+
 from models.Config import Config
 from utils.aws_utils import(
     connect_aws_client,
     check_environment_is_aws,
 
 )
+from models.SNSSubjectsAlert import SNSSubjectsAlert
 
 from utils.invoke_function import(
-    invoke_eksctl_scale_node
+    invoke_eksctl_scale_node,
+    invoke_docekr_exec_revoke_task
 )
 from utils.sqs import (
     receive_queue_message,
@@ -114,11 +119,19 @@ def long_pulling_sqs(counter:int,
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 tasks.append(message_text)
                 num_task_completed += 1
-                if subject == "ProcessFileError" or subject == "Error":
-
+                if subject == SNSSubjectsAlert.TIMEOUT.name:
+                    logger.info(f"======> force {message_text} to reovke ")
+                    task_id_dict = json.loads(message_text)
+                    if 'task_id' in task_id_dict:
+                        task_id = task_id_dict['task_id']
+                        revoke_res = invoke_docekr_exec_revoke_task(task_id=task_id, container_type=config_params_obj.container_type , container_name=config_params_obj.container_name)
+                        logger.info(revoke_res)
+                if subject == SNSSubjectsAlert.PROCESS_FILE_ERROR.name or subject == SNSSubjectsAlert.SYSTEM_ERROR.name:
+                    # send error message to DLQ , 
                     send_mesage_to_DLQ(subject=subject, message=message_text, dlq_url=dlq_url, sqs_client=sqs_client)
 
-                if subject == "AllTaskCompleted" or subject == "Error":
+                if subject == SNSSubjectsAlert.All_TASKS_COMPLETED.name or subject == SNSSubjectsAlert.SYSTEM_ERROR.name:
+                    # close program after tasks complete or system error
 
                     logger.info(f"subject:{subject} message: {message_text}")
                     s3_client = connect_aws_client(client_name='s3',key_id=key_id, secret=secret_key, region=aws_region)

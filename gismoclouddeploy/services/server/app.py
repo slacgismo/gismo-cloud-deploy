@@ -1,5 +1,6 @@
 
 from cmath import log
+import json
 import logging
 
 from pyparsing import col
@@ -47,20 +48,20 @@ logging.basicConfig(level=logging.INFO,
 
 
 
-@cli.command("combine_files")
-@click.argument('bucket_name', nargs=1)
-@click.argument('source_folder', nargs=1)
-@click.argument('target_folder', nargs=1)
-@click.argument('target_filename', nargs=1)
+# @cli.command("combine_files")
+# @click.argument('bucket_name', nargs=1)
+# @click.argument('source_folder', nargs=1)
+# @click.argument('target_folder', nargs=1)
+# @click.argument('target_filename', nargs=1)
 
-def combine_files(bucket_name, source_folder,target_folder,target_filename):
-    print(f"bucket_name: {bucket_name} ,source_folder {source_folder} ,target_folder: {target_folder},target_filename: {target_filename}")
-    task = combine_files_to_file_task.apply_async(
-        [bucket_name,
-        source_folder,
-        target_folder,
-        target_filename
-        ])
+# def combine_files(bucket_name, source_folder,target_folder,target_filename):
+#     print(f"bucket_name: {bucket_name} ,source_folder {source_folder} ,target_folder: {target_folder},target_filename: {target_filename}")
+#     task = combine_files_to_file_task.apply_async(
+#         [bucket_name,
+#         source_folder,
+#         target_folder,
+#         target_filename
+#         ])
     
 # ***************************        
 # Process first n files : first_n_files is integer
@@ -124,7 +125,7 @@ def process_first_n_files( config_params_str:str,
                     ])
             task_ids.append(str(task_id)) 
 
-  
+
     # loop the task status in celery task
     loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, 
                                                     configure_obj.interval_of_exit_check_status,
@@ -143,7 +144,12 @@ def process_first_n_files( config_params_str:str,
                                                     ])
 
   
+@cli.command("revoke_task")
+@click.argument('task_id', nargs=1)
+def revoke_task( task_id:str):
 
+    logger.info(f"====== > revoke id {task_id} ====>")
+    celery.control.revoke(task_id, terminate=True, signal='SIGKILL')
 
 
 @app.cli.command("celery_worker")

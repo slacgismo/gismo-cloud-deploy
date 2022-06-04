@@ -12,19 +12,14 @@ from project.solardata.aws_utils import(
 
 from project.solardata.models.Configure import Configure
 
-from botocore.errorfactory import ClientError
 import pandas as pd
-from project.solardata.models.SolarParams import SolarParams
+
 from project.solardata.models.SolarData import SolarData
 from project.solardata.models.WorkerStatus import WorkerStatus, make_worker_object_from_dataframe
-from datetime import datetime
+
 import os
 from io import StringIO
-import boto3
-from flask import current_app
-import solardatatools
-import time
-import socket
+
 from boto3.dynamodb.types import TypeDeserializer
 from typing import List
 import logging

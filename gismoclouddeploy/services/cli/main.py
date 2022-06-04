@@ -12,7 +12,6 @@ from kubernetes import client, config
 
 import os
 from utils.invoke_function import (
-    invoke_docekr_exec_run_process_files,
     invoke_docekr_exec_run_process_first_n_files,
     )
 from models.SolarParams import SolarParams
@@ -76,6 +75,7 @@ def run_process_files(number,delete_nodes,configfile):
     :param delete_nodes: delete node after process files
     :param configfile: config file name
     """
+    
     # check aws credential
      
     try:
@@ -102,7 +102,7 @@ def run_process_files(number,delete_nodes,configfile):
                                                             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
                                                             aws_region=AWS_DEFAULT_REGION,
                                                             sns_topic=SNS_TOPIC)
-
+    # invoke_docekr_exec_revoke_tasks("[dsads]",config_params_obj.container_type, config_params_obj.container_name)
     # step 1 . check node status from local or AWS
     # spinner = Halo(text='Loading', spinner='dots')
 
@@ -142,10 +142,7 @@ def run_process_files(number,delete_nodes,configfile):
     if number is None:
         logger.info(" ========= Process default files in config.yam ========= ")  
         try:
-            # res = invoke_docekr_exec_run_process_files(config_obj = config_params_obj,
-            #                                 solarParams_obj= solardata_parmas_obj,
-            #                                 container_type= config_params_obj.container_type, 
-            #                                 container_name=config_params_obj.container_name)
+
             res = invoke_docekr_exec_run_process_first_n_files( config_params_obj,solardata_parmas_obj, number, config_params_obj.container_type, config_params_obj.container_name)
            
             total_task_num = len(config_params_obj.files) + 1
@@ -232,10 +229,11 @@ def check_nodes_status():
 
 
 def process_logs_and_plot():
-    config_params_obj = Config.import_config_from_yaml(f"./config/config.yaml",                                                     aws_access_key=AWS_ACCESS_KEY_ID,
-                                                            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-                                                            aws_region=AWS_DEFAULT_REGION,
-                                                            sns_topic=SNS_TOPIC)
+    config_params_obj = Config.import_config_from_yaml( f"./config/config.yaml",
+                                                        aws_access_key=AWS_ACCESS_KEY_ID,
+                                                        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                                                        aws_region=AWS_DEFAULT_REGION,
+                                                        sns_topic=SNS_TOPIC)
 
     s3_client = connect_aws_client(client_name="s3",key_id=AWS_ACCESS_KEY_ID, 
                                     secret=AWS_SECRET_ACCESS_KEY,
@@ -279,6 +277,7 @@ def print_dlq(empty):
 
         counter -= 1
         time.sleep(1)
+
 
 
 
@@ -342,7 +341,8 @@ def processlogs():
 def read_dlq(empty):
     """Read messages from dlq """
     print_dlq(empty)
-
+    
+# 
 
 if __name__ == '__main__':
 	main()
