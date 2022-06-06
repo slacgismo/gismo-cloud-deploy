@@ -39,19 +39,19 @@ This image had been installed necessary dependenciues included:
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy) 
 
-#### Lunch instance notes
+#### Launch instance notes
 
 - **_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
 - **_NOTE:_** Under `Configure Storage`, select the volume of the instance should be `12 GB` at least.
 
 - **_NOTE:_** Under `Key pair(login)` option, create a new key pair or use your existing key pair.
-- 
+
 - **_NOTE:_** Click `Lunach instance` button to lanch a EC2 instance.
 
 - **_NOTE:_** After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
 
-1. Onec the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs
+1. Once the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs
 
 Change `pem-file` permission.
 
@@ -104,17 +104,46 @@ SNS_TOPIC=<your-sns-topic>
 6. The AMIs image should have pre-install all the python3 dependencies of `cli` in the environment.
 In case users need to re-install the dependencies of `cli`. Please follow the below command:
 
-- Create virutal environment.
+- The python virtual environemnt was created Create virutal environment.
 
-```bash
-cd ./gismoclouddeploy/services/cli
-python3 -m venv venv
-```
-
-- Switch to virtual environment.
+- Activate the virtual environment.
   
 ```bash
 source ./venv/bin/activate
+```
+
+- Upgrade pip
+
+```bash
+pip install --upgrage pip
+```
+
+- Update dependencies.
+
+```bash
+pip install -r requirements.txt
+```
+
+- **_NOTE:_** If virtual environment was not created, please create the virtual environemnt first.
+  
+```bash
+cd ./gismoclouddeploy/services/cli
+```
+
+```bash
+python3.8 -m venv venv
+```
+
+Upgrade pip
+
+```bash
+pip install --upgrage pip
+```
+
+Install dependencies
+
+```bash
+pip install -r requirements.txt
 ```
 
 - Install python dependencies
@@ -129,7 +158,7 @@ source ./venv/bin/activate
 pip install e .
 ```
 
-7. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `config.yaml` are defined below.
+1. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `./gismoclouddeploy/config/config.yaml` are defined below.
 
 ~~~
   environment: "AWS"  
