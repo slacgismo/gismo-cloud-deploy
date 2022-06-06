@@ -256,7 +256,7 @@ make delete-cluster
 
 The AWS EKS hosts services based on the ECR images. If developers modify any code inside the server folder, developers have to build and push new images to ECR to see the changes.
 
-To build new images to be used by Kubernetes, developers have to build and test images by docker-compose command. If the images are verified, developers can push images to ECR.
+To build new images to be used by Kubernetes, developers have to build and test images using docker-compose command. If the images are verified, developers can push images to ECR.
 
 1. Build `worker` and `webapp` images through `docker-compose` command.
 
@@ -328,13 +328,13 @@ source ./venv/bin/activate
 pip install -r requirements.txt
 ```
 
-3. Developers are allowed to use `docker-compose` or `kubernetes` to manage the system locally.
+3. Developers can use `docker-compose` or `kubernetes` to manage the system locally.
 
 #### Using docker-compose
 
 Before using docker to host local services, please install docker by the following instructions [Docker Link](https://docs.docker.com/get-docker/).
 
-Developers are allowed to run `gcd` command in the local environment through docker services instead of kubernetes.
+Developers can run `gcd` command in the local environment through docker services instead of kubernetes.
 
 In `config.yaml` file, change the following settings below to run the program through docer services.
 
