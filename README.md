@@ -27,9 +27,9 @@ Tools for performing multiple common tasks on solar PV data signals by running v
 
 ### Quick start on AWS
 
-1. Login to 'slac-gismo` AWS account.
+1. Login to `slac-gismo` AWS account.
 2. Go to `EC2` page in `us-east-2` region and select `AMIs` in `Images` tab in left option menu.
-3. Create an EC2 instance from a private [AMIs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) Image named as `pvinsight-eks-bastion-template`.
+3. Select the template called `pvinsight-eks-bastion-template` from AMIs private image and click `Lunach instance from AMIs`.
 This image had been installed necessary dependenciues included:
 - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
@@ -39,18 +39,32 @@ This image had been installed necessary dependenciues included:
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy) 
 
-- **_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type. The `t2.large` type is recommended.
-If the developer would like to build and run images in this ec2 instance, the volume of the instance should be `12 GB` at least.
+#### Lunch instance notes
 
-- **_NOTE:_** Please create a project tag: `project:pvinstight` for budget management purpose.
+- **_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
-2. Onec EC2 instance is running. Use ssh key to connect to the EC2 tunnel.
+- **_NOTE:_** Under `Configure Storage`, select the volume of the instance should be `12 GB` at least.
+
+- **_NOTE:_** Under `Key pair(login)` option, create a new key pair or use your existing key pair.
+- 
+- **_NOTE:_** Click `Lunach instance` button to lanch a EC2 instance.
+
+- **_NOTE:_** After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
+
+1. Onec the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs
+
+Change `pem-file` permission.
 
 ```bash
-$ ssh -i <pem-file> ec2-user@<host-ip>
+cd /path-of-pem-file
+chmod 400 <pem-file>
 ```
 
-3. Set up AWS crednetial to access EKS and ECR. **_NOTE:_** `(Reach out this project's owner to get the AWS credentials).`
+```bash
+ssh -i <path/pem-file> ec2-user@<Public IPv4 address>
+```
+
+2. Once inside the instance, set up AWS credential to access EKS and ECR. **_NOTE:_** `(Reach out this project's owner to get the AWS credentials).`
 
 ```bash
 $ aws configure
@@ -63,17 +77,18 @@ Default region name:
 Default output format [None]: 
 ~~~
 
-4. Check if aws credentials are vaild by listing aws s3 bucket command.
+3. Check if aws credentials are vaild by listing aws s3 bucket command.
    
 ``` bash
-$ aws s3 ls
+aws s3 ls
 ```
 
-5. Pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git)
-6. Set up .env files for `cli` program usage.
+4. Change directory to `gismo-cloud-deploy`. Pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git), and run `git pull` command.
+  
+5. Set up .env files for `cli` program usage.
 
 ```bash
-$  touch ./gismoclouddeploy/services/cli/.env
+touch ./gismoclouddeploy/services/cli/.env
 ```
 
 Below are the sample variables in the .env file, and replace `<your-aws-key>` with the correct keys.
@@ -86,20 +101,20 @@ SQS_ARN=<your-sqs-arn>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
-7. The AMIs image should have pre-install all the python3 dependencies of `cli` in the environment.
+6. The AMIs image should have pre-install all the python3 dependencies of `cli` in the environment.
 In case users need to re-install the dependencies of `cli`. Please follow the below command:
 
 - Create virutal environment.
 
 ```bash
-$ cd ./gismoclouddeploy/services/cli
-$ python3 -m venv venv
+cd ./gismoclouddeploy/services/cli
+python3 -m venv venv
 ```
 
 - Switch to virtual environment.
   
 ```bash
-$ source ./venv/bin/activate
+source ./venv/bin/activate
 ```
 
 - Install python dependencies
@@ -114,7 +129,7 @@ $ source ./venv/bin/activate
 pip install e .
 ```
 
-8. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `config.yaml` are defined below.
+7. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `config.yaml` are defined below.
 
 ~~~
   environment: "AWS"  
@@ -122,7 +137,7 @@ pip install e .
   container_name: "webapp"    
 ~~~
 
-9. Under the virutal environemnt, run `process first file in defined bucket and delete nodes after processing` command.
+8. Under the virutal environemnt, run `process first file in defined bucket and delete nodes after processing` command.
 
 ```bash
 (venv)$ gcd run-files -n 1 -d 
@@ -202,14 +217,14 @@ All kubernetes deployment and service files are listed under `gismoclouddeploy/s
 The create cluster command will create a eks cluster based on the configuration file in `cluster.yaml`.
 
 ```bash
-$ make create-cluster
+make create-cluster
 ```
 
 If user create cluster throug the `create-cluster` command based on the `cluster.yaml`. 
 It's recommended to delete cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.  
 
 ```bash
-$ make delete-cluster
+make delete-cluster
 ```
 
 ---
@@ -223,19 +238,19 @@ To build new images to be used by Kubernetes, developers have to build and test 
 1. Build `worker` and `webapp` images through `docker-compose` command.
 
 ```bash
-$ cd gismoclouddeploy/services
-$ docker-compose build
+cd gismoclouddeploy/services
+docker-compose build
 ```
 
 2. Login to ECR and get validation
 
 ```bash
-$ make ecr-validation
+make ecr-validation
 ```
 
 3. push `worker` and `webapp` to ECR
 ```bash
-$ make push-all
+make push-all
 ```
 
 4. Check k8s status by command:
@@ -259,14 +274,14 @@ deployment.apps/worker     0/1     1            0           20h
 If no k8s config files had been apply, please apply k8s yaml files by command:
 
 ```bash
-$ cd gismoclouddeploy/services/cli/k8s/k8s-aws
-$ kubectl apply -f .
+cd gismoclouddeploy/services/cli/k8s/k8s-aws
+kubectl apply -f .
 ```
 
 If `worker` and `webapp` images had been applied. Developers can rollout and restart image by command:
 
 ```bash
-$ make rollout
+make rollout
 ```
 
 ---
@@ -278,16 +293,16 @@ $ make rollout
 1. Download git repository
 
 ```bash
-$ git clone https://github.com/slacgismo/gismo-cloud-deploy.git
+git clone https://github.com/slacgismo/gismo-cloud-deploy.git
 ```
 
 2. Install the dependencies
 
 ```bash
-$ cd gismo-cloud-deploy/services/cli
-$ python3 -m venv venv
-$ source ./venv/bin/activate
-$ pip install -r requirements.txt
+cd gismo-cloud-deploy/services/cli
+python3 -m venv venv
+source ./venv/bin/activate
+pip install -r requirements.txt
 ```
 
 3. Developers are allowed to use `docker-compose` or `kubernetes` to manage the system locally.
@@ -320,8 +335,8 @@ Include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/servic
 Running docker images by command
 
 ```bash
-$ cd gismo-cloud-deploy/gismoclouddeploy/services
-$ docker-compose up --build
+cd gismo-cloud-deploy/gismoclouddeploy/services
+docker-compose up --build
 ```
 
 
