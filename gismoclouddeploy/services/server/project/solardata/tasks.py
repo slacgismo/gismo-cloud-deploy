@@ -9,7 +9,7 @@ from project.solardata.models.WorkerStatus import WorkerStatus
 from project.solardata.models.SNSSubjectsAlert import SNSSubjectsAlert
 import time
 import socket
-
+from project.solardata.models.WorkerState import WorkerState
 import json
 
 logger = get_task_logger(__name__)
@@ -127,7 +127,7 @@ def process_data_task(self,table_name:str,
                         aws_secret_access_key=aws_secret_access_key,
                         aws_region=aws_region
                         )
-            self.update_state(state='PROGRESS', meta = {'start':startime})
+            self.update_state(state= WorkerState.PROGRESS.name, meta = {'start':startime})
             process_solardata_tools(  
                             task_id =process_file_task_id,
                             bucket_name=bucket_name ,
@@ -177,10 +177,10 @@ def process_data_task(self,table_name:str,
         
 
         if subject == SNSSubjectsAlert.PROCESS_FILE_ERROR.name:
-            self.update_state(state='FAILED', meta = {'start':startime})
+            self.update_state(state=WorkerState.FAILED.name, meta = {'start':startime})
             return
             
-        self.update_state(state='SUCCESS', meta = {'start':startime})
+        self.update_state(state=WorkerState.SUCCESS.name, meta = {'start':startime})
 
 @shared_task(bind=True)
 def loop_tasks_status_task( self,
@@ -216,7 +216,7 @@ def loop_tasks_status_task( self,
                     aws_secret_access_key=aws_secret_access_key,
                     aws_region=aws_region
                     )
-    self.update_state(state='PROGRESS', meta = {'start':startime})
+    self.update_state(state=WorkerState.PROGRESS.name, meta = {'start':startime})
     
     from project import create_app
     from project.solardata.models import SolarData
@@ -257,8 +257,8 @@ def loop_tasks_status_task( self,
                         logger.info("no start key in info")    
                     
                 
-                # if tasks success or failed remove check
-                if status == "SUCCESS" or status == "FAILED" or status == "REVOKED" :
+                # if tasks success failed or revoked 
+                if status == WorkerState.SUCCESS.name or status == WorkerState.FAILED.name or status == WorkerState.REVOKED.name :
                     logger.info(f"completed schedulers: id: {res.task_id} \n task status: {res.status} ")
                     # delete id from task_ids
                     task_ids.remove(id)

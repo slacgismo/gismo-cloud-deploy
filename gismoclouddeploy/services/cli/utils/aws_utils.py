@@ -66,9 +66,6 @@ def read_all_csv_from_s3_and_parse_dates_from(
         response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
         status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
         if status == 200:
-            # print(f"Successful S3 get_object response. Status - {status}")
-            # result_df = pd.read_csv(response.get("Body"),
-            #                         index_col=index_col)
             result_df = pd.read_csv(response.get("Body"), index_col=0, parse_dates=[dates_column_name], infer_datetime_format=True)
             result_df[dates_column_name] = pd.to_datetime(result_df[dates_column_name], 
                                     unit='s')

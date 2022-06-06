@@ -125,7 +125,6 @@ def process_first_n_files( config_params_str:str,
                                                     configure_obj.sns_topic
                                                     ])
 
-  
 @cli.command("revoke_task")
 @click.argument('task_id', nargs=1)
 def revoke_task( task_id:str):
