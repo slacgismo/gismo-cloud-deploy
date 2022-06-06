@@ -1,5 +1,6 @@
 import enum
 
+
 class SNSSubjectsAlert(enum.Enum):
     PROCESS_FILE_ERROR = "PROCESS_FILE_ERROR"
     All_TASKS_COMPLETED = "All_TASKS_COMPLETED"

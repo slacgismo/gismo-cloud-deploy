@@ -1,38 +1,23 @@
-
-from cmath import log
-import json
 import logging
 
-from pyparsing import col
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 
 
-from typing import List
-from project.solardata.models.WorkerStatus import WorkerStatus
-from project.solardata.models.SolarParams import SolarParams
-from project.solardata.models.SolarParams import make_solardata_params_from_str
-from project.solardata.models.Configure import Configure
 from project.solardata.models.Configure import make_configure_from_str
-from project.solardata.utils import (
-
-    connect_aws_client,
-
-    find_matched_column_name_set)
+from project.solardata.utils import connect_aws_client, find_matched_column_name_set
 
 import click
 import time
-import os 
+import os
 
 import re
 from project.solardata.tasks import (
-
     process_data_task,
     loop_tasks_status_task,
-
 )
 
-from project.solardata.utils import (get_process_filenamef_base_on_command)
+from project.solardata.utils import get_process_filenamef_base_on_command
 
 app = create_app()
 celery = ext_celery.celery
@@ -41,56 +26,62 @@ cli = FlaskGroup(create_app=create_app)
 
 # logger config
 logger = logging.getLogger()
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s: %(levelname)s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
+)
 
 
-# ***************************        
+# ***************************
 # Process first n files : first_n_files is integer
-# Process all files  : first_n_files is 0 
+# Process all files  : first_n_files is 0
 # Process define files : first_n_files is None
-# ***************************   
+# ***************************
 @cli.command("process_first_n_files")
-@click.argument('config_params_str', nargs=1)
-@click.argument('solardata_params_str', nargs=1)
-@click.argument('first_n_files', nargs=1)
-def process_first_n_files( config_params_str:str,
-                    solardata_params_str:str,
-                    first_n_files: str
-                    ):
-    # track scheduler status start    
+@click.argument("config_params_str", nargs=1)
+@click.argument("solardata_params_str", nargs=1)
+@click.argument("first_n_files", nargs=1)
+def process_first_n_files(
+    config_params_str: str, solardata_params_str: str, first_n_files: str
+):
+    # track scheduler status start
     configure_obj = make_configure_from_str(config_params_str)
 
-
-    s3_client = connect_aws_client(client_name='s3',
-                                    key_id=configure_obj.aws_access_key,
-                                    secret=configure_obj.aws_secret_access_key,
-                                    region=configure_obj.aws_region)
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=configure_obj.aws_access_key,
+        secret=configure_obj.aws_secret_access_key,
+        region=configure_obj.aws_region,
+    )
     task_ids = []
     try:
-       n_files =  get_process_filenamef_base_on_command(first_n_files=first_n_files,
-                                             configure_obj = configure_obj,
-                                             s3_client=s3_client)
+        n_files = get_process_filenamef_base_on_command(
+            first_n_files=first_n_files,
+            configure_obj=configure_obj,
+            s3_client=s3_client,
+        )
     except Exception as e:
         logger.error(f"Get filenames error: {e}")
-        return 
-    
+        return
+
     for file in n_files:
-         # implement partial match 
-        matched_column_set = find_matched_column_name_set(bucket_name=configure_obj.bucket, 
-                                                            columns_key=configure_obj.column_names, 
-                                                            file_path_name=file,
-                                                            s3_client=s3_client)
+        # implement partial match
+        matched_column_set = find_matched_column_name_set(
+            bucket_name=configure_obj.bucket,
+            columns_key=configure_obj.column_names,
+            file_path_name=file,
+            s3_client=s3_client,
+        )
         for column in matched_column_set:
-       
+
             path, filename = os.path.split(file)
             prefix = path.replace("/", "-")
             # remove special characters
-            postfix = re.sub(r'[\\/*?:"<>|()]',"",column)
+            postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
             temp_saved_filename = f"{prefix}-{postfix}-{filename}"
             start_time = time.time()
-    
-            task_id = process_data_task.apply_async([
+
+            task_id = process_data_task.apply_async(
+                [
                     configure_obj.dynamodb_tablename,
                     configure_obj.bucket,
                     file,
@@ -103,34 +94,38 @@ def process_first_n_files( config_params_str:str,
                     configure_obj.aws_access_key,
                     configure_obj.aws_secret_access_key,
                     configure_obj.aws_region,
-                    configure_obj.sns_topic
-                    ])
-            task_ids.append(str(task_id)) 
-
+                    configure_obj.sns_topic,
+                ]
+            )
+            task_ids.append(str(task_id))
 
     # loop the task status in celery task
-    loop_task = loop_tasks_status_task.apply_async([configure_obj.interval_of_check_task_status, 
-                                                    configure_obj.interval_of_exit_check_status,
-                                                    task_ids,
-                                                    configure_obj.saved_bucket,
-                                                    configure_obj.saved_tmp_path,
-                                                    configure_obj.saved_target_path,
-                                                    configure_obj.saved_target_filename,
-                                                    configure_obj.dynamodb_tablename,
-                                                    configure_obj.saved_logs_target_path,
-                                                    configure_obj.saved_logs_target_filename,
-                                                    configure_obj.aws_access_key,
-                                                    configure_obj.aws_secret_access_key,
-                                                    configure_obj.aws_region,
-                                                    configure_obj.sns_topic
-                                                    ])
+    loop_tasks_status_task.apply_async(
+        [
+            configure_obj.interval_of_check_task_status,
+            configure_obj.interval_of_exit_check_status,
+            task_ids,
+            configure_obj.saved_bucket,
+            configure_obj.saved_tmp_path,
+            configure_obj.saved_target_path,
+            configure_obj.saved_target_filename,
+            configure_obj.dynamodb_tablename,
+            configure_obj.saved_logs_target_path,
+            configure_obj.saved_logs_target_filename,
+            configure_obj.aws_access_key,
+            configure_obj.aws_secret_access_key,
+            configure_obj.aws_region,
+            configure_obj.sns_topic,
+        ]
+    )
+
 
 @cli.command("revoke_task")
-@click.argument('task_id', nargs=1)
-def revoke_task( task_id:str):
+@click.argument("task_id", nargs=1)
+def revoke_task(task_id: str):
 
     logger.info(f"====== > revoke id {task_id} ====>")
-    celery.control.revoke(task_id, terminate=True, signal='SIGKILL')
+    celery.control.revoke(task_id, terminate=True, signal="SIGKILL")
 
 
 @app.cli.command("celery_worker")
@@ -139,17 +134,10 @@ def celery_worker():
     import subprocess
 
     def run_worker():
-        subprocess.call(
-            ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
-        )
+        subprocess.call(["celery", "-A", "app.celery", "worker", "--loglevel=info"])
 
     run_process("./project", run_worker)
 
 
-
-
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()
