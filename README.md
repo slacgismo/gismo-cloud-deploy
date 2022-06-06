@@ -27,7 +27,9 @@ Tools for performing multiple common tasks on solar PV data signals by running v
 
 ### Quick start on AWS
 
-1. Create a EC2 instance from a private [AMIs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) Image named as `pvinsight-eks-bastion-template`.
+1. Login to 'slac-gismo` AWS account.
+2. Go to `EC2` page in `us-east-2` region and select `AMIs` in `Images` tab in left option menu.
+3. Create an EC2 instance from a private [AMIs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIs.html) Image named as `pvinsight-eks-bastion-template`.
 This image had been installed necessary dependenciues included:
 - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
