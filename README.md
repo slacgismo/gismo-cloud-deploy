@@ -227,25 +227,24 @@ The `processlogs` command processes `logs.csv` files on AWS and draws the gantt 
 Under `gismoclouddeploy/services/cli` folder, developers can modify parametes of the cli command tool.
 
 1. The `general` configuration contains all the environement variables settings.
-2. The `file-config` configuration contains all the config settings of run multiple files.
-3. The `solardata` configuration contains all the parameters of solar-data-tools algorithm.
-4. The `aws_config` configuration contains basic eks settings. Developers can defined number of nodes in EKS.
-5. The `k8s_config` configuration contains basic kubernetes setting. Developers can define the replicas of worker in this files instead of modifying the `worker.deployment.yaml`.
+2. The `file-config` configuration contains all the config settings to run multiple files.
+3. The `solardata` configuration contains all the parameters of the solar-data-tools algorithm.
+4. The `aws_config` configuration contains basic eks settings. Developers can define the number of nodes in EKS.
+5. The `k8s_config` configuration contains basic kubernetes setting. Developers can define the replicas of workers in this file instead of modifying the `worker.deployment.yaml`.
 
 ### Kubernetes yaml files
 
-All kubernetes deployment and service files are listed under `gismoclouddeploy/services/cli/k8s/k8s-aws` and `gismoclouddeploy/services/cli/k8s/k8s-local` folder. Developers can modify as their need.
+All kubernetes deployment and service files are listed under `gismoclouddeploy/services/cli/k8s/k8s-aws` and `gismoclouddeploy/services/cli/k8s/k8s-local` folder. Developers can modify as they need.
 
-### EKS configration yaml files
+### EKS configuration yaml files
 
-The create cluster command will create a eks cluster based on the configuration file in `cluster.yaml`.
+The create cluster command will create an EKS cluster based on the configuration file in `cluster.yaml`.
 
 ```bash
 make create-cluster
 ```
 
-If user create cluster throug the `create-cluster` command based on the `cluster.yaml`. 
-It's recommended to delete cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.  
+If users create a cluster based on the `cluster.yaml` file, and if they need to delete the cluster later, it's recommended to delete the cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.  
 
 ```bash
 make delete-cluster
