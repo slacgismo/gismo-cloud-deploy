@@ -24,10 +24,7 @@ def test_receive_message(sqs_client, sqs_test):
     client = MySQSClient()
     queue_url = client.get_queue_url(queue_name="blah")
 
-    sqs_client.send_message(
-        QueueUrl=queue_url,
-        MessageBody="derp"
-    )
+    sqs_client.send_message(QueueUrl=queue_url, MessageBody="derp")
 
     response = client.receive_message(queue_url=queue_url)
     assert response["Messages"][0]["Body"] == "derp"

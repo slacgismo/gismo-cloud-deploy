@@ -6,9 +6,7 @@ class MySQSClient:
         self.client = boto3.client("sqs", region_name=region_name)
 
     def get_queue_url(self, queue_name):
-        response = self.client.create_queue(
-            QueueName=queue_name
-        )
+        response = self.client.create_queue(QueueName=queue_name)
         return response["QueueUrl"]
 
     def receive_message(self, queue_url):

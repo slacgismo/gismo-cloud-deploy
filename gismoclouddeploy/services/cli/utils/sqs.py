@@ -3,24 +3,33 @@ from botocore.exceptions import ClientError
 import logging
 import json
 import time
+
 logger = logging.getLogger()
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s: %(levelname)s: %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
+)
 # SQS
 
 
-def create_standard_queue(queue_name:str, delay_seconds:int, visiblity_timeout:int, sqs_resource:'botocore.resource.SQS'):
+def create_standard_queue(
+    queue_name: str,
+    delay_seconds: int,
+    visiblity_timeout: int,
+    sqs_resource: "botocore.resource.SQS",
+):
     """
     Create a standard SQS queue
     """
     try:
-        response = sqs_resource.create_queue(QueueName=queue_name,
-                                             Attributes={
-                                                 'DelaySeconds': delay_seconds,
-                                                 'VisibilityTimeout': visiblity_timeout
-                                             })
+        response = sqs_resource.create_queue(
+            QueueName=queue_name,
+            Attributes={
+                "DelaySeconds": delay_seconds,
+                "VisibilityTimeout": visiblity_timeout,
+            },
+        )
     except ClientError:
-        logger.exception(f'Could not create SQS queue - {queue_name}.')
+        logger.exception(f"Could not create SQS queue - {queue_name}.")
         raise
     else:
         return response
@@ -32,14 +41,16 @@ def create_fifo_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource
     """
 
     try:
-        response = sqs_resource.create_queue(QueueName=queue_name,
-                                             Attributes={
-                                                 'DelaySeconds': delay_seconds,
-                                                 'VisibilityTimeout': visiblity_timeout,
-                                                 'FifoQueue': 'true'
-                                             })
+        response = sqs_resource.create_queue(
+            QueueName=queue_name,
+            Attributes={
+                "DelaySeconds": delay_seconds,
+                "VisibilityTimeout": visiblity_timeout,
+                "FifoQueue": "true",
+            },
+        )
     except ClientError:
-        logger.exception(f'Could not create SQS queue - {queue_name}.')
+        logger.exception(f"Could not create SQS queue - {queue_name}.")
         raise
     else:
         return response
@@ -55,28 +66,28 @@ def list_queues(sqs_resource):
             sqs_queues.append(queue)
             print(queue)
     except ClientError:
-        logger.exception('Could not list queues.')
+        logger.exception("Could not list queues.")
         raise
     else:
 
         return sqs_queues
 
 
-def get_queue(queue_name:str, sqs_client:'botocore.client.SQS'):
+def get_queue(queue_name: str, sqs_client: "botocore.client.SQS"):
     """
     Returns the URL of an existing Amazon SQS queue.
     """
     try:
-        response = sqs_client.get_queue_url(QueueName=queue_name)['QueueUrl']
+        response = sqs_client.get_queue_url(QueueName=queue_name)["QueueUrl"]
 
     except ClientError:
-        logger.exception(f'Could not get the {queue_name} queue.')
+        logger.exception(f"Could not get the {queue_name} queue.")
         raise
     else:
         return response
 
 
-def delete_queue(queue_name:str, sqs_client:'botocore.client.SQS'):
+def delete_queue(queue_name: str, sqs_client: "botocore.client.SQS"):
     """
     Deletes the queue specified by the QueueUrl.
     """
@@ -85,7 +96,7 @@ def delete_queue(queue_name:str, sqs_client:'botocore.client.SQS'):
         response = sqs_client.delete_queue(QueueUrl=queue_name)
 
     except ClientError:
-        logger.exception(f'Could not delete the {queue_name} queue.')
+        logger.exception(f"Could not delete the {queue_name} queue.")
         raise
     else:
         return response
@@ -99,7 +110,7 @@ def purge_queue(queue_url, sqs_client):
         response = sqs_client.purge_queue(QueueUrl=queue_url)
         logger.info(f"Purge QUEUE {queue_url} ")
     except ClientError:
-        logger.exception(f'Could not purge the queue - {queue_url}.')
+        logger.exception(f"Could not purge the queue - {queue_url}.")
         raise
     else:
         return response
@@ -110,68 +121,73 @@ def send_queue_message(queue_url, msg_attributes, msg_body, sqs_client):
     Sends a message to the specified queue.
     """
     try:
-        response = sqs_client.send_message(QueueUrl=queue_url,
-                                           MessageAttributes=msg_attributes,
-                                           MessageBody=msg_body)
+        response = sqs_client.send_message(
+            QueueUrl=queue_url, MessageAttributes=msg_attributes, MessageBody=msg_body
+        )
     except ClientError:
-        logger.exception(f'Could not send meessage to the - {queue_url}.')
+        logger.exception(f"Could not send meessage to the - {queue_url}.")
         raise
     else:
         return response
 
-def enable_existing_queue_long_pulling(queue_url:str,msg_rcv_wait_time:int,sqs_client:'botocore.client.SQS'):
+
+def enable_existing_queue_long_pulling(
+    queue_url: str, msg_rcv_wait_time: int, sqs_client: "botocore.client.SQS"
+):
     """
     Configure queue to for long polling.
     """
     try:
         response = sqs_client.set_queue_attributes(
             QueueUrl=queue_url,
-            Attributes={'ReceiveMessageWaitTimeSeconds': msg_rcv_wait_time})
+            Attributes={"ReceiveMessageWaitTimeSeconds": msg_rcv_wait_time},
+        )
     except ClientError:
-        logger.exception(f'Could not configure long polling on - {queue_url}.')
+        logger.exception(f"Could not configure long polling on - {queue_url}.")
         raise
     else:
         return response
 
-def receive_queue_message(queue_url:str, sqs_client,MaxNumberOfMessages:int = 1,  wait_time:int = 0):
+
+def receive_queue_message(
+    queue_url: str, sqs_client, MaxNumberOfMessages: int = 1, wait_time: int = 0
+):
     """
     Retrieves one or more messages (up to 10), from the specified queue.
     """
     try:
-        response = sqs_client.receive_message(QueueUrl=queue_url,
-                                              AttributeNames=[
-                                                  'SentTimestamp'
-                                              ],
-                                              MaxNumberOfMessages=MaxNumberOfMessages,
-                                              MessageAttributeNames=[
-                                                  'All'
-                                              ],
-                                              WaitTimeSeconds=wait_time
-                                              )
+        response = sqs_client.receive_message(
+            QueueUrl=queue_url,
+            AttributeNames=["SentTimestamp"],
+            MaxNumberOfMessages=MaxNumberOfMessages,
+            MessageAttributeNames=["All"],
+            WaitTimeSeconds=wait_time,
+        )
     except ClientError:
-        logger.exception(
-            f'Could not receive the message from the - {queue_url}.')
+        logger.exception(f"Could not receive the message from the - {queue_url}.")
         raise
     else:
         return response
 
 
-def delete_queue_message(queue_url:str, receipt_handle:str, sqs_client:'botocore.client.SQS'):
+def delete_queue_message(
+    queue_url: str, receipt_handle: str, sqs_client: "botocore.client.SQS"
+):
     """
     Deletes the specified message from the specified queue.
     """
     try:
-        response = sqs_client.delete_message(QueueUrl=queue_url,
-                                             ReceiptHandle=receipt_handle)
+        response = sqs_client.delete_message(
+            QueueUrl=queue_url, ReceiptHandle=receipt_handle
+        )
     except ClientError:
-        logger.exception(
-            f'Could not delete the meessage from the - {queue_url}.')
+        logger.exception(f"Could not delete the meessage from the - {queue_url}.")
         raise
     else:
         return response
 
 
-def read_from_sqs_queue(queue_url:str, sqs_client:'botocore.client.SQS'):
+def read_from_sqs_queue(queue_url: str, sqs_client: "botocore.client.SQS"):
 
     messages = sqs_client.receive_message(
         QueueUrl=queue_url,
@@ -181,40 +197,53 @@ def read_from_sqs_queue(queue_url:str, sqs_client:'botocore.client.SQS'):
     return messages
 
 
-def configure_queue_long_polling(queue_url:str, msg_rcv_wait_time:int, sqs_client:'botocore.client.SQS'):
+def configure_queue_long_polling(
+    queue_url: str, msg_rcv_wait_time: int, sqs_client: "botocore.client.SQS"
+):
     """
     Configure queue to for long polling.
     """
     try:
         response = sqs_client.set_queue_attributes(
             QueueUrl=queue_url,
-            Attributes={'ReceiveMessageWaitTimeSeconds': msg_rcv_wait_time})
+            Attributes={"ReceiveMessageWaitTimeSeconds": msg_rcv_wait_time},
+        )
     except ClientError:
-        logger.exception(f'Could not configure long polling on - {queue_url}.')
+        logger.exception(f"Could not configure long polling on - {queue_url}.")
         raise
     else:
         return response
 
 
-
-def clean_previous_sqs_message(sqs_url:str, sqs_client:'botocore.client.SQS', wait_time:int, counter:int, delay:int):
+def clean_previous_sqs_message(
+    sqs_url: str,
+    sqs_client: "botocore.client.SQS",
+    wait_time: int,
+    counter: int,
+    delay: int,
+):
     # print("Receive previous message ---->")
 
     while counter:
-        messages = receive_queue_message(queue_url=sqs_url,MaxNumberOfMessages=1 ,sqs_client=sqs_client, wait_time=wait_time)
+        messages = receive_queue_message(
+            queue_url=sqs_url,
+            MaxNumberOfMessages=1,
+            sqs_client=sqs_client,
+            wait_time=wait_time,
+        )
         # print(messages)
-        if 'Messages' in messages:
-            for msg in messages['Messages']:
-                msg_body = msg['Body']
-                receipt_handle = msg['ReceiptHandle']
-                message_id = msg['MessageId']
-                logger.info(f'The message body: {msg_body}')
+        if "Messages" in messages:
+            for msg in messages["Messages"]:
+                msg_body = msg["Body"]
+                receipt_handle = msg["ReceiptHandle"]
+                message_id = msg["MessageId"]
+                logger.info(f"The message body: {msg_body}")
 
                 # logger.info('Deleting message from the queue...')
 
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
 
-                logger.info(f'Received and deleted message(s) from {sqs_url}.')
+                logger.info(f"Received and deleted message(s) from {sqs_url}.")
                 print(receipt_handle)
         else:
             logger.info("Clean previous message completed")
@@ -222,5 +251,3 @@ def clean_previous_sqs_message(sqs_url:str, sqs_client:'botocore.client.SQS', wa
 
         counter -= 1
         time.sleep(delay)
-
-    

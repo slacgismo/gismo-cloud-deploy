@@ -1,14 +1,7 @@
 class Node(object):
     def __init__(
-                self,
-                nodegroup,
-                cluster,
-                hostname,
-                instance_type,
-                region,
-                status,
-                status_type
-                ):
+        self, nodegroup, cluster, hostname, instance_type, region, status, status_type
+    ):
         self.nodegroup = nodegroup
         self.cluster = cluster
         self.hostname = hostname

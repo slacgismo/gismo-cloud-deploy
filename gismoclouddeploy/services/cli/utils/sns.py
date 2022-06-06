@@ -1,12 +1,17 @@
 import boto3
+
 #  SNS
 from botocore.exceptions import ClientError
 import logging
+
 # logger config
 logger = logging.getLogger()
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s: %(levelname)s: %(message)s')
-def create_sns_topic(name:str, sns_resource):
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
+)
+
+
+def create_sns_topic(name: str, sns_resource):
     """
     Creates a notification topic.
 
@@ -15,8 +20,9 @@ def create_sns_topic(name:str, sns_resource):
     """
 
     topic = sns_resource.create_topic(Name=name)
-    
+
     return topic
+
 
 def list_topics(sns_resource):
     """
@@ -29,8 +35,7 @@ def list_topics(sns_resource):
     return topics_iter
 
 
-def publish_message(message: str, topic_arn:str,sns_client):
-
+def publish_message(message: str, topic_arn: str, sns_client):
 
     message_id = sns_client.publish(
         TopicArn=topic_arn,
@@ -39,6 +44,7 @@ def publish_message(message: str, topic_arn:str,sns_client):
 
     return message_id
 
+
 def delete_topic(topic_arn, sns_client):
     """
     Delete a SNS topic.
@@ -46,12 +52,13 @@ def delete_topic(topic_arn, sns_client):
     try:
         response = sns_client.delete_topic(TopicArn=topic_arn)
     except ClientError:
-        logger.exception(f'Could not delete a SNS topic.')
+        logger.exception(f"Could not delete a SNS topic.")
         raise
     else:
         return response
 
-def sns_subscribe_sqs(topic:str, endpoint:str,sns_client):
+
+def sns_subscribe_sqs(topic: str, endpoint: str, sns_client):
     """
     Subscribe to a topic using endpoint as email OR SMS
     """
@@ -60,13 +67,14 @@ def sns_subscribe_sqs(topic:str, endpoint:str,sns_client):
             TopicArn=topic,
             Protocol="sqs",
             Endpoint=endpoint,
-            ReturnSubscriptionArn=True)['SubscriptionArn']
+            ReturnSubscriptionArn=True,
+        )["SubscriptionArn"]
     except ClientError:
-        logger.exception(
-            "Couldn't subscribe {protocol} {endpoint} to topic {topic}.")
+        logger.exception("Couldn't subscribe {protocol} {endpoint} to topic {topic}.")
         raise
     else:
         return subscription
+
 
 def list_sns(sns_resource):
     # topic= create_sns_topic('gismo-cloud-deploy-sns')
@@ -74,5 +82,3 @@ def list_sns(sns_resource):
     for topic in list_topics(sns_resource):
         print(topic)
     # print(f"start sns {list_topic}")
-
-
