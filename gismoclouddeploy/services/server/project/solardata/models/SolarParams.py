@@ -1,8 +1,5 @@
 import json
 
-from matplotlib.pyplot import flag
-
-
 class SolarParams(object):
     def __init__(
         self,

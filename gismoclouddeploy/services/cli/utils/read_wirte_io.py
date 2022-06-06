@@ -1,6 +1,4 @@
 import yaml
-import sys
-import io
 
 # Read YAML file
 def read_yaml(filename):

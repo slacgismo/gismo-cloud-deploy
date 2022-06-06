@@ -83,8 +83,7 @@ def process_df_for_gantt(df: pd):
 
 
 def plot_gantt_chart(bucket, file_path_name, saved_image_name):
-    logger.info(f" plot gantt")
-    print(
+    logger.info(
         f"--->plot process file from {bucket}, {file_path_name} to {saved_image_name} "
     )
     # read log from csv
@@ -495,7 +494,7 @@ def get_process_filenamef_base_on_command(
                     n_files.append(file["Key"])
             else:
                 logger.info(f"Process first {first_n_files} files")
-                for file in files_dict[0 : int(first_n_files)]:
+                for file in files_dict[0:int(first_n_files)]:
                     n_files.append(file["Key"])
         except Exception as e:
             logger.error(f"Input {first_n_files} is not an integer")

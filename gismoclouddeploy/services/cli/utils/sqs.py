@@ -1,7 +1,6 @@
-import boto3
+
 from botocore.exceptions import ClientError
 import logging
-import json
 import time
 
 logger = logging.getLogger()
@@ -49,11 +48,11 @@ def create_fifo_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource
                 "FifoQueue": "true",
             },
         )
-    except ClientError:
+    except ClientError as e:
         logger.exception(f"Could not create SQS queue - {queue_name}.")
-        raise
-    else:
-        return response
+        raise e
+    
+    return response
 
 
 def list_queues(sqs_resource):
@@ -222,8 +221,6 @@ def clean_previous_sqs_message(
     counter: int,
     delay: int,
 ):
-    # print("Receive previous message ---->")
-
     while counter:
         messages = receive_queue_message(
             queue_url=sqs_url,
@@ -236,13 +233,8 @@ def clean_previous_sqs_message(
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 receipt_handle = msg["ReceiptHandle"]
-                message_id = msg["MessageId"]
                 logger.info(f"The message body: {msg_body}")
-
-                # logger.info('Deleting message from the queue...')
-
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
-
                 logger.info(f"Received and deleted message(s) from {sqs_url}.")
                 print(receipt_handle)
         else:

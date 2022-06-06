@@ -1,10 +1,12 @@
-from urllib3 import Retry
+
 from utils.read_wirte_io import read_yaml
 import logging
 
 logger = logging.getLogger()
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
+    level=logging.INFO, format="%(asctime)s: \
+                                %(levelname)s: \
+                                %(message)s"
 )
 
 

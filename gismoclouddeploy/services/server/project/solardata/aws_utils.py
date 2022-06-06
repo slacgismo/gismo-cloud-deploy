@@ -1,6 +1,5 @@
-from re import S
+
 import boto3
-from flask import current_app
 import os
 import pandas as pd
 

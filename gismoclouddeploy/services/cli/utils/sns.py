@@ -1,4 +1,4 @@
-import boto3
+
 
 #  SNS
 from botocore.exceptions import ClientError
@@ -52,7 +52,7 @@ def delete_topic(topic_arn, sns_client):
     try:
         response = sns_client.delete_topic(TopicArn=topic_arn)
     except ClientError:
-        logger.exception(f"Could not delete a SNS topic.")
+        logger.exception("Could not delete a SNS topic.")
         raise
     else:
         return response

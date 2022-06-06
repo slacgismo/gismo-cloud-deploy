@@ -1,10 +1,7 @@
-from cmath import log
+
 import threading
 import time
 import logging
-import json
-
-# logger config
 import json
 
 from models.Config import Config
@@ -123,7 +120,8 @@ def long_pulling_sqs(
             sqs_url, sqs_client, MaxNumberOfMessages=1, wait_time=wait_time
         )
         logger.info(
-            f"waiting ....counter: {counter - wait_time} Time: {time.ctime(time.time())}"
+            f"waiting ....counter: {counter - wait_time} \
+            Time: {time.ctime(time.time())}"
         )
         counter -= int(wait_time)
         if "Messages" in messages:
@@ -188,7 +186,8 @@ def long_pulling_sqs(
                         s3_client,
                     )
 
-                    if check_environment_is_aws() and delete_nodes_after_processing:
+                    if check_environment_is_aws() and \
+                            delete_nodes_after_processing is True:
                         logger.info("Delete node after processing")
                         scale_nodes_and_wait(
                             scale_node_num=0,
@@ -203,7 +202,8 @@ def long_pulling_sqs(
                     return tasks
                 logger.info(f"Received and deleted message(s) from {sqs_url}.")
             print(
-                f"num_task_completed {num_task_completed}, target num_task :{num_task}"
+                f"num_task_completed {num_task_completed},\
+                target num_task :{num_task}"
             )
 
     return tasks

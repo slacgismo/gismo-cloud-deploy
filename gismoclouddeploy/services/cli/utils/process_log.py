@@ -1,7 +1,6 @@
 from asyncio.log import logger
 import pandas as pd
-from models.WorkerStatus import WorkerStatus, make_worker_object_from_dataframe
-from datetime import datetime
+from models.WorkerStatus import make_worker_object_from_dataframe
 from utils.eks_utils import match_pod_ip_to_node_name
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
@@ -22,7 +21,7 @@ def process_df_for_gantt_separate_worker(df: pd):
     key_start = "start"
     key_end = "end"
     key_task = "task"
-    key_host_ip = "host_ip"
+    # key_host_ip = "host_ip"
     for worker in workerstatus_list:
         host_ip = worker.host_ip
         task_id = worker.task_id
@@ -199,7 +198,7 @@ def process_logs_from_local():
                 Host=value["host_ip"],
                 Duration=value["duration"],
             )
-        except Exception as e:
+        except Exception:
             logger.info(f"skip task {key}")
             continue
         gantt_list.append(item)

@@ -1,16 +1,12 @@
-import re
+
 import time
 import logging
 from kubernetes import client, config
-from utils.aws_utils import check_environment_is_aws
 
 from models.Config import Config
 import logging
-from typing import List
 import yaml
 
-from halo import Halo
-from models.Config import Config
 from utils.invoke_function import (
     invoke_kubectl_apply,
     invoke_eksctl_scale_node,
@@ -90,19 +86,18 @@ def num_of_nodes_ready():
     config.load_kube_config()
     v1 = client.CoreV1Api()
     response = v1.list_node()
-    nodes = []
     num_of_node_ready = 0
     for node in response.items:
 
         # print(node.metadata.labels['kubernetes.io/hostname'])
-        cluster = node.metadata.labels["alpha.eksctl.io/cluster-name"]
-        nodegroup = node.metadata.labels["alpha.eksctl.io/nodegroup-name"]
-        hostname = node.metadata.labels["kubernetes.io/hostname"]
-        instance_type = node.metadata.labels["beta.kubernetes.io/instance-type"]
-        region = node.metadata.labels["topology.kubernetes.io/region"]
+        # cluster = node.metadata.labels["alpha.eksctl.io/cluster-name"]
+        # nodegroup = node.metadata.labels["alpha.eksctl.io/nodegroup-name"]
+        # hostname = node.metadata.labels["kubernetes.io/hostname"]
+        # instance_type = node.metadata.labels["beta.kubernetes.io/instance-type"]
+        # region = node.metadata.labels["topology.kubernetes.io/region"]
         status = node.status.conditions[-1].status  # only looks the last
-        status_type = node.status.conditions[-1].type  # only looks the last
-        if bool(status) == True:
+        # status_type = node.status.conditions[-1].type  # only looks the last
+        if bool(status) is True:
             num_of_node_ready += 1
     return num_of_node_ready
 
@@ -112,12 +107,12 @@ def scale_node_number(min_nodes: int, cluster_name: str, nodegroup_name: str):
     # assert(type(min_nodes) is int, f"Input {min_nodes} is not an")
     # gcd-node-group-lt
     try:
-        node = int(min_nodes)
+        num_node = int(min_nodes)
     except Exception as e:
-        print(f"Error: input {min_nodes} is not a integer")
+        print(f"Error: input {min_nodes} is not a integer: {e}")
         return False
 
-    if int(min_nodes) == 0:
+    if num_node == 0:
 
         res = invoke_eksctl_scale_node(
             cluster_name=cluster_name,
@@ -126,16 +121,16 @@ def scale_node_number(min_nodes: int, cluster_name: str, nodegroup_name: str):
             nodes_max=1,
             nodes_min=0,
         )
-        print(f"scale down to {min_nodes}, res: {res}")
+        print(f"scale down to {num_node}, res: {res}")
     else:
         res = invoke_eksctl_scale_node(
             cluster_name=cluster_name,
             group_name=nodegroup_name,
-            nodes=min_nodes,
-            nodes_max=min_nodes,
-            nodes_min=min_nodes,
+            nodes=num_node,
+            nodes_max=num_node,
+            nodes_min=num_node,
         )
-        print(f"scale up to {min_nodes}, res:{res}")
+        print(f"scale up to {num_node}, res:{res}")
 
 
 def match_pod_ip_to_node_name(pods_name_sets: set) -> dict:
