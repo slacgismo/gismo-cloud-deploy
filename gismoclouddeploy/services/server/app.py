@@ -7,7 +7,7 @@ from pyparsing import col
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 
-import socket
+
 from typing import List
 from project.solardata.models.WorkerStatus import WorkerStatus
 from project.solardata.models.SolarParams import SolarParams
@@ -15,9 +15,9 @@ from project.solardata.models.SolarParams import make_solardata_params_from_str
 from project.solardata.models.Configure import Configure
 from project.solardata.models.Configure import make_configure_from_str
 from project.solardata.utils import (
-    list_files_in_bucket,
+
     connect_aws_client,
-    put_item_to_dynamodb,
+
     find_matched_column_name_set)
 
 import click
@@ -28,7 +28,6 @@ import re
 from project.solardata.tasks import (
 
     process_data_task,
-    combine_files_to_file_task,
     loop_tasks_status_task,
 
 )
@@ -46,23 +45,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s: %(levelname)s: %(message)s')
 
 
-
-
-# @cli.command("combine_files")
-# @click.argument('bucket_name', nargs=1)
-# @click.argument('source_folder', nargs=1)
-# @click.argument('target_folder', nargs=1)
-# @click.argument('target_filename', nargs=1)
-
-# def combine_files(bucket_name, source_folder,target_folder,target_filename):
-#     print(f"bucket_name: {bucket_name} ,source_folder {source_folder} ,target_folder: {target_folder},target_filename: {target_filename}")
-#     task = combine_files_to_file_task.apply_async(
-#         [bucket_name,
-#         source_folder,
-#         target_folder,
-#         target_filename
-#         ])
-    
 # ***************************        
 # Process first n files : first_n_files is integer
 # Process all files  : first_n_files is 0 

@@ -102,7 +102,6 @@ def run_process_files(number,delete_nodes,configfile):
                                                             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
                                                             aws_region=AWS_DEFAULT_REGION,
                                                             sns_topic=SNS_TOPIC)
-    # invoke_docekr_exec_revoke_tasks("[dsads]",config_params_obj.container_type, config_params_obj.container_name)
     # step 1 . check node status from local or AWS
     # spinner = Halo(text='Loading', spinner='dots')
 

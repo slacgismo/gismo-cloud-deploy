@@ -235,7 +235,6 @@ def loop_tasks_status_task( self,
                         star_time = res.info['start']
                         curr_time = time.time()
                         duration  = int(curr_time - float(star_time))
-                        logger.info(f"waiting {id} \n duration: {duration} {interval_of_max_timeout} {status}")
                         # if the duration of task is over timeout stop 
                         if duration >= int(interval_of_max_timeout) :
                             # remove id to avoid duplicated sns message
@@ -269,14 +268,9 @@ def loop_tasks_status_task( self,
 
         logger.info("------- start combine files, save logs , clean dynamodb items---------")
     
-    # from project import create_app
-    # from project.solardata.models import SolarData
-    # from project.solardata.utils import combine_files_to_file,save_logs_from_dynamodb_to_s3,remove_all_items_from_dynamodb,publish_message_sns
-    # app = create_app()
-    # with app.app_context():
         message = "end loop_tasks_status_task"
         try:
-            
+
             track_logs(task_id=self.request.id,
                     function_name="loop_tasks_status_task",
                     time=str(time.time()),

@@ -111,7 +111,7 @@ def process_logs_subplot():
 
 
 def process_df_for_gantt(df:pd)  :
-    # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
+
     # print(result)
     workerstatus_list= make_worker_object_from_dataframe(df)
 
