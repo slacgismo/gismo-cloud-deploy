@@ -36,14 +36,18 @@ This image had been installed necessary dependenciues included:
 - [docker](https://docs.docker.com/)
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy) 
+
+
+**_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpu` instance type. The `t2.large` type is recommended.
+Please create a project tag `project:pvinstight` for budget management purpose.
    
-1. Onec EC2 instance is running. Use ssh key to connect to the EC2 tunnel.
+2. Onec EC2 instance is running. Use ssh key to connect to the EC2 tunnel.
 
 ```bash
 $ ssh -i <pem-file> ec2-user@<host-ip>
 ```
 
-2. Set up AWS crednetial to access EKS and ECR.` (Reach out this project owner to get the correct AWS credentials).`
+3. Set up AWS crednetial to access EKS and ECR.` (Reach out this project owner to get the correct AWS credentials).`
 ```bash
 $ aws configure
 ```
@@ -55,11 +59,11 @@ Default region name:
 Default output format [None]: 
 ~~~
 
-1. Check if aws credentials vaild by listing aws s3 bucket command.
+4. Check if aws credentials vaild by listing aws s3 bucket command.
 ``` bash
 $ aws s3 ls
 ```
-4. Set up .env files for `cli` program usage.
+5. Set up .env files for `cli` program usage.
 
 ```bash
 $  touch ./gismoclouddeploy/services/cli/.env
@@ -75,7 +79,7 @@ SQS_ARN=<your-sqs-arn>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
-4. The AMIs image should had pre-insatll all the python3 dependencies of `cli` in the environment.
+6. The AMIs image should had pre-insatll all the python3 dependencies of `cli` in the environment.
 In case users need to re-install the dependencies of `cli`. Please follow the below command:
 
 - Create virutal environment.
@@ -103,10 +107,10 @@ $ source ./venv/bin/activate
 pip install e .
 ```
 
-5. Under virutal environemnt, run process files command.
+7. Under virutal environemnt, run process files command.
 
 ```bash
-(venv)$ gcd run-files -n 1
+(venv)$ gcd run-files -n 1 -d 
 ```
 
 ### Command
@@ -138,7 +142,7 @@ Examples:
 (venv)$ gcd run-files -n 1 -d -f test_config.yaml
 ```
 The above command process the `first one` file of bucket defined in the `test_config.yaml`.  
-Because `-d` optional command is assigned, the EKS nodes will be deleted after processing 
+Because `-d` optional command is assigned, the EKS nodes will be deleted after processing.
 
 #### Other support command
 
@@ -156,7 +160,6 @@ The `read-dlq` command allows developers to check current nodes number. The `-e`
 The default value is `False`.
 
 The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
-
 
 The above command invokes function to process the first `1` file in the bucket defined in `gismoclouddeploy/services/cli/config/test_config.yaml` file.
 The optional command `-d False` will disable deleting the eks nodes action after processing the files.
@@ -330,8 +333,7 @@ $ make ecr-validation
 
 Push images to ECR
 ```bash
-$ make push-server
-$ make push-worker
+$ make push-all
 ```
 ---
 

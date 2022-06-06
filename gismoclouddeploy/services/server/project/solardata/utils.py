@@ -146,7 +146,7 @@ def save_logs_from_dynamodb_to_s3(table_name:str,
         logger.info("remove previous logs.csv file")
     except Exception as e:
         logger.info("no logs.csv file")
-    
+        raise e
 
 
 

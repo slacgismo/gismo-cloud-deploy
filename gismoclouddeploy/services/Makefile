@@ -13,6 +13,15 @@ push-worker:
 	docker image tag worker 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
 	docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
 
+.PHONY: push-all
+push-all:
+	@echo "Push worker"
+	docker image tag worker 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+	docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+	@echo "Push server"
+	docker image tag web 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+	docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+
 .PHONY: create-cluster
 create-cluster:
 	@echo "Create Cluster from cluster.yaml"
