@@ -158,12 +158,12 @@ pip install -r requirements.txt
 pip install e .
 ```
 
-1. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `./gismoclouddeploy/config/config.yaml` are defined below.
+1. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `./gismoclouddeploy/services/cli/config/config.yaml` are defined below.
 
 ~~~
-  environment: "AWS"  
-  container_type: "kubernetes"  
-  container_name: "webapp"    
+environment: "AWS"  
+container_type: "kubernetes"  
+container_name: "webapp"    
 ~~~
 
 8. Under the virutal environemnt, run `process first file in defined bucket and delete nodes after processing` command.
