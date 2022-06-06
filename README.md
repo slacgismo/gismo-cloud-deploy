@@ -67,7 +67,8 @@ Default output format [None]:
 $ aws s3 ls
 ```
 
-5. Set up .env files for `cli` program usage.
+5. Pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git)
+6. Set up .env files for `cli` program usage.
 
 ```bash
 $  touch ./gismoclouddeploy/services/cli/.env
@@ -83,7 +84,7 @@ SQS_ARN=<your-sqs-arn>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
-6. The AMIs image should have pre-install all the python3 dependencies of `cli` in the environment.
+7. The AMIs image should have pre-install all the python3 dependencies of `cli` in the environment.
 In case users need to re-install the dependencies of `cli`. Please follow the below command:
 
 - Create virutal environment.
@@ -111,7 +112,7 @@ $ source ./venv/bin/activate
 pip install e .
 ```
 
-7. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `config.yaml` are defined below.
+8. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `config.yaml` are defined below.
 
 ~~~
   environment: "AWS"  
@@ -119,7 +120,7 @@ pip install e .
   container_name: "webapp"    
 ~~~
 
-8. Under the virutal environemnt, run `process first file in defined bucket and delete nodes after processing` command.
+9. Under the virutal environemnt, run `process first file in defined bucket and delete nodes after processing` command.
 
 ```bash
 (venv)$ gcd run-files -n 1 -d 
