@@ -220,9 +220,6 @@ The default value is `False`.
 
 The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
 
-The above command invokes function to process the first `1` file in the bucket defined in `gismoclouddeploy/services/cli/config/test_config.yaml` file.
-The optional command `-d False` will disable deleting the eks nodes action after processing the files.
-
 ---
 
 ### Configuration files
