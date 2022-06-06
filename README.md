@@ -37,17 +37,19 @@ This image had been installed necessary dependenciues included:
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy) 
 
+- **_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type. The `t2.large` type is recommended.
+If developer would like to build and run images in this ec2 instance, the volumne of the instance should be `12 GB` at least.
 
-**_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpu` instance type. The `t2.large` type is recommended.
-Please create a project tag `project:pvinstight` for budget management purpose.
-   
+- **_NOTE:_** Please create a project tag: `project:pvinstight` for budget management purpose.
+
 2. Onec EC2 instance is running. Use ssh key to connect to the EC2 tunnel.
 
 ```bash
 $ ssh -i <pem-file> ec2-user@<host-ip>
 ```
 
-3. Set up AWS crednetial to access EKS and ECR.` (Reach out this project owner to get the correct AWS credentials).`
+3. Set up AWS crednetial to access EKS and ECR. **_NOTE:_** `(Reach out this project's owner to get the AWS credentials).`
+
 ```bash
 $ aws configure
 ```
@@ -59,10 +61,12 @@ Default region name:
 Default output format [None]: 
 ~~~
 
-4. Check if aws credentials vaild by listing aws s3 bucket command.
+4. Check if aws credentials are vaild by listing aws s3 bucket command.
+   
 ``` bash
 $ aws s3 ls
 ```
+
 5. Set up .env files for `cli` program usage.
 
 ```bash
@@ -107,17 +111,19 @@ $ source ./venv/bin/activate
 pip install e .
 ```
 
-7. Under virutal environemnt, run process files command.
+7. Under the virutal environemnt, run process files command.
 
 ```bash
 (venv)$ gcd run-files -n 1 -d 
 ```
 
+---
+
 ### Command
 
-The make command supports the following subcommands:
+The gcd command supports the following subcommands:
 
----
+
 
 #### Process files command
 
@@ -125,23 +131,24 @@ The make command supports the following subcommands:
 (venv)$ gcd run-files [ --number | -n ] <0 ~ number> [ --deletenodes | -d ] [ --configfile | -f ] <filename> [--help]
 ```
 
-* If processfile command with no option command `-n` . The program will process the defined files in `config.yaml` files.
+* If processfile command with no option command `-n` . The program will process the defined files in the `config.yaml` file.
 
-* The process file command with option command`-n` followed with `integer number` will process the first `number` files in defined bucket.
+* The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket.
 If `number=0`, it processes all files in the buckets.
 
 * The option command `[ --deletenodes | -d ]` will enable or disable deleting the eks nodes action after processing the files.
 If `[ --deletenodes | -d ]` is assigned. The program will delete all eks nodes after processing.
 
 * The option command `[ --configfile | -f ] [filename]` allows users to import configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
-If this option command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
+If this optional command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
 
 Examples:
 
 ```bash
 (venv)$ gcd run-files -n 1 -d -f test_config.yaml
 ```
-The above command process the `first one` file of bucket defined in the `test_config.yaml`.  
+
+The above command process the `first one` file of the bucket defined in the `test_config.yaml`.  
 Because `-d` optional command is assigned, the EKS nodes will be deleted after processing.
 
 #### Other support command
@@ -219,8 +226,7 @@ $ make ecr-validation
 
 3. push `worker` and `webapp` to ECR
 ```bash
-$ make push-worker
-$ make push-server
+$ make push-all
 ```
 
 4. Check k8s status by command:
@@ -228,15 +234,17 @@ $ make push-server
 ```bash
 kubectl get all
 ```
-If kubernetes is running. Developers should see following output in the terminal.
+If kubernetes services are running, developers should see the following output in the terminal.
 
-~~~
+- **_NOTE:_** Since the eks node number is 0, the terminal output shows `0/1 READY` as below.
+
+```bash
 NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
 deployment.apps/rabbitmq   0/1     1            0           20h
 deployment.apps/redis      0/1     1            0           20h
 deployment.apps/webapp     0/1     1            0           20h
 deployment.apps/worker     0/1     1            0           20h
-~~~
+```
 
 If no k8s config files had been apply, please apply k8s yaml files by command:
 
@@ -275,6 +283,7 @@ $ pip install -r requirements.txt
 3). Developers are allowed to use `docker-compose` or `kubernetes` to manage the system
 
 #### Using `docker-compose`
+
 Before using docker to host local services, please install docker by following the instructions [Docker Link](https://docs.docker.com/get-docker/).
 
 Setup AWS credentials for Kubernetes
@@ -339,7 +348,7 @@ $ make push-all
 
 ### Testing
 
-### Test cli 
+### Test cli
 
 Run pytest coverage in cli
 
