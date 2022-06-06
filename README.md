@@ -336,7 +336,7 @@ Before using docker to host local services, please install docker by the followi
 
 Developers can run `gcd` command in the local environment through docker services instead of kubernetes.
 
-In `config.yaml` file, change the following settings below to run the program through docer services.
+In `config.yaml` file, change the following settings below to run the program through docker services.
 
 ~~~
   environment: "local"  
@@ -376,7 +376,7 @@ In `config.yaml` file, change the following settings below to run the program th
 ~~~
 
 
-Once the docker images were build. Apply `kubernetes` setting in `./gismoclouddeploy/services/cli/k8s/k8s-local` folder by command.
+Once the docker images were built, apply `kubernetes` setting in `./gismoclouddeploy/services/cli/k8s/k8s-local` folder by command.
 
 ```bash
 $ kubectl apply -f .
@@ -432,18 +432,19 @@ $ docker-compose exec web pytest --cov=.
 
 ### EKS auth setting
 
-Once the EKS cluster is created, only the user who makes this EKS cluster has permission to access it. In order to add other users permission into this cluster, two methods are listed below to setup permissions.
+Once the EKS cluster is created, only the user who makes this EKS cluster has permission to access it. In order to add other users permission into this cluster, two methods are listed below to setup permissions. 
+Users can get their `User ARN` in their `IAM` user page.
 
 method 1:
 
 ```bash
-$ eksctl create iamidentitymapping --cluster  <clusterName> --region=<region> --arn arn:aws:iam::123456:role/testing --group system:masters --username admin
+eksctl create iamidentitymapping --cluster  <clusterName> --region=<region> --arn <arn:aws:iam::123456:role/testing> --group system:masters --username admin
 ```
 
 method 2:
 
 ```bash
-$ kubectl edit configmap aws-auth -n kube-system
+kubectl edit configmap aws-auth -n kube-system
 ```
 
 change the config file as:
