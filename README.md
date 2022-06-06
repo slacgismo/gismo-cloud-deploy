@@ -1,4 +1,4 @@
-# gismo-cloud-deployment
+ ../../README.md# gismo-cloud-deployment
 
 <table>
 <tr>
@@ -166,11 +166,13 @@ container_type: "kubernetes"
 container_name: "webapp"    
 ~~~
 
-8. Under the virutal environemnt, run `process first file in defined bucket and delete nodes after processing` command.
+8. Under the virutal environemnt, run `run-files` command to test it.
 
 ```bash
 (venv)$ gcd run-files -n 1 -d 
 ```
+
+Read below for more informations.
 
 ---
 
@@ -178,23 +180,21 @@ container_name: "webapp"
 
 The gcd command supports the following subcommands:
 
-
-
-#### Process files command
+#### run-files command
 
 ```bash
 (venv)$ gcd run-files [ --number | -n ] <0 ~ number> [ --deletenodes | -d ] [ --configfile | -f ] <filename> [--help]
 ```
 
-* If process file command with no option command `-n`. The program will process the defined files in the `config.yaml` file.
-
-* The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket.
+* If you use default `run-files` command with no option, the program processes the files defined in the `config.yaml` file with `solar-data-tools` algorithm, and generated the results that saved in a file defined in `config.yaml` file.
+  
+* The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first 10 files in defined bucket )
 If `number=0`, it processes all files in the buckets.
 
-* The process file command with option command`-n` and an `integer number` will process the first `number` files in the defined bucket. If `number=0`, it processes all files in the buckets.
+* The process file command with option command`-n` and an `integer number` will process the first `n` files in the defined bucket. If `number=0`, it processes all files in the buckets.
 
-* The option command `[ --configfile | -f ] [filename]` allows users to import configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
-If this optional command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
+* The option command `[ --configfile | -f ] [filename]` allows developers to import custom configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
+If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
 
 Examples:
 
