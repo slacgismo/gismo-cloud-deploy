@@ -19,7 +19,7 @@
 </tr>
 </table>
 
-Tools for performing multiple common tasks on solar PV data signals by running multiple EC2 instances in parallel on AWS EKS platform.
+Tools for performing multiple common tasks on solar PV data signals by running various EC2 instances in parallel on the AWS EKS platform.
 
 ---
 
@@ -38,7 +38,7 @@ This image had been installed necessary dependenciues included:
 - [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy) 
 
 - **_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type. The `t2.large` type is recommended.
-If developer would like to build and run images in this ec2 instance, the volumne of the instance should be `12 GB` at least.
+If the developer would like to build and run images in this ec2 instance, the volume of the instance should be `12 GB` at least.
 
 - **_NOTE:_** Please create a project tag: `project:pvinstight` for budget management purpose.
 
@@ -73,7 +73,7 @@ $ aws s3 ls
 $  touch ./gismoclouddeploy/services/cli/.env
 ```
 
-The below is the sample variables in .env file, and replace `<your-aws-key> `with correct keys.
+Below are the sample variables in the .env file, and replace `<your-aws-key>` with the correct keys.
 ~~~
 AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
 AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key-id>
@@ -83,7 +83,7 @@ SQS_ARN=<your-sqs-arn>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
-6. The AMIs image should had pre-insatll all the python3 dependencies of `cli` in the environment.
+6. The AMIs image should have pre-install all the python3 dependencies of `cli` in the environment.
 In case users need to re-install the dependencies of `cli`. Please follow the below command:
 
 - Create virutal environment.
@@ -111,7 +111,15 @@ $ source ./venv/bin/activate
 pip install e .
 ```
 
-7. Under the virutal environemnt, run process files command.
+7. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `config.yaml` are defined below.
+
+~~~
+  environment: "AWS"  
+  container_type: "kubernetes"  
+  container_name: "webapp"    
+~~~
+
+8. Under the virutal environemnt, run `process first file in defined bucket and delete nodes after processing` command.
 
 ```bash
 (venv)$ gcd run-files -n 1 -d 
@@ -131,13 +139,12 @@ The gcd command supports the following subcommands:
 (venv)$ gcd run-files [ --number | -n ] <0 ~ number> [ --deletenodes | -d ] [ --configfile | -f ] <filename> [--help]
 ```
 
-* If processfile command with no option command `-n` . The program will process the defined files in the `config.yaml` file.
+* If process file command with no option command `-n`. The program will process the defined files in the `config.yaml` file.
 
 * The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket.
 If `number=0`, it processes all files in the buckets.
 
-* The option command `[ --deletenodes | -d ]` will enable or disable deleting the eks nodes action after processing the files.
-If `[ --deletenodes | -d ]` is assigned. The program will delete all eks nodes after processing.
+* The process file command with option command`-n` and an `integer number` will process the first `number` files in the defined bucket. If `number=0`, it processes all files in the buckets.
 
 * The option command `[ --configfile | -f ] [filename]` allows users to import configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
 If this optional command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
@@ -148,8 +155,8 @@ Examples:
 (venv)$ gcd run-files -n 1 -d -f test_config.yaml
 ```
 
-The above command process the `first one` file of the bucket defined in the `test_config.yaml`.  
-Because `-d` optional command is assigned, the EKS nodes will be deleted after processing.
+The above command processes the bucket's `first 1` file defined in the `test_config.yaml`.  
+Since the `-d` option command is assigned, all of the EKS nodes will be deleted after processing.
 
 #### Other support command
 
@@ -177,10 +184,10 @@ The optional command `-d False` will disable deleting the eks nodes action after
 
 Under `gismoclouddeploy/services/cli` folder, developers can modify parametes of the cli command tool.
 
-1. The `general` configuration contains all the environement variables setting.
-2. The `file-config` configuration contains all the config setting of run multiple files.
-3. The `solardata` configuration contains all the parametes of solar-data-tools algorithm.
-4. The `aws_config` configuration contains basic eks setting.Developer can defined number of nodes in EKS.
+1. The `general` configuration contains all the environement variables settings.
+2. The `file-config` configuration contains all the config settings of run multiple files.
+3. The `solardata` configuration contains all the parameters of solar-data-tools algorithm.
+4. The `aws_config` configuration contains basic eks settings. Developers can defined number of nodes in EKS.
 5. The `k8s_config` configuration contains basic kubernetes setting. Developers can define the replicas of worker in this files instead of modifying the `worker.deployment.yaml`.
 
 ### Kubernetes yaml files
@@ -189,7 +196,7 @@ All kubernetes deployment and service files are listed under `gismoclouddeploy/s
 
 ### EKS configration yaml files
 
-The create cluster command will create a eks cluster based on the configuration file in
+The create cluster command will create a eks cluster based on the configuration file in `cluster.yaml`.
 
 ```bash
 $ make create-cluster
@@ -206,10 +213,9 @@ $ make delete-cluster
 
 ### Build and push images on AWS.
 
-The AWS EKS hosts services based on the ECR images. If developers modify any code inside server folder, developers have to build and push new imges to ECR to see the chnages.
+The AWS EKS hosts services based on the ECR images. If developers modify any code inside the server folder, developers have to build and push new images to ECR to see the changes.
 
-In order to build new images to be used by Kubernetes, developers have to build and test images by docker-compose command. If the images are verified, developers can push images to ECR.
-The EC2 basion instance has pre-installed `docker` and `docker-compose` command.
+To build new images to be used by Kubernetes, developers have to build and test images by docker-compose command. If the images are verified, developers can push images to ECR.
 
 1. Build `worker` and `webapp` images through `docker-compose` command.
 
@@ -234,6 +240,7 @@ $ make push-all
 ```bash
 kubectl get all
 ```
+
 If kubernetes services are running, developers should see the following output in the terminal.
 
 - **_NOTE:_** Since the eks node number is 0, the terminal output shows `0/1 READY` as below.
@@ -280,25 +287,24 @@ $ source ./venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
-3). Developers are allowed to use `docker-compose` or `kubernetes` to manage the system
+3. Developers are allowed to use `docker-compose` or `kubernetes` to manage the system locally.
 
-#### Using `docker-compose`
+#### Using docker-compose
 
-Before using docker to host local services, please install docker by following the instructions [Docker Link](https://docs.docker.com/get-docker/).
+Before using docker to host local services, please install docker by the following instructions [Docker Link](https://docs.docker.com/get-docker/).
 
-Setup AWS credentials for Kubernetes
-```
-touch ./gismoclouddeploy/services/server/.env/.dev-sample
-```
-Replace the environemnt variables inside `<xxx-xxx-xxx>`.
+Developers are allowed to run `gcd` command in the local environment through docker services instead of kubernetes.
+
+In `config.yaml` file, change the following settings below to run the program through docer services.
 
 ~~~
-AWS_ACCESS_KEY_ID=<your-access-key>
-AWS_SECRET_ACCESS_KEY=<your-secret-key-id>
-AWS_DEFAULT_REGION=<region>
+  environment: "local"  
+  container_type: "docker"  
+  container_name: "web"    
 ~~~
 
-#### Include MOSEK licence
+
+#### Include MOSEK licence to build docker image
 
  MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
 
@@ -306,18 +312,28 @@ AWS_DEFAULT_REGION=<region>
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
-Include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/server/licence`. The licence file is required to build docker images. 
+Include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/server/licence`. The licence file is required to build docker images.
 
-Staring docker images by command
+Running docker images by command
 
 ```bash
 $ cd gismo-cloud-deploy/gismoclouddeploy/services
 $ docker-compose up --build
 ```
 
+
 ---
 
-#### Using `Kubernetes`
+#### Using local Kubernetes
+
+In `config.yaml` file, change the following settings below to run the program through local kubernetes services.
+
+~~~
+  environment: "local"  
+  container_type: "kubernetes"  
+  container_name: "webapp"    
+~~~
+
 
 Once the docker images were build. Apply `kubernetes` setting in `./gismoclouddeploy/services/cli/k8s/k8s-local` folder by command.
 
@@ -373,16 +389,29 @@ $ docker-compose exec web pytest --cov=.
 
 ---
 
-### EKS Setting
-method 1
-eksctl create iamidentitymapping --cluster  <clusterName> --region=<region> --arn arn:aws:iam::123456:role/testing --group system:masters --username admin
-method 2
-kubectl edit configmap aws-auth -n kube-system
+### EKS auth setting
+
+Once the EKS cluster is created, only the user who makes this EKS cluster has permission to access it. In order to add other users permission into this cluster, two methods are listed below to setup permissions.
+
+method 1:
+
+```bash
+$ eksctl create iamidentitymapping --cluster  <clusterName> --region=<region> --arn arn:aws:iam::123456:role/testing --group system:masters --username admin
+```
+
+method 2:
+
+```bash
+$ kubectl edit configmap aws-auth -n kube-system
+```
+
+change the config file as:
+~~~
 mapUsers: |
   - userarn: arn:aws:iam::[account_id]:root
     groups:
     - system:masters
-
+~~~
 ---
 
 ### System diagram
