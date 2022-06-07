@@ -1,4 +1,3 @@
-
 import threading
 import time
 import logging
@@ -186,8 +185,10 @@ def long_pulling_sqs(
                         s3_client,
                     )
 
-                    if check_environment_is_aws() and \
-                            delete_nodes_after_processing is True:
+                    if (
+                        check_environment_is_aws()
+                        and delete_nodes_after_processing is True
+                    ):
                         logger.info("Delete node after processing")
                         scale_nodes_and_wait(
                             scale_node_num=0,

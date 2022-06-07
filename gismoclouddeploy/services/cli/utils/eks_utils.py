@@ -1,4 +1,3 @@
-
 import time
 from kubernetes import client, config
 
@@ -18,10 +17,10 @@ logging.basicConfig(
 )
 
 
-def num_container_ready(container_prefix:str) -> int:
+def num_container_ready(container_prefix: str) -> int:
     config.load_kube_config()
     v1 = client.CoreV1Api()
-    num_container_running = 0 
+    num_container_running = 0
     try:
         ret = v1.list_pod_for_all_namespaces(watch=False)
         for i in ret.items:
@@ -36,7 +35,9 @@ def num_container_ready(container_prefix:str) -> int:
                 num_container_running += 1
         return num_container_running
     except Exception as e:
-        logger.error(f"list name:{i.metadata.name}  status:{i.status.container_statuses} has error:{e}")
+        logger.error(
+            f"list name:{i.metadata.name}  status:{i.status.container_statuses} has error:{e}"
+        )
         raise e
 
 
@@ -51,7 +52,9 @@ def wait_container_ready(
             logger.info(f"{num_container} pods are running")
             return True
         counter -= delay
-        logger.info(f"waiting {container_prefix} {cunrrent_num_container} .counter: {counter - delay} Time: {time.ctime(time.time())}")
+        logger.info(
+            f"waiting {container_prefix} {cunrrent_num_container} .counter: {counter - delay} Time: {time.ctime(time.time())}"
+        )
         time.sleep(delay)
 
     return False
@@ -60,13 +63,17 @@ def wait_container_ready(
 def scale_nodes_and_wait(
     scale_node_num: int, counter: int, delay: int, config_params_obj: Config
 ) -> bool:
-    try: 
+    try:
         target_node_number = int(scale_node_num)
-    
+
         num_nodes = num_of_nodes_ready()
-        logger.info(f"scale node {target_node_number}, current node number: {num_nodes}")
+        logger.info(
+            f"scale node {target_node_number}, current node number: {num_nodes}"
+        )
         if num_nodes == target_node_number:
-            logger.info(f"current node number is {num_nodes}, and target node number is {target_node_number}. Scale node success!!!")
+            logger.info(
+                f"current node number is {num_nodes}, and target node number is {target_node_number}. Scale node success!!!"
+            )
             return True
         # num_node is not equal ,
         logger.info(f"scale node num: {target_node_number}")
@@ -75,7 +82,6 @@ def scale_nodes_and_wait(
             cluster_name=config_params_obj.cluster_name,
             nodegroup_name=config_params_obj.nodegroup_name,
         )
-
 
         while counter:
             num_nodes = num_of_nodes_ready()

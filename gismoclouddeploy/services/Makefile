@@ -34,7 +34,7 @@ delete-cluster:
 
 .PHONY: get-cluster
 get-cluster:
-	eksctl get cluster 
+	eksctl get cluster
 
 
 .PHONY: rollout

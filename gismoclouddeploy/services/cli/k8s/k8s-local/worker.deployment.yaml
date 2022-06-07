@@ -20,9 +20,9 @@ spec:
         command: ["/start-celeryworker"]
         env:
           - name: FLASK_APP
-            value: app 
+            value: app
           - name: FLASK_ENV
-            value: development 
+            value: development
           - name: FLASK_CONFIG
             value: "development"
           - name: CELERY_BROKER_URL

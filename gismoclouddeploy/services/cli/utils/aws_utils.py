@@ -1,18 +1,16 @@
-
 import os
 import boto3
 import pandas as pd
 from typing import List
 from dotenv import load_dotenv
 import botocore
+
 load_dotenv()
 
 
-def check_aws_validity(key_id:str, secret:str) -> bool:
+def check_aws_validity(key_id: str, secret: str) -> bool:
     try:
-        boto3.client(
-            "s3", aws_access_key_id=key_id, aws_secret_access_key=secret
-        )
+        boto3.client("s3", aws_access_key_id=key_id, aws_secret_access_key=secret)
         return True
 
     except Exception as e:
@@ -24,7 +22,7 @@ def check_aws_validity(key_id:str, secret:str) -> bool:
         return False
 
 
-def connect_aws_client(client_name:str, key_id:str, secret:str, region:str):
+def connect_aws_client(client_name: str, key_id: str, secret: str, region: str):
     try:
         if check_aws_validity(key_id, secret):
             client = boto3.client(
@@ -34,12 +32,11 @@ def connect_aws_client(client_name:str, key_id:str, secret:str, region:str):
                 aws_secret_access_key=secret,
             )
             return client
-    except Exception :
+    except Exception:
         raise Exception("AWS Validation Error")
 
 
-
-def connect_aws_resource(resource_name:str, key_id:str, secret:str, region:str) :
+def connect_aws_resource(resource_name: str, key_id: str, secret: str, region: str):
     try:
         if check_aws_validity(key_id, secret):
             resource = boto3.resource(

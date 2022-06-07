@@ -191,7 +191,9 @@ def save_logs_from_dynamodb_to_s3(
         raise e
 
 
-def retrive_all_item_from_dyanmodb(table_name: str, dynamo_client:"botocore.client.dynamo"):
+def retrive_all_item_from_dyanmodb(
+    table_name: str, dynamo_client: "botocore.client.dynamo"
+):
 
     deserializer = TypeDeserializer()
     items = []
@@ -493,7 +495,7 @@ def get_process_filenamef_base_on_command(
                     n_files.append(file["Key"])
             else:
                 logger.info(f"Process first {first_n_files} files")
-                for file in files_dict[0:int(first_n_files)]:
+                for file in files_dict[0 : int(first_n_files)]:
                     n_files.append(file["Key"])
         except Exception as e:
             logger.error(f"Input {first_n_files} is not an integer")

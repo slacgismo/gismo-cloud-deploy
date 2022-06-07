@@ -20,13 +20,12 @@ spec:
         command: ["/start-celeryworker"]
         env:
           - name: FLASK_APP
-            value: app 
+            value: app
           - name: FLASK_ENV
-            value: development 
+            value: development
           - name: FLASK_CONFIG
             value: "development"
           - name: CELERY_BROKER_URL
             value: "amqp://admin:admin@rabbitmq-service:5672/"
           - name: CELERY_RESULT_BACKEND
             value: "redis://redis:6379/0"
-

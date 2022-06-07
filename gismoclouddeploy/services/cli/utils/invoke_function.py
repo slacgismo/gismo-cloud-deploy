@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 
 
-def exec_docker_command(command:str) -> str:
+def exec_docker_command(command: str) -> str:
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
     if result.returncode != 0:
@@ -140,7 +140,7 @@ def invoke_docekr_exec_revoke_task(
         raise e
 
 
-def get_k8s_pod_name(container_name:str) -> str:
+def get_k8s_pod_name(container_name: str) -> str:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     # print("Listing pods with their IPs:")

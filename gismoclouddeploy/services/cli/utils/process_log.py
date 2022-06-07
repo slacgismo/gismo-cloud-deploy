@@ -11,6 +11,7 @@ import plotly.io as pio
 
 import botocore
 
+
 def process_df_for_gantt_separate_worker(df: pd):
     # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
     # print(result)
@@ -275,4 +276,3 @@ def process_logs_from_s3(
     s3_client.put_object(
         Bucket=bucket, Key=saved_image_name, Body=img_data, ContentType="image/png"
     )
-

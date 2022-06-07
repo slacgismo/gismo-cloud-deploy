@@ -1,6 +1,7 @@
 from botocore.exceptions import ClientError
 import logging
 import botocore
+
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -41,7 +42,7 @@ def publish_message(message: str, topic_arn: str, sns_client):
     return message_id
 
 
-def delete_topic(topic_arn, sns_client:'botocore.client.SNS'):
+def delete_topic(topic_arn, sns_client: "botocore.client.SNS"):
     """
     Delete a SNS topic.
     """

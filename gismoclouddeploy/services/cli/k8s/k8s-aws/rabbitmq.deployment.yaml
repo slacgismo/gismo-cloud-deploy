@@ -20,6 +20,6 @@ spec:
               name: rabbitmq
           env:
           - name: RABBITMQ_DEFAULT_USER
-            value: "admin"    
+            value: "admin"
           - name: RABBITMQ_DEFAULT_PASS
             value: "admin"

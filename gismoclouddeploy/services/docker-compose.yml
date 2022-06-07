@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: ./server/compose/local/flask/Dockerfile
-  
+
     image: web
     container_name: web
     # '/start' is the shell script used to run the service

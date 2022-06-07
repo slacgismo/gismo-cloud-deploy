@@ -34,10 +34,10 @@ This image had been installed necessary dependenciues included:
 - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
 - [awscli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-- [git](https://git-scm.com/) 
+- [git](https://git-scm.com/)
 - [docker](https://docs.docker.com/)
 - [docker-compose](https://docs.docker.com/compose/install/)
-- [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy) 
+- [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy)
 
 #### Launch instance notes
 
@@ -70,20 +70,20 @@ $ aws configure
 ```
 
 ~~~
-AWS Access Key ID : 
-AWS Secret Access Key: 
-Default region name: 
-Default output format [None]: 
+AWS Access Key ID :
+AWS Secret Access Key:
+Default region name:
+Default output format [None]:
 ~~~
 
 3. Check if aws credentials are vaild by listing aws s3 bucket command.
-   
+
 ``` bash
 aws s3 ls
 ```
 
 4. Change directory to `gismo-cloud-deploy`. Pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git), and run `git pull` command.
-  
+
 5. Set up .env files for `cli` program usage.
 
 ```bash
@@ -106,7 +106,7 @@ In case users need to re-install the dependencies of `cli`. Please follow the be
 - The python virtual environemnt was created Create virutal environment.
 
 - Activate the virtual environment.
-  
+
 ```bash
 source ./venv/bin/activate
 ```
@@ -124,7 +124,7 @@ pip install -r requirements.txt
 ```
 
 - **_NOTE:_** If virtual environment was not created, please create the virtual environemnt first.
-  
+
 ```bash
 cd ./gismoclouddeploy/services/cli
 ```
@@ -160,9 +160,9 @@ pip install e .
 7. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `./gismoclouddeploy/services/cli/config/config.yaml` are defined below.
 
 ~~~
-environment: "AWS"  
-container_type: "kubernetes"  
-container_name: "webapp"    
+environment: "AWS"
+container_type: "kubernetes"
+container_name: "webapp"
 ~~~
 
 8. Check the EKS cluster is existing.
@@ -183,7 +183,7 @@ If cluster is not existing, please follow `EKS configuration yaml files` section
 9.  Under the virutal environemnt, run `run-files` command to test it.
 
 ```bash
-(venv)$ gcd run-files -n 1 -d 
+(venv)$ gcd run-files -n 1 -d
 ```
 
 Read below for more informations.
@@ -201,7 +201,7 @@ The gcd command supports the following subcommands:
 ```
 
 * If you use default `run-files` command with no option, the program processes the files defined in the `config.yaml` file with `solar-data-tools` algorithm, and generated the results that saved in a file defined in `config.yaml` file.
-  
+
 * The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first 10 files in defined bucket )
 If `number=0`, it processes all files in the buckets.
 
@@ -214,7 +214,7 @@ Examples:
 (venv)$ gcd run-files -n 1 -d -f test_config.yaml
 ```
 
-The above command processes the bucket's `first 1` file defined in the `test_config.yaml`.  
+The above command processes the bucket's `first 1` file defined in the `test_config.yaml`.
 Since the `-d` option command is assigned, all of the EKS nodes will be deleted after processing.
 
 #### Other support command
@@ -258,7 +258,7 @@ The create cluster command will create an EKS cluster based on the configuration
 make create-cluster
 ```
 
-If users create a cluster based on the `cluster.yaml` file, and if they need to delete the cluster later, it's recommended to delete the cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.  
+If users create a cluster based on the `cluster.yaml` file, and if they need to delete the cluster later, it's recommended to delete the cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.
 
 ```bash
 make delete-cluster
@@ -353,9 +353,9 @@ Developers can run `gcd` command in the local environment through docker service
 In `config.yaml` file, change the following settings below to run the program through docker services.
 
 ~~~
-  environment: "local"  
-  container_type: "docker"  
-  container_name: "web"    
+  environment: "local"
+  container_type: "docker"
+  container_name: "web"
 ~~~
 
 
@@ -384,9 +384,9 @@ docker-compose up --build
 In `config.yaml` file, change the following settings below to run the program through local kubernetes services.
 
 ~~~
-  environment: "local"  
-  container_type: "kubernetes"  
-  container_name: "webapp"    
+  environment: "local"
+  container_type: "kubernetes"
+  container_name: "webapp"
 ~~~
 
 
@@ -433,7 +433,7 @@ $ pytest --cov=.
 Run pytest in docker image
 
 ```bash
-$ docker-compose exec web pytest 
+$ docker-compose exec web pytest
 ```
 
 Get test coverage in docker image
@@ -446,7 +446,7 @@ $ docker-compose exec web pytest --cov=.
 
 ### EKS auth setting
 
-Once the EKS cluster is created, only the user who makes this EKS cluster has permission to access it. In order to add other users permission into this cluster, two methods are listed below to setup permissions. 
+Once the EKS cluster is created, only the user who makes this EKS cluster has permission to access it. In order to add other users permission into this cluster, two methods are listed below to setup permissions.
 Users can get their `User ARN` in their `IAM` user page.
 
 method 1:
@@ -490,5 +490,3 @@ We use [Semantic Versioning](http://semver.org/) for versioning. For the version
 ## License
 
 This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICENSE) file for details
-
-

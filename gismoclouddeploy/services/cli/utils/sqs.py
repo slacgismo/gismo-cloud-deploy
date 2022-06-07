@@ -1,8 +1,8 @@
-
 from botocore.exceptions import ClientError
 import logging
 import time
 import botocore
+
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -51,7 +51,7 @@ def create_fifo_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource
     except ClientError as e:
         logger.exception(f"Could not create SQS queue - {queue_name}.")
         raise e
-    
+
     return response
 
 

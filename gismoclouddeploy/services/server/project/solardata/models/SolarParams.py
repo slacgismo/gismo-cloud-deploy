@@ -1,5 +1,6 @@
 import json
 
+
 class SolarParams(object):
     def __init__(
         self,
