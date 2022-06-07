@@ -19,18 +19,26 @@ logging.basicConfig(
 )
 
 
-def num_container_ready(container_prefix: str) -> int:
+def num_container_ready(container_prefix:str) -> int:
     config.load_kube_config()
     v1 = client.CoreV1Api()
-    num_container_running = 0
-    ret = v1.list_pod_for_all_namespaces(watch=False)
-    for i in ret.items:
-        podname = i.metadata.name.split("-")[0]
-        if podname == container_prefix:
+    num_container_running = 0 
+    try:
+        ret = v1.list_pod_for_all_namespaces(watch=False)
+        for i in ret.items:
+            if i.metadata.name is None:
+                continue
+            podname = i.metadata.name.split("-")[0]
+            if podname != container_prefix or i.status.container_statuses is None:
+                continue
+
             logger.info(f"{i.metadata.name}: {i.status.container_statuses[-1].state}")
             if i.status.container_statuses[-1].ready:
                 num_container_running += 1
-    return num_container_running
+        return num_container_running
+    except Exception as e:
+        logger.error(f"list name:{i.metadata.name}  status:{i.status.container_statuses} has error:{e}")
+        raise e
 
 
 def wait_container_ready(
@@ -44,9 +52,7 @@ def wait_container_ready(
             logger.info(f"{num_container} pods are running")
             return True
         counter -= delay
-        logger.info(
-            f"waiting ....counter: {counter - delay} Time: {time.ctime(time.time())}"
-        )
+        logger.info(f"waiting {container_prefix} {cunrrent_num_container} .counter: {counter - delay} Time: {time.ctime(time.time())}")
         time.sleep(delay)
 
     return False
@@ -55,33 +61,39 @@ def wait_container_ready(
 def scale_nodes_and_wait(
     scale_node_num: int, counter: int, delay: int, config_params_obj: Config
 ) -> bool:
-
-    num_nodes = num_of_nodes_ready()
-    print(f"scale node {scale_node_num}, current node number: {num_nodes}")
-    if num_nodes == scale_node_num:
-        logger.info(f"{num_nodes} nodes is ready ")
-        return True
-    # num_node is not equal ,
-    logger.info(f"scale node num: {scale_node_num}")
-    scale_node_number(
-        min_nodes=scale_node_num,
-        cluster_name=config_params_obj.cluster_name,
-        nodegroup_name=config_params_obj.nodegroup_name,
-    )
-
-    while counter:
+    try: 
+        target_node_number = int(scale_node_num)
+    
         num_nodes = num_of_nodes_ready()
-        print(
-            f"waiting {scale_node_num} ready , current num_nodes:{num_nodes}  ....counter: {counter} Time: {time.ctime(time.time())}"
-        )
-        if num_nodes == scale_node_num:
+        logger.info(f"scale node {target_node_number}, current node number: {num_nodes}")
+        if num_nodes == target_node_number:
+            logger.info(f"current node number is {num_nodes}, and target node number is {target_node_number}. Scale node success!!!")
             return True
-        counter -= delay
-        time.sleep(delay)
-    return False
+        # num_node is not equal ,
+        logger.info(f"scale node num: {target_node_number}")
+        scale_node_number(
+            min_nodes=target_node_number,
+            cluster_name=config_params_obj.cluster_name,
+            nodegroup_name=config_params_obj.nodegroup_name,
+        )
 
 
-def num_of_nodes_ready():
+        while counter:
+            num_nodes = num_of_nodes_ready()
+            print(
+                f"waiting {target_node_number} ready , current num_nodes:{num_nodes}  ....counter: {counter} Time: {time.ctime(time.time())}"
+            )
+            if num_nodes == target_node_number:
+                return True
+            counter -= delay
+            time.sleep(delay)
+        return False
+    except Exception as e:
+        logger.error(f"scale node number error: {e}")
+        return False
+
+
+def num_of_nodes_ready() -> int:
     # print("check node status")
     config.load_kube_config()
     v1 = client.CoreV1Api()
