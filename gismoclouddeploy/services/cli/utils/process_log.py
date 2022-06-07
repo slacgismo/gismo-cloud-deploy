@@ -237,8 +237,6 @@ def process_logs_from_s3(
 
     gantt_list = []
     for key, value in worker_dict.items():
-        # print(value)
-        # print(f"start :{value['start']} end:{value['end']}")
         try:
             pod_ip = value["host_ip"]
             node_name = ""
@@ -270,7 +268,6 @@ def process_logs_from_s3(
     fig.update_yaxes(
         autorange="reversed"
     )  # otherwise tasks are listed from the bottom up
-    # fig.show()
     image_name = "test.png"
     pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600)
 
@@ -278,3 +275,4 @@ def process_logs_from_s3(
     s3_client.put_object(
         Bucket=bucket, Key=saved_image_name, Body=img_data, ContentType="image/png"
     )
+

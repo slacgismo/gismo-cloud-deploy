@@ -1,9 +1,9 @@
 
 import boto3
 import pandas as pd
+import botocore
 
-
-def check_aws_validity(key_id, secret):
+def check_aws_validity(key_id:str, secret:str) -> bool:
     try:
         client = boto3.client(
             "s3", aws_access_key_id=key_id, aws_secret_access_key=secret
@@ -20,29 +20,33 @@ def check_aws_validity(key_id, secret):
         return False
 
 
-def connect_aws_client(client_name, key_id, secret, region):
+def connect_aws_client(client_name:str, key_id:str, secret:str, region:str):
+    try:
+        if check_aws_validity(key_id, secret):
+            client = boto3.client(
+                client_name,
+                region_name=region,
+                aws_access_key_id=key_id,
+                aws_secret_access_key=secret,
+            )
+            return client
+    except Exception :
+        raise Exception("AWS Validation Error")
 
-    if check_aws_validity(key_id, secret):
-        client = boto3.client(
-            client_name,
-            region_name=region,
-            aws_access_key_id=key_id,
-            aws_secret_access_key=secret,
-        )
-        return client
-    raise Exception("AWS Validation Error")
 
 
-def connect_aws_resource(resource_name, key_id, secret, region):
-    if check_aws_validity(key_id, secret):
-        resource = boto3.resource(
-            resource_name,
-            region_name=region,
-            aws_access_key_id=key_id,
-            aws_secret_access_key=secret,
-        )
-        return resource
-    raise Exception("AWS Validation Error")
+def connect_aws_resource(resource_name:str, key_id:str, secret:str, region:str) :
+    try:
+        if check_aws_validity(key_id, secret):
+            resource = boto3.resource(
+                resource_name,
+                region_name=region,
+                aws_access_key_id=key_id,
+                aws_secret_access_key=secret,
+            )
+            return resource
+    except Exception:
+        raise Exception("AWS Validation Error")
 
 
 def to_s3(
@@ -84,7 +88,7 @@ def read_csv_from_s3_with_column_name(
     file_path_name: str = None,
     column_name: str = None,
     s3_client: str = None,
-):
+) -> pd.DataFrame:
 
     if (
         bucket_name is None
@@ -99,11 +103,9 @@ def read_csv_from_s3_with_column_name(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        # print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(
             response.get("Body"),
             index_col=False,
-            # parse_dates=parse_dates,
             usecols=[column_name],
         )
         # drop nan
@@ -119,7 +121,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
     s3_client=None,
     dates_column_name=None,
     index_col=0,
-):
+) -> pd.DataFrame:
 
     if (
         bucket_name is None
@@ -132,12 +134,13 @@ def read_all_csv_from_s3_and_parse_dates_from(
         response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
     except Exception as e:
         print(f"error read  file: {file_path_name} error:{e}")
+        raise e
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
         result_df = pd.read_csv(
             response.get("Body"),
-            index_col=0,
+            index_col=index_col,
             parse_dates=["timestamp"],
             infer_datetime_format=True,
         )
@@ -155,7 +158,7 @@ def read_csv_from_s3_with_column_and_time(
     s3_client: "botocore.client.S3" = None,
     index_col: int = 0,
     parse_dates=[0],
-):
+) -> pd.DataFrame:
     """
     Read csv file from s3 bucket
     :param : bucket_name
@@ -197,7 +200,7 @@ def read_all_csv_from_s3(
     file_path_name: str = None,
     s3_client: "botocore.client.S3" = None,
     index_col: int = 0,
-):
+) -> pd.DataFrame:
 
     if bucket_name is None or file_path_name is None or s3_client is None:
         return
@@ -205,14 +208,12 @@ def read_all_csv_from_s3(
         response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
     except Exception as e:
         print(f"error read  file: {file_path_name} error:{e}")
+        raise e
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        # print(f"Successful S3 get_object response. Status - {status}")
-        # result_df = pd.read_csv(response.get("Body"),
-        #                         index_col=index_col)
         result_df = pd.read_csv(
-            response.get("Body"), index_col=0, infer_datetime_format=True
+            response.get("Body"), index_col=index_col, infer_datetime_format=True
         )
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
@@ -221,7 +222,7 @@ def read_all_csv_from_s3(
 
 def read_csv_from_s3(
     bucket_name: str = None, full_path: str = None, s3_client: str = None
-):
+) -> pd.DataFrame:
     if bucket_name is None or full_path is None or s3_client is None:
         return
 
@@ -230,7 +231,6 @@ def read_csv_from_s3(
     status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
     if status == 200:
-        # print(f"Successful S3 get_object response. Status - {status}")
         result_df = pd.read_csv(response.get("Body"), nrows=1)
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")

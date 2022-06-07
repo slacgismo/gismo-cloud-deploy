@@ -326,7 +326,10 @@ def main():
     pass
 
 
-# Run files
+# ***************************
+#  Run files
+# ***************************
+
 @main.command()
 @click.option(
     "--number",
@@ -351,7 +354,11 @@ def run_files(number, deletenodes, configfile):
     run_process_files(number, deletenodes, configfile)
 
 
-# scale nodes
+
+# ***************************
+#  Scale the eks nodes' number
+# ***************************
+
 @main.command()
 @click.argument("min_nodes")
 @click.option(
@@ -382,21 +389,31 @@ def nodes_scale(min_nodes, configfile):
     )
 
 
-# check nodes
+# ***************************
+#  Check eks node status
+# ***************************
+
 @main.command()
 def check_nodes():
     """Check nodes status"""
     check_nodes_status()
 
 
-# process logs
+# ***************************
+#  Read process logs file 
+#  in S3 buckeet, and save gantt 
+#  plot locally
+# ***************************
+
 @main.command()
 def processlogs():
     """Porcess logs.csv file on AWS"""
     process_logs_and_plot()
 
+# ***************************
+#  Read DLQ
+# ***************************
 
-# Read DLQ
 @main.command()
 @click.option("--empty", "-e", is_flag=True, help=" Empty DLQ after receive message")
 def read_dlq(empty):

@@ -151,16 +151,12 @@ def match_pod_ip_to_node_name(pods_name_sets: set) -> dict:
     ret = v1.list_pod_for_all_namespaces(watch=False)
     pods = {}
     for i in ret.items:
-        # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
         podname = i.metadata.name.split("-")[0]
         if podname in pods_name_sets:
             _pod_name = i.metadata.name
             _node_name = i.spec.node_name
             ip = i.status.pod_ip
             pods[ip] = dict(POD_NAME=_pod_name, NOD_NAME=_node_name)
-
-    # for key, value in pods.items():
-    #     print(key, value)
     return pods
 
 

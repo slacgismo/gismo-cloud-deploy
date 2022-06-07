@@ -8,7 +8,7 @@ import botocore
 load_dotenv()
 
 
-def check_aws_validity(key_id, secret):
+def check_aws_validity(key_id:str, secret:str) -> bool:
     try:
         boto3.client(
             "s3", aws_access_key_id=key_id, aws_secret_access_key=secret
@@ -24,29 +24,33 @@ def check_aws_validity(key_id, secret):
         return False
 
 
-def connect_aws_client(client_name, key_id, secret, region):
+def connect_aws_client(client_name:str, key_id:str, secret:str, region:str):
+    try:
+        if check_aws_validity(key_id, secret):
+            client = boto3.client(
+                client_name,
+                region_name=region,
+                aws_access_key_id=key_id,
+                aws_secret_access_key=secret,
+            )
+            return client
+    except Exception :
+        raise Exception("AWS Validation Error")
 
-    if check_aws_validity(key_id, secret):
-        client = boto3.client(
-            client_name,
-            region_name=region,
-            aws_access_key_id=key_id,
-            aws_secret_access_key=secret,
-        )
-        return client
-    raise Exception("AWS Validation Error")
 
 
-def connect_aws_resource(resource_name, key_id, secret, region):
-    if check_aws_validity(key_id, secret):
-        resource = boto3.resource(
-            resource_name,
-            region_name=region,
-            aws_access_key_id=key_id,
-            aws_secret_access_key=secret,
-        )
-        return resource
-    raise Exception("AWS Validation Error")
+def connect_aws_resource(resource_name:str, key_id:str, secret:str, region:str) :
+    try:
+        if check_aws_validity(key_id, secret):
+            resource = boto3.resource(
+                resource_name,
+                region_name=region,
+                aws_access_key_id=key_id,
+                aws_secret_access_key=secret,
+            )
+            return resource
+    except Exception:
+        raise Exception("AWS Validation Error")
 
 
 def check_environment_is_aws() -> bool:
@@ -71,7 +75,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
         if status == 200:
             result_df = pd.read_csv(
                 response.get("Body"),
-                index_col=0,
+                index_col=index_col,
                 parse_dates=[dates_column_name],
                 infer_datetime_format=True,
             )
