@@ -51,15 +51,14 @@ This image had been installed necessary dependenciues included:
 
 - **_NOTE:_** After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
 
-1. Once the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs
-
-Change `pem-file` permission.
+1. Once the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs.
+ - Change `pem-file` permission.
 
 ```bash
 cd /path-of-pem-file
 chmod 400 <pem-file>
 ```
-
+ - Connect to the EC2
 ```bash
 ssh -i <path/pem-file> ec2-user@<Public IPv4 address>
 ```
@@ -158,7 +157,7 @@ pip install -r requirements.txt
 pip install e .
 ```
 
-1. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `./gismoclouddeploy/services/cli/config/config.yaml` are defined below.
+7. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `./gismoclouddeploy/services/cli/config/config.yaml` are defined below.
 
 ~~~
 environment: "AWS"  
@@ -166,7 +165,22 @@ container_type: "kubernetes"
 container_name: "webapp"    
 ~~~
 
-8. Under the virutal environemnt, run `run-files` command to test it.
+8. Check the EKS cluster is existing.
+
+```bash
+eksctl get cluster
+```
+
+If cluster is existing, it returns the output below.
+
+~~~
+NAME		REGION		EKSCTL CREATED
+gcd-eks-cluster	us-east-2	True
+~~~
+
+If cluster is not existing, please follow `EKS configuration yaml files` section to create a cluster first.
+
+9.  Under the virutal environemnt, run `run-files` command to test it.
 
 ```bash
 (venv)$ gcd run-files -n 1 -d 
