@@ -2,12 +2,14 @@ from asyncio.log import logger
 import pandas as pd
 from models.WorkerStatus import make_worker_object_from_dataframe
 from utils.eks_utils import match_pod_ip_to_node_name
+from utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
+
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
 import plotly.express as px
 import plotly.io as pio
-from utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
 
+import botocore
 
 def process_df_for_gantt_separate_worker(df: pd):
     # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]

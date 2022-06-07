@@ -3,7 +3,7 @@ import threading
 import time
 import logging
 import json
-
+import botocore
 from models.Config import Config
 from utils.aws_utils import (
     connect_aws_client,

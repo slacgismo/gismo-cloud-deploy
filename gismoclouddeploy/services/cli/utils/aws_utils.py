@@ -1,11 +1,10 @@
 
 import os
-import boto3 
-
+import boto3
 import pandas as pd
 from typing import List
 from dotenv import load_dotenv
-
+import botocore
 load_dotenv()
 
 

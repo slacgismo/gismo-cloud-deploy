@@ -1,6 +1,5 @@
 
 import time
-import logging
 from kubernetes import client, config
 
 from models.Config import Config

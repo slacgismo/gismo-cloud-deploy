@@ -1,5 +1,5 @@
 from ast import Str
-
+import botocore
 from project.solardata.aws_utils import (
     connect_aws_client,
     connect_aws_resource,
@@ -191,7 +191,7 @@ def save_logs_from_dynamodb_to_s3(
         raise e
 
 
-def retrive_all_item_from_dyanmodb(table_name: str, dynamo_client):
+def retrive_all_item_from_dyanmodb(table_name: str, dynamo_client:"botocore.client.dynamo"):
 
     deserializer = TypeDeserializer()
     items = []
@@ -199,7 +199,6 @@ def retrive_all_item_from_dyanmodb(table_name: str, dynamo_client):
         deserialized_document = {
             k: deserializer.deserialize(v) for k, v in item.items()
         }
-        # print(deserialized_document)
         items.append(deserialized_document)
     return items
 
