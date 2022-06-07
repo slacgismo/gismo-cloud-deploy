@@ -213,6 +213,7 @@ def loop_tasks_status_task(
     subject = task_id
     startime = str(time.time())
     message = "init loop_tasks_status_task"
+
     track_logs(
         task_id=task_id,
         function_name="loop_tasks_status_task",
