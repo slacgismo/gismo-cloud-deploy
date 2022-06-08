@@ -8,12 +8,15 @@ from project.solardata.aws_utils import (
     read_csv_from_s3_with_column_name,
     read_all_csv_from_s3_and_parse_dates_from,
     read_csv_from_s3,
+    download_solver_licence_from_s3_and_save,
 )
+
+from project.solardata.models.SolarParams import SolarParams
 
 from project.solardata.models.Configure import Configure
 
 import pandas as pd
-
+from os.path import exists
 from project.solardata.models.SolarData import SolarData
 from project.solardata.models.WorkerStatus import (
     WorkerStatus,
@@ -501,3 +504,31 @@ def get_process_filenamef_base_on_command(
             logger.error(f"Input {first_n_files} is not an integer")
             raise e
     return n_files
+
+
+def check_solver_licence(
+    solarParams: SolarParams = None, s3_client: "botocore.client.S3" = None
+) -> None:
+    if solarParams.solver_name is None:
+        raise Exception("No solver name")
+
+    # check if the file is exist in local directory
+    solver_target_file_path = (
+        solarParams.solver_saved_lic_file_path
+        + "/"
+        + solarParams.solver_saved_lic_file_name
+    )
+    if exists(solver_target_file_path) is False:
+        logger.info(
+            f"Download MOSEK Licence {solarParams.solver_lic_file_path_name} from {solarParams.solver_lic_bucket}"
+        )
+        try:
+            download_solver_licence_from_s3_and_save(
+                s3_client=s3_client,
+                bucket_name=solarParams.solver_lic_bucket,
+                file_path_name=solarParams.solver_lic_file_path_name,
+                saved_file_path=solarParams.solver_saved_lic_file_path,
+                saved_file_name=solarParams.solver_saved_lic_file_name,
+            )
+        except Exception as e:
+            raise e

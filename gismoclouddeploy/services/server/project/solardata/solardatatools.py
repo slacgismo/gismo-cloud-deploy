@@ -1,19 +1,16 @@
-from cmath import log
 from project.solardata.models.SolarParams import SolarParams
 from project.solardata.models.SolarData import SolarData
 import solardatatools
 import socket
 from datetime import datetime
-from project.solardata.utils import save_solardata_to_file
+from project.solardata.utils import save_solardata_to_file, check_solver_licence
 from os.path import exists
 from project.solardata.aws_utils import (
     read_csv_from_s3_with_column_and_time,
-    download_solver_licence_from_s3_and_save,
-)
-
-from project.solardata.aws_utils import (
     connect_aws_client,
 )
+
+
 import logging
 import time
 
@@ -72,28 +69,13 @@ def process_solardata_tools(
         logger.error(f"Connect to AWS error: {e}")
         raise e
 
-    # check solver lic , and download from s3 bucket
-    if solarParams.solver_name == "MOSEK":
-        # check if the file is exist in local directory
-        solver_target_file_path = (
-            solarParams.solver_saved_lic_file_path
-            + "/"
-            + solarParams.solver_saved_lic_file_name
-        )
-        logger.info(f"====> {solver_target_file_path}")
-        if exists(solver_target_file_path) is False:
-            logger.info(f"Download MOSEK Licence {file_path_name} from {bucket_name}")
-            try:
-                download_solver_licence_from_s3_and_save(
-                    s3_client=s3_client,
-                    bucket_name=solarParams.solver_lic_bucket,
-                    file_path_name=solarParams.solver_lic_file_path_name,
-                    saved_file_path=solarParams.solver_saved_lic_file_path,
-                    saved_file_name=solarParams.solver_saved_lic_file_name,
-                )
-            except Exception as e:
-                logger.error(f"Download {file_path_name} from {bucket_name} error: {e}")
-                raise e
+    # check solver
+
+    try:
+        check_solver_licence(solarParams=solarParams, s3_client=s3_client)
+    except Exception as e:
+        logger.error(f"Check solver error: {e}")
+        raise e
 
     # read csv file from s3
     try:
