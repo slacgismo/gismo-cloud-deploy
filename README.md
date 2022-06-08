@@ -4,8 +4,11 @@
 <tr>
   <td>Latest Release</td>
   <td>
-    <a href="https://img.shields.io/github/downloads/slacgismo/gismo-cloud-deploy/total">
-        <img src="https://img.shields.io/github/downloads/slacgismo/gismo-cloud-deploy/total" alt="Release" />
+    <a href="https://img.shields.io/github/v/release/slacgismo/gismo-cloud-deploy?include_prereleases">
+        <img src="https://img.shields.io/github/v/release/slacgismo/gismo-cloud-deploy?include_prereleases" alt="Release" />
+    </a>
+    <a href="https://github.com/slacgismo/gismo-cloud-deploy/tags">
+        <img src="https://img.shields.io/github/v/tag/slacgismo/gismo-cloud-deploy" alt="tags" />
     </a>
   </td>
 </tr>
