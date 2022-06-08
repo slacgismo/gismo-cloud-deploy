@@ -10,10 +10,18 @@
 </tr>
 <tr>
   <td>Build Status</td>
+  <td>
+    <a href="https://img.shields.io/github/workflow/status/slacgismo/gismo-cloud-deploy/Build%20And%20Test">
+        <img src="https://img.shields.io/github/workflow/status/slacgismo/gismo-cloud-deploy/Build%20And%20Test" alt="Build And Test status" />
+    </a>
+    <a href="https://img.shields.io/github/workflow/status/slacgismo/gismo-cloud-deploy/Deploy?label=deploy">
+        <img src="https://img.shields.io/github/workflow/status/slacgismo/gismo-cloud-deploy/Deploy?label=deploy" alt="Deploy status" />
+    </a>
+  </td>
 </tr>
 <tr>
     <td>Code Quality</td>
-</tr>
+</tr>◊
 <tr>
     <td>Test-Coverage</td>
 </tr>
