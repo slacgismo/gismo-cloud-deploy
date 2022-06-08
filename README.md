@@ -377,7 +377,7 @@ In `config.yaml` file, change the following settings below to run the program th
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
-Include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/server/licence`. The licence file is required to build docker images.
+Include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/server/licence`. The licence file is required to prove you have the licence.
 
 Running docker images by command
 
@@ -385,8 +385,6 @@ Running docker images by command
 cd gismo-cloud-deploy/gismoclouddeploy/services
 docker-compose up --build
 ```
-
-
 ---
 
 #### Using local Kubernetes
