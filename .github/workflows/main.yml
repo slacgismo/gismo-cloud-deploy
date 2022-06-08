@@ -33,4 +33,6 @@ jobs:
       - name: Build the stack
         run: docker-compose -f gismoclouddeploy/services/docker-compose.yml build
       - name: Test with pytest
+        env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1
         run: docker-compose exec -T web pytest
