@@ -1,0 +1,41 @@
+name: Deploy Production
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+
+jobs:
+    deploy-production:
+        runs-on: ubuntu-latest
+        environment: production
+        env:
+          DOCKER_BUILDKIT: "1"
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+
+          - name: Configure AWS Credentials
+            uses: aws-actions/configure-aws-credentials@v1
+            with:
+              aws-access-key-id: ${{ secrets.PROD_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.PROD_SECRET_ACCESS_KEY }}
+              aws-region: ${{ secrets.AWS_REGION }}
+
+          - name: Login to Amazon ECR
+            id: login-ecr
+            uses: aws-actions/amazon-ecr-login@v1
+
+          - name: Build and run the stack
+            run: docker-compose -f gismoclouddeploy/services/docker-compose.yml up -d
+          - name: Check running containers
+            run: docker-compose -f gismoclouddeploy/services/docker-compose.yml ps
+          - name: Tag images
+            run: |
+              docker image tag worker 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+              docker image tag web 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+          - name: Push to ECR
+            run: |
+              docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+              docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
