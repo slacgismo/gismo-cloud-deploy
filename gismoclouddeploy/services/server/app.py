@@ -124,7 +124,7 @@ def process_first_n_files(
 @click.argument("task_id", nargs=1)
 def revoke_task(task_id: str):
 
-    logger.info(f"====== > revoke id {task_id} ====>")
+    logger.info(f"====== revoke id {task_id} ======= ")
     celery.control.revoke(task_id, terminate=True, signal="SIGKILL")
 
 

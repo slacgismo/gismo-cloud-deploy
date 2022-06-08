@@ -86,10 +86,10 @@ def process_solardata_tools(
             try:
                 download_solver_licence_from_s3_and_save(
                     s3_client=s3_client,
-                    bucket_name="slac.gismo.ci.artifacts",
-                    file_path_name="mosek.license/mosek.lic",
-                    saved_file_path="/root/mosek",
-                    saved_file_name="mosek.lic",
+                    bucket_name=solarParams.solver_lic_bucket,
+                    file_path_name=solarParams.solver_lic_file_path_name,
+                    saved_file_path=solarParams.solver_saved_lic_file_path,
+                    saved_file_name=solarParams.solver_saved_lic_file_name,
                 )
             except Exception as e:
                 logger.error(f"Download {file_path_name} from {bucket_name} error: {e}")
@@ -112,7 +112,7 @@ def process_solardata_tools(
 
     try:
         dh = solardatatools.DataHandler(df)
-        print(
+        logger.info(
             f"run pipeline solarParams.verbose: {solarParams.verbose}, solver: {solarParams.solver}"
         )
         dh.run_pipeline(
