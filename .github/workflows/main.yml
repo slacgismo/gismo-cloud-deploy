@@ -30,8 +30,10 @@ jobs:
         run: |
           echo Add other actions to build,
           echo test, and deploy your project.
-      - name: Build the stack
-        run: docker-compose -f gismoclouddeploy/services/docker-compose.yml build
+      - name: Build and run the stack
+        run: docker-compose -f gismoclouddeploy/services/docker-compose.yml up -d
+      - name: Check running containers
+        run: docker-compose ps -a
       - name: Test with pytest
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
