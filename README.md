@@ -3,6 +3,11 @@
 <table>
 <tr>
   <td>Latest Release</td>
+  <td>
+    <a href="https://img.shields.io/github/downloads/slacgismo/gismo-cloud-deploy/total">
+        <img src="https://img.shields.io/github/downloads/slacgismo/gismo-cloud-deploy/total" alt="Release" />
+    </a>
+  </td>
 </tr>
 <tr>
   <td>License</td>
