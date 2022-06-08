@@ -36,3 +36,5 @@ jobs:
           echo test, and deploy your project.
       - name: Build the stack
         run: docker-compose -f gismoclouddeploy/services/docker-compose.yml build
+      - name: Test the stack
+        run: docker-compose exec web pytest
