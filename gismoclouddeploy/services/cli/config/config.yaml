@@ -56,10 +56,8 @@ solardata:
   extra_cols: "None"
   daytime_threshold: "0.1"
   units: "W"
-  solver: "MOSEK"
-
-lic_config:
-  MOSEK:
+  solver:
+    name: "MOSEK"
     lic_bucket: "slac.gismo.ci.artifacts"
     lic_file_path_name: "mosek.license/mosek.lic"
     lic_saved_target_path: "/root/mosek"

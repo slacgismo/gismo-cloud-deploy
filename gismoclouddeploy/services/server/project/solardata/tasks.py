@@ -104,7 +104,12 @@ def process_data_task(
     aws_region: str,
     sns_topic: str,
 ) -> str:
-    solar_params_obj = make_solardata_params_from_str(solar_params_str)
+
+    try:
+        solar_params_obj = make_solardata_params_from_str(solar_params_str)
+    except Exception as e:
+        return f"solardata params conifg error: {e}"
+
     task_id = self.request.id
     subject = task_id
     message = "init process_data_task"

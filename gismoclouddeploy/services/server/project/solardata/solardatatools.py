@@ -1,3 +1,4 @@
+from cmath import log
 from project.solardata.models.SolarParams import SolarParams
 from project.solardata.models.SolarData import SolarData
 import solardatatools
@@ -71,23 +72,30 @@ def process_solardata_tools(
         logger.error(f"Connect to AWS error: {e}")
         raise e
 
-    if solarParams.solver == "MOSEK" and exists("/root/mosek/mosek.lic") is False:
-        logger.info(f"Download MOSEK Licence {file_path_name} from {bucket_name}")
-        try:
-            download_solver_licence_from_s3_and_save(
-                s3_client=s3_client,
-                bucket_name="slac.gismo.ci.artifacts",
-                file_path_name="mosek.license/mosek.lic",
-                saved_file_path="/root/mosek",
-                saved_file_name="mosek.lic",
-            )
+    # check solver lic , and download from s3 bucket
+    if solarParams.solver_name == "MOSEK":
+        # check if the file is exist in local directory
+        solver_target_file_path = (
+            solarParams.solver_saved_lic_file_path
+            + "/"
+            + solarParams.solver_saved_lic_file_name
+        )
+        logger.info(f"====> {solver_target_file_path}")
+        if exists(solver_target_file_path) is False:
+            logger.info(f"Download MOSEK Licence {file_path_name} from {bucket_name}")
+            try:
+                download_solver_licence_from_s3_and_save(
+                    s3_client=s3_client,
+                    bucket_name="slac.gismo.ci.artifacts",
+                    file_path_name="mosek.license/mosek.lic",
+                    saved_file_path="/root/mosek",
+                    saved_file_name="mosek.lic",
+                )
+            except Exception as e:
+                logger.error(f"Download {file_path_name} from {bucket_name} error: {e}")
+                raise e
 
-        except Exception as e:
-            logger.error(
-                f"---> download {file_path_name} from {bucket_name} error: {e}"
-            )
-            raise e
-
+    # read csv file from s3
     try:
         df = read_csv_from_s3_with_column_and_time(
             bucket_name=bucket_name,
@@ -129,7 +137,7 @@ def process_solardata_tools(
             extra_cols=solarParams.extra_cols,
             daytime_threshold=solarParams.daytime_threshold,
             units=solarParams.units,
-            solver=solarParams.solver,
+            solver=solarParams.solver_name,
         )
         length = float("{:.2f}".format(dh.num_days))
         if dh.num_days >= 365:
