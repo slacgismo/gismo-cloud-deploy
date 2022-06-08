@@ -59,8 +59,8 @@ solardata:
   solver: "MOSEK"
 
 lic_config:
-  solver: "MOSEK"
-    # lic_bucket: "slac.gismo.ci.artifacts"
+  MOSEK:
+    - lic_bucket: "slac.gismo.ci.artifacts"
     # lic_file_path_name: "mosek.license/mosek.lic"
     # lic_saved_target_path: "/root/mosek"
     # lic_saved_target_name: "mosek.lic"
