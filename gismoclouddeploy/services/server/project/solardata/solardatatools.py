@@ -4,9 +4,10 @@ import solardatatools
 import socket
 from datetime import datetime
 from project.solardata.utils import save_solardata_to_file
-
+from os.path import exists
 from project.solardata.aws_utils import (
     read_csv_from_s3_with_column_and_time,
+    download_solver_licence_from_s3_and_save,
 )
 
 from project.solardata.aws_utils import (
@@ -69,9 +70,30 @@ def process_solardata_tools(
     except Exception as e:
         logger.error(f"Connect to AWS error: {e}")
         raise e
+
+    if solarParams.solver == "MOSEK" and exists("/root/mosek/mosek.lic") is False:
+        logger.info(f"Download MOSEK Licence {file_path_name} from {bucket_name}")
+        try:
+            download_solver_licence_from_s3_and_save(
+                s3_client=s3_client,
+                bucket_name="slac.gismo.ci.artifacts",
+                file_path_name="mosek.license/mosek.lic",
+                saved_file_path="/root/mosek",
+                saved_file_name="mosek.lic",
+            )
+
+        except Exception as e:
+            logger.error(
+                f"---> download {file_path_name} from {bucket_name} error: {e}"
+            )
+            raise e
+
     try:
         df = read_csv_from_s3_with_column_and_time(
-            bucket_name, file_path_name, column_name, s3_client
+            bucket_name=bucket_name,
+            file_path_name=file_path_name,
+            column_name=column_name,
+            s3_client=s3_client,
         )
     except Exception as e:
         error_message += f"read column and time error: {e}"

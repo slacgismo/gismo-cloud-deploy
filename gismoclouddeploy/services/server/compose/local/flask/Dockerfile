@@ -32,7 +32,6 @@ COPY ./server/compose/local/flask/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
 
-COPY ./server/licence/mosek.lic /root/mosek/
 
 # WORKDIR /app
 

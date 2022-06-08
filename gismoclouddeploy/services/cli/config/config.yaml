@@ -1,10 +1,10 @@
 # process file
 general:
   environment: "loacl"  # "local" , "AWS"
-  container_type: "kubernetes"  # "docker" , "kubernetes"
-  container_name: "webapp"     # "web" . "webapp"
+  container_type: "docker"  # "docker" , "kubernetes"
+  container_name: "web"     # "web" . "webapp"
   interval_of_check_task_status: "1" # in second
-  interval_of_exit_check_status: "600" # in second. If the task status didn't update after this period. stop check individual status
+  interval_of_exit_check_status: "900" # in second. If the task status didn't update after this period. stop check individual status
 
 
 aws_config:
@@ -57,3 +57,10 @@ solardata:
   daytime_threshold: "0.1"
   units: "W"
   solver: "MOSEK"
+
+lic_config:
+  solver: "MOSEK"
+    # lic_bucket: "slac.gismo.ci.artifacts"
+    # lic_file_path_name: "mosek.license/mosek.lic"
+    # lic_saved_target_path: "/root/mosek"
+    # lic_saved_target_name: "mosek.lic"

@@ -1,6 +1,8 @@
 import boto3
 import pandas as pd
 import botocore
+import os
+import os.path
 
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
@@ -234,3 +236,22 @@ def read_csv_from_s3(
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
+
+
+def download_solver_licence_from_s3_and_save(
+    s3_client,
+    bucket_name: str,
+    file_path_name: str,
+    saved_file_path: str,
+    saved_file_name: str,
+) -> None:
+
+    if not os.path.exists(saved_file_path):
+        os.makedirs(saved_file_path)
+
+    saved_file_path_name = saved_file_path + "/" + saved_file_name
+
+    try:
+        s3_client.download_file(bucket_name, file_path_name, saved_file_path_name)
+    except Exception as e:
+        raise e
