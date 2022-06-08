@@ -51,15 +51,15 @@ This image had been installed necessary dependenciues included:
 
 #### Launch instance notes
 
-- **_NOTE:_** This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
+- This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
-- **_NOTE:_** Under `Configure Storage`, select the volume of the instance should be `12 GB` at least.
+- Under `Configure Storage`, select the volume of the instance should be `12 GB` at least.
 
-- **_NOTE:_** Under `Key pair(login)` option, create a new key pair or use your existing key pair.
+- Under `Key pair(login)` option, create a new key pair or use your existing key pair.
 
-- **_NOTE:_** Click `Lunach instance` button to lanch a EC2 instance.
+- Click `Lunach instance` button to lanch a EC2 instance.
 
-- **_NOTE:_** After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
+- After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
 
 1. Once the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs.
  - Change `pem-file` permission.
