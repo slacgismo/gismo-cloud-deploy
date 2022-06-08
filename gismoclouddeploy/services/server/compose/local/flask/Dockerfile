@@ -18,6 +18,7 @@ RUN apt install libhdf5-dev -y
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./server/requirements.txt /requirements.txt
+RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt
 
 COPY ./server/compose/local/flask/entrypoint /entrypoint
