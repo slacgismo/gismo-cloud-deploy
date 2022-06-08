@@ -19,8 +19,8 @@ jobs:
           - name: Configure AWS Credentials
             uses: aws-actions/configure-aws-credentials@v1
             with:
-              aws-access-key-id: ${{ secrets.PROD_ACCESS_KEY_ID }}
-              aws-secret-access-key: ${{ secrets.PROD_SECRET_ACCESS_KEY }}
+              aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+              aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
               aws-region: ${{ secrets.AWS_REGION }}
 
           - name: Login to Amazon ECR
@@ -33,9 +33,9 @@ jobs:
             run: docker-compose -f gismoclouddeploy/services/docker-compose.yml ps
           - name: Tag images
             run: |
-              docker image tag worker 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
-              docker image tag web 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+              docker image tag worker ${{ secrets.ECR_ECR_REGISTRY }}/worker:latest
+              docker image tag web ${{ secrets.ECR_ECR_REGISTRY }}/server:latest
           - name: Push to ECR
             run: |
-              docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
-              docker push 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+              docker push ${{ secrets.ECR_ECR_REGISTRY }}/worker:latest
+              docker push ${{ secrets.ECR_ECR_REGISTRY }}/server:latest
