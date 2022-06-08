@@ -27,12 +27,6 @@
     </a>
   </td>
 </tr>
-<tr>
-    <td>Code Quality</td>
-</tr>◊
-<tr>
-    <td>Test-Coverage</td>
-</tr>
 </table>
 
 Tools for performing multiple common tasks on solar PV data signals by running various EC2 instances in parallel on the AWS EKS platform.
@@ -409,7 +403,7 @@ In `config.yaml` file, change the following settings below to run the program th
 Once the docker images were built, apply `kubernetes` setting in `./gismoclouddeploy/services/cli/k8s/k8s-local` folder by command.
 
 ```bash
-$ kubectl apply -f .
+kubectl apply -f .
 ```
 
 #### Push to AWS ECR
@@ -417,19 +411,19 @@ $ kubectl apply -f .
 Setup AWS credentials
 
 ```bash
-$ aws configure
+aws configure
 ```
 
 Login AWS ECR
 
 ```bash
-$ cd ./gismoclouddeploy/services
-$ make ecr-validation
+cd ./gismoclouddeploy/services
+make ecr-validation
 ```
 
 Push images to ECR
 ```bash
-$ make push-all
+make push-all
 ```
 ---
 
@@ -440,8 +434,8 @@ $ make push-all
 Run pytest coverage in cli
 
 ```bash
-$ cd ./gismoclouddeploy/services/cli
-$ pytest --cov=.
+cd ./gismoclouddeploy/services/cli
+pytest --cov=.
 ```
 
 #### Test docker image
