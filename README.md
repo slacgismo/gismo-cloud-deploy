@@ -1,4 +1,4 @@
- ../../README.md# gismo-cloud-deployment
+# gismo-cloud-deployment
 
 <table>
 <tr>
