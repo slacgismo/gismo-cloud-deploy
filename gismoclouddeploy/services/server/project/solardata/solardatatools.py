@@ -12,7 +12,7 @@ from os.path import exists
 #     connect_aws_client,
 # )
 from project.utils.utils import save_solardata_to_file, check_solver_licence
-from project.utils.aws_utils import (
+from utils.aws_utils import (
     read_csv_from_s3_with_column_and_time,
     connect_aws_client,
 )

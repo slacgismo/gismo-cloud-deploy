@@ -1,6 +1,6 @@
 from ast import Str
 import botocore
-from project.utils.aws_utils import (
+from utils.aws_utils import (
     connect_aws_client,
     connect_aws_resource,
     to_s3,
@@ -13,12 +13,12 @@ from project.utils.aws_utils import (
 
 from project.solardata.models.SolarParams import SolarParams
 
-from project.models.Configure import Configure
+from models.Configure import Configure
 
 import pandas as pd
 from os.path import exists
 from project.solardata.models.SolarData import SolarData
-from project.models.WorkerStatus import (
+from models.WorkerStatus import (
     WorkerStatus,
     make_worker_object_from_dataframe,
 )

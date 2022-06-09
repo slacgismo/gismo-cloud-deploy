@@ -4,11 +4,11 @@ from celery.result import AsyncResult
 
 import os
 from project.solardata.models.SolarParams import make_solardata_params_from_str
-from project.models.WorkerStatus import WorkerStatus
-from project.models.SNSSubjectsAlert import SNSSubjectsAlert
+from models.WorkerStatus import WorkerStatus
+from models.SNSSubjectsAlert import SNSSubjectsAlert
 import time
 import socket
-from project.models.WorkerState import WorkerState
+from models.WorkerState import WorkerState
 import json
 
 from project.utils.utils import (

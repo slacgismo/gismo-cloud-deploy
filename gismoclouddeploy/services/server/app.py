@@ -4,7 +4,7 @@ from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 
 
-from project.models.Configure import make_configure_from_str
+from models.Configure import make_configure_from_str
 
 # from project.solardata.utils import connect_aws_client, find_matched_column_name_set
 from project.utils.utils import connect_aws_client, find_matched_column_name_set
