@@ -1,11 +1,11 @@
 import time
 from kubernetes import client, config
 
-from models.Config import Config
+from modules.models.Config import Config
 import logging
 import yaml
 
-from utils.invoke_function import (
+from modules.utils.invoke_function import (
     invoke_kubectl_apply,
     invoke_eksctl_scale_node,
     get_k8s_pod_name,

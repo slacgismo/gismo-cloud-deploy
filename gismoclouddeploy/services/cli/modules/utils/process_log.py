@@ -1,8 +1,10 @@
 from asyncio.log import logger
 import pandas as pd
-from models.WorkerStatus import make_worker_object_from_dataframe
-from utils.eks_utils import match_pod_ip_to_node_name
-from utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
+
+# from models.WorkerStatus import make_worker_object_from_dataframe
+from server.models.WorkerStatus import make_worker_object_from_dataframe
+from modules.utils.eks_utils import match_pod_ip_to_node_name
+from modules.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
 
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
@@ -232,8 +234,6 @@ def process_logs_from_s3(
     pods_name_prefix_set = ("worker", "webapp")
     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
     worker_dict = process_df_for_gantt(df)
-    # atlter ip to host name
-    # print(worker_dict)
     # # # # Show dataframe
 
     gantt_list = []
@@ -269,7 +269,7 @@ def process_logs_from_s3(
     fig.update_yaxes(
         autorange="reversed"
     )  # otherwise tasks are listed from the bottom up
-    image_name = "test.png"
+    image_name = "plot/runtime.png"
     pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600)
 
     img_data = open(image_name, "rb")

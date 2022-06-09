@@ -1,36 +1,36 @@
 import click
 
-from models.Node import Node
+from modules.models.Node import Node
 
 import logging
 import time
 from kubernetes import client, config
 
 import os
-from utils.invoke_function import (
+from modules.utils.invoke_function import (
     invoke_docekr_exec_run_process_first_n_files,
 )
-from models.SolarParams import SolarParams
-from models.Config import Config
+from modules.models.SolarParams import SolarParams
+from modules.models.Config import Config
 
 
-from utils.aws_utils import connect_aws_client
+from modules.utils.aws_utils import connect_aws_client
 
-from utils.eks_utils import scale_nodes_and_wait, create_or_update_k8s
+from modules.utils.eks_utils import scale_nodes_and_wait, create_or_update_k8s
 
-from utils.taskThread import (
+from modules.utils.taskThread import (
     taskThread,
 )
 
-from utils.aws_utils import list_files_in_bucket, check_aws_validity
+from modules.utils.aws_utils import list_files_in_bucket, check_aws_validity
 
-from utils.sqs import (
+from modules.utils.sqs import (
     clean_previous_sqs_message,
     receive_queue_message,
     delete_queue_message,
 )
 
-from utils.process_log import process_logs_from_s3
+from modules.utils.process_log import process_logs_from_s3
 
 from dotenv import load_dotenv
 

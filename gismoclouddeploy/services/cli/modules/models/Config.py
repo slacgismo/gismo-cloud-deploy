@@ -1,4 +1,4 @@
-from utils.read_wirte_io import read_yaml
+from modules.utils.read_wirte_io import read_yaml
 import logging
 
 logger = logging.getLogger()

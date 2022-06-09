@@ -1,8 +1,8 @@
 from subprocess import PIPE, run
 from kubernetes import client, config
-from models.Config import Config
-from models.SolarParams import SolarParams
-from models.Config import Config
+from modules.models.Config import Config
+from modules.models.SolarParams import SolarParams
+from modules.models.Config import Config
 import logging
 
 logger = logging.getLogger()

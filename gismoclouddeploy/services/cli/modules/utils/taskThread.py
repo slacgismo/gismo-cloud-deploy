@@ -3,15 +3,15 @@ import time
 import logging
 import json
 import botocore
-from models.Config import Config
-from utils.aws_utils import (
+from modules.models.Config import Config
+from modules.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
 )
-from models.SNSSubjectsAlert import SNSSubjectsAlert
+from server.models.SNSSubjectsAlert import SNSSubjectsAlert
 
-from utils.invoke_function import invoke_docekr_exec_revoke_task
-from utils.sqs import (
+from modules.utils.invoke_function import invoke_docekr_exec_revoke_task
+from modules.utils.sqs import (
     receive_queue_message,
     delete_queue_message,
     purge_queue,
@@ -20,9 +20,9 @@ from utils.sqs import (
 from typing import List
 
 
-from utils.eks_utils import scale_nodes_and_wait
+from modules.utils.eks_utils import scale_nodes_and_wait
 
-from utils.process_log import process_logs_from_s3
+from modules.utils.process_log import process_logs_from_s3
 
 
 logger = logging.getLogger()
