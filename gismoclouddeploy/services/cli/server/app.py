@@ -1,10 +1,12 @@
+from cmath import log
 import logging
 
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 
+from models.Configurations import make_configurations_obj_from_str
 
-from models.Configure import make_configure_from_str
+# from models.Configure import make_configure_from_str
 
 # from project.solardata.utils import connect_aws_client, find_matched_column_name_set
 from project.utils.utils import connect_aws_client, find_matched_column_name_set
@@ -13,13 +15,9 @@ import time
 import os
 
 import re
-
-# from project.solardata.tasks import (
-#     # process_data_task,
-#     loop_tasks_status_task,
-# )
-
 from project.tasks import process_data_task, loop_tasks_status_task
+
+# from project.tasks import process_data_task, loop_tasks_status_task
 
 from project.utils.utils import get_process_filenamef_base_on_command
 
@@ -34,38 +32,46 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
 
-
 # ***************************
 # Process first n files : first_n_files is integer
 # Process all files  : first_n_files is 0
 # Process define files : first_n_files is None
 # ***************************
-@cli.command("process_first_n_files")
-@click.argument("config_params_str", nargs=1)
-@click.argument("solardata_params_str", nargs=1)
-@click.argument("first_n_files", nargs=1)
-def process_first_n_files(
-    config_params_str: str, solardata_params_str: str, first_n_files: str
-):
-    # track scheduler status start
-    configure_obj = make_configure_from_str(config_params_str)
 
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=configure_obj.aws_access_key,
-        secret=configure_obj.aws_secret_access_key,
-        region=configure_obj.aws_region,
-    )
+
+@cli.command("process_files")
+@click.argument("config_params_str", nargs=1)
+@click.argument("first_n_files", nargs=1)
+def process_files(config_params_str: str, first_n_files: str):
+    # logger.info(f"first_n_files {first_n_files } config {config_params_str} ")
+    try:
+        configure_obj = make_configurations_obj_from_str(config_params_str)
+    except Exception as e:
+        return f"Convert configuratios josn string failed: {e} "
+    # connect to S3
     task_ids = []
     try:
-        n_files = get_process_filenamef_base_on_command(
-            first_n_files=first_n_files,
-            configure_obj=configure_obj,
-            s3_client=s3_client,
+        s3_client = connect_aws_client(
+            client_name="s3",
+            key_id=configure_obj.aws_access_key,
+            secret=configure_obj.aws_secret_access_key,
+            region=configure_obj.aws_region,
         )
     except Exception as e:
-        logger.error(f"Get filenames error: {e}")
-        return
+        return "AWS validation fail"
+    try:
+
+        logger.info(f"get process filesname {first_n_files} {configure_obj.files}")
+
+        n_files = get_process_filenamef_base_on_command(
+            first_n_files=first_n_files,
+            bucket=configure_obj.bucket,
+            default_files=configure_obj.files,
+            s3_client=s3_client,
+        )
+
+    except Exception as e:
+        return f"Get filenames error: {e}"
 
     for file in n_files:
         # implement partial match
@@ -83,9 +89,9 @@ def process_first_n_files(
             postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
             temp_saved_filename = f"{prefix}-{postfix}-{filename}"
             start_time = time.time()
-
             task_id = process_data_task.apply_async(
                 [
+                    configure_obj.selected_algorithm,
                     configure_obj.dynamodb_tablename,
                     configure_obj.bucket,
                     file,
@@ -94,15 +100,15 @@ def process_first_n_files(
                     configure_obj.saved_tmp_path,
                     temp_saved_filename,
                     start_time,
-                    solardata_params_str,
+                    configure_obj.algorithms,
                     configure_obj.aws_access_key,
                     configure_obj.aws_secret_access_key,
                     configure_obj.aws_region,
                     configure_obj.sns_topic,
                 ]
             )
-            task_ids.append(str(task_id))
 
+            task_ids.append(str(task_id))
     # loop the task status in celery task
     loop_tasks_status_task.apply_async(
         [

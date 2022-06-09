@@ -4,7 +4,9 @@ import pandas as pd
 # from models.WorkerStatus import make_worker_object_from_dataframe
 from server.models.WorkerStatus import make_worker_object_from_dataframe
 from modules.utils.eks_utils import match_pod_ip_to_node_name
-from modules.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
+
+# from modules.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
+from server.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
 
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff

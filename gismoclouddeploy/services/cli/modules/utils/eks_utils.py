@@ -1,7 +1,8 @@
 import time
 from kubernetes import client, config
+from server.models.Configurations import Configurations
 
-from modules.models.Config import Config
+# from modules.models.Configurations import Configurations
 import logging
 import yaml
 
@@ -61,7 +62,7 @@ def wait_container_ready(
 
 
 def scale_nodes_and_wait(
-    scale_node_num: int, counter: int, delay: int, config_params_obj: Config
+    scale_node_num: int, counter: int, delay: int, config_params_obj: Configurations
 ) -> bool:
     try:
         target_node_number = int(scale_node_num)
@@ -188,7 +189,7 @@ def create_k8s_from_yaml(file_path: str, file_name: str, app_name: str) -> bool:
         raise e
 
 
-def create_or_update_k8s(config_params_obj: Config, env: str = "local"):
+def create_or_update_k8s(config_params_obj: Configurations, env: str = "local"):
     """Read worker config, if the replicas of woker is between from config.yaml and k8s/k8s-aws or k8s/k8s-local
     Update the replicas number
     """

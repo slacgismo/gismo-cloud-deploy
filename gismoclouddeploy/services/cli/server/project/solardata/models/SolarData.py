@@ -1,4 +1,4 @@
-# from project import db
+import json
 
 
 class SolarData(object):

@@ -1,4 +1,6 @@
+import json
 import click
+from os.path import exists
 
 from modules.models.Node import Node
 
@@ -7,22 +9,22 @@ import time
 from kubernetes import client, config
 
 import os
-from modules.utils.invoke_function import (
-    invoke_docekr_exec_run_process_first_n_files,
-)
-from modules.models.SolarParams import SolarParams
-from modules.models.Config import Config
+from modules.utils.invoke_function import invoke_exec_run_process_files
 
-
-from modules.utils.aws_utils import connect_aws_client
-
+# from modules.utils.aws_utils import connect_aws_client
 from modules.utils.eks_utils import scale_nodes_and_wait, create_or_update_k8s
-
 from modules.utils.taskThread import (
     taskThread,
 )
 
-from modules.utils.aws_utils import list_files_in_bucket, check_aws_validity
+# from modules.utils.read_wirte_io import read_yaml
+# from modules.utils.aws_utils import list_files_in_bucket, check_aws_validity
+
+from server.utils.aws_utils import (
+    list_files_in_bucket,
+    check_aws_validity,
+    connect_aws_client,
+)
 
 from modules.utils.sqs import (
     clean_previous_sqs_message,
@@ -31,6 +33,12 @@ from modules.utils.sqs import (
 )
 
 from modules.utils.process_log import process_logs_from_s3
+from server.models.Configurations import Configurations
+
+from modules.utils.read_wirte_io import (
+    import_yaml_and_convert_to_json_str,
+    make_config_obj_from_yaml,
+)
 
 from dotenv import load_dotenv
 
@@ -64,48 +72,41 @@ def run_process_files(number, delete_nodes, configfile):
     except Exception as e:
         logger.error(f"AWS credential failed: {e}")
         return
-    # convert yaml and aws credentials to json and pass into kubernetes
-    try:
-        solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(
-            f"./config/{configfile}"
+
+    # check config exist
+    config_yaml = f"./config/{configfile}"
+
+    if exists(config_yaml) is False:
+        logger.warning(
+            f"./config/{configfile} not exist, use default config.yaml instead"
         )
-        config_params_obj = Config.import_config_from_yaml(
-            f"./config/{configfile}",
+        config_yaml = f"./config/config.yaml"
+
+    try:
+        config_params_obj = make_config_obj_from_yaml(
+            yaml_file=config_yaml,
+            aws_access_key=AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+            aws_region=AWS_DEFAULT_REGION,
+            sns_topic=SNS_TOPIC,
+        )
+        config_params_str = import_yaml_and_convert_to_json_str(
+            yaml_file=config_yaml,
             aws_access_key=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             aws_region=AWS_DEFAULT_REGION,
             sns_topic=SNS_TOPIC,
         )
     except Exception as e:
+        logger.error(f"Convert yaml  error:{e}")
+        return
 
-        logger.error(
-            " ================================== ERROR ========================================= "
-        )
-        logger.error(
-            f" ========= Could not find {configfile} {e}========================================= "
-        )
-        logger.error(
-            "======== Apply ./config/config.yaml file instead ================================ "
-        )
-        logger.error(
-            " ================================================================================== "
-        )
-        solardata_parmas_obj = SolarParams.import_solar_params_from_yaml(
-            "./config/config.yaml"
-        )
-        config_params_obj = Config.import_config_from_yaml(
-            file="./config/config.yaml",
-            aws_access_key=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            aws_region=AWS_DEFAULT_REGION,
-            sns_topic=SNS_TOPIC,
-        )
-    # step 1 . check node status from local or AWS
-
+    # check node status from local or AWS
     if config_params_obj.environment == "AWS":
         logger.info(" ============ Running on AWS ===============")
         config_params_obj.container_type = "kubernetes"
         config_params_obj.container_name = "webapp"
+
         scale_nodes_and_wait(
             scale_node_num=int(config_params_obj.eks_nodes_number),
             counter=int(config_params_obj.scale_eks_nodes_wait_time),
@@ -128,8 +129,7 @@ def run_process_files(number, delete_nodes, configfile):
             except Exception as e:
                 logger.error(f"Create or update k8s error :{e}")
                 return
-
-    # # # step 2 . clear sqs
+    # clear sqs
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client(
         client_name="sqs",
@@ -141,18 +141,17 @@ def run_process_files(number, delete_nodes, configfile):
         sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1
     )
 
+    # invoke command
     total_task_num = 0
-
     if number is None:
         logger.info(" ========= Process default files in config.yam ========= ")
         try:
 
-            invoke_docekr_exec_run_process_first_n_files(
-                config_params_obj,
-                solardata_parmas_obj,
-                number,
-                config_params_obj.container_type,
-                config_params_obj.container_name,
+            invoke_exec_run_process_files(
+                config_params_str=config_params_str,
+                container_type=config_params_obj.container_type,
+                container_name=config_params_obj.container_name,
+                first_n_files=number,
             )
 
             total_task_num = len(config_params_obj.files) + 1
@@ -180,12 +179,11 @@ def run_process_files(number, delete_nodes, configfile):
                 )
                 total_task_num = int(number) + 1
             try:
-                invoke_docekr_exec_run_process_first_n_files(
-                    config_params_obj,
-                    solardata_parmas_obj,
-                    number,
-                    config_params_obj.container_type,
-                    config_params_obj.container_name,
+                invoke_exec_run_process_files(
+                    config_params_str=config_params_str,
+                    container_type=config_params_obj.container_type,
+                    container_name=config_params_obj.container_name,
+                    first_n_files=number,
                 )
 
             except Exception as e:
@@ -195,7 +193,6 @@ def run_process_files(number, delete_nodes, configfile):
         else:
             print(f"error input {number}")
             return
-    # long pulling
     thread = taskThread(
         threadID=1,
         name="sqs",
@@ -251,7 +248,7 @@ def check_nodes_status():
 
 
 def process_logs_and_plot():
-    config_params_obj = Config.import_config_from_yaml(
+    config_params_obj = make_config_obj_from_yaml(
         "./config/config.yaml",
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,

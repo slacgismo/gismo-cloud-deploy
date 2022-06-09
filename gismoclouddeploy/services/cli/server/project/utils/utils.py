@@ -1,4 +1,5 @@
 from ast import Str
+from cmath import log
 import botocore
 from utils.aws_utils import (
     connect_aws_client,
@@ -13,7 +14,7 @@ from utils.aws_utils import (
 
 from project.solardata.models.SolarParams import SolarParams
 
-from models.Configure import Configure
+# from models.Configure import Configure
 
 import pandas as pd
 from os.path import exists
@@ -480,20 +481,22 @@ def find_matched_column_name_set(
 
 
 def get_process_filenamef_base_on_command(
-    first_n_files: str, configure_obj: Configure, s3_client: "botocore.client.S3"
+    first_n_files: str,
+    bucket: str,
+    default_files: List[str],
+    s3_client: "botocore.client.S3",
 ) -> List[str]:
+
     n_files = []
-    files_dict = list_files_in_bucket(
-        bucket_name=configure_obj.bucket, s3_client=s3_client
-    )
+    files_dict = list_files_in_bucket(bucket_name=bucket, s3_client=s3_client)
 
     if first_n_files == "None":
         logger.info("Process defined files")
-        n_files = configure_obj.files
+        n_files = default_files
     else:
         try:
             if int(first_n_files) == 0:
-                logger.info(f"Process all files in {configure_obj.bucket}")
+                logger.info(f"Process all files in {bucket}")
                 for file in files_dict:
                     n_files.append(file["Key"])
             else:
@@ -532,3 +535,134 @@ def check_solver_licence(
             )
         except Exception as e:
             raise e
+
+
+def str_to_bool(s: str):
+
+    if type(s) == type(True):
+        return s
+
+    if type(s) != str:
+        raise TypeError
+
+    if s == "True":
+        return True
+    elif s == "False":
+        return False
+    else:
+        raise ValueError
+
+
+def make_solardata_params_obj_from_json(algorithm_json: str) -> SolarParams:
+    try:
+
+        solar_params_json = algorithm_json["solar_data_tools"]
+
+        power_col = str(solar_params_json["power_col"])
+        min_val = solar_params_json["min_val"]
+        if min_val == "None":
+            min_val = None
+        else:
+            min_val = int(solar_params_json["min_val"])
+
+        max_val = solar_params_json["max_val"]
+        if max_val == "None":
+            max_val = None
+        else:
+            max_val = int(solar_params_json["max_val"])
+
+        zero_night = str_to_bool(solar_params_json["zero_night"])
+        interp_day = str_to_bool(solar_params_json["interp_day"])
+        fix_shifts = str_to_bool(solar_params_json["fix_shifts"])
+
+        density_lower_threshold = float(solar_params_json["density_lower_threshold"])
+        density_upper_threshold = float(solar_params_json["density_upper_threshold"])
+        linearity_threshold = float(solar_params_json["linearity_threshold"])
+        clear_day_smoothness_param = float(
+            solar_params_json["clear_day_smoothness_param"]
+        )
+        clear_day_energy_param = float(solar_params_json["clear_day_energy_param"])
+        verbose = str_to_bool(solar_params_json["verbose"])
+
+        start_day_ix = solar_params_json["start_day_ix"]
+        if start_day_ix == "None":
+            start_day_ix = None
+        else:
+            start_day_ix = int(solar_params_json["start_day_ix"])
+
+        end_day_ix = solar_params_json["end_day_ix"]
+        if end_day_ix == "None":
+            end_day_ix = None
+        else:
+            end_day_ix = int(solar_params_json["end_day_ix"])
+
+        c1 = solar_params_json["c1"]
+        if c1 == "None":
+            c1 = None
+        else:
+            c1 = float(solar_params_json["c1"])
+
+        c2 = solar_params_json["c2"]
+        if c2 == "None":
+            c2 = None
+        else:
+            c2 = float(solar_params_json["c2"])
+
+        solar_noon_estimator = str(solar_params_json["solar_noon_estimator"])
+        correct_tz = str_to_bool(solar_params_json["correct_tz"])
+        extra_cols = str(solar_params_json["extra_cols"])
+
+        extra_cols = solar_params_json["extra_cols"]
+        if extra_cols == "None":
+            extra_cols = None
+        else:
+            extra_cols = str(solar_params_json["extra_cols"])
+
+        daytime_threshold = float(solar_params_json["daytime_threshold"])
+        units = str(solar_params_json["units"])
+
+        solver = solar_params_json["solver"]
+
+        if solver == "None":
+            solver = None
+        else:
+            solver_name = solver["name"]
+            solver_lic_bucket = solver["lic_bucket"]
+            solver_lic_file_path_name = solver["lic_file_path_name"]
+            solver_saved_lic_file_path = solver["lic_saved_target_path"]
+            solver_saved_lic_file_name = solver["lic_saved_target_name"]
+        logger.info("========solver")
+        solarparams = SolarParams(
+            power_col,
+            min_val,
+            max_val,
+            zero_night,
+            interp_day,
+            fix_shifts,
+            density_lower_threshold,
+            density_upper_threshold,
+            linearity_threshold,
+            clear_day_smoothness_param,
+            clear_day_energy_param,
+            verbose,
+            start_day_ix,
+            end_day_ix,
+            c1,
+            c2,
+            solar_noon_estimator,
+            correct_tz,
+            extra_cols,
+            daytime_threshold,
+            units,
+            solver,
+            solver_name=solver_name,
+            solver_lic_bucket=solver_lic_bucket,
+            solver_lic_file_path_name=solver_lic_file_path_name,
+            solver_saved_lic_file_path=solver_saved_lic_file_path,
+            solver_saved_lic_file_name=solver_saved_lic_file_name,
+        )
+
+        return solarparams
+    except Exception as e:
+        print(f"conver solardata parameter error :{e}")
+        raise e

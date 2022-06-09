@@ -3,6 +3,7 @@ import pandas as pd
 import botocore
 import os
 import os.path
+from typing import List
 
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
@@ -146,7 +147,6 @@ def read_all_csv_from_s3_and_parse_dates_from(
             infer_datetime_format=True,
         )
         result_df["timestamp"] = pd.to_datetime(result_df["timestamp"], unit="s")
-        print(f"result df ---> {result_df}")
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
@@ -255,3 +255,32 @@ def download_solver_licence_from_s3_and_save(
         s3_client.download_file(bucket_name, file_path_name, saved_file_path_name)
     except Exception as e:
         raise e
+
+
+def list_files_in_bucket(
+    bucket_name: str, key_id: str, secret_key: str, aws_region: str
+) -> List[str]:
+
+    """Get filename and size from S3 , remove non csv file"""
+    s3_client = connect_aws_client(
+        client_name="s3", key_id=key_id, secret=secret_key, region=aws_region
+    )
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    files = response["Contents"]
+    filterFiles = []
+    for file in files:
+        split_tup = os.path.splitext(file["Key"])
+        file_extension = split_tup[1]
+        if file_extension == ".csv":
+            obj = {
+                "Key": file["Key"],
+                "Size": file["Size"],
+            }
+            filterFiles.append(obj)
+    return filterFiles
+
+
+def check_environment_is_aws() -> bool:
+    my_user = os.environ.get("USER")
+    is_aws = True if "ec2" in my_user else False
+    return is_aws

@@ -70,4 +70,4 @@ override.tf.json
 .vscode
 .dev-sample
 secret.yaml
-test.png
+runtime.png

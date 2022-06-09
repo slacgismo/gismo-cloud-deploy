@@ -1,9 +1,12 @@
+from cmath import log
+import imp
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
 
 import os
-from project.solardata.models.SolarParams import make_solardata_params_from_str
+from project.solardata.models.SolarParams import SolarParams
+
 from models.WorkerStatus import WorkerStatus
 from models.SNSSubjectsAlert import SNSSubjectsAlert
 import time
@@ -17,6 +20,7 @@ from project.utils.utils import (
     save_logs_from_dynamodb_to_s3,
     remove_all_items_from_dynamodb,
     publish_message_sns,
+    make_solardata_params_obj_from_json,
 )
 
 from project.solardata.solardatatools import process_solardata_tools
@@ -66,6 +70,7 @@ def track_logs(
 @shared_task(bind=True)
 def process_data_task(
     self,
+    selected_algorithm: str,
     table_name: str,
     bucket_name: str,
     file_path_name: str,
@@ -74,7 +79,7 @@ def process_data_task(
     saved_file_path: str,
     saved_filename: str,
     start_time: str,
-    solar_params_str: str,
+    algorithms_params: str,
     aws_access_key: str,
     aws_secret_access_key: str,
     aws_region: str,
@@ -82,20 +87,15 @@ def process_data_task(
 ) -> str:
     startime = str(time.time())
     self.update_state(state=WorkerState.PROGRESS.name, meta={"start": startime})
-    try:
-        solar_params_obj = make_solardata_params_from_str(solar_params_str)
-    except Exception as e:
-        return f"solardata params conifg error: {e}"
-
     task_id = self.request.id
     subject = task_id
     message = "init process_data_task"
 
+    # logger.info(selected_algorithm)
+    # logger.info(algorithms_params)
     try:
-        process_file_task_id = str(self.request.id)
-
         track_logs(
-            task_id=process_file_task_id,
+            task_id=task_id,
             function_name="process_data_task",
             time=startime,
             action="idle-stop/busy-start",
@@ -107,42 +107,52 @@ def process_data_task(
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
+    except Exception as e:
+        return f"track logs error:{e}"
 
-        process_solardata_tools(
-            task_id=process_file_task_id,
-            bucket_name=bucket_name,
-            file_path_name=file_path_name,
-            column_name=column_name,
-            start_time=start_time,
-            saved_bucket=saved_bucket,
-            saved_file_path=saved_file_path,
-            saved_filename=saved_filename,
-            solarParams=solar_params_obj,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
+    try:
+        if selected_algorithm == "None":
+            return "No selected algorithm"
 
-        message = "end of process data task"
+        if selected_algorithm == "solar_data_tools":
+            solar_params_obj = make_solardata_params_obj_from_json(
+                algorithm_json=algorithms_params
+            )
+            process_solardata_tools(
+                task_id=task_id,
+                bucket_name=bucket_name,
+                file_path_name=file_path_name,
+                column_name=column_name,
+                start_time=start_time,
+                saved_bucket=saved_bucket,
+                saved_file_path=saved_file_path,
+                saved_filename=saved_filename,
+                solarParams=solar_params_obj,
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region,
+            )
+            message = "end of process data task"
     except Exception as e:
         subject = SNSSubjectsAlert.PROCESS_FILE_ERROR.name
         message = f"error:{e}"
         logger.error(f"Error: {file_path_name} {column_name} :  {message} ")
-
-    track_logs(
-        task_id=process_file_task_id,
-        function_name="process_data_task",
-        action="busy-stop/idle-start",
-        time=str(time.time()),
-        message=message,
-        table_name=table_name,
-        process_file_name=file_path_name,
-        column_name=column_name,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
-
+    try:
+        track_logs(
+            task_id=task_id,
+            function_name="process_data_task",
+            action="busy-stop/idle-start",
+            time=str(time.time()),
+            message=message,
+            table_name=table_name,
+            process_file_name=file_path_name,
+            column_name=column_name,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
+    except Exception as e:
+        return f"track logs error:{e}"
     # send message
     try:
         mesage_id = publish_message_sns(
@@ -156,7 +166,7 @@ def process_data_task(
         logger.info(f" Send to SNS, message: {mesage_id}")
     except Exception as e:
         logger.error("Publish SNS Error")
-        raise e
+        return f"Publish SNS Error:{e}"
 
     if subject == SNSSubjectsAlert.PROCESS_FILE_ERROR.name:
         self.update_state(state=WorkerState.FAILED.name, meta={"start": startime})

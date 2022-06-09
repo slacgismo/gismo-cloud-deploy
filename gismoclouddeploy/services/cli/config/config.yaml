@@ -11,7 +11,7 @@ aws_config:
   cluster_name: "gcd-eks-cluster"
   nodegroup_name: "gcd-nodegroup"
   eks_nodes_number: "1" # total ec2 instances
-  scale_eks_nodes_wait_time : "80" # in second
+  scale_eks_nodes_wait_time : "90" # in second
   interval_of_check_sqs_in_second: "2" # in second
   interval_of_total_wait_time_of_sqs: "360" # in second.
 
@@ -23,42 +23,43 @@ files_config:
   bucket: "pv.insight.nrel"
   files: ["PVO/PVOutput/10059.csv"]
   column_names: ["Power(W)","(W)"] # partial match
+  selected_algorithm: "solar_data_tools"
 
 output:
   saved_bucket: "pv.insight.test"
   saved_tmp_path: "tmp"
-  saved__target_path: "results"
-  saved__target_filename: "04262022_results.csv"
+  saved_target_path: "results"
+  saved_target_filename: "04262022_results.csv"
   dynamodb_tablename: "GCD-LOGS_TABLE" # pre-define in AWS us-east-2
   saved_logs_target_path: "results"
   saved_logs_target_filename: "logs.csv"
 
-
-solardata:
-  power_col: "None"
-  min_val: -5
-  max_val: "None"
-  zero_night: True
-  interp_day: True
-  fix_shifts: True
-  density_lower_threshold: 0.6
-  density_upper_threshold: 1.05
-  linearity_threshold: 0.1
-  clear_day_smoothness_param: 0.9
-  clear_day_energy_param: 0.8
-  verbose: False
-  start_day_ix: "None"
-  end_day_ix: "None"
-  c1: "None"
-  c2: 500.0
-  solar_noon_estimator: "com"
-  correct_tz: True
-  extra_cols: "None"
-  daytime_threshold: "0.1"
-  units: "W"
-  solver:
-    name: "MOSEK"
-    lic_bucket: "slac.gismo.ci.artifacts"
-    lic_file_path_name: "mosek.license/mosek.lic"
-    lic_saved_target_path: "/root/mosek"
-    lic_saved_target_name: "mosek.lic"
+algorithms:
+  solar_data_tools:
+    power_col: "None"
+    min_val: -5
+    max_val: "None"
+    zero_night: True
+    interp_day: True
+    fix_shifts: True
+    density_lower_threshold: 0.6
+    density_upper_threshold: 1.05
+    linearity_threshold: 0.1
+    clear_day_smoothness_param: 0.9
+    clear_day_energy_param: 0.8
+    verbose: False
+    start_day_ix: "None"
+    end_day_ix: "None"
+    c1: "None"
+    c2: 500.0
+    solar_noon_estimator: "com"
+    correct_tz: True
+    extra_cols: "None"
+    daytime_threshold: "0.1"
+    units: "W"
+    solver:
+      name: "MOSEK"
+      lic_bucket: "slac.gismo.ci.artifacts"
+      lic_file_path_name: "mosek.license/mosek.lic"
+      lic_saved_target_path: "/root/mosek"
+      lic_saved_target_name: "mosek.lic"

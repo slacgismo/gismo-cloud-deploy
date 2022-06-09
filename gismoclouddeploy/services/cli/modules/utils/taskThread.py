@@ -3,11 +3,18 @@ import time
 import logging
 import json
 import botocore
-from modules.models.Config import Config
-from modules.utils.aws_utils import (
+from server.models.Configurations import Configurations
+
+# from modules.models.Configurations import Configurations
+# from modules.utils.aws_utils import (
+#     connect_aws_client,
+#     check_environment_is_aws,
+# )
+from server.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
 )
+
 from server.models.SNSSubjectsAlert import SNSSubjectsAlert
 
 from modules.utils.invoke_function import invoke_docekr_exec_revoke_task
@@ -40,7 +47,7 @@ class taskThread(threading.Thread):
         wait_time: int,
         sqs_url: str,
         num_task: int,
-        config_params_obj: Config,
+        config_params_obj: Configurations,
         delete_nodes_after_processing: bool,
         dlq_url: str,
         key_id: str,
@@ -101,7 +108,7 @@ def long_pulling_sqs(
     wait_time: int,
     sqs_url: str,
     num_task: int,
-    config_params_obj: Config,
+    config_params_obj: Configurations,
     delete_nodes_after_processing: bool,
     dlq_url: str,
     key_id: str,
