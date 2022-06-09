@@ -20,10 +20,6 @@ def create_app(config_name=None):
     app.config.from_object(config[config_name])
     ext_celery.init_app(app)
 
-    from project.solardata import solardata_blueprint
-
-    app.register_blueprint(solardata_blueprint)
-
     # shell context for flask cli
     @app.shell_context_processor
     def ctx():

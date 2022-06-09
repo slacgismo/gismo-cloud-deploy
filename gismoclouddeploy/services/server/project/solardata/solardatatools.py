@@ -3,14 +3,19 @@ from project.solardata.models.SolarData import SolarData
 import solardatatools
 import socket
 from datetime import datetime
-from project.solardata.utils import save_solardata_to_file, check_solver_licence
+
+# from project.solardata.utils import save_solardata_to_file, check_solver_licence
 from os.path import exists
-from project.solardata.aws_utils import (
+
+# from project.solardata.aws_utils import (
+#     read_csv_from_s3_with_column_and_time,
+#     connect_aws_client,
+# )
+from project.utils.utils import save_solardata_to_file, check_solver_licence
+from project.utils.aws_utils import (
     read_csv_from_s3_with_column_and_time,
     connect_aws_client,
 )
-
-
 import logging
 import time
 
@@ -95,7 +100,7 @@ def process_solardata_tools(
     try:
         dh = solardatatools.DataHandler(df)
         logger.info(
-            f"run pipeline solarParams.verbose: {solarParams.verbose}, solver: {solarParams.solver}"
+            f"run pipeline solarParams.verbose: {solarParams.verbose}, solver: {solarParams.solver_name}"
         )
         dh.run_pipeline(
             power_col=column_name,

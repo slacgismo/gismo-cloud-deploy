@@ -4,20 +4,24 @@ from project import create_app, ext_celery
 from flask.cli import FlaskGroup
 
 
-from project.solardata.models.Configure import make_configure_from_str
-from project.solardata.utils import connect_aws_client, find_matched_column_name_set
+from project.models.Configure import make_configure_from_str
 
+# from project.solardata.utils import connect_aws_client, find_matched_column_name_set
+from project.utils.utils import connect_aws_client, find_matched_column_name_set
 import click
 import time
 import os
 
 import re
-from project.solardata.tasks import (
-    process_data_task,
-    loop_tasks_status_task,
-)
 
-from project.solardata.utils import get_process_filenamef_base_on_command
+# from project.solardata.tasks import (
+#     # process_data_task,
+#     loop_tasks_status_task,
+# )
+
+from project.tasks import process_data_task, loop_tasks_status_task
+
+from project.utils.utils import get_process_filenamef_base_on_command
 
 app = create_app()
 celery = ext_celery.celery
