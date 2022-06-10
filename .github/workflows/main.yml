@@ -6,11 +6,11 @@ name: Build And Test
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
   push:
-    branches: [ main ]
+    branches: [ main, develop ]
     paths-ignore:
       - '**/README.md'
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
     paths-ignore:
       - '**/README.md'
 
@@ -36,9 +36,9 @@ jobs:
           echo Add other actions to build,
           echo test, and deploy your project.
       - name: Build and run the stack
-        run: docker-compose -f gismoclouddeploy/services/docker-compose.yml up -d
+        run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml up -d
       - name: Check running containers
-        run: docker-compose -f gismoclouddeploy/services/docker-compose.yml ps -a
+        run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml ps -a
       # - name: Test with pytest
       #   env:
       #     COMPOSE_INTERACTIVE_NO_CLI: 1

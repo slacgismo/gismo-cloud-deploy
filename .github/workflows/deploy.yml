@@ -30,9 +30,9 @@ jobs:
             id: login-ecr
             uses: aws-actions/amazon-ecr-login@v1
           - name: Build and run the stack
-            run: docker-compose -f gismoclouddeploy/services/docker-compose.yml up -d
+            run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml up -d
           - name: Check running containers
-            run: docker-compose -f gismoclouddeploy/services/docker-compose.yml ps
+            run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml ps
           - name: Tag images
             run: |
               docker image tag worker ${{ secrets.ECR_ECR_REGISTRY }}/worker:latest
