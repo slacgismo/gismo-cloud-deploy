@@ -18,7 +18,7 @@ import pandas as pd
 from os.path import exists
 
 # from project.solardata.models.SolarData import SolarData
-from models.WorkerStatus import WorkerStatus
+from models.LogsInfo import LogsInfo
 
 import os
 from io import StringIO
@@ -138,7 +138,7 @@ def remove_all_items_from_dynamodb(
 
 def put_item_to_dynamodb(
     table_name: str,
-    workerstatus: WorkerStatus,
+    LogsInfo: LogsInfo,
     aws_access_key: str,
     aws_secret_access_key: str,
     aws_region: str,
@@ -152,16 +152,16 @@ def put_item_to_dynamodb(
     table = dynamodb_resource.Table(table_name)
     response = table.put_item(
         Item={
-            "host_name": workerstatus.host_name,
-            "host_ip": workerstatus.host_ip,
-            "task_id": str(workerstatus.task_id),
-            "pid": workerstatus.pid,
-            "function_name": workerstatus.function_name,
-            "action": workerstatus.action,
-            "timestamp": workerstatus.time,
-            "message": workerstatus.message,
-            "filename": workerstatus.filename,
-            "column_name": workerstatus.column_name,
+            "host_name": LogsInfo.host_name,
+            "host_ip": LogsInfo.host_ip,
+            "task_id": str(LogsInfo.task_id),
+            "pid": LogsInfo.pid,
+            "function_name": LogsInfo.function_name,
+            "action": LogsInfo.action,
+            "timestamp": LogsInfo.time,
+            "message": LogsInfo.message,
+            "filename": LogsInfo.filename,
+            "column_name": LogsInfo.column_name,
         }
     )
     return response
@@ -470,7 +470,7 @@ def track_logs(
     hostname = socket.gethostname()
     host_ip = socket.gethostbyname(hostname)
     pid = os.getpid()
-    start_status = WorkerStatus(
+    start_status = LogsInfo(
         host_name=hostname,
         task_id=task_id,
         host_ip=host_ip,
@@ -485,7 +485,7 @@ def track_logs(
 
     put_item_to_dynamodb(
         table_name=table_name,
-        workerstatus=start_status,
+        LogsInfo=start_status,
         aws_access_key=aws_access_key,
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region,
@@ -507,3 +507,22 @@ def list_files_in_folder_of_bucket(
         if file_extension == ".csv" and path == file_path:
             filterFiles.append(file["Key"])
     return filterFiles
+
+
+def make_response(subject: str = None, messages: str = None) -> str:
+    response = {"Subject": subject, "Messages": messages}
+    return response
+
+
+def parse_subject_from_response(response: str) -> str:
+    try:
+        return response["Subject"]
+    except Exception as e:
+        raise e
+
+
+def parse_messages_from_response(response: str) -> str:
+    try:
+        return response["Messages"]
+    except Exception as e:
+        raise e

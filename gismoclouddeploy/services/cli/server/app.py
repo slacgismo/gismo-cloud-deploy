@@ -82,45 +82,83 @@ def process_files(config_params_str: str, first_n_files: str):
             postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
             temp_saved_filename = f"{prefix}-{postfix}-{filename}"
             start_time = time.time()
-            task_id = process_data_task.apply_async(
-                [
-                    configure_obj.selected_algorithm,
-                    configure_obj.dynamodb_tablename,
-                    configure_obj.bucket,
-                    file,
-                    column,
-                    configure_obj.saved_bucket,
-                    configure_obj.saved_tmp_path,
-                    temp_saved_filename,
-                    start_time,
-                    configure_obj.algorithms,
-                    configure_obj.aws_access_key,
-                    configure_obj.aws_secret_access_key,
-                    configure_obj.aws_region,
-                    configure_obj.sns_topic,
-                ]
-            )
+            # pass input keywords to worker
+            #             task_id = args[0].request.id
+
+            task_input_keywords = {
+                "selected_algorithm": configure_obj.selected_algorithm,
+                "table_name": configure_obj.dynamodb_tablename,
+                "bucket_name": configure_obj.bucket,
+                "file_path_name": file,
+                "column_name": column,
+                "saved_bucket": configure_obj.saved_bucket,
+                "saved_file_path": configure_obj.saved_tmp_path,
+                "saved_filename": temp_saved_filename,
+                "start_time": start_time,
+                "algorithms_params": configure_obj.algorithms,
+                "aws_access_key": configure_obj.aws_access_key,
+                "aws_secret_access_key": configure_obj.aws_secret_access_key,
+                "aws_region": configure_obj.aws_region,
+                "sns_topic": configure_obj.sns_topic,
+            }
+
+            task_id = process_data_task.delay(**task_input_keywords)
+            # task_id = process_data_task.apply_async(
+            #     [
+            #         configure_obj.selected_algorithm,
+            #         configure_obj.dynamodb_tablename,
+            #         configure_obj.bucket,
+            #         file,
+            #         column,
+            #         configure_obj.saved_bucket,
+            #         configure_obj.saved_tmp_path,
+            #         temp_saved_filename,
+            #         start_time,
+            #         configure_obj.algorithms,
+            #         configure_obj.aws_access_key,
+            #         configure_obj.aws_secret_access_key,
+            #         configure_obj.aws_region,
+            #         configure_obj.sns_topic,
+            #     ]
+            # )
 
             task_ids.append(str(task_id))
-    # loop the task status in celery task
-    loop_tasks_status_task.apply_async(
-        [
-            configure_obj.interval_of_check_task_status,
-            configure_obj.interval_of_exit_check_status,
-            task_ids,
-            configure_obj.saved_bucket,
-            configure_obj.saved_tmp_path,
-            configure_obj.saved_target_path,
-            configure_obj.saved_target_filename,
-            configure_obj.dynamodb_tablename,
-            configure_obj.saved_logs_target_path,
-            configure_obj.saved_logs_target_filename,
-            configure_obj.aws_access_key,
-            configure_obj.aws_secret_access_key,
-            configure_obj.aws_region,
-            configure_obj.sns_topic,
-        ]
-    )
+
+    loop_task_input_keywords = {
+        "delay": configure_obj.interval_of_check_task_status,
+        "interval_of_timeout": configure_obj.interval_of_exit_check_status,
+        "task_ids": task_ids,
+        "bucket_name": configure_obj.saved_bucket,
+        "source_folder": configure_obj.saved_tmp_path,
+        "target_folder": configure_obj.saved_target_path,
+        "target_filename": configure_obj.saved_target_filename,
+        "table_name": configure_obj.dynamodb_tablename,
+        "file_path_name": "None",
+        "column_name": "None",
+        "aws_access_key": configure_obj.aws_access_key,
+        "aws_secret_access_key": configure_obj.aws_secret_access_key,
+        "aws_region": configure_obj.aws_region,
+        "sns_topic": configure_obj.sns_topic,
+    }
+    loop_tasks_status_task.delay(**loop_task_input_keywords)
+    # # loop_tasks_status_task.apply_async(
+    # #     [
+    # #         configure_obj.interval_of_check_task_status,
+    # #         configure_obj.interval_of_exit_check_status,
+    # #         task_ids,
+    # #         configure_obj.saved_bucket,
+    # #         configure_obj.saved_tmp_path,
+    # #         configure_obj.saved_target_path,
+    # #         configure_obj.saved_target_filename,
+    # #         configure_obj.dynamodb_tablename,
+    # #         configure_obj.saved_logs_target_path,
+    # #         configure_obj.saved_logs_target_filename,
+    # #         configure_obj.aws_access_key,
+    # #         configure_obj.aws_secret_access_key,
+    # #         configure_obj.aws_region,
+    # #         configure_obj.sns_topic,
+    # #     ]
+    # # )
 
 
 @cli.command("revoke_task")

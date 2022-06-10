@@ -3,19 +3,14 @@ import time
 import logging
 import json
 import botocore
-from server.models.Configurations import Configurations
 
-# from modules.models.Configurations import Configurations
-# from modules.utils.aws_utils import (
-#     connect_aws_client,
-#     check_environment_is_aws,
-# )
+
 from server.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
 )
-
-from server.models.SNSSubjectsAlert import SNSSubjectsAlert
+from server.models import Configurations
+from server.models import SNSSubjectsAlert
 
 from modules.utils.invoke_function import invoke_docekr_exec_revoke_task
 from modules.utils.sqs import (
@@ -28,7 +23,6 @@ from typing import List
 
 
 from modules.utils.eks_utils import scale_nodes_and_wait
-
 from modules.utils.process_log import process_logs_from_s3
 
 

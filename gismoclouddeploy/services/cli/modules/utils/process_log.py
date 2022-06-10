@@ -1,7 +1,7 @@
 from asyncio.log import logger
 import pandas as pd
 
-# from server.models.WorkerStatus import make_worker_object_from_dataframe
+
 from modules.utils.eks_utils import match_pod_ip_to_node_name
 from server.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
 
@@ -17,9 +17,7 @@ import botocore
 
 
 def process_df_for_gantt_separate_worker(df: pd):
-    # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
-    # print(result)
-    workerstatus_list = models.make_worker_object_from_dataframe(df)
+    LogsInfo_list = models.make_logsinfo_object_from_dataframe(df)
 
     # process timestamp into linear
     # find min
@@ -28,7 +26,7 @@ def process_df_for_gantt_separate_worker(df: pd):
     key_start = "start"
     key_end = "end"
     key_task = "task"
-    for worker in workerstatus_list:
+    for worker in LogsInfo_list:
         host_ip = worker.host_ip
         task_id = worker.task_id
         if host_ip in worker_dict:
@@ -99,7 +97,6 @@ def process_logs_subplot():
                 Resource=f"{v2['task']}:{v2['duration']}s",
                 Duration=v2["duration"],
             )
-            #     print(item)
             gantt_list.append(item)
         gantt_df = pd.DataFrame(gantt_list)
 
@@ -122,9 +119,7 @@ def process_logs_subplot():
 
 
 def process_df_for_gantt(df: pd):
-
-    # print(result)
-    workerstatus_list = models.make_worker_object_from_dataframe(df)
+    LogsInfo_list = models.make_logsinfo_object_from_dataframe(df)
 
     # process timestamp into linear
     # find min
@@ -135,7 +130,7 @@ def process_df_for_gantt(df: pd):
     key_task = "task"
     key_host_ip = "host_ip"
     key_pid = "pid"
-    for worker in workerstatus_list:
+    for worker in LogsInfo_list:
         # print(worker.task_id)
         task_id = worker.task_id
         if task_id in worker_dict:

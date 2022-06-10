@@ -1,4 +1,4 @@
-class WorkerStatus(object):
+class LogsInfo(object):
     def __init__(
         self,
         host_name,
@@ -40,13 +40,13 @@ class WorkerStatus(object):
         }
 
 
-def make_worker_object_from_dataframe(dataframe):
+def make_logsinfo_object_from_dataframe(dataframe):
     worker_list = []
     for row in dataframe.itertuples(index=True, name="Pandas"):
         if row.task_id == "":
             row.task_id = "scheduler"
 
-        worker = WorkerStatus(
+        worker = LogsInfo(
             host_name=row.host_name,
             host_ip=row.host_ip,
             task_id=row.task_id,
