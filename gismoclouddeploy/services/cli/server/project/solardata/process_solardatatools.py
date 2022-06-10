@@ -1,16 +1,27 @@
-from project.solardata.models.SolarParams import SolarParams
-from project.solardata.models.SolarData import SolarData
+# from project.solardatatools.models.SolarParams import SolarParams
+# from project.solardatatools.models.SolarData import SolarData
 import solardatatools
 import socket
 from datetime import datetime
 
-from project.utils.utils import save_solardata_to_file, check_solver_licence
-from utils.aws_utils import (
-    read_csv_from_s3_with_column_and_time,
-    connect_aws_client,
-)
+# from project.utils.tasks_utils import (
+#     save_solardata_to_file,
+#     check_solver_licence,
+
+# )
+# from utils.aws_utils import (
+#     read_csv_from_s3_with_column_and_time,
+#     connect_aws_client,
+# )
+# import solardata_models
+# import utils.aws_utils
+# import project.utils.tasks_utils
+from .solardata_models import SolarData, SolarParams
+from utils import aws_utils
+from project.tasks_utilities import tasks_utils
 import logging
 import time
+
 
 # logger config
 logger = logging.getLogger()
@@ -57,7 +68,7 @@ def process_solardata_tools(
         raise Exception("Input error")
     error_message = ""
     try:
-        s3_client = connect_aws_client(
+        s3_client = aws_utils.connect_aws_client(
             client_name="s3",
             key_id=aws_access_key,
             secret=aws_secret_access_key,
@@ -70,14 +81,14 @@ def process_solardata_tools(
     # check solver
 
     try:
-        check_solver_licence(solarParams=solarParams, s3_client=s3_client)
+        tasks_utils.check_solver_licence(solarParams=solarParams, s3_client=s3_client)
     except Exception as e:
         logger.error(f"Check solver error: {e}")
         raise e
 
     # read csv file from s3
     try:
-        df = read_csv_from_s3_with_column_and_time(
+        df = aws_utils.read_csv_from_s3_with_column_and_time(
             bucket_name=bucket_name,
             file_path_name=file_path_name,
             column_name=column_name,
@@ -175,7 +186,7 @@ def process_solardata_tools(
             normal_quality_scores=normal_quality_scores,
         )
 
-        save_solardata_to_file(
+        tasks_utils.save_solardata_to_file(
             solardata=solarData.to_json(),
             saved_bucket=saved_bucket,
             saved_file_path=saved_file_path,

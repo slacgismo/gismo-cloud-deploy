@@ -38,7 +38,7 @@ logging.basicConfig(
 )
 
 
-class taskThread(threading.Thread):
+class TaskThread(threading.Thread):
     def __init__(
         self,
         threadID: int,

@@ -1,70 +1,28 @@
-from cmath import log
-import imp
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
 
-import os
-from project.solardata.models.SolarParams import SolarParams
-
-from models.WorkerStatus import WorkerStatus
+from models.ActionState import ActionState
 from models.SNSSubjectsAlert import SNSSubjectsAlert
 import time
-import socket
+
 from models.WorkerState import WorkerState
 import json
 
-from project.utils.utils import (
-    put_item_to_dynamodb,
+from project.tasks_utilities.tasks_utils import (
     combine_files_to_file,
     save_logs_from_dynamodb_to_s3,
     remove_all_items_from_dynamodb,
     publish_message_sns,
     make_solardata_params_obj_from_json,
+    track_logs,
 )
 
-from project.solardata.solardatatools import process_solardata_tools
+from .solardata import process_solardata_tools
+
+# from project.solardata.solardatatools import process_solardata_tools
 
 logger = get_task_logger(__name__)
-
-
-def track_logs(
-    task_id: str,
-    function_name: str,
-    time: str,
-    action: str,
-    message: str,
-    process_file_name: str,
-    table_name: str,
-    column_name: str,
-    aws_access_key: str,
-    aws_secret_access_key: str,
-    aws_region: str,
-):
-
-    hostname = socket.gethostname()
-    host_ip = socket.gethostbyname(hostname)
-    pid = os.getpid()
-    start_status = WorkerStatus(
-        host_name=hostname,
-        task_id=task_id,
-        host_ip=host_ip,
-        pid=str(pid),
-        function_name=function_name,
-        action=action,
-        time=time,
-        message=message,
-        filename=process_file_name,
-        column_name=column_name,
-    )
-
-    put_item_to_dynamodb(
-        table_name=table_name,
-        workerstatus=start_status,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
 
 
 @shared_task(bind=True)
@@ -85,20 +43,18 @@ def process_data_task(
     aws_region: str,
     sns_topic: str,
 ) -> str:
+
     startime = str(time.time())
     self.update_state(state=WorkerState.PROGRESS.name, meta={"start": startime})
     task_id = self.request.id
     subject = task_id
     message = "init process_data_task"
-
-    # logger.info(selected_algorithm)
-    # logger.info(algorithms_params)
     try:
         track_logs(
             task_id=task_id,
             function_name="process_data_task",
             time=startime,
-            action="idle-stop/busy-start",
+            action=ActionState.ACTION_START.name,
             message=message,
             table_name=table_name,
             process_file_name=file_path_name,
@@ -141,7 +97,7 @@ def process_data_task(
         track_logs(
             task_id=task_id,
             function_name="process_data_task",
-            action="busy-stop/idle-start",
+            action=ActionState.ACTION_STOP.name,
             time=str(time.time()),
             message=message,
             table_name=table_name,
@@ -205,7 +161,7 @@ def loop_tasks_status_task(
         task_id=task_id,
         function_name="loop_tasks_status_task",
         time=startime,
-        action="idle-stop/busy-start",
+        action=ActionState.ACTION_START.name,
         message=message,
         table_name=table_name,
         process_file_name=None,
@@ -274,7 +230,7 @@ def loop_tasks_status_task(
             task_id=self.request.id,
             function_name="loop_tasks_status_task",
             time=str(time.time()),
-            action="busy-stop/idle-start",
+            action=ActionState.ACTION_STOP.name,
             message=message,
             table_name=table_name,
             process_file_name=None,

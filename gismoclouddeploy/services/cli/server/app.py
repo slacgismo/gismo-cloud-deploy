@@ -1,25 +1,21 @@
 from cmath import log
+import imp
 import logging
 
 from project import create_app, ext_celery
 from flask.cli import FlaskGroup
-
+from utils.aws_utils import connect_aws_client
 from models.Configurations import make_configurations_obj_from_str
-
-# from models.Configure import make_configure_from_str
-
-# from project.solardata.utils import connect_aws_client, find_matched_column_name_set
-from project.utils.utils import connect_aws_client, find_matched_column_name_set
+from utils.app_utils import (
+    find_matched_column_name_set,
+    get_process_filenamef_base_on_command,
+)
 import click
 import time
 import os
 
 import re
 from project.tasks import process_data_task, loop_tasks_status_task
-
-# from project.tasks import process_data_task, loop_tasks_status_task
-
-from project.utils.utils import get_process_filenamef_base_on_command
 
 app = create_app()
 celery = ext_celery.celery
@@ -60,9 +56,6 @@ def process_files(config_params_str: str, first_n_files: str):
     except Exception as e:
         return "AWS validation fail"
     try:
-
-        logger.info(f"get process filesname {first_n_files} {configure_obj.files}")
-
         n_files = get_process_filenamef_base_on_command(
             first_n_files=first_n_files,
             bucket=configure_obj.bucket,
@@ -70,6 +63,7 @@ def process_files(config_params_str: str, first_n_files: str):
             s3_client=s3_client,
         )
 
+        logger.info(n_files)
     except Exception as e:
         return f"Get filenames error: {e}"
 
@@ -82,7 +76,6 @@ def process_files(config_params_str: str, first_n_files: str):
             s3_client=s3_client,
         )
         for column in matched_column_set:
-
             path, filename = os.path.split(file)
             prefix = path.replace("/", "-")
             # remove special characters

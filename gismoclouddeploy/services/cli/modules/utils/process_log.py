@@ -1,12 +1,12 @@
 from asyncio.log import logger
 import pandas as pd
 
-# from models.WorkerStatus import make_worker_object_from_dataframe
-from server.models.WorkerStatus import make_worker_object_from_dataframe
+# from server.models.WorkerStatus import make_worker_object_from_dataframe
 from modules.utils.eks_utils import match_pod_ip_to_node_name
-
-# from modules.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
 from server.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
+
+
+from server import models
 
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
@@ -19,7 +19,7 @@ import botocore
 def process_df_for_gantt_separate_worker(df: pd):
     # result = [f(row[0], ..., row[5]) for row in df[['host_ip','filename','function_name','action','column_name','timestamp']].to_numpy()]
     # print(result)
-    workerstatus_list = make_worker_object_from_dataframe(df)
+    workerstatus_list = models.make_worker_object_from_dataframe(df)
 
     # process timestamp into linear
     # find min
@@ -28,7 +28,6 @@ def process_df_for_gantt_separate_worker(df: pd):
     key_start = "start"
     key_end = "end"
     key_task = "task"
-    # key_host_ip = "host_ip"
     for worker in workerstatus_list:
         host_ip = worker.host_ip
         task_id = worker.task_id
@@ -56,7 +55,7 @@ def process_df_for_gantt_separate_worker(df: pd):
                 else:
                     temp_dict[key_task] = worker.filename
 
-                if worker.action == "busy-stop/idle-start":
+                if worker.action == models.ActionState.ACTION_STOP.name:
                     temp_dict[key_end] = worker.time
                 else:
                     temp_dict[key_start] = worker.time
@@ -69,7 +68,7 @@ def process_df_for_gantt_separate_worker(df: pd):
                 info_dict[key_task] = worker.function_name
             else:
                 info_dict[key_task] = worker.filename
-            if worker.action == "busy-stop/idle-start":
+            if worker.action == models.ActionState.ACTION_STOP.name:
                 info_dict[key_end] = worker.time
             else:
                 info_dict[key_start] = worker.time
@@ -125,7 +124,7 @@ def process_logs_subplot():
 def process_df_for_gantt(df: pd):
 
     # print(result)
-    workerstatus_list = make_worker_object_from_dataframe(df)
+    workerstatus_list = models.make_worker_object_from_dataframe(df)
 
     # process timestamp into linear
     # find min
@@ -157,7 +156,7 @@ def process_df_for_gantt(df: pd):
                 info_dict[key_task] = worker.filename
             info_dict[key_host_ip] = worker.host_ip
             info_dict[key_pid] = worker.pid
-            if worker.action == "busy-stop/idle-start":
+            if worker.action == models.ActionState.ACTION_STOP.name:
                 info_dict[key_end] = worker.time
             else:
                 info_dict[key_start] = worker.time

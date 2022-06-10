@@ -2,9 +2,6 @@ from subprocess import PIPE, run
 from kubernetes import client, config
 from server.models.Configurations import Configurations
 
-# from modules.models.Configurations import Configurations
-# from modules.models.SolarParams import SolarParams
-
 import logging
 
 logger = logging.getLogger()
@@ -92,55 +89,6 @@ def invoke_exec_run_process_files(
         return res
     except Exception as e:
         raise e
-
-
-# def invoke_docekr_exec_run_process_first_n_files(
-#     config_obj: Config,
-#     solarParams_obj: SolarParams,
-#     first_n_files: int,
-#     container_type: str,
-#     container_name: str,
-# ) -> str:
-#     solardata_params_str = solarParams_obj.parse_solardata_params_to_json_str()
-#     config_params_str = config_obj.parse_config_to_json_str()
-
-#     if container_type == "docker":
-#         command = [
-#             "docker",
-#             "exec",
-#             "-it",
-#             container_name,
-#             "python",
-#             "app.py",
-#             "process_first_n_files",
-#             f"{config_params_str}",
-#             f"{solardata_params_str}",
-#             f"{first_n_files}",
-#         ]
-
-#     elif container_type == "kubernetes":
-#         # get pod name
-
-#         pod_name = get_k8s_pod_name(container_name)
-#         command = [
-#             "kubectl",
-#             "exec",
-#             pod_name,
-#             "--stdin",
-#             "--tty",
-#             "--",
-#             "python",
-#             "app.py",
-#             "process_first_n_files",
-#             f"{config_params_str}",
-#             f"{solardata_params_str}",
-#             f"{first_n_files}",
-#         ]
-#     try:
-#         res = exec_docker_command(command)
-#         return res
-#     except Exception as e:
-#         raise e
 
 
 def invoke_docekr_exec_revoke_task(

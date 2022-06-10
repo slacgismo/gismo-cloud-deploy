@@ -11,15 +11,10 @@ def check_aws_validity(key_id: str, secret: str) -> bool:
         client = boto3.client(
             "s3", aws_access_key_id=key_id, aws_secret_access_key=secret
         )
-        response = client.list_buckets()
+        client.list_buckets()
         return True
 
     except Exception as e:
-        if (
-            str(e)
-            != "An error occurred (InvalidAccessKeyId) when calling the ListBuckets operation: The AWS Access Key Id you provided does not exist in our records."
-        ):
-            return True
         return False
 
 
@@ -147,6 +142,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
             infer_datetime_format=True,
         )
         result_df["timestamp"] = pd.to_datetime(result_df["timestamp"], unit="s")
+
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
@@ -196,31 +192,6 @@ def read_csv_from_s3_with_column_and_time(
     return result_df
 
 
-def read_all_csv_from_s3(
-    bucket_name: str = None,
-    file_path_name: str = None,
-    s3_client: "botocore.client.S3" = None,
-    index_col: int = 0,
-) -> pd.DataFrame:
-
-    if bucket_name is None or file_path_name is None or s3_client is None:
-        return
-    try:
-        response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
-    except Exception as e:
-        print(f"error read  file: {file_path_name} error:{e}")
-        raise e
-    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-
-    if status == 200:
-        result_df = pd.read_csv(
-            response.get("Body"), index_col=index_col, infer_datetime_format=True
-        )
-    else:
-        print(f"Unsuccessful S3 get_object response. Status - {status}")
-    return result_df
-
-
 def read_csv_from_s3(
     bucket_name: str = None, full_path: str = None, s3_client: str = None
 ) -> pd.DataFrame:
@@ -257,14 +228,8 @@ def download_solver_licence_from_s3_and_save(
         raise e
 
 
-def list_files_in_bucket(
-    bucket_name: str, key_id: str, secret_key: str, aws_region: str
-) -> List[str]:
-
+def list_files_in_bucket(bucket_name: str, s3_client: "botocore.client.S3"):
     """Get filename and size from S3 , remove non csv file"""
-    s3_client = connect_aws_client(
-        client_name="s3", key_id=key_id, secret=secret_key, region=aws_region
-    )
     response = s3_client.list_objects_v2(Bucket=bucket_name)
     files = response["Contents"]
     filterFiles = []
