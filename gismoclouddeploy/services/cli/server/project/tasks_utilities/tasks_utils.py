@@ -38,104 +38,6 @@ logging.basicConfig(
 )
 
 
-def save_logs_from_dynamodb_to_s3(
-    table_name: str,
-    saved_bucket: str,
-    saved_file_path: str,
-    saved_filename: str,
-    aws_access_key: str,
-    aws_secret_access_key: str,
-    aws_region: str,
-):
-
-    # step 1. get all item from dynamodb
-    dynamo_client = connect_aws_client(
-        client_name="dynamodb",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-    all_items = retrive_all_item_from_dyanmodb(
-        table_name=table_name, dynamo_client=dynamo_client
-    )
-    df = pd.json_normalize(all_items)
-    csv_buffer = StringIO()
-    df.to_csv(csv_buffer)
-    content = csv_buffer.getvalue()
-    # remove preivous logs.csv
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-    logs_full_path_name = saved_file_path + "/" + saved_filename
-    try:
-        s3_client.delete_object(Bucket=saved_bucket, Key=logs_full_path_name)
-        logger.info("remove previous logs.csv file")
-    except Exception as e:
-        logger.info("no logs.csv file")
-        raise e
-
-    try:
-        to_s3(
-            bucket=saved_bucket,
-            file_path=saved_file_path,
-            filename=saved_filename,
-            content=content,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
-    except Exception as e:
-        logger.error(f"ERROR ---> {e}")
-        raise e
-
-
-def retrive_all_item_from_dyanmodb(
-    table_name: str, dynamo_client: "botocore.client.dynamo"
-):
-
-    deserializer = TypeDeserializer()
-    items = []
-    for item in scan_table(dynamo_client, TableName=table_name):
-        deserialized_document = {
-            k: deserializer.deserialize(v) for k, v in item.items()
-        }
-        items.append(deserialized_document)
-    return items
-
-
-def scan_table(dynamo_client, *, TableName, **kwargs):
-
-    paginator = dynamo_client.get_paginator("scan")
-
-    for page in paginator.paginate(TableName=TableName, **kwargs):
-        yield from page["Items"]
-
-
-def remove_all_items_from_dynamodb(
-    table_name: str, aws_access_key: str, aws_secret_access_key: str, aws_region: str
-):
-    try:
-        dynamodb_resource = connect_aws_resource(
-            resource_name="dynamodb",
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
-        )
-        table = dynamodb_resource.Table(table_name)
-        scan = table.scan()
-        with table.batch_writer() as batch:
-            for each in scan["Items"]:
-                batch.delete_item(
-                    Key={"host_ip": each["host_ip"], "timestamp": each["timestamp"]}
-                )
-        print("remove all items from db completed")
-    except Exception as e:
-        raise e
-
-
 def put_item_to_dynamodb(
     table_name: str,
     LogsInfo: LogsInfo,
@@ -165,6 +67,135 @@ def put_item_to_dynamodb(
         }
     )
     return response
+
+
+# def save_logs_from_dynamodb_to_s3(
+#     table_name: str,
+#     saved_bucket: str,
+#     saved_file_path: str,
+#     saved_filename: str,
+#     aws_access_key: str,
+#     aws_secret_access_key: str,
+#     aws_region: str,
+# ):
+
+#     # step 1. get all item from dynamodb
+#     dynamo_client = connect_aws_client(
+#         client_name="dynamodb",
+#         key_id=aws_access_key,
+#         secret=aws_secret_access_key,
+#         region=aws_region,
+#     )
+#     all_items = retrive_all_item_from_dyanmodb(
+#         table_name=table_name, dynamo_client=dynamo_client
+#     )
+#     df = pd.json_normalize(all_items)
+#     csv_buffer = StringIO()
+#     df.to_csv(csv_buffer)
+#     content = csv_buffer.getvalue()
+#     # remove preivous logs.csv
+#     s3_client = connect_aws_client(
+#         client_name="s3",
+#         key_id=aws_access_key,
+#         secret=aws_secret_access_key,
+#         region=aws_region,
+#     )
+#     logs_full_path_name = saved_file_path + "/" + saved_filename
+#     try:
+#         s3_client.delete_object(Bucket=saved_bucket, Key=logs_full_path_name)
+#         logger.info("remove previous logs.csv file")
+#     except Exception as e:
+#         logger.info("no logs.csv file")
+#         raise e
+
+#     try:
+#         to_s3(
+#             bucket=saved_bucket,
+#             file_path=saved_file_path,
+#             filename=saved_filename,
+#             content=content,
+#             aws_access_key=aws_access_key,
+#             aws_secret_access_key=aws_secret_access_key,
+#             aws_region=aws_region,
+#         )
+#     except Exception as e:
+#         logger.error(f"ERROR ---> {e}")
+#         raise e
+
+
+# def retrive_all_item_from_dyanmodb(
+#     table_name: str, dynamo_client: "botocore.client.dynamo"
+# ):
+
+#     deserializer = TypeDeserializer()
+#     items = []
+#     for item in scan_table(dynamo_client, TableName=table_name):
+#         deserialized_document = {
+#             k: deserializer.deserialize(v) for k, v in item.items()
+#         }
+#         items.append(deserialized_document)
+#     return items
+
+
+# def scan_table(dynamo_client, *, TableName, **kwargs):
+
+#     paginator = dynamo_client.get_paginator("scan")
+
+#     for page in paginator.paginate(TableName=TableName, **kwargs):
+#         yield from page["Items"]
+
+
+# def remove_all_items_from_dynamodb(
+#     table_name: str, aws_access_key: str, aws_secret_access_key: str, aws_region: str
+# ):
+#     try:
+#         dynamodb_resource = connect_aws_resource(
+#             resource_name="dynamodb",
+#             key_id=aws_access_key,
+#             secret=aws_secret_access_key,
+#             region=aws_region,
+#         )
+#         table = dynamodb_resource.Table(table_name)
+#         scan = table.scan()
+#         with table.batch_writer() as batch:
+#             for each in scan["Items"]:
+#                 batch.delete_item(
+#                     Key={"host_ip": each["host_ip"], "timestamp": each["timestamp"]}
+#                 )
+#         print("remove all items from db completed")
+#     except Exception as e:
+#         raise e
+
+
+# def put_item_to_dynamodb(
+#     table_name: str,
+#     LogsInfo: LogsInfo,
+#     aws_access_key: str,
+#     aws_secret_access_key: str,
+#     aws_region: str,
+# ):
+#     dynamodb_resource = connect_aws_resource(
+#         resource_name="dynamodb",
+#         key_id=aws_access_key,
+#         secret=aws_secret_access_key,
+#         region=aws_region,
+#     )
+#     table = dynamodb_resource.Table(table_name)
+#     response = table.put_item(
+#         Item={
+#             "host_name": LogsInfo.host_name,
+#             "host_ip": LogsInfo.host_ip,
+#             "task_id": str(LogsInfo.task_id),
+#             "pid": LogsInfo.pid,
+#             "function_name": LogsInfo.function_name,
+#             "action": LogsInfo.action,
+#             "timestamp": LogsInfo.time,
+#             "message": LogsInfo.message,
+#             "filename": LogsInfo.filename,
+#             "column_name": LogsInfo.column_name,
+#         }
+#     )
+#     return response
 
 
 def save_solardata_to_file(
@@ -272,14 +303,14 @@ def publish_message_sns(
     aws_secret_access_key: str,
     aws_region: str,
 ) -> str:
-
-    sns_client = connect_aws_client(
-        client_name="sns",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
     try:
+        sns_client = connect_aws_client(
+            client_name="sns",
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+        )
+
         message_res = sns_client.publish(
             TopicArn=topic_arn,
             Subject=subject,
@@ -292,6 +323,7 @@ def publish_message_sns(
         return message_id
     except Exception as e:
         logger.error(f"publish message fail : {e}")
+        raise e
 
 
 def check_solver_licence(
@@ -509,20 +541,20 @@ def list_files_in_folder_of_bucket(
     return filterFiles
 
 
-def make_response(subject: str = None, messages: str = None) -> str:
+def make_response(subject: str = None, messages: str = None) -> dict:
     response = {"Subject": subject, "Messages": messages}
     return response
 
 
-def parse_subject_from_response(response: str) -> str:
+def parse_subject_from_response(response: dict) -> str:
     try:
-        return response["Subject"]
+        return str(response["Subject"])
     except Exception as e:
         raise e
 
 
-def parse_messages_from_response(response: str) -> str:
+def parse_messages_from_response(response: dict) -> str:
     try:
-        return response["Messages"]
+        return str(response["Messages"])
     except Exception as e:
         raise e

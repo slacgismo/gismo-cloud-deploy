@@ -5,6 +5,11 @@ import os
 import os.path
 from typing import List
 
+import os
+from io import StringIO
+
+from boto3.dynamodb.types import TypeDeserializer
+
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
     try:
@@ -249,3 +254,98 @@ def check_environment_is_aws() -> bool:
     my_user = os.environ.get("USER")
     is_aws = True if "ec2" in my_user else False
     return is_aws
+
+
+def save_logs_from_dynamodb_to_s3(
+    table_name: str,
+    saved_bucket: str,
+    saved_file_path: str,
+    saved_filename: str,
+    aws_access_key: str,
+    aws_secret_access_key: str,
+    aws_region: str,
+):
+
+    # step 1. get all item from dynamodb
+    dynamo_client = connect_aws_client(
+        client_name="dynamodb",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    all_items = retrive_all_item_from_dyanmodb(
+        table_name=table_name, dynamo_client=dynamo_client
+    )
+    df = pd.json_normalize(all_items)
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer)
+    content = csv_buffer.getvalue()
+    # remove preivous logs.csv
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    logs_full_path_name = saved_file_path + "/" + saved_filename
+    try:
+        s3_client.delete_object(Bucket=saved_bucket, Key=logs_full_path_name)
+    except Exception as e:
+        raise f"no logs.csv file :{e}"
+
+    try:
+        to_s3(
+            bucket=saved_bucket,
+            file_path=saved_file_path,
+            filename=saved_filename,
+            content=content,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
+    except Exception as e:
+        raise e
+
+
+def retrive_all_item_from_dyanmodb(
+    table_name: str, dynamo_client: "botocore.client.dynamo"
+):
+
+    deserializer = TypeDeserializer()
+    items = []
+    for item in scan_table(dynamo_client, TableName=table_name):
+        deserialized_document = {
+            k: deserializer.deserialize(v) for k, v in item.items()
+        }
+        items.append(deserialized_document)
+    return items
+
+
+def scan_table(dynamo_client, *, TableName, **kwargs):
+
+    paginator = dynamo_client.get_paginator("scan")
+
+    for page in paginator.paginate(TableName=TableName, **kwargs):
+        yield from page["Items"]
+
+
+def remove_all_items_from_dynamodb(
+    table_name: str, aws_access_key: str, aws_secret_access_key: str, aws_region: str
+):
+    try:
+        dynamodb_resource = connect_aws_resource(
+            resource_name="dynamodb",
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+        )
+        table = dynamodb_resource.Table(table_name)
+        scan = table.scan()
+        with table.batch_writer() as batch:
+            for each in scan["Items"]:
+                batch.delete_item(
+                    Key={"host_ip": each["host_ip"], "timestamp": each["timestamp"]}
+                )
+        print("remove all items from db completed")
+    except Exception as e:
+        raise e

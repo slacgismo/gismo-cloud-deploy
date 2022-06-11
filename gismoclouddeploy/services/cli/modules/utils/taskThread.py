@@ -8,6 +8,8 @@ import botocore
 from server.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
+    save_logs_from_dynamodb_to_s3,
+    remove_all_items_from_dynamodb,
 )
 from server.models import Configurations
 from server.models import SNSSubjectsAlert
@@ -167,6 +169,24 @@ def long_pulling_sqs(
                     # close program after tasks complete or system error
 
                     logger.info(f"subject:{subject} message: {message_text}")
+
+                    # save logs from dynamodb to s3
+                    save_res = save_logs_from_dynamodb_to_s3(
+                        table_name=config_params_obj.dynamodb_tablename,
+                        saved_bucket=config_params_obj.bucket,
+                        saved_file_path=config_params_obj.saved_logs_target_path,
+                        saved_filename=config_params_obj.saved_logs_target_filename,
+                        aws_access_key=config_params_obj.aws_access_key,
+                        aws_secret_access_key=config_params_obj.aws_secret_access_key,
+                        aws_region=config_params_obj.aws_region,
+                    )
+                    # remove dynamodb
+                    remov_res = remove_all_items_from_dynamodb(
+                        table_name=config_params_obj.dynamodb_tablename,
+                        aws_access_key=config_params_obj.aws_access_key,
+                        aws_secret_access_key=config_params_obj.aws_secret_access_key,
+                        aws_region=config_params_obj.aws_region,
+                    )
                     s3_client = connect_aws_client(
                         client_name="s3",
                         key_id=key_id,
