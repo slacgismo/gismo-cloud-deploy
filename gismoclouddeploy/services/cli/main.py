@@ -4,12 +4,13 @@ import logging
 import os
 
 import modules
-
+from server.models.Configurations import make_config_obj_from_yaml
 from server.utils.aws_utils import check_aws_validity, connect_aws_client
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
 AWS_ACCESS_KEY_ID = os.getenv("aws_access_key")
 AWS_SECRET_ACCESS_KEY = os.getenv("aws_secret_key")
 AWS_DEFAULT_REGION = os.getenv("aws_region")
@@ -83,7 +84,7 @@ def nodes_scale(min_nodes, configfile):
     logger.info(f"Scale nodes {min_nodes}")
     try:
         # config_obj = import_config_from_yaml(configfile)
-        config_params_obj = modules.read_wirte_io.make_config_obj_from_yaml(
+        config_params_obj = make_config_obj_from_yaml(
             file=f"./config/{configfile}",
             aws_access_key=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
@@ -122,7 +123,7 @@ def check_nodes():
 def processlogs():
     """Porcess logs.csv file on AWS"""
     try:
-        config_params_obj = modules.read_wirte_io.make_config_obj_from_yaml(
+        config_params_obj = make_config_obj_from_yaml(
             yaml_file="./config/config.yaml",
             aws_access_key=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
@@ -183,7 +184,7 @@ def run_process_files(number, delete_nodes, configfile, rollout):
         config_yaml = f"./config/config.yaml"
 
     try:
-        config_params_obj = modules.read_wirte_io.make_config_obj_from_yaml(
+        config_params_obj = make_config_obj_from_yaml(
             yaml_file=config_yaml,
             aws_access_key=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,

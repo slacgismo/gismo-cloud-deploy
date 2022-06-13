@@ -1,9 +1,8 @@
 from server import models
 from .eks_utils import scale_nodes_and_wait, create_or_update_k8s
-from .read_wirte_io import import_yaml_and_convert_to_json_str
 from .invoke_function import invoke_exec_run_process_files
 from .process_log import process_logs_from_s3
-
+from server.models.Configurations import import_yaml_and_convert_to_json_str
 from server.utils import aws_utils
 
 import time
@@ -157,11 +156,17 @@ def process_logs_and_plot(config_params_obj: models.Configurations) -> None:
         + "/"
         + config_params_obj.saved_logs_target_filename
     )
+
     process_logs_from_s3(
-        config_params_obj.saved_bucket,
-        logs_full_path_name,
-        "results/runtime.png",
-        s3_client,
+        bucket=config_params_obj.saved_bucket,
+        logs_file_path_name=logs_full_path_name,
+        saved_image_name_aws=config_params_obj.saved_rumtime_image_name_aws,
+        saved_image_name_local=config_params_obj.saved_rumtime_image_name_local,
+        s3_client=s3_client
+        # config_params_obj.saved_bucket,
+        # logs_full_path_name,
+        # "results/runtime.png",
+        # s3_client,
     )
     logger.info(
         f"Success process logs from {config_params_obj.saved_logs_target_filename}"

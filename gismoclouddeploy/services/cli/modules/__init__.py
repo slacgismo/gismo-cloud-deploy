@@ -4,7 +4,6 @@ from .utils import (
     eks_utils,
     invoke_function,
     process_log,
-    read_wirte_io,
     sns,
     sqs,
 )

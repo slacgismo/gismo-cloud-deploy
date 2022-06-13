@@ -4,7 +4,7 @@ import pandas as pd
 
 from modules.utils.eks_utils import match_pod_ip_to_node_name
 from server.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
-
+from server.models.LogsInfo import LogsInfo
 
 from server import models
 
@@ -214,10 +214,11 @@ def process_logs_from_local():
 
 
 def process_logs_from_s3(
-    bucket: str,
-    logs_file_path_name: str,
-    saved_image_name: str,
-    s3_client: "botocore.client.S3",
+    bucket: str = None,
+    logs_file_path_name: str = None,
+    saved_image_name_local: str = None,
+    saved_image_name_aws: str = None,
+    s3_client: "botocore.client.S3" = None,
 ):
 
     df = read_all_csv_from_s3_and_parse_dates_from(
@@ -265,10 +266,12 @@ def process_logs_from_s3(
     fig.update_yaxes(
         autorange="reversed"
     )  # otherwise tasks are listed from the bottom up
-    image_name = "plot/runtime.png"
-    pio.write_image(fig, image_name, format="png", scale=1, width=2400, height=1600)
 
-    img_data = open(image_name, "rb")
+    pio.write_image(
+        fig, saved_image_name_local, format="png", scale=1, width=2400, height=1600
+    )
+
+    img_data = open(saved_image_name_local, "rb")
     s3_client.put_object(
-        Bucket=bucket, Key=saved_image_name, Body=img_data, ContentType="image/png"
+        Bucket=bucket, Key=saved_image_name_aws, Body=img_data, ContentType="image/png"
     )

@@ -200,10 +200,11 @@ def long_pulling_sqs(
                     )
 
                     process_logs_from_s3(
-                        config_params_obj.saved_bucket,
-                        logs_full_path_name,
-                        "results/runtime.png",
-                        s3_client,
+                        bucket=config_params_obj.saved_bucket,
+                        logs_file_path_name=logs_full_path_name,
+                        saved_image_name_local=config_params_obj.saved_rumtime_image_name_local,
+                        saved_image_name_aws=config_params_obj.saved_rumtime_image_name_aws,
+                        s3_client=s3_client,
                     )
 
                     if (
