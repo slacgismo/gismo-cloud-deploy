@@ -39,6 +39,16 @@ jobs:
         run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml up -d
       - name: Check running containers
         run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml ps -a
+      - name: Build virtual environemnt
+        run: |
+          cd ./gismoclouddeploy/services/cli
+          python3 -m venv venv
+          source ./venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pytest
+
+
       # - name: Test with pytest
       #   env:
       #     COMPOSE_INTERACTIVE_NO_CLI: 1
