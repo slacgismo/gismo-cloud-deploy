@@ -1,7 +1,6 @@
 from subprocess import PIPE, run
 from kubernetes import client, config
 from server.models.Configurations import Configurations
-
 import logging
 
 logger = logging.getLogger()
@@ -22,6 +21,15 @@ def exec_docker_command(command: str) -> str:
 
 def invoke_kubectl_apply(folder: str = "../k8s/k8s-local"):
     command = ["kubectl", "apply", "-f", f"{folder}"]
+
+    res = exec_docker_command(command)
+    return res
+
+
+def invoke_kubectl_rollout(podprefix: str = None):
+    if podprefix is None:
+        return
+    command = ["kubectl", "rollout", "restart", f"deployment/{podprefix}"]
 
     res = exec_docker_command(command)
     return res

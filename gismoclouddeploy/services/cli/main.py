@@ -54,9 +54,15 @@ def main():
     help="Assign config files, Default files is config.yaml under /config",
     default="config.yaml",
 )
-def run_files(number, deletenodes, configfile):
+@click.option(
+    "--rollout",
+    "-r",
+    is_flag=True,
+    help="Rollout and restart of webapp and worker pod of kubernetes",
+)
+def run_files(number, deletenodes, configfile, rollout):
     """Run Process Files"""
-    run_process_files(number, deletenodes, configfile)
+    run_process_files(number, deletenodes, configfile, rollout)
 
 
 # ***************************
@@ -151,7 +157,7 @@ def read_dlq(empty):
     )
 
 
-def run_process_files(number, delete_nodes, configfile):
+def run_process_files(number, delete_nodes, configfile, rollout):
     """
     Proccess files in S3 bucket
     :param number: number of first n files in bucket
@@ -191,7 +197,7 @@ def run_process_files(number, delete_nodes, configfile):
 
     try:
         modules.command_utils.check_environment_setup(
-            config_params_obj=config_params_obj
+            config_params_obj=config_params_obj, rollout=rollout
         )
     except Exception as e:
         logger.error(f"Environemnt setup failed :{e}")

@@ -23,7 +23,9 @@ logging.basicConfig(
 )
 
 
-def check_environment_setup(config_params_obj: models.Configurations) -> None:
+def check_environment_setup(
+    config_params_obj: models.Configurations, rollout: bool
+) -> None:
 
     # check node status from local or AWS
     if config_params_obj.environment == "AWS":
@@ -39,7 +41,12 @@ def check_environment_setup(config_params_obj: models.Configurations) -> None:
         )
         # create or update k8s setting based on yaml files
         try:
-            create_or_update_k8s(config_params_obj=config_params_obj, env="aws")
+            # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="aws")
+            create_or_update_k8s(
+                config_params_obj=config_params_obj,
+                rollout=rollout,
+                env="AWS",
+            )
         except Exception as e:
             logger.error(f"Create or update k8s error :{e}")
             raise e
@@ -49,7 +56,12 @@ def check_environment_setup(config_params_obj: models.Configurations) -> None:
         if config_params_obj.container_type == "kubernetes":
             # check if k8s and webapp exist
             try:
-                create_or_update_k8s(config_params_obj=config_params_obj, env="local")
+                # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="local")
+                create_or_update_k8s(
+                    config_params_obj=config_params_obj,
+                    rollout=rollout,
+                    env="local",
+                )
             except Exception as e:
                 logger.error(f"Create or update k8s error :{e}")
                 raise e

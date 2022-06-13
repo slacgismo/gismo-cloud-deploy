@@ -10,7 +10,7 @@ from .TaskThread import TaskThread
 
 
 from .eks_utils import (
-    num_container_ready,
+    num_pod_ready,
     wait_container_ready,
     scale_nodes_and_wait,
     num_of_nodes_ready,
@@ -28,7 +28,7 @@ from .invoke_function import (
     invoke_eksctl_scale_node,
     invoke_exec_run_process_files,
     invoke_docekr_exec_revoke_task,
-    get_k8s_pod_name,
+    invoke_kubectl_rollout,
 )
 
 from .process_log import (
