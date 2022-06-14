@@ -16,4 +16,5 @@ from .aws_utils import (
     download_solver_licence_from_s3_and_save,
     list_files_in_bucket,
     check_environment_is_aws,
+    check_ecr_tag_exists,
 )

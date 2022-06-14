@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: server
+  name: worker
 spec:
   # minReadySeconds: 30
   selector:
     matchLabels:
-      app: server
+      app: worker
   replicas: 1
   template: # template for the pods
     metadata:
       labels:
-        app: server
+        app: worker
     spec:
       containers:
-      - name: server
-        image: server:latest
-        command: ["/start"]
-        imagePullPolicy: IfNotPresent
+      - name: worker
+        image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
+        imagePullPolicy: Always
+        command: ["/start-celeryworker"]
         env:
           - name: FLASK_APP
             value: app

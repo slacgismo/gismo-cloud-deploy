@@ -29,6 +29,13 @@ from .invoke_function import (
     invoke_exec_run_process_files,
     invoke_docekr_exec_revoke_task,
     invoke_kubectl_rollout,
+    invoke_docker_compose_build,
+    invoke_ecr_validation,
+    invoke_tag_image,
+    invoke_push_image,
+    invoke_kubectl_apply_file,
+    invoke_kubectl_delete_deployment,
+    invoke_docker_check_image_exist,
 )
 
 from .process_log import (

@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: webapp
+  name: server
 spec:
   # minReadySeconds: 30
   selector:
     matchLabels:
-      app: webapp
+      app: server
   replicas: 1
   template: # template for the pods
     metadata:
       labels:
-        app: webapp
+        app: server
     spec:
       containers:
-      - name: webapp
+      - name: server
         image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
         command: ["/start"]
         imagePullPolicy: Always

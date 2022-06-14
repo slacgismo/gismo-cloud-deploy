@@ -2,7 +2,7 @@
 general:
   environment: "loacl"  # "local" , "AWS"
   container_type: "kubernetes"  # "docker" , "kubernetes"
-  container_name: "webapp"     # "web" . "webapp"
+  container_name: "server"     # "server" . "server"
   interval_of_check_task_status: "1" # in second
   interval_of_exit_check_status: "900" # in second. If the task status didn't update after this period. stop check individual status
 
@@ -17,12 +17,32 @@ aws_config:
 
 
 k8s_config:
-    worker_replicas: "1"  # number of workers run in parallel
     deployment_services_list:
-      - worker
-      - webapp
-      - redis
-      - rabbitmq
+      worker:
+        desired_replicas: 3
+        deployment_file: "./config/k8s/worker.deployment.yaml"
+        service_file: ""
+        image_name: "worker"
+        image_tag: "latest"
+      server:
+        desired_replicas: 1
+        deployment_file: "./config/k8s/server.deployment.yaml"
+        service_file: "./config/k8s/server.services.yaml"
+        image_name: "server"
+        image_tag: "latest"
+      redis:
+        desired_replicas: 1
+        deployment_file: "./config/k8s/redis.deployment.yaml"
+        service_file: "./config/k8s/redis.services.yaml"
+        image_name: "redis"
+        image_tag: "latest"
+
+      rabbitmq:
+        desired_replicas: 1
+        deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
+        service_file: "./config/k8s/rabbitmq.services.yaml"
+        image_name: "rabbitmq"
+        image_tag: "latest"
 
 files_config:
   bucket: "pv.insight.nrel"

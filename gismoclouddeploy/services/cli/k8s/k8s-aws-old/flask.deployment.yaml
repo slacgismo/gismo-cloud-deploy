@@ -14,10 +14,10 @@ spec:
         app: server
     spec:
       containers:
-      - name: server
-        image: server:latest
+      - name: webapp
+        image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
         command: ["/start"]
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
           - name: FLASK_APP
             value: app

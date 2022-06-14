@@ -1,5 +1,13 @@
-from .eks_utils import scale_nodes_and_wait, create_or_update_k8s
-from .invoke_function import invoke_exec_run_process_files
+from .eks_utils import (
+    scale_nodes_and_wait,
+    create_or_update_k8s,
+    get_k8s_image_and_tag_from_deployment,
+    create_k8s_deployment_from_yaml,
+)
+from .invoke_function import (
+    invoke_exec_run_process_files,
+    invoke_kubectl_delete_deployment,
+)
 from .process_log import process_logs_from_s3
 from server.models.Configurations import (
     import_yaml_and_convert_to_json_str,
@@ -14,6 +22,7 @@ from .sqs import (
     delete_queue_message,
 )
 
+
 from typing import Union
 import logging
 
@@ -23,7 +32,9 @@ logging.basicConfig(
 )
 
 
-def check_environment_setup(config_params_obj: Configurations, rollout: bool) -> None:
+def check_environment_setup(
+    config_params_obj: Configurations, rollout: bool, images_tag: str
+) -> None:
 
     # check node status from local or AWS
     if config_params_obj.environment == "AWS":
@@ -44,6 +55,7 @@ def check_environment_setup(config_params_obj: Configurations, rollout: bool) ->
                 config_params_obj=config_params_obj,
                 rollout=rollout,
                 env="AWS",
+                image_tag=images_tag,
             )
         except Exception as e:
             logger.error(f"Create or update k8s error :{e}")
@@ -59,6 +71,7 @@ def check_environment_setup(config_params_obj: Configurations, rollout: bool) ->
                     config_params_obj=config_params_obj,
                     rollout=rollout,
                     env="local",
+                    image_tag=images_tag,
                 )
             except Exception as e:
                 logger.error(f"Create or update k8s error :{e}")
@@ -251,3 +264,65 @@ def check_nodes_status():
     for node in nodes:
         logger.info(f"{node.hostname} is ready")
     return True
+
+
+def create_or_update_k8s_deployment(
+    name: str = None,
+    image_tag: str = None,
+    imagePullPolicy: str = "Always",
+    desired_replicas: int = 1,
+    k8s_file_name: str = None,
+):
+    try:
+        curr_image, curr_tag, curr_status = get_k8s_image_and_tag_from_deployment(
+            prefix=name
+        )
+        # print(curr_image,curr_tag, curr_status )
+        image_url = f"{name}:{image_tag}"
+        if curr_status is None:
+            # Deployment does not exist
+
+            logger.info(f"============== Deployment {name} does not exist ==========")
+            logger.info(f"============== Create {name} deployment ==========")
+            create_k8s_deployment_from_yaml(
+                name="worker",
+                image=image_url,
+                imagePullPolicy=imagePullPolicy,
+                desired_replicas=desired_replicas,
+                file_name=k8s_file_name,
+            )
+        else:
+            logger.info(
+                f"=============== Deployment {name}:{curr_tag} exist ========== "
+            )
+
+            if (
+                curr_status.unavailable_replicas is not None
+                or curr_tag != image_tag
+                or int(curr_status.replicas) != int(desired_replicas)
+            ):
+
+                if curr_status.unavailable_replicas is not None:
+                    logger.info("Deployment status error")
+                if int(curr_status.replicas) != int(desired_replicas):
+                    logger.info(
+                        f"Update replicas from:{curr_status.replicas} to {desired_replicas}"
+                    )
+                if curr_tag != image_tag:
+                    logger.info(f"Update from {name}:{curr_tag} to {name}:{image_tag}")
+                logger.info(f"========== Delete  {name}:{curr_tag}  ==========")
+                output = invoke_kubectl_delete_deployment(name=name)
+                # logger.info(output)
+
+                # re-create deplpoyment
+                print("====================")
+                create_k8s_deployment_from_yaml(
+                    name=name,
+                    image=image_url,
+                    imagePullPolicy=imagePullPolicy,
+                    desired_replicas=desired_replicas,
+                    file_name=k8s_file_name,
+                )
+    except Exception as e:
+        logger.info(e)
+        raise e

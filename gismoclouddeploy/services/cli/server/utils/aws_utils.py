@@ -351,3 +351,18 @@ def remove_all_items_from_dynamodb(
         print("remove all items from dynamodb completed")
     except Exception as e:
         raise e
+
+
+def check_ecr_tag_exists(
+    image_tag: str = None, repoNme: str = None, ecr_client=None
+) -> bool:
+    try:
+        response = ecr_client.describe_images(
+            repositoryName=f"worker", filter={"tagStatus": "TAGGED"}
+        )
+        for i in response["imageDetails"]:
+            if image_tag in i["imageTags"]:
+                return True
+        return False
+    except Exception as e:
+        return False

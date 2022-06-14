@@ -24,7 +24,6 @@ class Configurations(object):
         container_name: str = None,
         interval_of_check_task_status: int = None,
         interval_of_exit_check_status: int = None,
-        worker_replicas: int = None,
         deployment_services_list: List[str] = None,
         interval_of_check_sqs_in_second: int = None,
         interval_of_total_wait_time_of_sqs: int = None,
@@ -57,7 +56,6 @@ class Configurations(object):
         self.container_name = container_name
         self.interval_of_check_task_status = interval_of_check_task_status
         self.interval_of_exit_check_status = interval_of_exit_check_status
-        self.worker_replicas = worker_replicas
         self.deployment_services_list = deployment_services_list
         self.interval_of_check_sqs_in_second = interval_of_check_sqs_in_second
         self.interval_of_total_wait_time_of_sqs = interval_of_total_wait_time_of_sqs
@@ -196,7 +194,6 @@ def make_config_obj_from_yaml(
             interval_of_exit_check_status=config_params["general"][
                 "interval_of_exit_check_status"
             ],
-            worker_replicas=config_params["k8s_config"]["worker_replicas"],
             deployment_services_list=config_params["k8s_config"][
                 "deployment_services_list"
             ],

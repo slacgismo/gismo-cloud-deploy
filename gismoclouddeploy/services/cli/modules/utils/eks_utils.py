@@ -1,15 +1,18 @@
 from importlib.metadata import metadata
 import time
+from urllib import response
 from kubernetes import client, config
 from server.models.Configurations import Configurations
-
+from typing import Tuple
 import logging
 import yaml
+import threading
 
 from modules.utils.invoke_function import (
     invoke_kubectl_apply,
     invoke_eksctl_scale_node,
     invoke_kubectl_rollout,
+    invoke_kubectl_delete_deployment,
 )
 
 logger = logging.getLogger()
@@ -55,14 +58,14 @@ def wait_pod_ready(
         cunrrent_num_container = num_pod_ready(container_prefix=container_prefix)
         if cunrrent_num_container == num_container:
             logger.info(f"{num_container} pods are running")
-            return True
+            return
         counter -= delay
         logger.info(
             f"waiting {container_prefix} {cunrrent_num_container} .counter: {counter - delay} Time: {time.ctime(time.time())}"
         )
         time.sleep(delay)
 
-    return False
+    raise Exception("Wait over time")
 
 
 def scale_nodes_and_wait(
@@ -194,7 +197,10 @@ def create_k8s_from_yaml(file_path: str, file_name: str, app_name: str) -> bool:
 
 
 def create_or_update_k8s(
-    config_params_obj: Configurations, rollout: bool = True, env: str = "local"
+    config_params_obj: Configurations,
+    rollout: bool = True,
+    env: str = "local",
+    image_tag: str = "latest",
 ):
     """Read worker config, if the replicas of woker is between from config.yaml and k8s/k8s-aws or k8s/k8s-local
     Update the replicas number
@@ -207,6 +213,15 @@ def create_or_update_k8s(
             k8s_path = "./k8s/k8s-aws"
     except Exception as e:
         raise Exception(f"K8s path not exist {e}")
+    # 1 . check image tag for worker and server
+    # worker_image, worker_image_tag = get_k8s_image_and_tag_from_deployment(prefix="worker")
+    # webapp_image, webapp_image_tag = get_k8s_image_and_tag_from_deployment(prefix="webapp")
+    # print(worker_image,worker_image_tag,webapp_image,webapp_image_tag)
+
+    # if worker_image_tag != image_tag or webapp_image_tag != image_tag:
+    #     logger.info("========= Delete current deployment =============")
+    #     response = invoke_kubectl_delete_deployment()
+    #     logger.info(response)
 
     logger.info(" ========= Check K8s is status ========= ")
     # deployment_pod_name_list = ["worker", "webapp", "redis", "rabbitmq"]
@@ -223,7 +238,7 @@ def create_or_update_k8s(
     if apply_k8s_flag:
         # invoke kubectl apply -f .(folder)
         response = invoke_kubectl_apply(k8s_path)
-        logger.info(response)
+
         # wait pod ready
         for pod_name in deployment_services_list:
             pod_info = get_k8s_pod_info(prefix=pod_name)
@@ -308,9 +323,9 @@ def create_or_update_k8s(
                     raise Exception("Waiting over time")
 
 
-def read_k8s_yml(file_path: str, file_name: str):
+def read_k8s_yml(full_path_name: str):
     config.load_kube_config()
-    full_path_name = file_path + "/" + file_name
+    # full_path_name = file_path + "/" + file_name
     try:
         with open(full_path_name) as f:
             dep = yaml.safe_load(f)
@@ -321,16 +336,64 @@ def read_k8s_yml(file_path: str, file_name: str):
 
 
 def create_k8s_svc_from_yaml(
-    file_path: str, file_name: str, namspace: str = "default"
+    full_path_name: str = None, namspace: str = "default"
 ) -> bool:
     try:
-        file_setting = read_k8s_yml(file_path=file_path, file_name=file_name)
+        file_setting = read_k8s_yml(full_path_name=full_path_name)
     except Exception as e:
         raise e
     config.load_kube_config()
     apps_v1_api = client.CoreV1Api()
     try:
         resp = apps_v1_api.create_namespaced_service(
+            body=file_setting, namespace=namspace
+        )
+        print("Created. status='%s'" % str(resp.status))
+        return True
+    except Exception as e:
+        logger.error(f"create k8s svc error: {e}")
+        raise e
+
+
+def create_k8s_deployment_from_yaml(
+    name: str = None,
+    image: str = None,
+    imagePullPolicy: str = None,
+    desired_replicas: int = 1,
+    file_name: str = None,
+    namspace: str = "default",
+) -> bool:
+    try:
+        file_setting = read_k8s_yml(full_path_name=file_name)
+    except Exception as e:
+        raise e
+    default_image = file_setting["spec"]["template"]["spec"]["containers"][0]["image"]
+    default_replicas = file_setting["spec"]["replicas"]
+    default_imagePullPolicy = file_setting["spec"]["template"]["spec"]["containers"][0][
+        "imagePullPolicy"
+    ]
+    default_replicas = file_setting["spec"]["replicas"]
+
+    print(str(desired_replicas), image, imagePullPolicy)
+    # update setting if not nont
+    if image is not None and image != default_image:
+        logger.info(f"update k8s image {image}")
+        file_setting["spec"]["template"]["spec"]["containers"][0]["image"] = image
+
+    if desired_replicas != 1 and desired_replicas != default_replicas:
+        logger.info(f"update k8s replicas {desired_replicas}")
+        file_setting["spec"]["replicas"] = int(desired_replicas)
+
+    if imagePullPolicy is not None and imagePullPolicy != default_imagePullPolicy:
+        logger.info(f"update imagePullPolicy {imagePullPolicy}")
+        file_setting["spec"]["template"]["spec"]["containers"][0][
+            "imagePullPolicy"
+        ] = imagePullPolicy
+
+    config.load_kube_config()
+    apps_v1_api = client.AppsV1Api()
+    try:
+        resp = apps_v1_api.create_namespaced_deployment(
             body=file_setting, namespace=namspace
         )
         print("Created. status='%s'" % str(resp.status))
@@ -415,3 +478,34 @@ def get_k8s_pod_info(prefix: str = None) -> dict:
         "max_version": max_version,
         "available_replicas": available_replicas,
     }
+
+
+def get_k8s_image_and_tag_from_deployment(prefix: str = None) -> Tuple[str, str, str]:
+    try:
+        config.load_kube_config()
+        v1 = client.AppsV1Api()
+        resp = v1.list_namespaced_deployment(namespace="default")
+        deployment = []
+        for i in resp.items:
+            if i.metadata.name == prefix:
+                deployment.append(i)
+        if len(deployment) > 0:
+            for po in deployment:
+                full_image_url = po.spec.template.spec.containers[0].image
+                image, image_tag = full_image_url.split(":")
+                status = po.status
+                return image, image_tag, status
+
+        return None, None, None
+    except Exception as e:
+        raise e
+
+
+def check_k8s_services_exists(name: str = None) -> bool:
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    resp = v1.list_service_for_all_namespaces(watch=False)
+    for i in resp.items:
+        if i.metadata.name == name:
+            return True
+    return False
