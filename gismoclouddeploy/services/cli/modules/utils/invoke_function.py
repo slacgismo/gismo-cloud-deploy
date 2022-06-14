@@ -1,12 +1,6 @@
 from subprocess import PIPE, run
 from kubernetes import client, config
 from server.models.Configurations import Configurations
-import logging
-
-logger = logging.getLogger()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
-)
 
 
 def exec_docker_command(command: str) -> str:
@@ -79,6 +73,7 @@ def invoke_exec_run_process_files(
         # get pod name
 
         pod_name = get_k8s_pod_name(container_name)
+
         command = [
             "kubectl",
             "exec",

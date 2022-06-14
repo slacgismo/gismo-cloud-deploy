@@ -46,7 +46,7 @@ def num_pod_ready(container_prefix: str) -> int:
     return ready_replicas
 
 
-def wait_container_ready(
+def wait_pod_ready(
     num_container: str, container_prefix: str, counter: int, delay: int
 ) -> bool:
     cunrrent_num_container = 0
@@ -209,10 +209,12 @@ def create_or_update_k8s(
         raise Exception(f"K8s path not exist {e}")
 
     logger.info(" ========= Check K8s is status ========= ")
-    deployment_pod_name_list = ["worker", "webapp", "redis", "rabbitmq"]
+    # deployment_pod_name_list = ["worker", "webapp", "redis", "rabbitmq"]
+    deployment_services_list = config_params_obj.deployment_services_list
+    logger.info(deployment_services_list)
     apply_k8s_flag = False
     # if one of the pod is missing , re init all the k8s services
-    for pod_name in deployment_pod_name_list:
+    for pod_name in deployment_services_list:
         pod_info = get_k8s_pod_info(prefix=pod_name)
         if pod_info["pod_name"] is None:
             apply_k8s_flag = True
@@ -223,7 +225,7 @@ def create_or_update_k8s(
         response = invoke_kubectl_apply(k8s_path)
         logger.info(response)
         # wait pod ready
-        for pod_name in deployment_pod_name_list:
+        for pod_name in deployment_services_list:
             pod_info = get_k8s_pod_info(prefix=pod_name)
             if pod_name == "worker":
                 try:
@@ -233,7 +235,7 @@ def create_or_update_k8s(
                 except Exception as e:
                     raise e
                 worker_default_replicas = worker_setting["spec"]["replicas"]
-                is_pod_ready = wait_container_ready(
+                is_pod_ready = wait_pod_ready(
                     num_container=worker_default_replicas,
                     container_prefix=pod_name,
                     counter=60,
@@ -243,7 +245,7 @@ def create_or_update_k8s(
                     logger.error(f"Waiting {pod_name} pod ready over time")
                     raise Exception("Waiting over time")
             else:
-                is_pod_ready = wait_container_ready(
+                is_pod_ready = wait_pod_ready(
                     num_container=1, container_prefix=pod_name, counter=60, delay=1
                 )
                 if is_pod_ready is False:
@@ -274,9 +276,9 @@ def create_or_update_k8s(
         raise e
     if rollout:
         logger.info(" ========= Rollout and restart ========= ")
-        rollout_pod_list = ["webapp", "worker"]
+        # rollout_pod_list = ["webapp", "worker"]
 
-        for pod_name in rollout_pod_list:
+        for pod_name in deployment_services_list:
             esponse = invoke_kubectl_rollout(podprefix=pod_name)
             logger.info(esponse)
         # wait 30 second
@@ -286,9 +288,9 @@ def create_or_update_k8s(
             wait_time -= 1
             time.sleep(1)
 
-        for pod_name in rollout_pod_list:
+        for pod_name in deployment_services_list:
             if pod_name == "worker":
-                is_pod_ready = wait_container_ready(
+                is_pod_ready = wait_pod_ready(
                     num_container=int(config_params_obj.worker_replicas),
                     container_prefix=pod_name,
                     counter=60,
@@ -298,7 +300,7 @@ def create_or_update_k8s(
                     logger.error(f"Waiting {pod_name} pod ready over time")
                     raise Exception("Waiting over time")
             else:
-                is_pod_ready = wait_container_ready(
+                is_pod_ready = wait_pod_ready(
                     num_container=1, container_prefix=pod_name, counter=60, delay=1
                 )
                 if is_pod_ready is False:
@@ -359,7 +361,7 @@ def replace_k8s_yaml_with_replicas(
                 name=app_name, body=file_setting, namespace="default"
             )
             print("Replace created. status='%s'" % str(resp.status))
-            is_ready = wait_container_ready(
+            is_ready = wait_pod_ready(
                 num_container=new_replicas,
                 container_prefix=app_name,
                 counter=60,

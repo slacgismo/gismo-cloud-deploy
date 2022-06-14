@@ -25,6 +25,7 @@ class Configurations(object):
         interval_of_check_task_status: int = None,
         interval_of_exit_check_status: int = None,
         worker_replicas: int = None,
+        deployment_services_list: List[str] = None,
         interval_of_check_sqs_in_second: int = None,
         interval_of_total_wait_time_of_sqs: int = None,
         eks_nodes_number: int = None,
@@ -57,6 +58,7 @@ class Configurations(object):
         self.interval_of_check_task_status = interval_of_check_task_status
         self.interval_of_exit_check_status = interval_of_exit_check_status
         self.worker_replicas = worker_replicas
+        self.deployment_services_list = deployment_services_list
         self.interval_of_check_sqs_in_second = interval_of_check_sqs_in_second
         self.interval_of_total_wait_time_of_sqs = interval_of_total_wait_time_of_sqs
         self.eks_nodes_number = eks_nodes_number
@@ -164,7 +166,6 @@ def make_config_obj_from_yaml(
 
     except IOError as e:
         raise f"I/O error:{e}"
-
     try:
         config = Configurations(
             files=config_params["files_config"]["files"],
@@ -196,6 +197,9 @@ def make_config_obj_from_yaml(
                 "interval_of_exit_check_status"
             ],
             worker_replicas=config_params["k8s_config"]["worker_replicas"],
+            deployment_services_list=config_params["k8s_config"][
+                "deployment_services_list"
+            ],
             interval_of_check_sqs_in_second=config_params["aws_config"][
                 "interval_of_check_sqs_in_second"
             ],

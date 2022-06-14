@@ -4,7 +4,7 @@ import botocore
 import os
 import os.path
 from typing import List
-
+from mypy_boto3_s3 import S3Client
 import os
 from io import StringIO
 
@@ -70,7 +70,9 @@ def to_s3(
     s3_client.put_object(Bucket=bucket, Key=k, Body=content)
 
 
-def read_column_from_csv_from_s3(bucket_name=None, file_path_name=None, s3_client=None):
+def read_column_from_csv_from_s3(
+    bucket_name: str = None, file_path_name: str = None, s3_client: str = None
+) -> pd.DataFrame:
     if bucket_name is None or file_path_name is None or s3_client is None:
         return
 
@@ -233,7 +235,7 @@ def download_solver_licence_from_s3_and_save(
         raise e
 
 
-def list_files_in_bucket(bucket_name: str, s3_client: "botocore.client.S3"):
+def list_files_in_bucket(bucket_name: str, s3_client: S3Client):
     """Get filename and size from S3 , remove non csv file"""
     response = s3_client.list_objects_v2(Bucket=bucket_name)
     files = response["Contents"]
@@ -346,6 +348,6 @@ def remove_all_items_from_dynamodb(
                 batch.delete_item(
                     Key={"host_ip": each["host_ip"], "timestamp": each["timestamp"]}
                 )
-        print("remove all items from db completed")
+        print("remove all items from dynamodb completed")
     except Exception as e:
         raise e

@@ -1,10 +1,11 @@
-from server import models
 from .eks_utils import scale_nodes_and_wait, create_or_update_k8s
 from .invoke_function import invoke_exec_run_process_files
 from .process_log import process_logs_from_s3
-from server.models.Configurations import import_yaml_and_convert_to_json_str
+from server.models.Configurations import (
+    import_yaml_and_convert_to_json_str,
+    Configurations,
+)
 from server.utils import aws_utils
-
 import time
 from kubernetes import client, config
 from modules.models.Node import Node
@@ -22,9 +23,7 @@ logging.basicConfig(
 )
 
 
-def check_environment_setup(
-    config_params_obj: models.Configurations, rollout: bool
-) -> None:
+def check_environment_setup(config_params_obj: Configurations, rollout: bool) -> None:
 
     # check node status from local or AWS
     if config_params_obj.environment == "AWS":
@@ -69,7 +68,7 @@ def check_environment_setup(
 
 
 def invoke_process_files_based_on_number(
-    number: Union[int, None], config_params_obj: models.Configurations, config_yaml: str
+    number: Union[int, None], config_params_obj: Configurations, config_yaml: str
 ) -> int:
     total_task_num = 0
     try:
@@ -142,7 +141,7 @@ def invoke_process_files_based_on_number(
     return total_task_num
 
 
-def process_logs_and_plot(config_params_obj: models.Configurations) -> None:
+def process_logs_and_plot(config_params_obj: Configurations) -> None:
 
     s3_client = aws_utils.connect_aws_client(
         client_name="s3",

@@ -42,28 +42,6 @@ class LogsInfo(object):
             "column_name": self.column_name,
         }
 
-    # key for process logs
-    # def get_host_name_key() -> str:
-    #     return "host_name"
-    # def get_host_ip_key() -> str:
-    #     return "host_ip"
-    # def get_task_id_key() -> str:
-    #     return "task_id"
-    # def get_pid_key() -> str:
-    #     return "pid"
-    # def get_function_name_key() -> str:
-    #     return "function_name"
-    # def get_action_key() -> str:
-    #     return "action"
-    # def get_time_key() -> str:
-    #     return "time"
-    # def get_message_key() -> str:
-    #     return "message"
-    # def get_filename_key()-> str:
-    #     return "filename"
-    # def get_column_name_key() -> str:
-    #     return "column_name"
-
 
 def make_logsinfo_object_from_dataframe(dataframe):
     worker_list = []

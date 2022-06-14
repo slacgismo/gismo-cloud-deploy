@@ -11,7 +11,7 @@ from .TaskThread import TaskThread
 
 from .eks_utils import (
     num_pod_ready,
-    wait_container_ready,
+    wait_pod_ready,
     scale_nodes_and_wait,
     num_of_nodes_ready,
     scale_node_number,

@@ -65,7 +65,6 @@ def get_process_filenamef_base_on_command(
     files_dict = list_files_in_bucket(bucket_name=bucket, s3_client=s3_client)
 
     if first_n_files == "None":
-
         n_files = default_files
     else:
         try:
