@@ -167,15 +167,7 @@ pip install -r requirements.txt
 pip install e .
 ```
 
-7. To run the program in `AWS` environment using `EKS` services, please make sure the environment settings in `./gismoclouddeploy/services/cli/config/config.yaml` are defined below.
-
-~~~
-environment: "AWS"
-container_type: "kubernetes"
-container_name: "webapp"
-~~~
-
-8. Check the EKS cluster is existing.
+7.  Check the EKS cluster is existing.
 
 ```bash
 eksctl get cluster
@@ -200,15 +192,47 @@ Read below for more informations.
 
 ---
 
-### Command
+## Command
 
 The gcd command supports the following subcommands:
 
-#### run-files command
+### run-files command
 
-```bash
-(venv)$ gcd run-files [ --number | -n ] <0 ~ number> [ --deletenodes | -d ] [ --configfile | -f ] <filename> [--help]
-```
+~~~
+Usage: gcd run-files [OPTIONS]
+
+Run Process Files
+
+Options:
+  -n, --number TEXT       Process the first n files in the defined bucket of
+                          config.yaml.  If number is None, this application
+                          process defined files in config.yaml. If number is
+                          0,this application processs all files in the defined
+                          bucket in config.yaml. If number is an integer, this
+                          applicaion process the first `number` files in the
+                          defined bucket in config.yaml.
+
+  -d, --deletenodes BOOL  Enable deleting eks node after complete this
+                          application. Default value is False.
+
+  -f, --configfile TEXT   Assign custom config files, Default files name is
+                          ./config/config.yaml
+
+  -r, --rollout  BOOL     Enable deleting current k8s deployment services and
+                          re-deployment services. Default value is False
+
+  -i, --imagetag TEXT     Specifiy the image tag. Default value is 'latest'
+
+  -do, --docker  BOOL     Default value is False. If it is True, the services
+                          run in docker environment. Otherwise, the services run
+                          in kubernetes environment.
+
+  -l, --local    BOOL     Default value is False. If it is True, define running
+                          environemnt in local. Otherwiser, define running
+                          environemt on AWS
+
+  --help                  Show this message and exit.
+~~~
 
 * If you use default `run-files` command with no option, the program processes the files defined in the `config.yaml` file with `solar-data-tools` algorithm, and generated the results that saved in a file defined in `config.yaml` file.
 
@@ -227,19 +251,25 @@ Examples:
 The above command processes the bucket's `first 1` file defined in the `test_config.yaml`.
 Since the `-d` option command is assigned, all of the EKS nodes will be deleted after processing.
 
-#### Other support command
+### Other support command
 
 - gcd --help
 - gcd nodes-scale [integer_number] [--help]
+- gcd build-images [-t|--tag] <image_tag> [-p|--push] [--help]
+- gcd k8s-deploy [-t|--tag] <image_tag> [-l|--local] [-r|--rollout] [-f|--configfile] <config_file> [--help]
 - gcd check-nodes [--help]
 - gcd read-dlq  [-e] [--help]
 - gcd processlogs [--help]
 
-The `nodes-scale` command allows developers to scale up or down the eks nodes.
+The `nodes-scale` command scales up or down the eks nodes.
 
-The `check-nodes` command allows developers to check current nodes number.
+Then `build-images` command builds image from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
 
-The `read-dlq` command allows developers to check current nodes number. The `-e` option commmand enables or disables deleting messages after invoking this command.
+The `check-nodes` command checks current nodes number.
+
+The `k8s-deploy` command deploys kubernetes servies. This commnd is used to test deploy process of k8s without process files.
+
+The `read-dlq` command checks current DLQ(dead letter queue) on AWS. The `-e` option commmand enables or disables deleting messages after invoking this command.
 The default value is `False`.
 
 The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
@@ -250,19 +280,21 @@ The `processlogs` command processes `logs.csv` files on AWS and draws the gantt 
 
 Under `gismoclouddeploy/services/cli` folder, developers can modify parametes of the cli command tool.
 
-1. The `general` configuration contains all the environement variables settings.
-2. The `file-config` configuration contains all the config settings to run multiple files.
-3. The `solardata` configuration contains all the parameters of the solar-data-tools algorithm.
-4. The `aws_config` configuration contains basic eks settings. Developers can define the number of nodes in EKS.
-5. The `k8s_config` configuration contains basic kubernetes setting. Developers can define the replicas of workers in this file instead of modifying the `worker.deployment.yaml`.
+1. The `general` section contains all the environement variables settings.
+2. The `file_config` section contains all the config settings to run multiple files.
+3. The `algorithms` section contains all algorithms setting. The algorithm's parametes are defined under its name.
+   The `algorithm` name should match the `selected_algorithm` in `file_config`.
+4. The `aws_config` section contains basic eks settings. Developers can define the number of nodes in EKS.
+5. The `k8s_config` section contains basic kubernetes setting. Developers can define the replicas of workers in this file instead of modifying the `worker.deployment.yaml`.
+6. The `output` section contains the setting of all output file names, paths and target bucket.
 
 ### Kubernetes yaml files
 
-All kubernetes deployment and service files are listed under `gismoclouddeploy/services/cli/k8s/k8s-aws` and `gismoclouddeploy/services/cli/k8s/k8s-local` folder. Developers can modify as they need.
+All kubernetes deployment and service files are listed under `gismoclouddeploy/services/cli/config/k8s` folder. Developers can modify it if necessary.
 
 ### EKS configuration yaml files
 
-The create cluster command will create an EKS cluster based on the configuration file in `cluster.yaml`.
+The create cluster command will create an EKS cluster based on the configuration file in `gismoclouddeploy/services/cli/config/eks/cluster.yaml`.
 
 ```bash
 make create-cluster
@@ -276,99 +308,6 @@ make delete-cluster
 
 ---
 
-### Build and push images on AWS.
-
-The AWS EKS hosts services based on the ECR images. If developers modify any code inside the server folder, developers have to build and push new images to ECR to see the changes.
-
-To build new images to be used by Kubernetes, developers have to build and test images using docker-compose command. If the images are verified, developers can push images to ECR.
-
-1. Build `worker` and `webapp` images through `docker-compose` command.
-
-```bash
-cd gismoclouddeploy/services
-docker-compose build
-```
-
-2. Login to ECR and get validation
-
-```bash
-make ecr-validation
-```
-
-3. push `worker` and `webapp` to ECR
-```bash
-make push-all
-```
-
-4. Check k8s status by command:
-
-```bash
-kubectl get all
-```
-
-If kubernetes services are running, developers should see the following output in the terminal.
-
-- **_NOTE:_** Since the eks node number is 0, the terminal output shows `0/1 READY` as below.
-
-```bash
-NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/rabbitmq   0/1     1            0           20h
-deployment.apps/redis      0/1     1            0           20h
-deployment.apps/webapp     0/1     1            0           20h
-deployment.apps/worker     0/1     1            0           20h
-```
-
-If no k8s config files had been apply, please apply k8s yaml files by command:
-
-```bash
-cd gismoclouddeploy/services/cli/k8s/k8s-aws
-kubectl apply -f .
-```
-
-If `worker` and `webapp` images had been applied. Developers can rollout and restart image by command:
-
-```bash
-make rollout
-```
-
----
-
-### Setup, build and push image in the local machine
-
-#### local Installation
-
-1. Download git repository
-
-```bash
-git clone https://github.com/slacgismo/gismo-cloud-deploy.git
-```
-
-2. Install the dependencies
-
-```bash
-cd gismo-cloud-deploy/services/cli
-python3 -m venv venv
-source ./venv/bin/activate
-pip install -r requirements.txt
-```
-
-3. Developers can use `docker-compose` or `kubernetes` to manage the system locally.
-
-#### Using docker-compose
-
-Before using docker to host local services, please install docker by the following instructions [Docker Link](https://docs.docker.com/get-docker/).
-
-Developers can run `gcd` command in the local environment through docker services instead of kubernetes.
-
-In `config.yaml` file, change the following settings below to run the program through docker services.
-
-~~~
-  environment: "local"
-  container_type: "docker"
-  container_name: "web"
-~~~
-
-
 #### Include MOSEK licence to build docker image
 
  MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
@@ -379,53 +318,41 @@ In `config.yaml` file, change the following settings below to run the program th
 
 Include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/server/licence`. The licence file is required to prove you have the licence.
 
-Running docker images by command
 
-```bash
-cd gismo-cloud-deploy/gismoclouddeploy/services
-docker-compose up --build
-```
----
+## Build and push images
 
-#### Using local Kubernetes
+The AWS EKS hosts services based on the ECR images. If developers modify any code inside the server folder, developers have to build and push new images to ECR to see the changes.
 
-In `config.yaml` file, change the following settings below to run the program through local kubernetes services.
+In order to build images, developers have to use `build-images` command. This command is a python wrapper function to invoke `docker-compose build` command in shell.
 
 ~~~
-  environment: "local"
-  container_type: "kubernetes"
-  container_name: "webapp"
+Usage: main.py build-images [OPTIONS]
+
+  Build image from docker-compose and push to ECR
+
+Options:
+  -t, --tag TEXT    Rollout and restart of webapp and worker pod of kubernetes
+
+  -p, --push BOOL   Is pushing image to AWS ECR : Default is False
+  --help            Show this message and exit.
 ~~~
 
-
-Once the docker images were built, apply `kubernetes` setting in `./gismoclouddeploy/services/cli/k8s/k8s-local` folder by command.
-
-```bash
-kubectl apply -f .
-```
-
-#### Push to AWS ECR
-
-Setup AWS credentials
+Example:
 
 ```bash
-aws configure
+gcd build-image  -t test -p
 ```
 
-Login AWS ECR
+The above example command execute `build-image` command, and tag built images with tag `test`.
+In this example, two images with build and tag as `worker:test` and `server:test`.Since `-p` optin command is enabled, the built images with tag are pushed to AWS ECR.
 
-```bash
-cd ./gismoclouddeploy/services
-make ecr-validation
-```
+> **_NOTE:_** The image with `latest` and `develop` tags are pushed from `Github Action` CI/CD pipeline to AWS ECR.
+> Developers cannot push images with `latest` and `develop` tags from local to AWS ECR.
 
-Push images to ECR
-```bash
-make push-all
-```
 ---
 
-### Testing
+
+## Testing
 
 ### Test cli
 
@@ -433,7 +360,7 @@ Run pytest coverage in cli
 
 ```bash
 cd ./gismoclouddeploy/services/cli
-pytest --cov=.
+pytest
 ```
 
 #### Test docker image
@@ -447,7 +374,7 @@ $ docker-compose exec web pytest
 Get test coverage in docker image
 
 ```bash
-$ docker-compose exec web pytest --cov=.
+$ docker-compose exec web pytest
 ```
 
 ---
