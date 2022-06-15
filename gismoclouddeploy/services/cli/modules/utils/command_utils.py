@@ -1,8 +1,5 @@
 from http import server
-from sys import modules
 from .eks_utils import (
-    scale_nodes_and_wait,
-    create_or_update_k8s,
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
