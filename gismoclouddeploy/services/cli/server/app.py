@@ -80,7 +80,7 @@ def process_files(config_params_str: str, first_n_files: str):
             s3_client=s3_client,
         )
 
-        logger.info(n_files)
+        # logger.info(n_files)
     except Exception as e:
         return f"Get filenames error: {e}"
 
