@@ -11,6 +11,7 @@ aws_config:
   scale_eks_nodes_wait_time : "90" # in second
   interval_of_check_sqs_in_second: "2" # in second
   interval_of_total_wait_time_of_sqs: "360" # in second.
+  interval_of__wait_pod_ready: "90" # in second
 
 
 k8s_config:

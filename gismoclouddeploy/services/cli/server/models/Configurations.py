@@ -24,6 +24,7 @@ class Configurations(object):
         deployment_services_list: List[str] = None,
         interval_of_check_sqs_in_second: int = None,
         interval_of_total_wait_time_of_sqs: int = None,
+        interval_of__wait_pod_ready: int = None,
         eks_nodes_number: int = None,
         scale_eks_nodes_wait_time: int = None,
         cluster_name: str = None,
@@ -53,6 +54,7 @@ class Configurations(object):
         self.deployment_services_list = deployment_services_list
         self.interval_of_check_sqs_in_second = interval_of_check_sqs_in_second
         self.interval_of_total_wait_time_of_sqs = interval_of_total_wait_time_of_sqs
+        self.interval_of__wait_pod_ready = interval_of__wait_pod_ready
         self.eks_nodes_number = eks_nodes_number
         self.scale_eks_nodes_wait_time = scale_eks_nodes_wait_time
         self.cluster_name = cluster_name
@@ -188,12 +190,15 @@ def make_config_obj_from_yaml(
             deployment_services_list=config_params["k8s_config"][
                 "deployment_services_list"
             ],
-            interval_of_check_sqs_in_second=config_params["aws_config"][
-                "interval_of_check_sqs_in_second"
-            ],
-            interval_of_total_wait_time_of_sqs=config_params["aws_config"][
-                "interval_of_total_wait_time_of_sqs"
-            ],
+            interval_of_check_sqs_in_second=int(
+                config_params["aws_config"]["interval_of_check_sqs_in_second"]
+            ),
+            interval_of_total_wait_time_of_sqs=int(
+                config_params["aws_config"]["interval_of_total_wait_time_of_sqs"]
+            ),
+            interval_of__wait_pod_ready=int(
+                config_params["aws_config"]["interval_of__wait_pod_ready"]
+            ),
             cluster_name=config_params["aws_config"]["cluster_name"],
             nodegroup_name=config_params["aws_config"]["nodegroup_name"],
             eks_nodes_number=config_params["aws_config"]["eks_nodes_number"],

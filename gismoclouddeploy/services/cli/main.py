@@ -589,7 +589,12 @@ def run_process_files(
                 desired_replicas = value["desired_replicas"]
                 x = threading.Thread(
                     target=modules.utils.eks_utils.wait_pod_ready,
-                    args=(desired_replicas, key, 60, 1),
+                    args=(
+                        desired_replicas,
+                        key,
+                        config_params_obj.interval_of__wait_pod_ready,
+                        1,
+                    ),
                 )
                 x.name = key
                 threads.append(x)
@@ -628,8 +633,8 @@ def run_process_files(
     thread = modules.TaskThread(
         threadID=1,
         name="sqs",
-        counter=120,
-        wait_time=2,
+        counter=config_params_obj.interval_of_total_wait_time_of_sqs,
+        wait_time=config_params_obj.interval_of_check_sqs_in_second,
         sqs_url=SQS_URL,
         num_task=total_task_num,
         config_params_obj=config_params_obj,
