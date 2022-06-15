@@ -41,8 +41,8 @@ jobs:
 
           - name: Tag images
             run: |
-              docker image tag worker ${{ secrets.ECR_ECR_REGISTRY }}/worker:latest
-              docker image tag web ${{ secrets.ECR_ECR_REGISTRY }}/server:latest
+              docker image tag worker ${{ secrets.ECR_ECR_REGISTRY }}/worker:${{ steps.extract_branch.outputs.branch }}
+              docker image tag web ${{ secrets.ECR_ECR_REGISTRY }}/server:${{ steps.extract_branch.outputs.branch }}
           - name: Push to ECR
             id: ecr
             run: |
