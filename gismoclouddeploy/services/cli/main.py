@@ -53,44 +53,49 @@ def main():
 @click.option(
     "--number",
     "-n",
-    help="Process the first n files in bucket, if number=0, run all files in the bucket",
+    help="""
+    Process the first n files in the defined bucket of config.yaml.
+    If number is None, this application process defined files in config.yaml.
+    If number is 0, this application processs all files in the defined bucket in config.yaml.
+    If number is an integer, this applicaion process the first `number` files in the defined bucket in config.yaml.
+    """,
     default=None,
 )
 @click.option(
     "--deletenodes",
     "-d",
     is_flag=True,
-    help="Enbale or disable delet nodes after process, default is Ture. Set False to disable ",
+    help="Enable deleting eks node after complete this application. Default value is False.",
 )
 @click.option(
     "--configfile",
     "-f",
-    help="Assign config files, Default files is config.yaml under /config",
+    help="Assign custom config files, Default files name is ./config/config.yaml",
     default="config.yaml",
 )
 @click.option(
     "--rollout",
     "-r",
     is_flag=True,
-    help="Rollout and restart of webapp and worker pod of kubernetes",
+    help="Enable deleting current k8s deployment services and re-deployment services. Default value is False",
 )
 @click.option(
     "--imagetag",
     "-i",
-    help="Select images base on the branch. Default image branch is latest",
+    help="Specifiy the image tag. Default value is 'latest'",
     default="latest",
 )
 @click.option(
     "--docker",
     "-do",
     is_flag=True,
-    help="Running services in docker environemts. Default is False (Running in k8s)",
+    help="Default value is False. If it is True, the services run in docker environment.Otherwise, the services run in k8s environment.",
 )
 @click.option(
     "--local",
     "-l",
     is_flag=True,
-    help="Running services in local. Default is False (Running in AWS)",
+    help="Default value is False. If it is True, define running environemnt in local.Otherwiser, define running environemt on AWS",
 )
 def run_files(number, deletenodes, configfile, rollout, imagetag, docker, local):
     """Run Process Files"""
@@ -170,7 +175,7 @@ def check_nodes():
     help="Is push image to ecr : Default is False",
 )
 def build_images(tag: str = None, push: bool = False):
-    """Check nodes status"""
+    """Build image from docker-compose and push to ECR"""
     click.echo(f"Build image :{tag}")
     # build_resp = modules.utils.invoke_docker_compose_build()
     # click.echo(build_resp)
@@ -238,6 +243,7 @@ def build_images(tag: str = None, push: bool = False):
     help="Rollout and restart of webapp and worker pod of kubernetes",
 )
 def k8s_deploy(tag: str, local: bool, configfile: str, rollout: bool):
+    """Deploy k8s services"""
     click.echo(
         f"Select image tag: {tag}, Is environment AWS:{not local}, config file: {configfile}, rollout: {rollout}"
     )
