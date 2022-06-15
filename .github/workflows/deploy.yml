@@ -4,10 +4,14 @@ on:
     branches: [ main, develop ]
     paths-ignore:
       - '**/README.md'
+    tags:
+      - 'v*.*.*'
   pull_request:
     branches: [ main,develop ]
     paths-ignore:
       - '**/README.md'
+
+
 
 
 jobs:
@@ -19,6 +23,16 @@ jobs:
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v3
+          - name: Extract tag version
+            run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+            id: extract_tags
+
+          - name: Check tag
+            env:
+              RELEASE_VERSION: ${{ steps.vars.outputs.tag }}
+            run: |
+              echo $RELEASE_VERSION
+              echo ${{ steps.vars.outputs.tag }}
 
           - name: Extract branch name
             shell: bash
@@ -42,7 +56,7 @@ jobs:
           - name: Tag images
             run: |
               docker image tag worker ${{ secrets.ECR_ECR_REGISTRY }}/worker:${{ steps.extract_branch.outputs.branch }}
-              docker image tag web ${{ secrets.ECR_ECR_REGISTRY }}/server:${{ steps.extract_branch.outputs.branch }}
+              docker image tag server ${{ secrets.ECR_ECR_REGISTRY }}/server:${{ steps.extract_branch.outputs.branch }}
           - name: Push to ECR
             id: ecr
             run: |
