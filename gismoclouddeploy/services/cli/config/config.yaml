@@ -31,7 +31,7 @@ k8s_config:
         image_tag: "latest"
       redis:
         desired_replicas: 1
-        magePullPolicy: "Always"
+        imagePullPolicy: "Always"
         deployment_file: "./config/k8s/redis.deployment.yaml"
         service_file: "./config/k8s/redis.services.yaml"
         image_name: "redis"

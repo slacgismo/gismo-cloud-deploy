@@ -606,7 +606,6 @@ def run_process_files(
         sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1
     )
 
-    logger.info("-------------------------")
     try:
         total_task_num = modules.command_utils.invoke_process_files_based_on_number(
             number=number,
