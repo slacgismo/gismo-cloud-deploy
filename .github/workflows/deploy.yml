@@ -20,6 +20,11 @@ jobs:
           - name: Checkout Repository
             uses: actions/checkout@v3
 
+          - name: Extract branch name
+            shell: bash
+            run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+            id: extract_branch
+
           - name: Configure AWS Credentials
             uses: aws-actions/configure-aws-credentials@v1
             with:
@@ -33,11 +38,13 @@ jobs:
             run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml up -d
           - name: Check running containers
             run: docker-compose -f gismoclouddeploy/services/cli/docker-compose.yml ps
+
           - name: Tag images
             run: |
               docker image tag worker ${{ secrets.ECR_ECR_REGISTRY }}/worker:latest
               docker image tag web ${{ secrets.ECR_ECR_REGISTRY }}/server:latest
           - name: Push to ECR
+            id: ecr
             run: |
-              docker push ${{ secrets.ECR_ECR_REGISTRY }}/worker:latest
-              docker push ${{ secrets.ECR_ECR_REGISTRY }}/server:latest
+              docker push ${{ secrets.ECR_ECR_REGISTRY }}/worker:${{ steps.extract_branch.outputs.branch }}
+              docker push ${{ secrets.ECR_ECR_REGISTRY }}/server:${{ steps.extract_branch.outputs.branch }}
