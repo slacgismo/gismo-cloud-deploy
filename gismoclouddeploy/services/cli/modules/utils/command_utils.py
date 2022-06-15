@@ -37,54 +37,6 @@ logging.basicConfig(
 )
 
 
-# def check_environment_setup(
-#     config_params_obj: Configurations, rollout: bool, images_tag: str
-# ) -> None:
-
-#     # check node status from local or AWS
-#     if config_params_obj.environment == "AWS":
-#         logger.info(" ============ Running on AWS ===============")
-#         config_params_obj.container_type = "kubernetes"
-#         config_params_obj.container_name = "webapp"
-
-#         scale_nodes_and_wait(
-#             scale_node_num=int(config_params_obj.eks_nodes_number),
-#             counter=int(config_params_obj.scale_eks_nodes_wait_time),
-#             delay=1,
-#             config_params_obj=config_params_obj,
-#         )
-#         # create or update k8s setting based on yaml files
-#         try:
-#             # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="aws")
-#             create_or_update_k8s(
-#                 config_params_obj=config_params_obj,
-#                 rollout=rollout,
-#                 env="AWS",
-#                 image_tag=images_tag,
-#             )
-#         except Exception as e:
-#             logger.error(f"Create or update k8s error :{e}")
-#             raise e
-
-#     else:
-#         # local env
-#         if config_params_obj.container_type == "kubernetes":
-#             # check if k8s and webapp exist
-#             try:
-#                 # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="local")
-#                 create_or_update_k8s(
-#                     config_params_obj=config_params_obj,
-#                     rollout=rollout,
-#                     env="local",
-#                     image_tag=images_tag,
-#                 )
-#             except Exception as e:
-#                 logger.error(f"Create or update k8s error :{e}")
-#                 raise e
-
-#     return
-
-
 def invoke_process_files_based_on_number(
     number: Union[int, None],
     config_params_obj: Configurations = None,
@@ -153,80 +105,6 @@ def invoke_process_files_based_on_number(
         logger.info(k8s_resp)
 
     return total_task_num
-
-
-# def invoke_process_files_based_on_number(
-#     number: Union[int, None], config_params_obj: Configurations, config_yaml: str
-# ) -> int:
-#     total_task_num = 0
-#     try:
-#         config_params_str = import_yaml_and_convert_to_json_str(
-#             yaml_file=config_yaml,
-#             aws_access_key=config_params_obj.aws_access_key,
-#             aws_secret_access_key=config_params_obj.aws_secret_access_key,
-#             aws_region=config_params_obj.aws_region,
-#             sns_topic=config_params_obj.sns_topic,
-#         )
-#     except Exception as e:
-#         logger.error(f"Convert Configrations to json failed:{e}")
-#         raise e
-
-#     if number is None:
-#         logger.info(" ========= Process default files in config.yam ========= ")
-#         try:
-
-#             invoke_exec_run_process_files(
-#                 config_params_str=config_params_str,
-#                 container_type=config_params_obj.container_type,
-#                 container_name=config_params_obj.container_name,
-#                 first_n_files=number,
-#             )
-
-#             total_task_num = len(config_params_obj.files) + 1
-#         except Exception as e:
-#             logger.error(f"Process default files failed :{e}")
-#             raise e
-#     else:
-#         try:
-#             total_task_num = 0
-#             if int(number) == 0:
-
-#                 s3_client = aws_utils.connect_aws_client(
-#                     client_name="s3",
-#                     key_id=config_params_obj.aws_access_key,
-#                     secret=config_params_obj.aws_secret_access_key,
-#                     region=config_params_obj.aws_region,
-#                 )
-
-#                 all_files = aws_utils.list_files_in_bucket(
-#                     bucket_name=config_params_obj.bucket, s3_client=s3_client
-#                 )
-#                 number_files = len(all_files)
-#                 total_task_num = len(all_files) + 1
-#                 logger.info(
-#                     f" ========= Process all {number_files} files in bucket ========= "
-#                 )
-#             else:
-#                 logger.info(
-#                     f" ========= Process first {number} files in bucket ========= "
-#                 )
-#                 total_task_num = int(number) + 1
-#             try:
-#                 invoke_exec_run_process_files(
-#                     config_params_str=config_params_str,
-#                     container_type=config_params_obj.container_type,
-#                     container_name=config_params_obj.container_name,
-#                     first_n_files=number,
-#                 )
-
-#             except Exception as e:
-#                 logger.error(f"Process first {number} files failed :{e}")
-#                 raise e
-
-#         except Exception as e:
-#             raise Exception(f"Input Number Error :{e}")
-#     logger.info(f"total_task_num :{total_task_num}")
-#     return total_task_num
 
 
 def process_logs_and_plot(config_params_obj: Configurations) -> None:
