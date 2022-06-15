@@ -428,9 +428,9 @@ def run_k8s_deploy(
         # service exists
         if service_file:
             # check service exist
-            if not modules.utils.eks_utils.check_k8s_services_exists(name=service_name):
+            if not modules.utils.k8s_utils.check_k8s_services_exists(name=service_name):
                 logger.info(f"========= Create services{service_file} =========== ")
-                modules.utils.eks_utils.create_k8s_svc_from_yaml(
+                modules.utils.k8s_utils.create_k8s_svc_from_yaml(
                     full_path_name=service_file
                 )
 
@@ -574,11 +574,11 @@ def run_process_files(
             # service exists
             if service_file:
                 # check service exist
-                if not modules.utils.eks_utils.check_k8s_services_exists(
+                if not modules.utils.k8s_utils.check_k8s_services_exists(
                     name=service_name
                 ):
                     logger.info(f"========= Create services{service_file} =========== ")
-                    modules.utils.eks_utils.create_k8s_svc_from_yaml(
+                    modules.utils.k8s_utils.create_k8s_svc_from_yaml(
                         full_path_name=service_file
                     )
 

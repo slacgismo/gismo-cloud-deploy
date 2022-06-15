@@ -1,5 +1,4 @@
-from http import server
-from .eks_utils import (
+from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,

@@ -1,18 +1,13 @@
-from importlib.metadata import metadata
 import time
-from urllib import response
 from kubernetes import client, config
 from server.models.Configurations import Configurations
-from typing import Tuple
 import logging
-import yaml
-import threading
+from .k8s_utils import get_k8s_pod_info, read_k8s_yml
 
 from modules.utils.invoke_function import (
     invoke_kubectl_apply,
     invoke_eksctl_scale_node,
     invoke_kubectl_rollout,
-    invoke_kubectl_delete_deployment,
 )
 
 logger = logging.getLogger()
@@ -174,26 +169,39 @@ def match_pod_ip_to_node_name(pods_name_sets: set) -> dict:
     return pods
 
 
-def create_k8s_from_yaml(file_path: str, file_name: str, app_name: str) -> bool:
+def replace_k8s_yaml_with_replicas(
+    file_path: str, file_name: str, new_replicas: int, app_name: str, curr_replicas: int
+) -> bool:
+    try:
+        file_setting = read_k8s_yml(file_path=file_path, file_name=file_name)
+    except Exception as e:
+        raise e
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
-    full_path_name = file_path + "/" + file_name
-    try:
-        with open(full_path_name) as f:
-            dep = yaml.safe_load(f)
-            logger.info(f" ========= Create {app_name} app_name:{app_name} ========= ")
-            try:
-                resp = apps_v1_api.create_namespaced_deployment(
-                    body=dep, namespace="default"
-                )
-                print("Created. status='%s'" % str(resp.status))
-                return True
-            except Exception as e:
-                print(f"no deplyment.yaml {file_name}")
-                raise e
-    except Exception as e:
-        print(f"openf file {full_path_name} failed: {e}")
-        raise e
+
+    # origin_replica = dep['spec']['replicas']
+    if curr_replicas != new_replicas:
+        file_setting["spec"]["replicas"] = int(new_replicas)
+        logger.info(
+            f" ========= Update {app_name} replicas from {curr_replicas} to {new_replicas} ========= "
+        )
+        try:
+            resp = apps_v1_api.replace_namespaced_deployment(
+                name=app_name, body=file_setting, namespace="default"
+            )
+            print("Replace created. status='%s'" % str(resp.status))
+            is_ready = wait_pod_ready(
+                num_container=new_replicas,
+                container_prefix=app_name,
+                counter=60,
+                delay=1,
+            )
+            if is_ready is False:
+                raise Exception("Wait over time")
+            return True
+        except Exception as e:
+            print(f"no deplyment.yaml or wait over time{e}")
+            raise e
 
 
 def create_or_update_k8s(
@@ -213,15 +221,6 @@ def create_or_update_k8s(
             k8s_path = "./k8s/k8s-aws"
     except Exception as e:
         raise Exception(f"K8s path not exist {e}")
-    # 1 . check image tag for worker and server
-    # worker_image, worker_image_tag = get_k8s_image_and_tag_from_deployment(prefix="worker")
-    # webapp_image, webapp_image_tag = get_k8s_image_and_tag_from_deployment(prefix="webapp")
-    # print(worker_image,worker_image_tag,webapp_image,webapp_image_tag)
-
-    # if worker_image_tag != image_tag or webapp_image_tag != image_tag:
-    #     logger.info("========= Delete current deployment =============")
-    #     response = invoke_kubectl_delete_deployment()
-    #     logger.info(response)
 
     logger.info(" ========= Check K8s is status ========= ")
     # deployment_pod_name_list = ["worker", "webapp", "redis", "rabbitmq"]
@@ -321,208 +320,3 @@ def create_or_update_k8s(
                 if is_pod_ready is False:
                     logger.error(f"Waiting {pod_name} pod ready over time")
                     raise Exception("Waiting over time")
-
-
-def read_k8s_yml(full_path_name: str):
-    config.load_kube_config()
-    # full_path_name = file_path + "/" + file_name
-    try:
-        with open(full_path_name) as f:
-            dep = yaml.safe_load(f)
-            return dep
-    except Exception as e:
-        logger.error(f"cannot open yaml file: {e}")
-        raise e
-
-
-def create_k8s_svc_from_yaml(
-    full_path_name: str = None, namspace: str = "default"
-) -> bool:
-    try:
-        file_setting = read_k8s_yml(full_path_name=full_path_name)
-    except Exception as e:
-        raise e
-    config.load_kube_config()
-    apps_v1_api = client.CoreV1Api()
-    try:
-        resp = apps_v1_api.create_namespaced_service(
-            body=file_setting, namespace=namspace
-        )
-        print("Created. status='%s'" % str(resp.status))
-        return True
-    except Exception as e:
-        logger.error(f"create k8s svc error: {e}")
-        raise e
-
-
-def create_k8s_deployment_from_yaml(
-    service_name: str = None,
-    image_url_tag: str = None,
-    imagePullPolicy: str = None,
-    desired_replicas: int = 1,
-    file_name: str = None,
-    namspace: str = "default",
-) -> bool:
-    try:
-        file_setting = read_k8s_yml(full_path_name=file_name)
-    except Exception as e:
-        raise e
-    default_image = file_setting["spec"]["template"]["spec"]["containers"][0]["image"]
-    default_replicas = file_setting["spec"]["replicas"]
-    default_imagePullPolicy = file_setting["spec"]["template"]["spec"]["containers"][0][
-        "imagePullPolicy"
-    ]
-    default_replicas = file_setting["spec"]["replicas"]
-
-    print(str(desired_replicas), image_url_tag, imagePullPolicy)
-    # update setting if not nont
-    if image_url_tag is not None and image_url_tag != default_image:
-        logger.info(f"update k8s image {image_url_tag}")
-        file_setting["spec"]["template"]["spec"]["containers"][0][
-            "image"
-        ] = image_url_tag
-
-    if desired_replicas != 1 and desired_replicas != default_replicas:
-        logger.info(f"update k8s replicas {desired_replicas}")
-        file_setting["spec"]["replicas"] = int(desired_replicas)
-
-    if imagePullPolicy is not None and imagePullPolicy != default_imagePullPolicy:
-        logger.info(f"update imagePullPolicy {imagePullPolicy}")
-        file_setting["spec"]["template"]["spec"]["containers"][0][
-            "imagePullPolicy"
-        ] = imagePullPolicy
-
-    config.load_kube_config()
-    apps_v1_api = client.AppsV1Api()
-    try:
-        resp = apps_v1_api.create_namespaced_deployment(
-            body=file_setting, namespace=namspace
-        )
-        print("Created. status='%s'" % str(resp.status))
-        return True
-    except Exception as e:
-        logger.error(f"create k8s deployment error: {e}")
-        raise e
-
-
-def replace_k8s_yaml_with_replicas(
-    file_path: str, file_name: str, new_replicas: int, app_name: str, curr_replicas: int
-) -> bool:
-    try:
-        file_setting = read_k8s_yml(file_path=file_path, file_name=file_name)
-    except Exception as e:
-        raise e
-    config.load_kube_config()
-    apps_v1_api = client.AppsV1Api()
-
-    # origin_replica = dep['spec']['replicas']
-    if curr_replicas != new_replicas:
-        file_setting["spec"]["replicas"] = int(new_replicas)
-        logger.info(
-            f" ========= Update {app_name} replicas from {curr_replicas} to {new_replicas} ========= "
-        )
-        try:
-            resp = apps_v1_api.replace_namespaced_deployment(
-                name=app_name, body=file_setting, namespace="default"
-            )
-            print("Replace created. status='%s'" % str(resp.status))
-            is_ready = wait_pod_ready(
-                num_container=new_replicas,
-                container_prefix=app_name,
-                counter=60,
-                delay=1,
-            )
-            if is_ready is False:
-                raise Exception("Wait over time")
-            return True
-        except Exception as e:
-            print(f"no deplyment.yaml or wait over time{e}")
-            raise e
-
-
-def get_k8s_deployment(prefix: str = None) -> str:
-    config.load_kube_config()
-    v1 = client.AppsV1Api()
-    resp = v1.list_namespaced_deployment(namespace="default")
-    dep = []
-    for i in resp.items:
-        if i.metadata.name == "worker":
-            dep.append(i)
-
-    print(dep[0])
-
-
-def get_k8s_pod_info(prefix: str = None) -> dict:
-    config.load_kube_config()
-    v1 = client.AppsV1Api()
-    resp = v1.list_replica_set_for_all_namespaces(watch=False)
-    pods = []
-
-    # find the latest version of deployemnt
-    max_version = 0
-    pod_name = None
-    available_replicas = 0
-    for i in resp.items:
-        pod_prefix = i.metadata.name.split("-")[0]
-        if pod_prefix == prefix:
-            if (
-                int(i.metadata.annotations["deployment.kubernetes.io/revision"])
-                > max_version
-            ):
-                max_version = int(
-                    i.metadata.annotations["deployment.kubernetes.io/revision"]
-                )
-                pod_name = i.metadata.name
-                available_replicas = i.status.available_replicas
-
-    return {
-        "pod_name": pod_name,
-        "max_version": max_version,
-        "available_replicas": available_replicas,
-    }
-
-
-def get_k8s_image_and_tag_from_deployment(prefix: str = None) -> Tuple[str, str, str]:
-    try:
-        config.load_kube_config()
-        v1 = client.AppsV1Api()
-        resp = v1.list_namespaced_deployment(namespace="default")
-        deployment = []
-        for i in resp.items:
-            if i.metadata.name == prefix:
-                deployment.append(i)
-        if len(deployment) > 0:
-            for po in deployment:
-                full_image_url = po.spec.template.spec.containers[0].image
-                image, image_tag = full_image_url.split(":")
-                status = po.status
-                return image, image_tag, status
-
-        return None, None, None
-    except Exception as e:
-        raise e
-
-
-def check_k8s_services_exists(name: str = None) -> bool:
-    config.load_kube_config()
-    v1 = client.CoreV1Api()
-    resp = v1.list_service_for_all_namespaces(watch=False)
-    for i in resp.items:
-        if i.metadata.name == name:
-            return True
-    return False
-
-
-def get_k8s_pod_name(pod_name: str = None) -> str:
-    config.load_kube_config()
-    v1 = client.CoreV1Api()
-    # print("Listing pods with their IPs:")
-    ret = v1.list_pod_for_all_namespaces(watch=False)
-    for i in ret.items:
-        # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
-        podname = i.metadata.name.split("-")[0]
-        if podname == pod_name:
-            # print(f"podname: {i.metadata.name}")
-            return i.metadata.name
-
-    return None

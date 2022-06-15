@@ -16,11 +16,19 @@ from .eks_utils import (
     num_of_nodes_ready,
     scale_node_number,
     match_pod_ip_to_node_name,
-    create_k8s_from_yaml,
     create_or_update_k8s,
+    replace_k8s_yaml_with_replicas,
+)
+
+from .k8s_utils import (
+    create_k8s_from_yaml,
     read_k8s_yml,
     create_k8s_svc_from_yaml,
-    replace_k8s_yaml_with_replicas,
+    create_k8s_deployment_from_yaml,
+    get_k8s_deployment,
+    get_k8s_pod_info,
+    get_k8s_image_and_tag_from_deployment,
+    check_k8s_services_exists,
     get_k8s_pod_name,
 )
 
