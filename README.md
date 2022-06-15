@@ -256,7 +256,6 @@ Since the `-d` option command is assigned, all of the EKS nodes will be deleted 
 - gcd --help
 - gcd nodes-scale [integer_number] [--help]
 - gcd build-images [-t|--tag] <image_tag> [-p|--push] [--help]
-- gcd k8s-deploy [-t|--tag] <image_tag> [-l|--local] [-r|--rollout] [-f|--configfile] <config_file> [--help]
 - gcd check-nodes [--help]
 - gcd read-dlq  [-e] [--help]
 - gcd processlogs [--help]
@@ -266,8 +265,6 @@ The `nodes-scale` command scales up or down the eks nodes.
 Then `build-images` command builds image from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
 
 The `check-nodes` command checks current nodes number.
-
-The `k8s-deploy` command deploys kubernetes servies. This commnd is used to test deploy process of k8s without process files.
 
 The `read-dlq` command checks current DLQ(dead letter queue) on AWS. The `-e` option commmand enables or disables deleting messages after invoking this command.
 The default value is `False`.
@@ -376,6 +373,11 @@ Get test coverage in docker image
 ```bash
 $ docker-compose exec web pytest
 ```
+
+## Debug
+
+### Kubernetes.
+
 
 ---
 
