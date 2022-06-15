@@ -1,8 +1,5 @@
-# process file
+
 general:
-  environment: "loacl"  # "local" , "AWS"
-  container_type: "kubernetes"  # "docker" , "kubernetes"
-  container_name: "server"     # "server" . "server"
   interval_of_check_task_status: "1" # in second
   interval_of_exit_check_status: "900" # in second. If the task status didn't update after this period. stop check individual status
 
@@ -19,7 +16,7 @@ aws_config:
 k8s_config:
     deployment_services_list:
       worker:
-        desired_replicas: 1
+        desired_replicas: 1 # Define how many workers run parallel in k8s
         imagePullPolicy: "Always"
         deployment_file: "./config/k8s/worker.deployment.yaml"
         service_file: ""
@@ -53,7 +50,7 @@ files_config:
   bucket: "pv.insight.nrel"
   files: ["PVO/PVOutput/10059.csv"]
   column_names: ["Power(W)","(W)"] # partial match
-  selected_algorithm: "solar_data_tools"
+  selected_algorithm: "solar_data_tools" # Define algorithm. It has to match the label in algroithms.
 
 output:
   saved_bucket: "pv.insight.test"

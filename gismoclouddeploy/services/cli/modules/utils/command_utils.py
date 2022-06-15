@@ -37,52 +37,52 @@ logging.basicConfig(
 )
 
 
-def check_environment_setup(
-    config_params_obj: Configurations, rollout: bool, images_tag: str
-) -> None:
+# def check_environment_setup(
+#     config_params_obj: Configurations, rollout: bool, images_tag: str
+# ) -> None:
 
-    # check node status from local or AWS
-    if config_params_obj.environment == "AWS":
-        logger.info(" ============ Running on AWS ===============")
-        config_params_obj.container_type = "kubernetes"
-        config_params_obj.container_name = "webapp"
+#     # check node status from local or AWS
+#     if config_params_obj.environment == "AWS":
+#         logger.info(" ============ Running on AWS ===============")
+#         config_params_obj.container_type = "kubernetes"
+#         config_params_obj.container_name = "webapp"
 
-        scale_nodes_and_wait(
-            scale_node_num=int(config_params_obj.eks_nodes_number),
-            counter=int(config_params_obj.scale_eks_nodes_wait_time),
-            delay=1,
-            config_params_obj=config_params_obj,
-        )
-        # create or update k8s setting based on yaml files
-        try:
-            # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="aws")
-            create_or_update_k8s(
-                config_params_obj=config_params_obj,
-                rollout=rollout,
-                env="AWS",
-                image_tag=images_tag,
-            )
-        except Exception as e:
-            logger.error(f"Create or update k8s error :{e}")
-            raise e
+#         scale_nodes_and_wait(
+#             scale_node_num=int(config_params_obj.eks_nodes_number),
+#             counter=int(config_params_obj.scale_eks_nodes_wait_time),
+#             delay=1,
+#             config_params_obj=config_params_obj,
+#         )
+#         # create or update k8s setting based on yaml files
+#         try:
+#             # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="aws")
+#             create_or_update_k8s(
+#                 config_params_obj=config_params_obj,
+#                 rollout=rollout,
+#                 env="AWS",
+#                 image_tag=images_tag,
+#             )
+#         except Exception as e:
+#             logger.error(f"Create or update k8s error :{e}")
+#             raise e
 
-    else:
-        # local env
-        if config_params_obj.container_type == "kubernetes":
-            # check if k8s and webapp exist
-            try:
-                # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="local")
-                create_or_update_k8s(
-                    config_params_obj=config_params_obj,
-                    rollout=rollout,
-                    env="local",
-                    image_tag=images_tag,
-                )
-            except Exception as e:
-                logger.error(f"Create or update k8s error :{e}")
-                raise e
+#     else:
+#         # local env
+#         if config_params_obj.container_type == "kubernetes":
+#             # check if k8s and webapp exist
+#             try:
+#                 # create_or_update_k8s(config_params_obj=config_params_obj,rollout=rollout, env="local")
+#                 create_or_update_k8s(
+#                     config_params_obj=config_params_obj,
+#                     rollout=rollout,
+#                     env="local",
+#                     image_tag=images_tag,
+#                 )
+#             except Exception as e:
+#                 logger.error(f"Create or update k8s error :{e}")
+#                 raise e
 
-    return
+#     return
 
 
 def invoke_process_files_based_on_number(

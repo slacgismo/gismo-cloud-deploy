@@ -1,5 +1,4 @@
 from .command_utils import (
-    check_environment_setup,
     invoke_process_files_based_on_number,
     process_logs_and_plot,
     print_dlq,

@@ -19,9 +19,6 @@ class Configurations(object):
         saved_logs_target_filename: str = None,
         saved_rumtime_image_name_aws: str = None,
         saved_rumtime_image_name_local: str = None,
-        environment: str = None,
-        container_type: str = None,
-        container_name: str = None,
         interval_of_check_task_status: int = None,
         interval_of_exit_check_status: int = None,
         deployment_services_list: List[str] = None,
@@ -51,9 +48,6 @@ class Configurations(object):
         self.saved_logs_target_filename = saved_logs_target_filename
         self.saved_rumtime_image_name_aws = saved_rumtime_image_name_aws
         self.saved_rumtime_image_name_local = saved_rumtime_image_name_local
-        self.environment = environment
-        self.container_type = container_type
-        self.container_name = container_name
         self.interval_of_check_task_status = interval_of_check_task_status
         self.interval_of_exit_check_status = interval_of_exit_check_status
         self.deployment_services_list = deployment_services_list
@@ -185,9 +179,6 @@ def make_config_obj_from_yaml(
             saved_rumtime_image_name_local=config_params["output"][
                 "saved_rumtime_image_name_local"
             ],
-            environment=config_params["general"]["environment"],
-            container_type=config_params["general"]["container_type"],
-            container_name=config_params["general"]["container_name"],
             interval_of_check_task_status=config_params["general"][
                 "interval_of_check_task_status"
             ],
