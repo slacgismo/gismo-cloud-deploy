@@ -86,13 +86,13 @@ def invoke_docker_compose_build() -> str:
 def invoke_ecr_validation() -> str:
     command = "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 041414866712.dkr.ecr.us-east-2.amazonaws.com"
     output = subprocess.check_output(["bash", "-c", command])
-    print(output)
+    return output
 
 
 def invoke_tag_image(image_name: str, image_tag: str, ecr_repo: str) -> str:
     command = f"docker image tag {image_name} {ecr_repo}/{image_name}:{image_tag}"
     output = exec_subprocess_command(command=command)
-    print(output)
+    return output
 
 
 def invoke_push_image(image_name: str, image_tag: str, ecr_repo: str) -> str:

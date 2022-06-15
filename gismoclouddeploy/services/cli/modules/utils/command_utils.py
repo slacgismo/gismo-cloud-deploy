@@ -272,6 +272,7 @@ def create_or_update_k8s_deployment(
     imagePullPolicy: str = "Always",
     desired_replicas: int = 1,
     k8s_file_name: str = None,
+    rollout: bool = False,
 ):
     try:
         curr_image, curr_tag, curr_status = get_k8s_image_and_tag_from_deployment(
@@ -300,6 +301,7 @@ def create_or_update_k8s_deployment(
                 curr_status.unavailable_replicas is not None
                 or curr_tag != image_tag
                 or int(curr_status.replicas) != int(desired_replicas)
+                or rollout is True
             ):
 
                 if curr_status.unavailable_replicas is not None:
@@ -310,6 +312,10 @@ def create_or_update_k8s_deployment(
                     )
                 if curr_tag != image_tag:
                     logger.info(f"Update from {name}:{curr_tag} to {name}:{image_tag}")
+
+                if rollout is True:
+                    logger.info(f"rollout is True")
+
                 logger.info(f"========== Delete  {name}:{curr_tag}  ==========")
                 output = invoke_kubectl_delete_deployment(name=name)
                 # logger.info(output)
