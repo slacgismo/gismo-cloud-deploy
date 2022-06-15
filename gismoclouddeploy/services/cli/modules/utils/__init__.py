@@ -6,7 +6,7 @@ from .command_utils import (
     update_config_obj_image_name_and_tag_according_to_env,
 )
 
-from .TaskThread import TaskThread
+from .task_thread import TaskThread
 
 
 from .eks_utils import (

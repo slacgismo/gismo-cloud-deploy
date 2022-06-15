@@ -1,15 +1,9 @@
-from concurrent.futures import thread
-from http import server
-import re
 import threading
-from unicodedata import name
-from urllib import response
 import click
 from os.path import exists
 import logging
 import os
 
-from server.utils.aws_utils import check_ecr_tag_exists
 import modules
 from server.models.Configurations import make_config_obj_from_yaml
 from server.utils.aws_utils import (
@@ -432,7 +426,7 @@ def run_process_files(
     except Exception as e:
         logger.error(f"Invoke process files error:{e}")
         return
-    thread = modules.TaskThread(
+    thread = modules.task_thread.TaskThread(
         threadID=1,
         name="sqs",
         counter=config_params_obj.interval_of_total_wait_time_of_sqs,

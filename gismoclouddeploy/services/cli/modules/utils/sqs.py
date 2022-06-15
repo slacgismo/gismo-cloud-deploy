@@ -233,10 +233,10 @@ def clean_previous_sqs_message(
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 receipt_handle = msg["ReceiptHandle"]
-                logger.info(f"The message body: {msg_body}")
+                # logger.info(f"The message body: {msg_body}")
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 logger.info(f"Received and deleted message(s) from {sqs_url}.")
-                print(receipt_handle)
+                # print(receipt_handle)
         else:
             logger.info("Clean previous message completed")
             return
