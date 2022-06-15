@@ -124,16 +124,17 @@ def run_files(number, deletenodes, configfile, rollout, imagetag, docker, local)
 )
 def nodes_scale(min_nodes, configfile):
     """Increate or decrease nodes number"""
-    logger.info(f"Scale nodes {min_nodes}")
+    logger.info(f"Scale nodes {min_nodes} {configfile}")
     try:
         # config_obj = import_config_from_yaml(configfile)
         config_params_obj = make_config_obj_from_yaml(
-            file=f"./config/{configfile}",
+            yaml_file=f"./config/{configfile}",
             aws_access_key=AWS_ACCESS_KEY_ID,
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             aws_region=AWS_DEFAULT_REGION,
             sns_topic=SNS_TOPIC,
         )
+
     except Exception as e:
         return logger.error(e)
     modules.eks_utils.scale_nodes_and_wait(
