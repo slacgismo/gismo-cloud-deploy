@@ -1,4 +1,3 @@
-from asyncio import threads
 from concurrent.futures import thread
 from http import server
 import re
