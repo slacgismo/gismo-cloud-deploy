@@ -239,7 +239,7 @@ Options:
 * The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first 10 files in defined bucket )
 If `number=0`, it processes all files in the buckets.
 
-* The option command `[ --configfile | -f ] [filename]` allows developers to import custom configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
+* The option command `[ --configfile | -f ] [filename]`  imports custom configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
 If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
 
 Examples:
