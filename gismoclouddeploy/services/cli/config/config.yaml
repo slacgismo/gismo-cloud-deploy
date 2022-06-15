@@ -19,19 +19,22 @@ aws_config:
 k8s_config:
     deployment_services_list:
       worker:
-        desired_replicas: 3
+        desired_replicas: 1
+        imagePullPolicy: "Always"
         deployment_file: "./config/k8s/worker.deployment.yaml"
         service_file: ""
         image_name: "worker"
         image_tag: "latest"
       server:
         desired_replicas: 1
+        imagePullPolicy: "Always"
         deployment_file: "./config/k8s/server.deployment.yaml"
         service_file: "./config/k8s/server.services.yaml"
         image_name: "server"
         image_tag: "latest"
       redis:
         desired_replicas: 1
+        magePullPolicy: "Always"
         deployment_file: "./config/k8s/redis.deployment.yaml"
         service_file: "./config/k8s/redis.services.yaml"
         image_name: "redis"
@@ -39,10 +42,12 @@ k8s_config:
 
       rabbitmq:
         desired_replicas: 1
+        imagePullPolicy: "Always"
         deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
         service_file: "./config/k8s/rabbitmq.services.yaml"
         image_name: "rabbitmq"
         image_tag: "latest"
+
 
 files_config:
   bucket: "pv.insight.nrel"

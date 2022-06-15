@@ -4,6 +4,7 @@ from .command_utils import (
     process_logs_and_plot,
     print_dlq,
     check_nodes_status,
+    update_config_obj_image_name_and_tag_according_to_env,
 )
 
 from .TaskThread import TaskThread
@@ -21,13 +22,15 @@ from .eks_utils import (
     read_k8s_yml,
     create_k8s_svc_from_yaml,
     replace_k8s_yaml_with_replicas,
+    get_k8s_pod_name,
 )
 
 from .invoke_function import (
     invoke_kubectl_apply,
     invoke_eksctl_scale_node,
-    invoke_exec_run_process_files,
+    # invoke_exec_run_process_files,
     invoke_docekr_exec_revoke_task,
+    invoke_ks8_exec_revoke_task,
     invoke_kubectl_rollout,
     invoke_docker_compose_build,
     invoke_ecr_validation,
@@ -36,6 +39,8 @@ from .invoke_function import (
     invoke_kubectl_apply_file,
     invoke_kubectl_delete_deployment,
     invoke_docker_check_image_exist,
+    invoke_check_docker_services,
+    invoke_exec_docker_run_process_files,
 )
 
 from .process_log import (

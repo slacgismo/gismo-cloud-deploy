@@ -1,12 +1,17 @@
+from http import server
+from sys import modules
 from .eks_utils import (
     scale_nodes_and_wait,
     create_or_update_k8s,
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
+    get_k8s_pod_name,
 )
 from .invoke_function import (
-    invoke_exec_run_process_files,
     invoke_kubectl_delete_deployment,
+    invoke_docker_check_image_exist,
+    invoke_exec_docker_run_process_files,
+    invoke_exec_k8s_run_process_files,
 )
 from .process_log import process_logs_from_s3
 from server.models.Configurations import (
@@ -81,8 +86,12 @@ def check_environment_setup(
 
 
 def invoke_process_files_based_on_number(
-    number: Union[int, None], config_params_obj: Configurations, config_yaml: str
+    number: Union[int, None],
+    config_params_obj: Configurations = None,
+    config_yaml: str = None,
+    is_docker: bool = False,
 ) -> int:
+
     total_task_num = 0
     try:
         config_params_str = import_yaml_and_convert_to_json_str(
@@ -95,63 +104,129 @@ def invoke_process_files_based_on_number(
     except Exception as e:
         logger.error(f"Convert Configrations to json failed:{e}")
         raise e
-
+    total_task_num = 0
     if number is None:
+        total_task_num = len(config_params_obj.files) + 1
         logger.info(" ========= Process default files in config.yam ========= ")
-        try:
-
-            invoke_exec_run_process_files(
-                config_params_str=config_params_str,
-                container_type=config_params_obj.container_type,
-                container_name=config_params_obj.container_name,
-                first_n_files=number,
+    else:
+        if int(number) == 0:
+            s3_client = aws_utils.connect_aws_client(
+                client_name="s3",
+                key_id=config_params_obj.aws_access_key,
+                secret=config_params_obj.aws_secret_access_key,
+                region=config_params_obj.aws_region,
             )
 
-            total_task_num = len(config_params_obj.files) + 1
-        except Exception as e:
-            logger.error(f"Process default files failed :{e}")
-            raise e
-    else:
-        try:
-            total_task_num = 0
-            if int(number) == 0:
-
-                s3_client = aws_utils.connect_aws_client(
-                    client_name="s3",
-                    key_id=config_params_obj.aws_access_key,
-                    secret=config_params_obj.aws_secret_access_key,
-                    region=config_params_obj.aws_region,
-                )
-
-                all_files = aws_utils.list_files_in_bucket(
-                    bucket_name=config_params_obj.bucket, s3_client=s3_client
-                )
-                number_files = len(all_files)
-                total_task_num = len(all_files) + 1
-                logger.info(
-                    f" ========= Process all {number_files} files in bucket ========= "
-                )
-            else:
-                logger.info(
-                    f" ========= Process first {number} files in bucket ========= "
-                )
-                total_task_num = int(number) + 1
-            try:
-                invoke_exec_run_process_files(
-                    config_params_str=config_params_str,
-                    container_type=config_params_obj.container_type,
-                    container_name=config_params_obj.container_name,
-                    first_n_files=number,
-                )
-
-            except Exception as e:
-                logger.error(f"Process first {number} files failed :{e}")
-                raise e
-
-        except Exception as e:
-            raise Exception(f"Input Number Error :{e}")
+            all_files = aws_utils.list_files_in_bucket(
+                bucket_name=config_params_obj.bucket, s3_client=s3_client
+            )
+            number_files = len(all_files)
+            total_task_num = len(all_files) + 1
+            logger.info(
+                f" ========= Process all {number_files} files in bucket ========= "
+            )
+        else:
+            logger.info(f" ========= Process first {number} files in bucket ========= ")
+            total_task_num = int(number) + 1
     logger.info(f"total_task_num :{total_task_num}")
+
+    if is_docker:
+        logger.info("------docker -----------")
+        image_name = config_params_obj.deployment_services_list["server"]["image_name"]
+        image_tag = config_params_obj.deployment_services_list["server"]["image_tag"]
+        image_name_tag = f"{image_name}:{image_tag}"
+        docker_resp = invoke_exec_docker_run_process_files(
+            config_params_str=config_params_str,
+            image_name=image_name,
+            first_n_files=number,
+        )
+        logger.info(docker_resp)
+    else:
+        logger.info("------ k8s -----------")
+        server_pod_name = get_k8s_pod_name(pod_name="server")
+        logger.info(f"server po name: {server_pod_name}")
+        k8s_resp = invoke_exec_k8s_run_process_files(
+            config_params_str=config_params_str,
+            pod_name=str(server_pod_name),
+            first_n_files=number,
+        )
+        logger.info(k8s_resp)
+
     return total_task_num
+
+
+# def invoke_process_files_based_on_number(
+#     number: Union[int, None], config_params_obj: Configurations, config_yaml: str
+# ) -> int:
+#     total_task_num = 0
+#     try:
+#         config_params_str = import_yaml_and_convert_to_json_str(
+#             yaml_file=config_yaml,
+#             aws_access_key=config_params_obj.aws_access_key,
+#             aws_secret_access_key=config_params_obj.aws_secret_access_key,
+#             aws_region=config_params_obj.aws_region,
+#             sns_topic=config_params_obj.sns_topic,
+#         )
+#     except Exception as e:
+#         logger.error(f"Convert Configrations to json failed:{e}")
+#         raise e
+
+#     if number is None:
+#         logger.info(" ========= Process default files in config.yam ========= ")
+#         try:
+
+#             invoke_exec_run_process_files(
+#                 config_params_str=config_params_str,
+#                 container_type=config_params_obj.container_type,
+#                 container_name=config_params_obj.container_name,
+#                 first_n_files=number,
+#             )
+
+#             total_task_num = len(config_params_obj.files) + 1
+#         except Exception as e:
+#             logger.error(f"Process default files failed :{e}")
+#             raise e
+#     else:
+#         try:
+#             total_task_num = 0
+#             if int(number) == 0:
+
+#                 s3_client = aws_utils.connect_aws_client(
+#                     client_name="s3",
+#                     key_id=config_params_obj.aws_access_key,
+#                     secret=config_params_obj.aws_secret_access_key,
+#                     region=config_params_obj.aws_region,
+#                 )
+
+#                 all_files = aws_utils.list_files_in_bucket(
+#                     bucket_name=config_params_obj.bucket, s3_client=s3_client
+#                 )
+#                 number_files = len(all_files)
+#                 total_task_num = len(all_files) + 1
+#                 logger.info(
+#                     f" ========= Process all {number_files} files in bucket ========= "
+#                 )
+#             else:
+#                 logger.info(
+#                     f" ========= Process first {number} files in bucket ========= "
+#                 )
+#                 total_task_num = int(number) + 1
+#             try:
+#                 invoke_exec_run_process_files(
+#                     config_params_str=config_params_str,
+#                     container_type=config_params_obj.container_type,
+#                     container_name=config_params_obj.container_name,
+#                     first_n_files=number,
+#                 )
+
+#             except Exception as e:
+#                 logger.error(f"Process first {number} files failed :{e}")
+#                 raise e
+
+#         except Exception as e:
+#             raise Exception(f"Input Number Error :{e}")
+#     logger.info(f"total_task_num :{total_task_num}")
+#     return total_task_num
 
 
 def process_logs_and_plot(config_params_obj: Configurations) -> None:
@@ -332,3 +407,52 @@ def create_or_update_k8s_deployment(
     except Exception as e:
         logger.info(e)
         raise e
+
+
+def update_config_obj_image_name_and_tag_according_to_env(
+    is_local: bool = False,
+    image_tag: str = None,
+    ecr_repo: str = None,
+    ecr_client=None,
+    config_params_obj: Configurations = None,
+) -> Configurations:
+
+    services_list = ["worker", "server"]
+
+    if is_local is False:
+        logger.info("Running on AWS")
+        # wait eks node status
+        for service in services_list:
+            image_base_url = f"{ecr_repo}/{service}"
+            # check if ecr exist
+            if (
+                aws_utils.check_ecr_tag_exists(
+                    image_tag=image_tag, repoNme=service, ecr_client=ecr_client
+                )
+                is False
+            ):
+                logger.error(f"{image_base_url} does not exist")
+                return
+            # update image name
+            config_params_obj.deployment_services_list[service][
+                "image_name"
+            ] = image_base_url
+            config_params_obj.deployment_services_list[service]["image_tag"] = image_tag
+    else:
+        logger.info("Running in Local")
+        for service in services_list:
+            image_url = f"{service}:{image_tag}"
+            imagePullPolicy = "IfNotPresent"
+            # check if image exist
+            try:
+                invoke_docker_check_image_exist(image_name=image_url)
+            except Exception as e:
+                logger.info(f"docker {image_url} does not exist")
+                return
+            # updat image tag
+            config_params_obj.deployment_services_list[service]["image_tag"] = image_tag
+            config_params_obj.deployment_services_list[service][
+                "imagePullPolicy"
+            ] = imagePullPolicy
+
+    return config_params_obj

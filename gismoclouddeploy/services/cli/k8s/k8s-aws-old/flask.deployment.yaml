@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: server
+  name: webapp
 spec:
   # minReadySeconds: 30
   selector:
     matchLabels:
-      app: server
+      app: webapp
   replicas: 1
   template: # template for the pods
     metadata:
       labels:
-        app: server
+        app: webapp
     spec:
       containers:
       - name: webapp

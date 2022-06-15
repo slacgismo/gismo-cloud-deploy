@@ -1,5 +1,4 @@
 from subprocess import PIPE, run
-from kubernetes import client, config
 from server.models.Configurations import Configurations
 import subprocess
 import sys
@@ -51,11 +50,7 @@ def invoke_kubectl_delete_deployment(name: str = None) -> str:
 
 
 def invoke_kubectl_apply_file(k8s_path: str = "./k8s/k8s-local", file_name: str = None):
-    # command = f"kubectl apply -f {k8s_path}/{file_name}"
     command = ["kubectl", "apply", "-f", f"{k8s_path}/{file_name}"]
-    print(f"command: {command}")
-    # output = subprocess.check_output(["bash", "-c", str(command)])
-    # output =exec_subprocess_command(command=command)
     output = exec_docker_command(command)
     return str(output)
 
@@ -77,7 +72,7 @@ def invoke_kubectl_rollout(podprefix: str = None):
 
 
 def invoke_docker_compose_build() -> str:
-    # command = ["docker-compose", "build"]
+
     command = "docker-compose build"
     output = subprocess.check_output(["bash", "-c", command])
     return output
@@ -124,83 +119,83 @@ def invoke_eksctl_scale_node(
     return res
 
 
-def invoke_exec_run_process_files(
-    config_params_str: str, container_type: str, container_name: str, first_n_files: str
+def invoke_exec_docker_run_process_files(
+    config_params_str: str = None,
+    image_name: str = None,
+    first_n_files: str = None,
 ) -> str:
 
-    if container_type == "docker":
-        command = [
-            "docker",
-            "exec",
-            "-it",
-            container_name,
-            "python",
-            "app.py",
-            "process_files",
-            f"{config_params_str}",
-            f"{first_n_files}",
-        ]
+    command = [
+        "docker",
+        "exec",
+        "-it",
+        image_name,
+        "python",
+        "app.py",
+        "process_files",
+        f"{config_params_str}",
+        f"{first_n_files}",
+    ]
 
-    elif container_type == "kubernetes":
-        # get pod name
-
-        pod_name = get_k8s_pod_name(container_name)
-
-        command = [
-            "kubectl",
-            "exec",
-            pod_name,
-            "--stdin",
-            "--tty",
-            "--",
-            "python",
-            "app.py",
-            "process_files",
-            f"{config_params_str}",
-            f"{first_n_files}",
-        ]
-    try:
-        res = exec_docker_command(command)
-        return res
-    except Exception as e:
-        raise e
+    res = exec_docker_command(command)
+    return res
 
 
-def invoke_docekr_exec_revoke_task(
-    task_id: str, container_type: str, container_name: str
+def invoke_exec_k8s_run_process_files(
+    config_params_str: str = None,
+    pod_name: str = None,
+    first_n_files: str = None,
 ) -> str:
+    command = [
+        "kubectl",
+        "exec",
+        pod_name,
+        "--stdin",
+        "--tty",
+        "--",
+        "python",
+        "app.py",
+        "process_files",
+        f"{config_params_str}",
+        f"{first_n_files}",
+    ]
 
-    if container_type == "docker":
-        command = [
-            "docker",
-            "exec",
-            "-it",
-            container_name,
-            "python",
-            "app.py",
-            "revoke_task",
-            f"{task_id}",
-        ]
+    res = exec_docker_command(command)
+    return res
 
-    elif container_type == "kubernetes":
-        pod_name = get_k8s_pod_name(container_name)
-        command = [
-            "kubectl",
-            "exec",
-            pod_name,
-            "--stdin",
-            "--tty",
-            "--",
-            "python",
-            "app.py",
-            "revoke_task",
-            f"{task_id}",
-        ]
-    try:
-        res = exec_docker_command(command)
-        return res
-    except Exception as e:
-        raise e
+
+def invoke_docekr_exec_revoke_task(image_name: str = None, task_id: str = None) -> str:
+
+    command = [
+        "docker",
+        "exec",
+        "-it",
+        image_name,
+        "python",
+        "app.py",
+        "revoke_task",
+        f"{task_id}",
+    ]
+    res = exec_docker_command(command)
+    return res
+
+
+def invoke_ks8_exec_revoke_task(pod_name: str = None, task_id: str = None) -> str:
+
+    command = [
+        "kubectl",
+        "exec",
+        pod_name,
+        "--stdin",
+        "--tty",
+        "--",
+        "python",
+        "app.py",
+        "revoke_task",
+        f"{task_id}",
+    ]
+    res = exec_docker_command(command)
+    return res
 
 
 def invoke_docker_check_image_exist(image_name: str = None):
@@ -212,14 +207,7 @@ def invoke_docker_check_image_exist(image_name: str = None):
         raise e
 
 
-def get_k8s_pod_name(container_name: str) -> str:
-    config.load_kube_config()
-    v1 = client.CoreV1Api()
-    # print("Listing pods with their IPs:")
-    ret = v1.list_pod_for_all_namespaces(watch=False)
-    for i in ret.items:
-        # print("%s\t%s\t%s" % (i.status.pod_ip, i.metadata.namespace, i.metadata.name))
-        podname = i.metadata.name.split("-")[0]
-        if podname == container_name:
-            # print(f"podname: {i.metadata.name}")
-            return i.metadata.name
+def invoke_check_docker_services():
+    command = "docker ps -q"
+    output = subprocess.check_output(["bash", "-c", command])
+    return output

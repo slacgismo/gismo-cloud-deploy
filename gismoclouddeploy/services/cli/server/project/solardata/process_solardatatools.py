@@ -79,7 +79,6 @@ def process_solardata_tools(
         raise e
 
     # check solver
-
     try:
         tasks_utils.check_solver_licence(solarParams=solarParams, s3_client=s3_client)
     except Exception as e:
@@ -103,9 +102,7 @@ def process_solardata_tools(
 
     try:
         dh = solardatatools.DataHandler(df)
-        logger.info(
-            f"run pipeline solarParams.verbose: {solarParams.verbose}, solver: {solarParams.solver_name}"
-        )
+        logger.info(f"run solardatatools pipeline solver: {solarParams.solver_name}")
         dh.run_pipeline(
             power_col=column_name,
             min_val=solarParams.min_val,

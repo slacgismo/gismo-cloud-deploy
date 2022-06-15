@@ -14,7 +14,10 @@ from server.utils.aws_utils import (
 from server.models import Configurations
 from server.models import SNSSubjectsAlert
 
-from modules.utils.invoke_function import invoke_docekr_exec_revoke_task
+from modules.utils.invoke_function import (
+    invoke_docekr_exec_revoke_task,
+    invoke_ks8_exec_revoke_task,
+)
 from modules.utils.sqs import (
     receive_queue_message,
     delete_queue_message,
@@ -45,6 +48,7 @@ class TaskThread(threading.Thread):
         num_task: int,
         config_params_obj: Configurations,
         delete_nodes_after_processing: bool,
+        is_docker: bool,
         dlq_url: str,
         key_id: str,
         secret_key: str,
@@ -59,6 +63,7 @@ class TaskThread(threading.Thread):
         self.num_task = num_task
         self.config_params_obj = config_params_obj
         self.delete_nodes_after_processing = delete_nodes_after_processing
+        self.is_docker = is_docker
         self.dlq_url = dlq_url
         self.key_id = key_id
         self.secret_key = secret_key
@@ -73,6 +78,7 @@ class TaskThread(threading.Thread):
             num_task=self.num_task,
             config_params_obj=self.config_params_obj,
             delete_nodes_after_processing=self.delete_nodes_after_processing,
+            is_docker=self.is_docker,
             dlq_url=self.dlq_url,
             key_id=self.key_id,
             secret_key=self.secret_key,
@@ -106,6 +112,7 @@ def long_pulling_sqs(
     num_task: int,
     config_params_obj: Configurations,
     delete_nodes_after_processing: bool,
+    is_docker: bool,
     dlq_url: str,
     key_id: str,
     secret_key: str,
@@ -144,12 +151,16 @@ def long_pulling_sqs(
                     task_id_dict = json.loads(message_text)
                     if "task_id" in task_id_dict:
                         task_id = task_id_dict["task_id"]
-                        revoke_res = invoke_docekr_exec_revoke_task(
-                            task_id=task_id,
-                            container_type=config_params_obj.container_type,
-                            container_name=config_params_obj.container_name,
-                        )
-                        logger.info(revoke_res)
+                        if is_docker:
+                            logger.info("reovk docker task")
+                            revoke_resp = invoke_docekr_exec_revoke_task(
+                                image_name="server", task_id=task_id
+                            )
+                        else:
+                            logger.info("reovk k8s task")
+                            revoke_resp = invoke_ks8_exec_revoke_task(
+                                pod_name="server", task_id=task_id
+                            )
                 if (
                     subject == SNSSubjectsAlert.PROCESS_FILE_ERROR.name
                     or subject == SNSSubjectsAlert.SYSTEM_ERROR.name

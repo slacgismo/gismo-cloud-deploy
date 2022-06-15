@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: server
-        image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/server:latest
+        image: server:latest
         command: ["/start"]
         imagePullPolicy: Always
         env:
@@ -26,6 +26,6 @@ spec:
           - name: FLASK_CONFIG
             value: "development"
           - name: CELERY_BROKER_URL
-            value: "amqp://admin:admin@rabbitmq-service:5672/"
+            value: "amqp://admin:admin@rabbitmq:5672/"
           - name: CELERY_RESULT_BACKEND
             value: "redis://redis:6379/0"
