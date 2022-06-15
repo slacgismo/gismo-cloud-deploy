@@ -417,7 +417,7 @@ def run_k8s_deploy(
         image_tag = value["image_tag"]
         # update deployment, if image tag or replicas are changed, update deployments
         modules.command_utils.create_or_update_k8s_deployment(
-            name=image_base_url,
+            service_name=image_base_url,
             image_tag=image_tag,
             imagePullPolicy=imagePullPolicy,
             desired_replicas=desired_replicas,
@@ -562,7 +562,7 @@ def run_process_files(
             imagePullPolicy = value["imagePullPolicy"]
             # update deployment, if image tag or replicas are changed, update deployments
             modules.command_utils.create_or_update_k8s_deployment(
-                name=image_base_url,
+                service_name=image_base_url,
                 image_tag=image_tag,
                 imagePullPolicy=imagePullPolicy,
                 desired_replicas=desired_replicas,

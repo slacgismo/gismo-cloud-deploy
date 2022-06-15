@@ -342,7 +342,8 @@ def check_nodes_status():
 
 
 def create_or_update_k8s_deployment(
-    name: str = None,
+    service_name: str = None,
+    image_base_url: str = None,
     image_tag: str = None,
     imagePullPolicy: str = "Always",
     desired_replicas: int = 1,
@@ -351,25 +352,27 @@ def create_or_update_k8s_deployment(
 ):
     try:
         curr_image, curr_tag, curr_status = get_k8s_image_and_tag_from_deployment(
-            prefix=name
+            prefix=service_name
         )
         # print(curr_image,curr_tag, curr_status )
-        image_url = f"{name}:{image_tag}"
+        image_url = f"{image_base_url}:{image_tag}"
         if curr_status is None:
             # Deployment does not exist
 
-            logger.info(f"============== Deployment {name} does not exist ==========")
-            logger.info(f"============== Create {name} deployment ==========")
+            logger.info(
+                f"============== Deployment {image_url} does not exist =========="
+            )
+            logger.info(f"============== Create {image_url} deployment ==========")
             create_k8s_deployment_from_yaml(
-                name="worker",
-                image=image_url,
+                service_name=service_name,
+                image_url_tag=image_url,
                 imagePullPolicy=imagePullPolicy,
                 desired_replicas=desired_replicas,
                 file_name=k8s_file_name,
             )
         else:
             logger.info(
-                f"=============== Deployment {name}:{curr_tag} exist ========== "
+                f"=============== Deployment {service_name}:{curr_tag} exist ========== "
             )
 
             if (
@@ -386,20 +389,22 @@ def create_or_update_k8s_deployment(
                         f"Update replicas from:{curr_status.replicas} to {desired_replicas}"
                     )
                 if curr_tag != image_tag:
-                    logger.info(f"Update from {name}:{curr_tag} to {name}:{image_tag}")
+                    logger.info(
+                        f"Update from {service_name}:{curr_tag} to {service_name}:{image_tag}"
+                    )
 
                 if rollout is True:
                     logger.info(f"rollout is True")
 
-                logger.info(f"========== Delete  {name}:{curr_tag}  ==========")
-                output = invoke_kubectl_delete_deployment(name=name)
+                logger.info(f"========== Delete  {service_name}:{curr_tag}  ==========")
+                output = invoke_kubectl_delete_deployment(name=service_name)
                 # logger.info(output)
 
                 # re-create deplpoyment
                 print("====================")
                 create_k8s_deployment_from_yaml(
-                    name=name,
-                    image=image_url,
+                    service_name=service_name,
+                    image_url_tag=image_url,
                     imagePullPolicy=imagePullPolicy,
                     desired_replicas=desired_replicas,
                     file_name=k8s_file_name,

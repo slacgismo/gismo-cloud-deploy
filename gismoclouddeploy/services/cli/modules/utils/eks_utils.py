@@ -356,8 +356,8 @@ def create_k8s_svc_from_yaml(
 
 
 def create_k8s_deployment_from_yaml(
-    name: str = None,
-    image: str = None,
+    service_name: str = None,
+    image_url_tag: str = None,
     imagePullPolicy: str = None,
     desired_replicas: int = 1,
     file_name: str = None,
@@ -374,11 +374,13 @@ def create_k8s_deployment_from_yaml(
     ]
     default_replicas = file_setting["spec"]["replicas"]
 
-    print(str(desired_replicas), image, imagePullPolicy)
+    print(str(desired_replicas), image_url_tag, imagePullPolicy)
     # update setting if not nont
-    if image is not None and image != default_image:
-        logger.info(f"update k8s image {image}")
-        file_setting["spec"]["template"]["spec"]["containers"][0]["image"] = image
+    if image_url_tag is not None and image_url_tag != default_image:
+        logger.info(f"update k8s image {image_url_tag}")
+        file_setting["spec"]["template"]["spec"]["containers"][0][
+            "image"
+        ] = image_url_tag
 
     if desired_replicas != 1 and desired_replicas != default_replicas:
         logger.info(f"update k8s replicas {desired_replicas}")
