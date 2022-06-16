@@ -46,4 +46,7 @@ WORKDIR /app
 
 COPY ./server .
 
+COPY ../config/code-templates/. ./project/solardata/
+RUN chmod -R 755 ./project/solardata/
+
 ENTRYPOINT ["/entrypoint"]

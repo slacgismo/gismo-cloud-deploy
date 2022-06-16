@@ -1,95 +1,61 @@
 
-general:
-  interval_of_check_task_status: "1" # in second
-  interval_of_exit_check_status: "900" # in second. If the task status didn't update after this period. stop check individual status
-
-
 aws_config:
   cluster_name: "gcd-eks-cluster"
   nodegroup_name: "gcd-nodegroup"
-  eks_nodes_number: "1" # total ec2 instances
-  scale_eks_nodes_wait_time : "90" # in second
-  interval_of_check_sqs_in_second: "2" # in second
-  interval_of_total_wait_time_of_sqs: "360" # in second.
-  interval_of__wait_pod_ready: "90" # in second
+  eks_nodes_number: 1 # total ec2 instances
+  scale_eks_nodes_wait_time : 90 # in second
+  interval_of_check_sqs_in_second: 2 # in second
+  interval_of_total_wait_time_of_sqs: 360 # in second.
+  interval_of_wait_pod_ready: 90 # in second
 
 
-k8s_config:
-    deployment_services_list:
-      worker:
-        desired_replicas: 1 # Define how many workers run parallel in k8s
-        imagePullPolicy: "Always"
-        deployment_file: "./config/k8s/worker.deployment.yaml"
-        service_file: ""
-        image_name: "worker"
-        image_tag: "latest"
-      server:
-        desired_replicas: 1
-        imagePullPolicy: "Always"
-        deployment_file: "./config/k8s/server.deployment.yaml"
-        service_file: "./config/k8s/server.services.yaml"
-        image_name: "server"
-        image_tag: "latest"
-      redis:
-        desired_replicas: 1
-        imagePullPolicy: "Always"
-        deployment_file: "./config/k8s/redis.deployment.yaml"
-        service_file: "./config/k8s/redis.services.yaml"
-        image_name: "redis"
-        image_tag: "latest"
 
-      rabbitmq:
-        desired_replicas: 1
-        imagePullPolicy: "Always"
-        deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
-        service_file: "./config/k8s/rabbitmq.services.yaml"
-        image_name: "rabbitmq"
-        image_tag: "latest"
+services_config_list:
+  worker:
+      desired_replicas: 1 # Define how many workers run parallel in k8s
+      imagePullPolicy: "Always"
+      deployment_file: "./config/k8s/worker.deployment.yaml"
+      service_file: ""
+      image_name: "worker"
+      image_tag: "latest"
+  server:
+      desired_replicas: 1
+      imagePullPolicy: "Always"
+      deployment_file: "./config/k8s/server.deployment.yaml"
+      service_file: "./config/k8s/server.services.yaml"
+      image_name: "server"
+      image_tag: "latest"
+  redis:
+      desired_replicas: 1
+      imagePullPolicy: "Always"
+      deployment_file: "./config/k8s/redis.deployment.yaml"
+      service_file: "./config/k8s/redis.services.yaml"
+      image_name: "redis"
+      image_tag: "latest"
+
+  rabbitmq:
+      desired_replicas: 1
+      imagePullPolicy: "Always"
+      deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
+      service_file: "./config/k8s/rabbitmq.services.yaml"
+      image_name: "rabbitmq"
+      image_tag: "latest"
 
 
-files_config:
-  bucket: "pv.insight.nrel"
-  files: ["PVO/PVOutput/10059.csv"]
-  column_names: ["Power(W)","(W)"] # partial match
-  selected_algorithm: "solar_data_tools" # Define algorithm. It has to match the label in algroithms.
-
-output:
+worker_config:
+  data_bucket: "pv.insight.nrel"
+  default_process_files: ["PVO/PVOutput/10059.csv"]
+  process_column_keywords: ["Power(W)","(W)"] # partial match
+  solver: "MOSEK"
+  solver_local_path: "./config/license/mosek.lic"
   saved_bucket: "pv.insight.test"
   saved_tmp_path: "tmp"
   saved_target_path: "results"
-  saved_target_filename: "04262022_results.csv"
+  usaved_target_filename: "04262022_results.csv"
   dynamodb_tablename: "GCD-LOGS_TABLE" # pre-define in AWS us-east-2
   saved_logs_target_path: "results"
   saved_logs_target_filename: "logs.csv"
   saved_rumtime_image_name_aws: "results/runtime.png"
   saved_rumtime_image_name_local: "plot/runtime.png"
-
-algorithms:
-  solar_data_tools:
-    power_col: "None"
-    min_val: "-5"
-    max_val: "None"
-    zero_night: True
-    interp_day: True
-    fix_shifts: True
-    density_lower_threshold: "0.6"
-    density_upper_threshold: "1.05"
-    linearity_threshold: "0.1"
-    clear_day_smoothness_param: "0.9"
-    clear_day_energy_param: "0.8"
-    verbose: False
-    start_day_ix: "None"
-    end_day_ix: "None"
-    c1: "None"
-    c2: "500.0"
-    solar_noon_estimator: "com"
-    correct_tz: True
-    extra_cols: "None"
-    daytime_threshold: "0.1"
-    units: "W"
-    solver:
-      name: "MOSEK"
-      lic_bucket: "slac.gismo.ci.artifacts"
-      lic_file_path_name: "mosek.license/mosek.lic"
-      lic_saved_target_path: "/root/mosek"
-      lic_saved_target_name: "mosek.lic"
+  interval_of_check_task_status: "1" # in second
+  interval_of_exit_check_status: "900" # in second. If the task status didn't update after this period. stop check individual status

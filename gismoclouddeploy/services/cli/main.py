@@ -1,15 +1,25 @@
+from http import server
+import socket
 import threading
 import click
 from os.path import exists
 import logging
 import os
 
+
 import modules
-from server.models.Configurations import make_config_obj_from_yaml
+from server.models.Configurations import (
+    make_config_obj_from_yaml,
+    convert_yaml_to_json,
+    AWS_CONFIG,
+    WORKER_CONFIG,
+)
 from server.utils.aws_utils import (
     check_aws_validity,
     connect_aws_client,
     check_environment_is_aws,
+    check_ecr_tag_exists,
+    delete_ecr_image,
 )
 
 from dotenv import load_dotenv
@@ -90,8 +100,42 @@ def main():
     is_flag=True,
     help="Default value is False. If it is True, define running environemnt in local.Otherwiser, define running environemt on AWS",
 )
-def run_files(number, deletenodes, configfile, rollout, imagetag, docker, local):
-    """Run Process Files"""
+@click.option(
+    "--build",
+    "-b",
+    is_flag=True,
+    help="Build a temp image and use it. If on AWS k8s environment, \
+    build and push image to ECR with temp image tag. These images will be deleted after used.\
+    If you would like to preserve images, please use build-image command instead ",
+)
+def run_files(
+    number: int = 1,
+    deletenodes: bool = False,
+    configfile: str = None,
+    rollout: str = False,
+    imagetag: str = "latest",
+    docker: bool = False,
+    local: bool = False,
+    build: bool = False,
+):
+    """
+    Proccess files in defined bucket
+    :param number:      number of first n files in bucket. Default value is `None`.
+                        If number is None, this application process defined files in config.yaml.
+                        If number is 0, this application processs all files in the defined bucket in config.yaml.
+                        If number is an integer, this applicaion process the first `number` files in the defined bucket in config.yaml.
+    :param deletenodes: Enable deleting eks node after complete this application. Default value is False.
+    :param configfile:  Define config file name. Default value is "./config/config.yaml"
+    :param rollout:     Enable delete current k8s deployment and re-deployment. Default value is False
+    :param imagetag:    Specifiy the image tag. Default value is 'latest'
+    :param docker:      Default value is False. If it is True, the services run in docker environment.
+                        Otherwise, the services run in k8s environment.
+    :param local:       Default value is False. If it is True, define running environemnt in local.
+                        Otherwiser, define running environemt on AWS
+    :param build:       Build a temp image and use it. If on AWS k8s environment, \
+                        build and push image to ECR with temp image tag. These images will be deleted after used.\
+                        If you would like to preserve images, please use build-image command instead
+    """
     run_process_files(
         number=number,
         delete_nodes=deletenodes,
@@ -100,6 +144,7 @@ def run_files(number, deletenodes, configfile, rollout, imagetag, docker, local)
         image_tag=imagetag,
         is_docker=docker,
         is_local=local,
+        is_build_image=build,
     )
 
 
@@ -171,7 +216,7 @@ def check_nodes():
 def build_images(tag: str = None, push: bool = False):
     """Build image from docker-compose and push to ECR"""
     click.echo(f"Build image :{tag}")
-    # build_resp = modules.utils.invoke_docker_compose_build()
+    build_resp = modules.utils.invoke_docker_compose_build()
     # click.echo(build_resp)
     services_list = ["worker", "server"]
     try:
@@ -232,6 +277,12 @@ def processlogs():
     modules.command_utils.process_logs_and_plot(config_params_obj=config_params_obj)
 
 
+@main.command()
+def get_iam():
+    click.echo("get iam ")
+    iam_client = connect_aws_client("iam")
+
+
 # ***************************
 #  Read DLQ
 # ***************************
@@ -261,9 +312,10 @@ def run_process_files(
     image_tag: str = None,
     is_docker: bool = False,
     is_local: bool = False,
+    is_build_image: bool = False,
 ) -> None:
     """
-    Proccess files in S3 bucket
+    Proccess files in defined bucket
     :param number:      number of first n files in bucket. Default value is `None`.
                         If number is None, this application process defined files in config.yaml.
                         If number is 0, this application processs all files in the defined bucket in config.yaml.
@@ -276,6 +328,9 @@ def run_process_files(
                         Otherwise, the services run in k8s environment.
     :param is_local:    Default value is False. If it is True, define running environemnt in local.
                         Otherwiser, define running environemt on AWS
+    :param is_build_image:    Build a temp image and use it. If on AWS k8s environment, \
+                        build and push image to ECR with temp image tag. These images will be deleted after used.\
+                        If you would like to preserve images, please use build-image command instead
     """
     # check aws credential
     try:
@@ -293,38 +348,85 @@ def run_process_files(
         )
         config_yaml = f"./config/config.yaml"
 
-    try:
-        config_params_obj_origin = make_config_obj_from_yaml(
-            yaml_file=config_yaml,
-            aws_access_key=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            aws_region=AWS_DEFAULT_REGION,
-            sns_topic=SNS_TOPIC,
-        )
+    config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    aws_config_obj = AWS_CONFIG(config_json["aws_config"])
+    aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
+    aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+    aws_config_obj.aws_region = AWS_DEFAULT_REGION
+    aws_config_obj.sns_topic = SNS_TOPIC
+    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
 
-    except Exception as e:
-        logger.error(f"Convert yaml  error:{e}")
-        return
-
-    # update image tags
+    services_config_list = config_json["services_config_list"]
     ecr_client = connect_aws_client(
         client_name="ecr",
-        key_id=config_params_obj_origin.aws_access_key,
-        secret=config_params_obj_origin.aws_secret_access_key,
-        region=config_params_obj_origin.aws_region,
+        key_id=AWS_ACCESS_KEY_ID,
+        secret=AWS_SECRET_ACCESS_KEY,
+        region=AWS_DEFAULT_REGION,
     )
-    # check environments , check image name and tag exist. Update images name and tag to object
-    try:
-        config_params_obj = modules.utils.command_utils.update_config_obj_image_name_and_tag_according_to_env(
+    #  check environments , check image name and tag exist. Update images name and tag to object
+    services_config_list = (
+        modules.command_utils.update_config_json_image_name_and_tag_base_on_env(
             is_local=is_local,
             image_tag=image_tag,
-            ecr_repo=ECR_REPO,
             ecr_client=ecr_client,
-            config_params_obj=config_params_obj_origin,
+            ecr_repo=ECR_REPO,
+            services_config_list=services_config_list,
         )
-    except Exception as e:
-        logger.error(f"{e}")
-        return
+    )
+
+    # check if build images.
+    if is_build_image:
+        temp_image_tag = socket.gethostname()
+
+        if is_docker:
+            logger.info("========= Build image and run in docker ========")
+        else:
+            logger.info("========= Build image ========")
+            modules.utils.invoke_docker_compose_build()
+            logger.info(f"========= tag image {temp_image_tag} ========")
+            for service in services_config_list:
+                # only inspect worker and server
+                if service == "worker" or service == "server":
+                    # Updated image tag
+                    modules.utils.invoke_tag_image(
+                        image_name=service,
+                        image_tag=temp_image_tag,
+                        ecr_repo=ECR_REPO,
+                    )
+                    services_config_list[service]["image_tag"] = temp_image_tag
+
+            if not is_local:
+                try:
+                    validation_resp = modules.utils.invoke_ecr_validation()
+                    logger.info(validation_resp)
+                except Exception as e:
+                    logger.error(f"Error :{e}")
+                    return
+                push_thread = list()
+                try:
+                    for service in services_config_list:
+                        x = threading.Thread(
+                            target=modules.utils.invoke_push_image,
+                            args=(service, temp_image_tag, ECR_REPO),
+                        )
+                        x.name = service
+                        push_thread.append(x)
+                        x.start()
+                except Exception as e:
+                    logger.error(f"{e}")
+                    return
+
+                for index, thread in enumerate(push_thread):
+                    thread.join()
+                    logging.info("Wait %s thread done", thread.name)
+                for service in services_config_list:
+                    logger.info(
+                        f"push to AWS ECR {ECR_REPO}/{service}:{temp_image_tag}"
+                    )
+                    push_worker = modules.utils.invoke_push_image(
+                        image_name=service, image_tag=temp_image_tag, ecr_repo=ECR_REPO
+                    )
+
     if is_docker:
         logger.info("Running docker")
         # Neither AWS of local environment, running servies in docker, we don't need to  take care of EKS.
@@ -338,18 +440,17 @@ def run_process_files(
                     "Ruuning in local not AWS. Please use [-l] option command."
                 )
                 return
-            modules.utils.eks_utils.scale_nodes_and_wait(
-                scale_node_num=int(config_params_obj.eks_nodes_number),
-                counter=int(config_params_obj.scale_eks_nodes_wait_time),
+            modules.eks_utils.scale_eks_nodes_and_wait(
+                scale_node_num=aws_config_obj.eks_nodes_number,
+                total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
                 delay=1,
-                config_params_obj=config_params_obj,
+                cluster_name=aws_config_obj.cluster_name,
+                nodegroup_name=aws_config_obj.nodegroup_name,
             )
         # updae k8s
-        services_list = config_params_obj.deployment_services_list
         # check worker deployment
         # loop k8s services list , create or update k8s depolyment and services
-
-        for key, value in services_list.items():
+        for key, value in services_config_list.items():
             service_name = key
             deployment_file = value["deployment_file"]
             service_file = value["service_file"]
@@ -357,6 +458,7 @@ def run_process_files(
             image_base_url = value["image_name"]
             image_tag = value["image_tag"]
             imagePullPolicy = value["imagePullPolicy"]
+
             # update deployment, if image tag or replicas are changed, update deployments
             modules.command_utils.create_or_update_k8s_deployment(
                 service_name=service_name,
@@ -367,7 +469,7 @@ def run_process_files(
                 k8s_file_name=deployment_file,
                 rollout=rollout,
             )
-            # service exists
+            # service file exists
             if service_file:
                 # check service exist
                 if not modules.utils.k8s_utils.check_k8s_services_exists(
@@ -381,14 +483,14 @@ def run_process_files(
         # wait k8s pod  ready
         threads = list()
         try:
-            for key, value in services_list.items():
+            for key, value in services_config_list.items():
                 desired_replicas = value["desired_replicas"]
                 x = threading.Thread(
                     target=modules.utils.eks_utils.wait_pod_ready,
                     args=(
                         desired_replicas,
                         key,
-                        config_params_obj.interval_of__wait_pod_ready,
+                        aws_config_obj.interval_of_wait_pod_ready,
                         1,
                     ),
                 )
@@ -403,13 +505,13 @@ def run_process_files(
             thread.join()
             logging.info("Wait %s thread done", thread.name)
 
-    # clear sqs
+    # # clear sqs
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client(
         client_name="sqs",
-        key_id=config_params_obj.aws_access_key,
-        secret=config_params_obj.aws_secret_access_key,
-        region=config_params_obj.aws_region,
+        key_id=aws_config_obj.aws_access_key,
+        secret=aws_config_obj.aws_secret_access_key,
+        region=aws_config_obj.aws_region,
     )
     modules.sqs.clean_previous_sqs_message(
         sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1
@@ -418,32 +520,238 @@ def run_process_files(
     try:
         total_task_num = modules.command_utils.invoke_process_files_based_on_number(
             number=number,
-            config_params_obj=config_params_obj,
-            config_yaml=config_yaml,
+            aws_config=aws_config_obj,
+            worker_config_json=config_json["worker_config"],
+            deployment_services_list=services_config_list,
             is_docker=is_docker,
         )
-
+        print(total_task_num)
     except Exception as e:
         logger.error(f"Invoke process files error:{e}")
         return
     thread = modules.task_thread.TaskThread(
         threadID=1,
         name="sqs",
-        counter=config_params_obj.interval_of_total_wait_time_of_sqs,
-        wait_time=config_params_obj.interval_of_check_sqs_in_second,
+        counter=aws_config_obj.interval_of_total_wait_time_of_sqs,
+        wait_time=aws_config_obj.interval_of_check_sqs_in_second,
         sqs_url=SQS_URL,
         num_task=total_task_num,
-        config_params_obj=config_params_obj,
+        aws_config=aws_config_obj,
+        worker_config=worker_config_obj,
         delete_nodes_after_processing=delete_nodes,
         is_docker=is_docker,
         dlq_url=DLQ_URL,
-        key_id=config_params_obj.aws_access_key,
-        secret_key=config_params_obj.aws_secret_access_key,
-        aws_region=config_params_obj.aws_region,
+        key_id=aws_config_obj.aws_access_key,
+        secret_key=aws_config_obj.aws_secret_access_key,
+        aws_region=aws_config_obj.aws_region,
     )
     thread.start()
 
+    if not is_local and not is_docker:
+        # delete temp image in AWS ecr
+        logger.info("Delete Temp ECR image")
+        for service in services_config_list:
+            if service == "worker" or service == "server":
+                image_tag = services_config_list[service]["image_tag"]
+                delete_ecr_image(
+                    ecr_client=ecr_client,
+                    image_name=service,
+                    image_tag=temp_image_tag,
+                )
     return
+
+
+# def run_process_files(
+#     number: int = 1,
+#     delete_nodes: bool = False,
+#     configfile: str = None,
+#     rollout: bool = False,
+#     image_tag: str = None,
+#     is_docker: bool = False,
+#     is_local: bool = False,
+# ) -> None:
+#     """
+#     Proccess files in S3 bucket
+#     :param number:      number of first n files in bucket. Default value is `None`.
+#                         If number is None, this application process defined files in config.yaml.
+#                         If number is 0, this application processs all files in the defined bucket in config.yaml.
+#                         If number is an integer, this applicaion process the first `number` files in the defined bucket in config.yaml.
+#     :param delete_nodes: Enable deleting eks node after complete this application. Default value is False.
+#     :param configfile:  Define config file name. Default value is "./config/config.yaml"
+#     :param rollout:     Enable delete current k8s deployment and re-deployment. Default value is False
+#     :param image_tag:   Specifiy the image tag. Default value is 'latest'
+#     :param is_docker:   Default value is False. If it is True, the services run in docker environment.
+#                         Otherwise, the services run in k8s environment.
+#     :param is_local:    Default value is False. If it is True, define running environemnt in local.
+#                         Otherwiser, define running environemt on AWS
+#     """
+#     # check aws credential
+#     try:
+#         check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
+#     except Exception as e:
+#         logger.error(f"AWS credential failed: {e}")
+#         return
+
+#     # check config exist
+#     config_yaml = f"./config/{configfile}"
+
+#     if exists(config_yaml) is False:
+#         logger.warning(
+#             f"./config/{configfile} not exist, use default config.yaml instead"
+#         )
+#         config_yaml = f"./config/config.yaml"
+
+# try:
+#     config_params_obj_origin = make_config_obj_from_yaml(
+#         yaml_file=config_yaml,
+#         aws_access_key=AWS_ACCESS_KEY_ID,
+#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+#         aws_region=AWS_DEFAULT_REGION,
+#         sns_topic=SNS_TOPIC,
+#     )
+# except Exception as e:
+#     logger.error(f"Convert yaml  error:{e}")
+#     return
+
+# # update image tags
+# ecr_client = connect_aws_client(
+#     client_name="ecr",
+#     key_id=config_params_obj_origin.aws_access_key,
+#     secret=config_params_obj_origin.aws_secret_access_key,
+#     region=config_params_obj_origin.aws_region,
+# )
+
+# #  check environments , check image name and tag exist. Update images name and tag to object
+# try:
+#     config_params_obj = modules.utils.command_utils.update_config_obj_image_name_and_tag_according_to_env(
+#         is_local=is_local,
+#         image_tag=image_tag,
+#         ecr_repo=ECR_REPO,
+#         ecr_client=ecr_client,
+#         config_params_obj=config_params_obj_origin,
+#     )
+# except Exception as e:
+#     logger.error(f"{e}")
+#     return
+# if is_docker:
+#     logger.info("Running docker")
+#     # Neither AWS of local environment, running servies in docker, we don't need to  take care of EKS.
+# else:
+#     if is_local:
+#         logger.info("Running local kubernetes")
+#     else:
+#         logger.info("Running AWS kubernetes")
+#         if check_environment_is_aws() is not True:
+#             logger.error(
+#                 "Ruuning in local not AWS. Please use [-l] option command."
+#             )
+#             return
+# modules.utils.eks_utils.scale_nodes_and_wait(
+#     scale_node_num=int(config_params_obj.eks_nodes_number),
+#     counter=int(config_params_obj.scale_eks_nodes_wait_time),
+#     delay=1,
+#     config_params_obj=config_params_obj,
+# )
+#     # updae k8s
+#     services_list = config_params_obj.deployment_services_list
+#     # check worker deployment
+#     # loop k8s services list , create or update k8s depolyment and services
+
+#     for key, value in services_list.items():
+#         service_name = key
+#         deployment_file = value["deployment_file"]
+#         service_file = value["service_file"]
+#         desired_replicas = value["desired_replicas"]
+#         image_base_url = value["image_name"]
+#         image_tag = value["image_tag"]
+#         imagePullPolicy = value["imagePullPolicy"]
+#         # update deployment, if image tag or replicas are changed, update deployments
+#         modules.command_utils.create_or_update_k8s_deployment(
+#             service_name=service_name,
+#             image_tag=image_tag,
+#             image_base_url=image_base_url,
+#             imagePullPolicy=imagePullPolicy,
+#             desired_replicas=desired_replicas,
+#             k8s_file_name=deployment_file,
+#             rollout=rollout,
+#         )
+#         # service exists
+#         if service_file:
+#             # check service exist
+#             if not modules.utils.k8s_utils.check_k8s_services_exists(
+#                 name=service_name
+#             ):
+#                 logger.info(f"========= Create services{service_file} =========== ")
+#                 modules.utils.k8s_utils.create_k8s_svc_from_yaml(
+#                     full_path_name=service_file
+#                 )
+
+# # wait k8s pod  ready
+# threads = list()
+# try:
+#     for key, value in services_list.items():
+#         desired_replicas = value["desired_replicas"]
+#         x = threading.Thread(
+#             target=modules.utils.eks_utils.wait_pod_ready,
+#             args=(
+#                 desired_replicas,
+#                 key,
+#                 config_params_obj.interval_of_wait_pod_ready,
+#                 1,
+#             ),
+#         )
+#         x.name = key
+#         threads.append(x)
+#         x.start()
+# except Exception as e:
+#     logger.error(f"{e}")
+#     return
+
+# for index, thread in enumerate(threads):
+#     thread.join()
+#     logging.info("Wait %s thread done", thread.name)
+
+# # clear sqs
+# logger.info(" ========= Clean previous SQS ========= ")
+# sqs_client = connect_aws_client(
+#     client_name="sqs",
+#     key_id=config_params_obj.aws_access_key,
+#     secret=config_params_obj.aws_secret_access_key,
+#     region=config_params_obj.aws_region,
+# )
+# modules.sqs.clean_previous_sqs_message(
+#     sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1
+# )
+
+# try:
+#     total_task_num = modules.command_utils.invoke_process_files_based_on_number(
+#         number=number,
+#         config_params_obj=config_params_obj,
+#         config_yaml=config_yaml,
+#         is_docker=is_docker,
+#     )
+
+# except Exception as e:
+#     logger.error(f"Invoke process files error:{e}")
+#     return
+# thread = modules.task_thread.TaskThread(
+#     threadID=1,
+#     name="sqs",
+#     counter=config_params_obj.interval_of_total_wait_time_of_sqs,
+#     wait_time=config_params_obj.interval_of_check_sqs_in_second,
+#     sqs_url=SQS_URL,
+#     num_task=total_task_num,
+#     config_params_obj=config_params_obj,
+#     delete_nodes_after_processing=delete_nodes,
+#     is_docker=is_docker,
+#     dlq_url=DLQ_URL,
+#     key_id=config_params_obj.aws_access_key,
+#     secret_key=config_params_obj.aws_secret_access_key,
+#     aws_region=config_params_obj.aws_region,
+# )
+# thread.start()
+
+# return
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ logging.basicConfig(
 )
 
 
-def process_solardata_tools(
+def entrypoint(
     task_id: str = None,
     bucket_name: str = None,
     file_path_name: str = None,
@@ -102,6 +102,7 @@ def process_solardata_tools(
 
     try:
         dh = solardatatools.DataHandler(df)
+        logger.info(f"run ======== code ===============: {solarParams.solver_name}")
         logger.info(f"run solardatatools pipeline solver: {solarParams.solver_name}")
         dh.run_pipeline(
             power_col=column_name,

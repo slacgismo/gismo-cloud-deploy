@@ -1,3 +1,4 @@
+from doctest import Example
 import boto3
 import pandas as pd
 import botocore
@@ -354,8 +355,11 @@ def remove_all_items_from_dynamodb(
 
 
 def check_ecr_tag_exists(
-    image_tag: str = None, repoNme: str = None, ecr_client=None
+    image_tag: str = None, image_name: str = None, ecr_client=None
 ) -> bool:
+    response = ecr_client.describe_images(
+        repositoryName=image_name, filter={"tagStatus": "TAGGED"}
+    )
     try:
         response = ecr_client.describe_images(
             repositoryName=f"worker", filter={"tagStatus": "TAGGED"}
@@ -366,3 +370,33 @@ def check_ecr_tag_exists(
         return False
     except Exception as e:
         return False
+
+
+def delete_ecr_image(
+    ecr_client=None, image_name: str = None, image_tag: str = None
+) -> str:
+    if ecr_client is None or image_name is None or image_tag is None:
+        raise Exception("Input parameters error")
+    if image_tag == "latest" or image_tag == "develop":
+        raise Exception(f"Can not remove {image_tag}")
+
+    # check if image tag exist
+    try:
+        check_ecr_tag_exists(
+            image_tag=image_tag, image_name=image_name, ecr_client=ecr_client
+        )
+    except Exception as e:
+        raise Exception(f"{image_name}:{image_tag} does not exist")
+
+    # delete ecr tag
+    response = ecr_client.list_images(
+        repositoryName=image_name, filter={"tagStatus": "TAGGED"}
+    )
+    delete_image_ids = [
+        image for image in response["imageIds"] if image["imageTag"] == image_tag
+    ]
+    # print(delete_image_ids)
+    delete_resp = ecr_client.batch_delete_image(
+        repositoryName="localstack-centos", imageIds=delete_image_ids
+    )
+    return delete_resp

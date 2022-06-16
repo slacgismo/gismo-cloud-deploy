@@ -1,6 +1,6 @@
 from .app_utils import (
     find_matched_column_name_set,
-    get_process_filenamef_base_on_command,
+    get_process_filename_base_on_command,
 )
 
 from .aws_utils import (

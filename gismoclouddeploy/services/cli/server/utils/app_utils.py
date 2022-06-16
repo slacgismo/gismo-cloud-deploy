@@ -54,7 +54,7 @@ def find_matched_column_name_set(
     return validated_column_set
 
 
-def get_process_filenamef_base_on_command(
+def get_process_filename_base_on_command(
     first_n_files: str,
     bucket: str,
     default_files: List[str],

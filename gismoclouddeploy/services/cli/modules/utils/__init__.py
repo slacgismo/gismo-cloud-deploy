@@ -3,7 +3,6 @@ from .command_utils import (
     process_logs_and_plot,
     print_dlq,
     check_nodes_status,
-    update_config_obj_image_name_and_tag_according_to_env,
 )
 
 from .task_thread import TaskThread

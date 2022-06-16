@@ -26,8 +26,8 @@ def tracklog_decorator(func):
         try:
             task_id = args[0].request.id
             table_name = kwargs["dynamodb_tablename"]
-            process_file_name = kwargs["file_path_name"]
-            column_name = kwargs["column_name"]
+            curr_process_file = kwargs["curr_process_file"]
+            curr_process_column = kwargs["curr_process_column"]
             aws_access_key = kwargs["aws_access_key"]
             aws_secret_access_key = kwargs["aws_secret_access_key"]
             aws_region = kwargs["aws_region"]
@@ -42,9 +42,9 @@ def tracklog_decorator(func):
                 action=ActionState.ACTION_START.name,
                 messages="init function",
                 task_id=task_id,
-                process_file_name=process_file_name,
+                process_file_name=curr_process_file,
                 table_name=table_name,
-                column_name=column_name,
+                column_name=curr_process_column,
                 aws_access_key=aws_access_key,
                 aws_secret_access_key=aws_secret_access_key,
                 aws_region=aws_region,
@@ -59,9 +59,9 @@ def tracklog_decorator(func):
                 action=ActionState.ACTION_STOP.name,
                 messages=response,
                 task_id=task_id,
-                process_file_name=process_file_name,
+                process_file_name=curr_process_file,
                 table_name=table_name,
-                column_name=column_name,
+                column_name=curr_process_column,
                 aws_access_key=aws_access_key,
                 aws_secret_access_key=aws_secret_access_key,
                 aws_region=aws_region,

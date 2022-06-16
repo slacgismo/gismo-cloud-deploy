@@ -1,4 +1,5 @@
 import time
+
 from kubernetes import client, config
 from server.models.Configurations import Configurations
 import logging
@@ -320,3 +321,45 @@ def create_or_update_k8s(
                 if is_pod_ready is False:
                     logger.error(f"Waiting {pod_name} pod ready over time")
                     raise Exception("Waiting over time")
+
+
+def scale_eks_nodes_and_wait(
+    scale_node_num: int = 1,
+    total_wait_time: int = 60,
+    delay: int = 1,
+    cluster_name: str = None,
+    nodegroup_name: str = None,
+) -> bool:
+    try:
+        target_node_number = int(scale_node_num)
+
+        num_nodes = num_of_nodes_ready()
+        logger.info(
+            f"scale node {target_node_number}, current node number: {num_nodes}"
+        )
+        if num_nodes == target_node_number:
+            logger.info(
+                f"current node number is {num_nodes}, and target node number is {target_node_number}. Scale node success!!!"
+            )
+            return True
+        # num_node is not equal ,
+        logger.info(f"scale node num: {target_node_number}")
+        scale_node_number(
+            min_nodes=target_node_number,
+            cluster_name=cluster_name,
+            nodegroup_name=nodegroup_name,
+        )
+
+        while total_wait_time:
+            num_nodes = num_of_nodes_ready()
+            print(
+                f"waiting {target_node_number} ready , current num_nodes:{num_nodes}  ....counter: {total_wait_time} Time: {time.ctime(time.time())}"
+            )
+            if num_nodes == target_node_number:
+                return True
+            total_wait_time -= delay
+            time.sleep(delay)
+        return False
+    except Exception as e:
+        logger.error(f"scale node number error: {e}")
+        return False

@@ -3,6 +3,7 @@ import time
 import logging
 import json
 import botocore
+from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
 
 
 from server.utils.aws_utils import (
@@ -27,7 +28,7 @@ from modules.utils.sqs import (
 from typing import List
 
 
-from modules.utils.eks_utils import scale_nodes_and_wait
+from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from modules.utils.process_log import process_logs_from_s3
 
 
@@ -46,7 +47,8 @@ class TaskThread(threading.Thread):
         wait_time: int,
         sqs_url: str,
         num_task: int,
-        config_params_obj: Configurations,
+        aws_config: AWS_CONFIG,
+        worker_config: WORKER_CONFIG,
         delete_nodes_after_processing: bool,
         is_docker: bool,
         dlq_url: str,
@@ -61,7 +63,8 @@ class TaskThread(threading.Thread):
         self.counter = counter
         self.sqs_url = sqs_url
         self.num_task = num_task
-        self.config_params_obj = config_params_obj
+        self.aws_config = aws_config
+        self.worker_config = worker_config
         self.delete_nodes_after_processing = delete_nodes_after_processing
         self.is_docker = is_docker
         self.dlq_url = dlq_url
@@ -76,7 +79,8 @@ class TaskThread(threading.Thread):
             wait_time=self.wait_time,
             sqs_url=self.sqs_url,
             num_task=self.num_task,
-            config_params_obj=self.config_params_obj,
+            aws_config=self.aws_config,
+            worker_config=self.worker_config,
             delete_nodes_after_processing=self.delete_nodes_after_processing,
             is_docker=self.is_docker,
             dlq_url=self.dlq_url,
@@ -110,7 +114,8 @@ def long_pulling_sqs(
     wait_time: int,
     sqs_url: str,
     num_task: int,
-    config_params_obj: Configurations,
+    worker_config: WORKER_CONFIG,
+    aws_config: AWS_CONFIG,
     delete_nodes_after_processing: bool,
     is_docker: bool,
     dlq_url: str,
@@ -183,20 +188,20 @@ def long_pulling_sqs(
 
                     # save logs from dynamodb to s3
                     save_res = save_logs_from_dynamodb_to_s3(
-                        table_name=config_params_obj.dynamodb_tablename,
-                        saved_bucket=config_params_obj.bucket,
-                        saved_file_path=config_params_obj.saved_logs_target_path,
-                        saved_filename=config_params_obj.saved_logs_target_filename,
-                        aws_access_key=config_params_obj.aws_access_key,
-                        aws_secret_access_key=config_params_obj.aws_secret_access_key,
-                        aws_region=config_params_obj.aws_region,
+                        table_name=worker_config.dynamodb_tablename,
+                        saved_bucket=worker_config.saved_bucket,
+                        saved_file_path=worker_config.saved_logs_target_path,
+                        saved_filename=worker_config.saved_logs_target_filename,
+                        aws_access_key=aws_config.aws_access_key,
+                        aws_secret_access_key=aws_config.aws_secret_access_key,
+                        aws_region=aws_config.aws_region,
                     )
                     # remove dynamodb
                     remov_res = remove_all_items_from_dynamodb(
-                        table_name=config_params_obj.dynamodb_tablename,
-                        aws_access_key=config_params_obj.aws_access_key,
-                        aws_secret_access_key=config_params_obj.aws_secret_access_key,
-                        aws_region=config_params_obj.aws_region,
+                        table_name=worker_config.dynamodb_tablename,
+                        aws_access_key=aws_config.aws_access_key,
+                        aws_secret_access_key=aws_config.aws_secret_access_key,
+                        aws_region=aws_config.aws_region,
                     )
                     s3_client = connect_aws_client(
                         client_name="s3",
@@ -205,16 +210,16 @@ def long_pulling_sqs(
                         region=aws_region,
                     )
                     logs_full_path_name = (
-                        config_params_obj.saved_logs_target_path
+                        worker_config.saved_logs_target_path
                         + "/"
-                        + config_params_obj.saved_logs_target_filename
+                        + worker_config.saved_logs_target_filename
                     )
 
                     process_logs_from_s3(
-                        bucket=config_params_obj.saved_bucket,
+                        bucket=worker_config.saved_bucket,
                         logs_file_path_name=logs_full_path_name,
-                        saved_image_name_local=config_params_obj.saved_rumtime_image_name_local,
-                        saved_image_name_aws=config_params_obj.saved_rumtime_image_name_aws,
+                        saved_image_name_local=worker_config.saved_rumtime_image_name_local,
+                        saved_image_name_aws=worker_config.saved_rumtime_image_name_aws,
                         s3_client=s3_client,
                     )
 
@@ -223,11 +228,12 @@ def long_pulling_sqs(
                         and delete_nodes_after_processing is True
                     ):
                         logger.info("Delete node after processing")
-                        scale_nodes_and_wait(
-                            scale_node_num=0,
-                            counter=60,
-                            delay=1,
-                            config_params_obj=config_params_obj,
+                        scale_eks_nodes_and_wait(
+                            scale_node_num=aws_config.scale_eks_nodes_wait_time,
+                            total_wait_time=aws_config.scale_eks_nodes_wait_time,
+                            delay=2,
+                            cluster_name=aws_config.cluster_name,
+                            nodegroup_name=aws_config.nodegroup_name,
                         )
                     try:
                         purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
