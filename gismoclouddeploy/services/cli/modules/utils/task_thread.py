@@ -11,13 +11,17 @@ from server.utils.aws_utils import (
     check_environment_is_aws,
     save_logs_from_dynamodb_to_s3,
     remove_all_items_from_dynamodb,
+    delete_ecr_image,
 )
-from server.models import Configurations
+
 from server.models import SNSSubjectsAlert
 
-from modules.utils.invoke_function import (
+from .invoke_function import (
     invoke_docekr_exec_revoke_task,
     invoke_ks8_exec_revoke_task,
+    invoke_docker_compose_down_and_remove,
+    invoke_kubectl_delete_all_deployment,
+    invoke_kubectl_delete_all_services,
 )
 from modules.utils.sqs import (
     receive_queue_message,
@@ -26,7 +30,7 @@ from modules.utils.sqs import (
     send_queue_message,
 )
 from typing import List
-
+from .command_utils import combine_files_to_file
 
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from modules.utils.process_log import process_logs_from_s3
@@ -119,12 +123,12 @@ def long_pulling_sqs(
     delete_nodes_after_processing: bool,
     is_docker: bool,
     dlq_url: str,
-    key_id: str,
-    secret_key: str,
-    aws_region: str,
 ) -> List[str]:
     sqs_client = connect_aws_client(
-        client_name="sqs", key_id=key_id, secret=secret_key, region=aws_region
+        client_name="sqs",
+        key_id=aws_config.aws_access_key,
+        secret=aws_config.aws_secret_access_key,
+        region=aws_config.aws_region,
     )
     tasks = []
     num_task_completed = 0
@@ -183,63 +187,8 @@ def long_pulling_sqs(
                     or subject == SNSSubjectsAlert.SYSTEM_ERROR.name
                 ):
                     # close program after tasks complete or system error
-
                     logger.info(f"subject:{subject} message: {message_text}")
-
-                    # save logs from dynamodb to s3
-                    save_res = save_logs_from_dynamodb_to_s3(
-                        table_name=worker_config.dynamodb_tablename,
-                        saved_bucket=worker_config.saved_bucket,
-                        saved_file_path=worker_config.saved_logs_target_path,
-                        saved_filename=worker_config.saved_logs_target_filename,
-                        aws_access_key=aws_config.aws_access_key,
-                        aws_secret_access_key=aws_config.aws_secret_access_key,
-                        aws_region=aws_config.aws_region,
-                    )
-                    # remove dynamodb
-                    remov_res = remove_all_items_from_dynamodb(
-                        table_name=worker_config.dynamodb_tablename,
-                        aws_access_key=aws_config.aws_access_key,
-                        aws_secret_access_key=aws_config.aws_secret_access_key,
-                        aws_region=aws_config.aws_region,
-                    )
-                    s3_client = connect_aws_client(
-                        client_name="s3",
-                        key_id=key_id,
-                        secret=secret_key,
-                        region=aws_region,
-                    )
-                    logs_full_path_name = (
-                        worker_config.saved_logs_target_path
-                        + "/"
-                        + worker_config.saved_logs_target_filename
-                    )
-
-                    process_logs_from_s3(
-                        bucket=worker_config.saved_bucket,
-                        logs_file_path_name=logs_full_path_name,
-                        saved_image_name_local=worker_config.saved_rumtime_image_name_local,
-                        saved_image_name_aws=worker_config.saved_rumtime_image_name_aws,
-                        s3_client=s3_client,
-                    )
-
-                    if (
-                        check_environment_is_aws()
-                        and delete_nodes_after_processing is True
-                    ):
-                        logger.info("Delete node after processing")
-                        scale_eks_nodes_and_wait(
-                            scale_node_num=aws_config.scale_eks_nodes_wait_time,
-                            total_wait_time=aws_config.scale_eks_nodes_wait_time,
-                            delay=2,
-                            cluster_name=aws_config.cluster_name,
-                            nodegroup_name=aws_config.nodegroup_name,
-                        )
-                    try:
-                        purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
-                    except Exception as e:
-                        logger.error(f"Cannot purge queue :{e}")
-                    return tasks
+                    return
                 logger.info(f"Received and deleted message(s) from {sqs_url}.")
             print(
                 f"num_task_completed {num_task_completed},\

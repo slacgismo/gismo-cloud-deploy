@@ -61,7 +61,7 @@ def loop_tasks_status_task(
         saved_bucket = kwargs["saved_bucket"]
         saved_tmp_path = kwargs["saved_tmp_path"]
         saved_target_path = kwargs["saved_target_path"]
-        saved_target_filename = kwargs["usaved_target_filename"]
+        saved_target_filename = kwargs["saved_target_filename"]
         interval_of_check_task_status = kwargs["interval_of_check_task_status"]
 
     except Exception as e:
@@ -123,17 +123,17 @@ def loop_tasks_status_task(
         "------- start combine files, save logs , clean dynamodb items---------"
     )
     try:
-        response = tasks_utilities.combine_files_to_file(
-            bucket_name=saved_bucket,
-            source_folder=saved_tmp_path,
-            target_folder=saved_target_path,
-            target_filename=saved_target_filename,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
+        # response = tasks_utilities.combine_files_to_file(
+        #     bucket_name=saved_bucket,
+        #     source_folder=saved_tmp_path,
+        #     target_folder=saved_target_path,
+        #     target_filename=saved_target_filename,
+        #     aws_access_key=aws_access_key,
+        #     aws_secret_access_key=aws_secret_access_key,
+        #     aws_region=aws_region,
+        # )
 
-        logger.info(f"response: {response}")
+        # logger.info(f"response: {response}")
         subject = SNSSubjectsAlert.All_TASKS_COMPLETED.name
         message = SNSSubjectsAlert.All_TASKS_COMPLETED.name
 

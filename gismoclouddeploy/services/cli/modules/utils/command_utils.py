@@ -1,17 +1,24 @@
 from re import A
 from typing import List, Dict
+import pandas as pd
 import json
+from .sqs import purge_queue
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
 from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
 )
+
+from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
     invoke_kubectl_delete_deployment,
     invoke_docker_check_image_exist,
     invoke_exec_docker_run_process_files,
     invoke_exec_k8s_run_process_files,
+    invoke_docker_compose_down_and_remove,
+    invoke_kubectl_delete_all_deployment,
+    invoke_kubectl_delete_all_services,
 )
 from .process_log import process_logs_from_s3
 from server.models.Configurations import (
@@ -25,7 +32,8 @@ from .sqs import (
     receive_queue_message,
     delete_queue_message,
 )
-
+from io import StringIO
+import os
 
 from typing import Union
 import logging
@@ -389,65 +397,206 @@ def update_config_json_image_name_and_tag_base_on_env(
     # if is_local is False:
 
 
-# def update_config_obj_image_name_and_tag_according_to_env(
-#     is_local: bool = False,
-#     image_tag: str = None,
-#     ecr_repo: str = None,
-#     ecr_client=None,
-#     config_params_obj: Configurations = None,
-# ) -> Configurations:
+def combine_files_to_file(
+    bucket_name: str,
+    source_folder: str,
+    target_folder: str,
+    target_filename: str,
+    aws_access_key: str,
+    aws_secret_access_key: str,
+    aws_region: str,
+) -> None:
+    """
+    Combine all files in sorce folder and save into target folder and target file.
+    After the process is completed, all files in source folder will be deleted.
+    """
+    print("combine files ---->")
+    s3_client = aws_utils.connect_aws_client(
+        client_name="s3",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    filter_files = list_files_in_folder_of_bucket(bucket_name, source_folder, s3_client)
 
-#     services_list = ["worker", "server"]
+    if not filter_files:
+        logger.warning("No tmp file in folder")
+        return
+        # raise Exception("Error: No saved tmp file found ")
+    contents = []
+    for file in filter_files:
+        df = aws_utils.read_csv_from_s3(bucket_name, file, s3_client)
+        contents.append(df)
+    frame = pd.concat(contents, axis=0, ignore_index=True)
+    csv_buffer = StringIO()
+    frame.to_csv(csv_buffer)
+    content = csv_buffer.getvalue()
+    try:
+        aws_utils.to_s3(
+            bucket=bucket_name,
+            file_path=target_folder,
+            filename=target_filename,
+            content=content,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
+        print(f"Save to {target_filename} success!!")
+        # delete files
+        for file in filter_files:
+            delete_files_from_bucket(bucket_name, file, s3_client)
+    except Exception as e:
+        print(f"save to s3 error or delete files error ---> {e}")
+        raise e
 
-#     if is_local is False:
-#         logger.info("Running on AWS")
-#         # wait eks node status
-#         for service in services_list:
-#             image_base_url = f"{ecr_repo}/{service}"
-#             # check if ecr exist
-#             if (
-#                 aws_utils.check_ecr_tag_exists(
-#                     ecr_client=ecr_client,
-#                     ecr_repo=ecr_repo,
-#                     image_name=service,
-#                     image_tag=image_tag
-#                 )
-#                 is False
-#             ):
-#                 logger.error(f"{image_base_url} does not exist")
-#                 return
 
-#             # update image name
-#             # for a in vars(config_params_obj.k8s_config.deployment_services_list):
-#             #     if a == "worker":
-#             #         config_params_obj.k8s_config.deployment_services_list.
-#             # print(vars(config_params_obj.k8s_config.deployment_services_list))
-#             # for index, service_info in config_params_obj.k8s_config.deployment_services_list.items():
-#             #     if service in service_info:
-#             #         # tt = config_params_obj.k8s_config.deployment_services_list[index]
-#             #         logger.info(index)
-#             # config_params_obj.deployment_services_list[service][
-#             #     "image_name"
-#             # ] = image_base_url
-#             # config_params_obj.deployment_services_list[service]["image_tag"] = image_tag
-#     else:
-#         logger.info("Running in Local")
-#         for service in services_list:
-#             image_url = f"{service}:{image_tag}"
-#             imagePullPolicy = "IfNotPresent"
-#             # check if image exist
-#             try:
-#                 invoke_docker_check_image_exist(image_name=image_url)
-#             except Exception as e:
-#                 logger.info(f"docker {image_url} does not exist")
-#                 return
-#             # updat image tag
-#             # config_params_obj.deployment_services_list[service]["image_tag"] = image_tag
-#             # config_params_obj.deployment_services_list[service][
-#             #     "imagePullPolicy"
-#             # ] = imagePullPolicy
+def list_files_in_folder_of_bucket(
+    bucket_name: str, file_path: str, s3_client: "botocore.client.S3"
+) -> List[str]:
+    """Get filename from a folder of the bucket , remove non csv file"""
 
-#             # service_info = filter(lambda key: service in key,config_params_obj.k8s_config.deployment_services_list )
-#             # print(list(service_info))
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    files = response["Contents"]
+    filterFiles = []
+    for file in files:
+        split_tup = os.path.splitext(file["Key"])
+        path, filename = os.path.split(file["Key"])
+        file_extension = split_tup[1]
+        if file_extension == ".csv" and path == file_path:
+            filterFiles.append(file["Key"])
+    return filterFiles
 
-#     return config_params_obj
+
+def delete_files_from_bucket(
+    bucket_name: str, full_path: str, s3_client: "botocore.client.S3"
+) -> None:
+    try:
+        s3_client.delete_object(Bucket=bucket_name, Key=full_path)
+        print(f"Deleted {full_path} success!!")
+    except Exception as e:
+        print(f"Delete file error ---> {e}")
+        raise e
+
+
+def initial_end_services(
+    worker_config: WORKER_CONFIG = None,
+    aws_config: AWS_CONFIG = None,
+    is_local: bool = False,
+    is_docker: bool = False,
+    delete_nodes_after_processing: bool = False,
+    is_build_image: bool = False,
+    services_config_list: List[str] = None,
+):
+    combine_res = combine_files_to_file(
+        bucket_name=worker_config.saved_bucket,
+        source_folder=worker_config.saved_tmp_path,
+        target_folder=worker_config.saved_target_path,
+        target_filename=worker_config.saved_target_filename,
+        aws_access_key=aws_config.aws_access_key,
+        aws_secret_access_key=aws_config.aws_secret_access_key,
+        aws_region=aws_config.aws_region,
+    )
+
+    # save logs from dynamodb to s3
+    save_res = aws_utils.save_logs_from_dynamodb_to_s3(
+        table_name=worker_config.dynamodb_tablename,
+        saved_bucket=worker_config.saved_bucket,
+        saved_file_path=worker_config.saved_logs_target_path,
+        saved_filename=worker_config.saved_logs_target_filename,
+        aws_access_key=aws_config.aws_access_key,
+        aws_secret_access_key=aws_config.aws_secret_access_key,
+        aws_region=aws_config.aws_region,
+    )
+    # remove dynamodb
+    remov_res = aws_utils.remove_all_items_from_dynamodb(
+        table_name=worker_config.dynamodb_tablename,
+        aws_access_key=aws_config.aws_access_key,
+        aws_secret_access_key=aws_config.aws_secret_access_key,
+        aws_region=aws_config.aws_region,
+    )
+    s3_client = aws_utils.connect_aws_client(
+        client_name="s3",
+        key_id=aws_config.aws_access_key,
+        secret=aws_config.aws_secret_access_key,
+        region=aws_config.aws_region,
+    )
+    logs_full_path_name = (
+        worker_config.saved_logs_target_path
+        + "/"
+        + worker_config.saved_logs_target_filename
+    )
+
+    process_logs_from_s3(
+        bucket=worker_config.saved_bucket,
+        logs_file_path_name=logs_full_path_name,
+        saved_image_name_local=worker_config.saved_rumtime_image_name_local,
+        saved_image_name_aws=worker_config.saved_rumtime_image_name_aws,
+        s3_client=s3_client,
+    )
+
+    if aws_utils.check_environment_is_aws() and delete_nodes_after_processing is True:
+        logger.info("Delete node after processing")
+        scale_eks_nodes_and_wait(
+            scale_node_num=aws_config.scale_eks_nodes_wait_time,
+            total_wait_time=aws_config.scale_eks_nodes_wait_time,
+            delay=2,
+            cluster_name=aws_config.cluster_name,
+            nodegroup_name=aws_config.nodegroup_name,
+        )
+
+        # Remove services.
+        remove_running_services(
+            is_build_image=is_build_image,
+            is_docker=is_docker,
+            is_local=is_local,
+            aws_config=aws_config,
+            services_config_list=services_config_list,
+        )
+    try:
+        sqs_client = aws_utils.connect_aws_client(
+            client_name="sqs",
+            key_id=aws_config.aws_access_key,
+            secret=aws_config.aws_secret_access_key,
+            region=aws_config.aws_region,
+        )
+        purge_queue(queue_url=aws_config.sqs_url, sqs_client=sqs_client)
+    except Exception as e:
+        logger.error(f"Cannot purge queue :{e}")
+        return
+    return
+
+
+def remove_running_services(
+    is_build_image: bool = False,
+    is_docker: bool = False,
+    is_local: bool = False,
+    aws_config: AWS_CONFIG = None,
+    services_config_list: List[str] = None,
+) -> None:
+    if is_build_image:
+        if is_docker:
+            # delete local docker images
+            logger.info("Delete local docker image")
+            invoke_docker_compose_down_and_remove()
+        else:
+            if is_local:
+                logger.info("Remove local k8s svc and deployment")
+                invoke_kubectl_delete_all_deployment()
+                invoke_kubectl_delete_all_services()
+            else:
+                logger.info("Delete Temp ECR image")
+                ecr_client = aws_utils.connect_aws_client(
+                    client_name="ecr",
+                    key_id=aws_config.aws_access_key,
+                    secret=aws_config.aws_secret_access_key,
+                    region=aws_config.aws_region,
+                )
+                for service in services_config_list:
+                    if service == "worker" or service == "server":
+                        image_tag = services_config_list[service]["image_tag"]
+                        aws_utils.delete_ecr_image(
+                            ecr_client=ecr_client,
+                            image_name=service,
+                            image_tag=image_tag,
+                        )
+    return

@@ -22,6 +22,11 @@ from server.utils.aws_utils import (
     delete_ecr_image,
 )
 
+from modules.utils.task_thread import (
+    long_pulling_sqs,
+)
+
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -354,6 +359,10 @@ def run_process_files(
     aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
     aws_config_obj.aws_region = AWS_DEFAULT_REGION
     aws_config_obj.sns_topic = SNS_TOPIC
+    aws_config_obj.sqs_url = SQS_URL
+    aws_config_obj.dlq_url = DLQ_URL
+    aws_config_obj.ecr_repo = ECR_REPO
+
     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
 
     services_config_list = config_json["services_config_list"]
@@ -527,23 +536,62 @@ def run_process_files(
     except Exception as e:
         logger.error(f"Invoke process files error:{e}")
         return
-    thread = modules.task_thread.TaskThread(
-        threadID=1,
-        name="sqs",
-        counter=aws_config_obj.interval_of_total_wait_time_of_sqs,
-        wait_time=aws_config_obj.interval_of_check_sqs_in_second,
-        sqs_url=SQS_URL,
-        num_task=total_task_num,
-        aws_config=aws_config_obj,
+
+    # waiting to receive sns message
+    threads = list()
+    try:
+        x = threading.Thread(
+            target=long_pulling_sqs(
+                counter=aws_config_obj.interval_of_total_wait_time_of_sqs,
+                wait_time=aws_config_obj.interval_of_check_sqs_in_second,
+                sqs_url=SQS_URL,
+                num_task=total_task_num,
+                worker_config=worker_config_obj,
+                aws_config=aws_config_obj,
+                delete_nodes_after_processing=delete_nodes,
+                is_docker=is_docker,
+                dlq_url=DLQ_URL,
+            )
+        )
+        x.name = "Receive SNS thread"
+        threads.append(x)
+        x.start()
+    except Exception as e:
+        logger.error(f"{e}")
+        return
+
+    for index, thread in enumerate(threads):
+        thread.join()
+        logging.info("Wait sns %s thread done", thread.name)
+
+    #  end services
+    modules.command_utils.initial_end_services(
         worker_config=worker_config_obj,
-        delete_nodes_after_processing=delete_nodes,
+        aws_config=aws_config_obj,
         is_docker=is_docker,
-        dlq_url=DLQ_URL,
-        key_id=aws_config_obj.aws_access_key,
-        secret_key=aws_config_obj.aws_secret_access_key,
-        aws_region=aws_config_obj.aws_region,
+        is_local=is_local,
+        delete_nodes_after_processing=delete_nodes,
+        is_build_image=is_build_image,
+        services_config_list=services_config_list,
     )
-    thread.start()
+    logger.info("=========== Completed ==========")
+    # thread = modules.task_thread.TaskThread(
+    #     threadID=1,
+    #     name="sqs",
+    #     counter=aws_config_obj.interval_of_total_wait_time_of_sqs,
+    #     wait_time=aws_config_obj.interval_of_check_sqs_in_second,
+    #     sqs_url=SQS_URL,
+    #     num_task=total_task_num,
+    #     aws_config=aws_config_obj,
+    #     worker_config=worker_config_obj,
+    #     delete_nodes_after_processing=delete_nodes,
+    #     is_docker=is_docker,
+    #     dlq_url=DLQ_URL,
+    #     key_id=aws_config_obj.aws_access_key,
+    #     secret_key=aws_config_obj.aws_secret_access_key,
+    #     aws_region=aws_config_obj.aws_region,
+    # )
+    # thread.start()
 
     # Remove services.
     # if is_build_image:

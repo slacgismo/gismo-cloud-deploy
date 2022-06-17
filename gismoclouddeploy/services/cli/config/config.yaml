@@ -51,7 +51,7 @@ worker_config:
   saved_bucket: "pv.insight.test"
   saved_tmp_path: "tmp"
   saved_target_path: "results"
-  usaved_target_filename: "04262022_results.csv"
+  saved_target_filename: "04262022_results.csv"
   dynamodb_tablename: "GCD-LOGS_TABLE" # pre-define in AWS us-east-2
   saved_logs_target_path: "results"
   saved_logs_target_filename: "logs.csv"
