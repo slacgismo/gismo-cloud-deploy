@@ -1,5 +1,5 @@
 from .tasks_utils import (
-    save_solardata_to_file,
+    # save_solardata_to_file,
     # combine_files_to_file,
     # delete_files_from_bucket,
     publish_message_sns,

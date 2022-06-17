@@ -6,3 +6,4 @@ class SNSSubjectsAlert(enum.Enum):
     All_TASKS_COMPLETED = "All_TASKS_COMPLETED"
     SYSTEM_ERROR = "SYSTEM_ERROR"
     TIMEOUT = "TIMEOUT"
+    SAVED_DATA = "SAVED_DATA"

@@ -9,6 +9,8 @@ from utils.aws_utils import (
     download_solver_licence_from_s3_and_save,
 )
 import socket
+import copy
+import json
 
 from project.solardata.solardata_models import SolarData, SolarParams
 
@@ -26,9 +28,7 @@ from io import StringIO
 from boto3.dynamodb.types import TypeDeserializer
 from typing import List
 import logging
-import plotly.express as px
 
-import plotly.io as pio
 from typing import Set
 
 # logger config
@@ -67,103 +67,6 @@ def put_item_to_dynamodb(
         }
     )
     return response
-
-
-def save_solardata_to_file(
-    solardata: SolarData,
-    saved_bucket: str,
-    saved_file_path: str,
-    saved_filename: str,
-    aws_access_key: str,
-    aws_secret_access_key: str,
-    aws_region: str,
-) -> bool:
-
-    try:
-        df = pd.json_normalize(solardata)
-        csv_buffer = StringIO()
-        df.to_csv(csv_buffer)
-        content = csv_buffer.getvalue()
-        to_s3(
-            bucket=saved_bucket,
-            file_path=saved_file_path,
-            filename=saved_filename,
-            content=content,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
-
-        logger.info(
-            f"save_bucket:{saved_bucket},saved_file_path: {saved_file_path},saved_filename :{saved_filename} success"
-        )
-        return True
-    except Exception as e:
-        print(f"save to s3 error ---> {e}")
-        raise e
-
-
-# def combine_files_to_file(
-#     bucket_name: str,
-#     source_folder: str,
-#     target_folder: str,
-#     target_filename: str,
-#     aws_access_key: str,
-#     aws_secret_access_key: str,
-#     aws_region: str,
-# ) -> None:
-#     """
-#     Combine all files in sorce folder and save into target folder and target file.
-#     After the process is completed, all files in source folder will be deleted.
-#     """
-#     print("combine files ---->")
-#     s3_client = connect_aws_client(
-#         client_name="s3",
-#         key_id=aws_access_key,
-#         secret=aws_secret_access_key,
-#         region=aws_region,
-#     )
-#     filter_files = list_files_in_folder_of_bucket(bucket_name, source_folder, s3_client)
-
-#     if not filter_files:
-#         logger.warning("No tmp file in folder")
-#         raise Exception("Error: No saved tmp file found ")
-#     contents = []
-#     for file in filter_files:
-#         df = read_csv_from_s3(bucket_name, file, s3_client)
-#         contents.append(df)
-#     frame = pd.concat(contents, axis=0, ignore_index=True)
-#     csv_buffer = StringIO()
-#     frame.to_csv(csv_buffer)
-#     content = csv_buffer.getvalue()
-#     try:
-#         to_s3(
-#             bucket=bucket_name,
-#             file_path=target_folder,
-#             filename=target_filename,
-#             content=content,
-#             aws_access_key=aws_access_key,
-#             aws_secret_access_key=aws_secret_access_key,
-#             aws_region=aws_region,
-#         )
-#         print(f"Save to {target_filename} success!!")
-#         # delete files
-#         for file in filter_files:
-#             delete_files_from_bucket(bucket_name, file, s3_client)
-#     except Exception as e:
-#         print(f"save to s3 error or delete files error ---> {e}")
-#         raise e
-
-
-def delete_files_from_bucket(
-    bucket_name: str, full_path: str, s3_client: "botocore.client.S3"
-) -> None:
-    try:
-        s3_client.delete_object(Bucket=bucket_name, Key=full_path)
-        print(f"Deleted {full_path} success!!")
-    except Exception as e:
-        print(f"Delete file error ---> {e}")
-        raise e
 
 
 def publish_message_sns(
@@ -395,21 +298,21 @@ def track_logs(
     )
 
 
-def list_files_in_folder_of_bucket(
-    bucket_name: str, file_path: str, s3_client: "botocore.client.S3"
-) -> List[str]:
-    """Get filename from a folder of the bucket , remove non csv file"""
+# def list_files_in_folder_of_bucket(
+#     bucket_name: str, file_path: str, s3_client: "botocore.client.S3"
+# ) -> List[str]:
+#     """Get filename from a folder of the bucket , remove non csv file"""
 
-    response = s3_client.list_objects_v2(Bucket=bucket_name)
-    files = response["Contents"]
-    filterFiles = []
-    for file in files:
-        split_tup = os.path.splitext(file["Key"])
-        path, filename = os.path.split(file["Key"])
-        file_extension = split_tup[1]
-        if file_extension == ".csv" and path == file_path:
-            filterFiles.append(file["Key"])
-    return filterFiles
+#     response = s3_client.list_objects_v2(Bucket=bucket_name)
+#     files = response["Contents"]
+#     filterFiles = []
+#     for file in files:
+#         split_tup = os.path.splitext(file["Key"])
+#         path, filename = os.path.split(file["Key"])
+#         file_extension = split_tup[1]
+#         if file_extension == ".csv" and path == file_path:
+#             filterFiles.append(file["Key"])
+#     return filterFiles
 
 
 def make_response(subject: str = None, messages: str = None) -> dict:
@@ -426,6 +329,20 @@ def parse_subject_from_response(response: dict) -> str:
 
 def parse_messages_from_response(response: dict) -> str:
     try:
+
         return str(response["Messages"])
     except Exception as e:
+        raise e
+
+
+def append_taskid_to_message(response: dict, task_id: str = None) -> str:
+    if not isinstance(response, dict):
+        raise Exception("response is not a json object")
+    try:
+        json_obj = json.loads(response)
+        json_obj["Messages"]["task_id"] = task_id
+        return json_obj
+    except Exception as e:
+        logger.info("-------------------------")
+        logger.error("append task id error")
         raise e

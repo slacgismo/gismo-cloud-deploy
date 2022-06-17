@@ -1,5 +1,7 @@
+from copy import copy
+import json
 import sys
-
+import copy
 import functools
 import time
 from .tasks_utils import (
@@ -7,10 +9,12 @@ from .tasks_utils import (
     publish_message_sns,
     parse_messages_from_response,
     parse_subject_from_response,
+    append_taskid_to_message,
 )
 from models.ActionState import ActionState
 import logging
 from models.WorkerState import WorkerState
+from models.SNSSubjectsAlert import SNSSubjectsAlert
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -32,7 +36,7 @@ def tracklog_decorator(func):
             aws_access_key = kwargs["aws_access_key"]
             aws_secret_access_key = kwargs["aws_secret_access_key"]
             aws_region = kwargs["aws_region"]
-
+            sns_topic = kwargs["sns_topic"]
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
         try:
@@ -74,18 +78,41 @@ def tracklog_decorator(func):
 
             # send message
 
-            mesage_id = publish_message_sns(
-                message=parse_messages_from_response(response=response),
-                subject=parse_subject_from_response(response=response),
-                topic_arn=kwargs["sns_topic"],
-                aws_access_key=kwargs["aws_access_key"],
-                aws_secret_access_key=kwargs["aws_secret_access_key"],
-                aws_region=kwargs["aws_region"],
-            )
-            logger.info(f" Send to SNS, message: {mesage_id}")
+            # update_response = append_taskid_to_message(response=response, task_id=str(task_id))
+            # response_str = str(response).replace("\'", "\"")
+            # json_obj = json.loads(response_str)
+
+            # json_obj['Messages']['task_id'] = 1212312312
+
+            # mesage_id = publish_message_sns(
+            #     message=json.dumps(update_messages),
+            #     subject=parse_subject_from_response(response=response),
+            #     topic_arn=sns_topic,
+            #     aws_access_key=aws_access_key,
+            #     aws_secret_access_key=aws_secret_access_key,
+            #     aws_region=aws_region,
+            # )
+
         except Exception as e:
+            response = {
+                "Subject": SNSSubjectsAlert.SYSTEM_ERROR.name,
+                "Messages": f"{e}",
+            }
             logger.error("Publish SNS Error")
-            raise Exception(f"Publish SNS Error:{e}")
+
+            # raise Exception(f"Publish SNS Error:{e}")
+        update_messages = response["Messages"]
+        if isinstance(update_messages, dict):
+            update_messages["task_id"] = str(task_id)
+        mesage_id = publish_message_sns(
+            message=json.dumps(update_messages),
+            subject=parse_subject_from_response(response=response),
+            topic_arn=sns_topic,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
+        logger.info(f" Send to SNS, message: {mesage_id}")
 
     return wrapper
 

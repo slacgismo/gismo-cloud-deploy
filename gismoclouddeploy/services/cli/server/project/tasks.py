@@ -20,19 +20,21 @@ logging.basicConfig(
 )
 
 
-from .solardata.start import entrypoint
-
 import json
+
+from .entrypoint import entrypoint
 
 
 @shared_task(bind=True)
 @tracklog_decorator
 def process_data_task(
-    self,
+    *args,
     **kwargs,
 ):
 
-    return tasks_utilities.tasks_utils.make_response(subject="test", messages="test")
+    print("------<<<<--------?>>>")
+    response = entrypoint(*args, kwargs)
+    return response
 
 
 @shared_task(bind=True)
@@ -47,8 +49,7 @@ def loop_tasks_status_task(
     for id in task_ids:
         print(id)
 
-    startime = str(time.time())
-    self.update_state(state=WorkerState.PROCESS.name, meta={"start": startime})
+    timestamp = str(time.time())
 
     try:
         task_id = self.request.id

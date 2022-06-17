@@ -3,9 +3,10 @@ import time
 import logging
 import json
 import botocore
+import boto3
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
-
-
+import pandas as pd
+from io import StringIO
 from server.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
@@ -151,7 +152,25 @@ def long_pulling_sqs(
                 message_text = msg_body["Message"]
                 logger.info(f"The subject : {subject}")
                 logger.info(f"The message : {message_text}")
-                # logger.info('Deleting message from the queue...')
+                if subject == SNSSubjectsAlert.SAVED_DATA.name:
+
+                    temp_str = message_text.replace("'", '"')
+                    json_obj = json.loads(temp_str)
+                    task_id = json_obj["task_id"]
+                    temp_filenmae = task_id.split("-")[-1]
+                    temp_file_name = (
+                        worker_config.saved_tmp_path + "/" + f"{temp_filenmae}.csv"
+                    )
+
+                    save_messages_to_s3(
+                        messages=message_text,
+                        save_bucket=worker_config.saved_bucket,
+                        saved_file_path_and_name=temp_file_name,
+                        aws_access_key=aws_config.aws_access_key,
+                        aws_secret_access_key=aws_config.aws_secret_access_key,
+                        aws_region=aws_config.aws_region,
+                    )
+
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 tasks.append(message_text)
                 num_task_completed += 1
@@ -196,3 +215,52 @@ def long_pulling_sqs(
             )
 
     return tasks
+
+
+def save_messages_to_s3(
+    messages: str = None,
+    save_bucket: str = None,
+    saved_file_path_and_name: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+) -> None:
+
+    """
+    Save json data format to S3 bucket in a temporary file path and name.
+    :param number saved_data: saved data in json object format
+    :param number save_bucket: saved bucket is S3 (If you would like to modify bucket, )
+    :param number saved_file_path_and_name: save temp file
+    :param number aws_access_key:
+    :param number aws_secret_access_key:
+    :param number aws_region:
+    """
+    if (
+        messages is None
+        or save_bucket is None
+        or saved_file_path_and_name is None
+        or aws_access_key is None
+        or aws_secret_access_key is None
+        or aws_region is None
+    ):
+        raise Exception("Input Error")
+    try:
+        str = messages.replace("'", '"')
+        json_obj = json.loads(str)
+        df = pd.json_normalize(json_obj)
+        csv_buffer = StringIO()
+        df.to_csv(csv_buffer)
+        content = csv_buffer.getvalue()
+        s3_client = connect_aws_client(
+            "s3", key_id=aws_access_key, secret=aws_secret_access_key, region=aws_region
+        )
+
+        s3_client.put_object(
+            Bucket=save_bucket, Key=saved_file_path_and_name, Body=content
+        )
+
+        logger.info(f"save_bucket:{save_bucket} {saved_file_path_and_name} success")
+        return True
+    except Exception as e:
+        logger.error(f"save to s3 error ---> {e}")
+        raise e

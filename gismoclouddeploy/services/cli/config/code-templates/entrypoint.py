@@ -30,20 +30,7 @@ logging.basicConfig(
 )
 
 
-def entrypoint(
-    task_id: str = None,
-    bucket_name: str = None,
-    file_path_name: str = None,
-    column_name: str = None,
-    start_time: str = None,
-    saved_bucket: str = None,
-    saved_file_path: str = None,
-    saved_filename: str = None,
-    solarParams: SolarParams = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-) -> str:
+def entrypoint(*args, **kwargs) -> str:
 
     """
     Process solardatatools from file with specific column name
@@ -58,14 +45,29 @@ def entrypoint(
     :param : solarParams. -> solardatatools parameters object
     :return: success messages.
     """
-    if (
-        bucket_name is None
-        or file_path_name is None
-        or column_name is None
-        or saved_bucket is None
-        or solarParams is None
-    ):
-        raise Exception("Input error")
+    try:
+        data_bucket = kwargs["data_bucket"]
+        solver = kwargs["MOSEK"]
+
+        saved_bucket = kwargs["saved_bucket"]
+        saved_tmp_path = kwargs["saved_tmp_path"]
+        saved_target_path = kwargs["saved_target_path"]
+        saved_target_filename = kwargs["saved_target_filename"]
+        dynamodb_tablename = kwargs["GCD-LOGS_TABLE"]
+        saved_logs_target_path = kwargs["results"]
+        saved_logs_target_filename = kwargs["logs.csv"]
+        saved_rumtime_image_name_aws = kwargs["results/runtime.png"]
+        saved_rumtime_image_name_local = kwargs["plot/runtime.png"]
+        curr_process_file = kwargs["curr_process_file"]
+        curr_process_column = kwargs["curr_process_column"]
+        temp_saved_filename = kwargs["temp_saved_filename"]
+        aws_access_key = kwargs["aws_access_key"]
+        aws_secret_access_key = kwargs["aws_secret_access_key"]
+        aws_region = kwargs["aws_region"]
+        sns_topic = kwargs["sns_topic"]
+
+    except Exception as e:
+        raise Exception(f"Input key error{e}")
     error_message = ""
     try:
         s3_client = aws_utils.connect_aws_client(

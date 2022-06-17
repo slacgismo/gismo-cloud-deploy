@@ -487,6 +487,7 @@ def initial_end_services(
     is_build_image: bool = False,
     services_config_list: List[str] = None,
 ):
+
     combine_res = combine_files_to_file(
         bucket_name=worker_config.saved_bucket,
         source_folder=worker_config.saved_tmp_path,
