@@ -23,7 +23,6 @@ logging.basicConfig(
 from .solardata.start import entrypoint
 
 import json
-from types import SimpleNamespace
 
 
 @shared_task(bind=True)
@@ -49,7 +48,7 @@ def loop_tasks_status_task(
         print(id)
 
     startime = str(time.time())
-    self.update_state(state=WorkerState.PROGRESS.name, meta={"start": startime})
+    self.update_state(state=WorkerState.PROCESS.name, meta={"start": startime})
 
     try:
         task_id = self.request.id
@@ -79,7 +78,7 @@ def loop_tasks_status_task(
                 logger.info("no info")
             else:
                 try:
-                    star_time = res.info["start"]
+                    star_time = res.info["time"]
                     curr_time = time.time()
                     duration = int(curr_time - float(star_time))
                     # if the duration of task is over timeout stop
@@ -119,32 +118,10 @@ def loop_tasks_status_task(
                 task_ids.remove(id)
         time.sleep(int(interval_of_check_task_status))
 
-    logger.info(
-        "------- start combine files, save logs , clean dynamodb items---------"
-    )
-    try:
-        # response = tasks_utilities.combine_files_to_file(
-        #     bucket_name=saved_bucket,
-        #     source_folder=saved_tmp_path,
-        #     target_folder=saved_target_path,
-        #     target_filename=saved_target_filename,
-        #     aws_access_key=aws_access_key,
-        #     aws_secret_access_key=aws_secret_access_key,
-        #     aws_region=aws_region,
-        # )
+    logger.info("------- All tasks are done !!! ---------")
 
-        # logger.info(f"response: {response}")
-        subject = SNSSubjectsAlert.All_TASKS_COMPLETED.name
-        message = SNSSubjectsAlert.All_TASKS_COMPLETED.name
-
-    except Exception as e:
-        subject = SNSSubjectsAlert.SYSTEM_ERROR.name
-        message = f"Loop task error:{e}"
-
-        return tasks_utilities.tasks_utils.make_response(
-            subject=subject, messages=message
-        )
-
+    subject = SNSSubjectsAlert.All_TASKS_COMPLETED.name
+    message = SNSSubjectsAlert.All_TASKS_COMPLETED.name
     return tasks_utilities.tasks_utils.make_response(subject=subject, messages=message)
 
     # logger.info(
@@ -178,7 +155,7 @@ def loop_tasks_status_task(
     # Parse JSON into an object with attributes corresponding to dict keys.
 
     # startime = str(time.time())
-    # self.update_state(state=WorkerState.PROGRESS.name, meta={"start": startime})
+    # self.update_state(state=WorkerState.PROCESS.name, meta={"start": startime})
     # task_id = self.request.id
     # subject = task_id
     # message = "init process_data_task"
@@ -245,7 +222,7 @@ def loop_tasks_status_task(
 #     **kwargs,
 # ):
 #     startime = str(time.time())
-#     self.update_state(state=WorkerState.PROGRESS.name, meta={"start": startime})
+#     self.update_state(state=WorkerState.PROCESS.name, meta={"start": startime})
 #     try:
 #         task_id = self.request.id
 #         aws_access_key = str(kwargs["aws_access_key"])

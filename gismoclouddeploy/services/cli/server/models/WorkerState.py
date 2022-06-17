@@ -3,6 +3,6 @@ import enum
 
 class WorkerState(enum.Enum):
     SUCCESS = "SUCCESS"
-    PROGRESS = "PROGRESS"
+    PROCESS = "PROCESS"
     FAILED = "FAILED"
     REVOKED = "REVOKED"

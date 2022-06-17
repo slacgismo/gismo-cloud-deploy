@@ -10,6 +10,7 @@ from .tasks_utils import (
 )
 from models.ActionState import ActionState
 import logging
+from models.WorkerState import WorkerState
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -35,7 +36,9 @@ def tracklog_decorator(func):
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
         try:
-
+            args[0].update_state(
+                state=WorkerState.PROCESS.name, meta={"timestamp": str(time.time())}
+            )
             # track start
             inspect_and_tracklog_decorator(
                 function_name=func.__name__,
@@ -52,7 +55,9 @@ def tracklog_decorator(func):
 
             # calls original function
             response = func(*args, **kwargs)
-
+            args[0].update_state(
+                state=WorkerState.SUCCESS.name, meta={"timestamp": str(time.time())}
+            )
             # track end
             inspect_and_tracklog_decorator(
                 function_name=func.__name__,
