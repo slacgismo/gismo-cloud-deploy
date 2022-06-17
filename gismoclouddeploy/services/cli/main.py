@@ -376,10 +376,11 @@ def run_process_files(
 
     # check if build images.
     if is_build_image:
+        rollout = True  # build image always rollout sevices
         temp_image_tag = socket.gethostname()
-
         if is_docker:
-            logger.info("========= Build image and run in docker ========")
+            logger.info("========= Build images and run in docker ========")
+            modules.invoke_function.invoke_docker_compose_build_and_run()
         else:
             logger.info("========= Build image ========")
             modules.utils.invoke_docker_compose_build()
@@ -388,44 +389,41 @@ def run_process_files(
                 # only inspect worker and server
                 if service == "worker" or service == "server":
                     # Updated image tag
+                    update_image = service
+                    if not is_local:
+                        update_image = f"{ECR_REPO}/{service}"
+
                     modules.utils.invoke_tag_image(
-                        image_name=service,
+                        origin_image=service,
+                        update_image=update_image,
                         image_tag=temp_image_tag,
-                        ecr_repo=ECR_REPO,
                     )
                     services_config_list[service]["image_tag"] = temp_image_tag
 
-            if not is_local:
-                try:
-                    validation_resp = modules.utils.invoke_ecr_validation()
-                    logger.info(validation_resp)
-                except Exception as e:
-                    logger.error(f"Error :{e}")
-                    return
-                push_thread = list()
-                try:
-                    for service in services_config_list:
-                        x = threading.Thread(
-                            target=modules.utils.invoke_push_image,
-                            args=(service, temp_image_tag, ECR_REPO),
-                        )
-                        x.name = service
-                        push_thread.append(x)
-                        x.start()
-                except Exception as e:
-                    logger.error(f"{e}")
-                    return
-
-                for index, thread in enumerate(push_thread):
-                    thread.join()
-                    logging.info("Wait %s thread done", thread.name)
+        if not is_local:
+            try:
+                validation_resp = modules.utils.invoke_ecr_validation()
+                logger.info(validation_resp)
+            except Exception as e:
+                logger.error(f"Error :{e}")
+                return
+            push_thread = list()
+            try:
                 for service in services_config_list:
-                    logger.info(
-                        f"push to AWS ECR {ECR_REPO}/{service}:{temp_image_tag}"
+                    x = threading.Thread(
+                        target=modules.utils.invoke_push_image,
+                        args=(service, temp_image_tag, ECR_REPO),
                     )
-                    push_worker = modules.utils.invoke_push_image(
-                        image_name=service, image_tag=temp_image_tag, ecr_repo=ECR_REPO
-                    )
+                    x.name = service
+                    push_thread.append(x)
+                    x.start()
+            except Exception as e:
+                logger.error(f"{e}")
+                return
+
+            for index, thread in enumerate(push_thread):
+                thread.join()
+                logging.info("Wait push to %s thread done", thread.name)
 
     if is_docker:
         logger.info("Running docker")
@@ -547,17 +545,27 @@ def run_process_files(
     )
     thread.start()
 
-    if not is_local and not is_docker:
-        # delete temp image in AWS ecr
-        logger.info("Delete Temp ECR image")
-        for service in services_config_list:
-            if service == "worker" or service == "server":
-                image_tag = services_config_list[service]["image_tag"]
-                delete_ecr_image(
-                    ecr_client=ecr_client,
-                    image_name=service,
-                    image_tag=temp_image_tag,
-                )
+    # Remove services.
+    # if is_build_image:
+    #     if is_docker:
+    #         # delete local docker images
+    #         logger.info("Delete local docker image")
+    #         modules.invoke_function.invoke_docker_compose_down_and_remove()
+    #     else:
+    #         if is_local:
+    #             logger.info("Remove local k8s svc and deployment")
+    #             modules.invoke_function.invoke_kubectl_delete_all_deployment()
+    #             modules.invoke_function.invoke_kubectl_delete_all_services()
+    #         else:
+    #             logger.info("Delete Temp ECR image")
+    #             for service in services_config_list:
+    #                 if service == "worker" or service == "server":
+    #                     image_tag = services_config_list[service]["image_tag"]
+    #                     delete_ecr_image(
+    #                         ecr_client=ecr_client,
+    #                         image_name=service,
+    #                         image_tag=temp_image_tag,
+    #                     )
     return
 
 

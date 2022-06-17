@@ -34,6 +34,13 @@ def exec_docker_command(command: str) -> str:
     return result.stdout
 
 
+def invoke_kubectl_delete_all_services():
+    command = ["kubectl", "delete", "svc", "--all"]
+
+    res = exec_docker_command(command)
+    return res
+
+
 def invoke_kubectl_delete_all_deployment():
     command = ["kubectl", "delete", "deployment", "--all"]
 
@@ -71,6 +78,18 @@ def invoke_kubectl_rollout(podprefix: str = None):
     return res
 
 
+def invoke_docker_compose_down_and_remove() -> str:
+    command = "docker-compose down --rmi local"
+    output = subprocess.check_output(["bash", "-c", command])
+    return output
+
+
+def invoke_docker_compose_build_and_run() -> str:
+    command = "docker-compose up --build -d"
+    output = subprocess.check_output(["bash", "-c", command])
+    return output
+
+
 def invoke_docker_compose_build() -> str:
 
     command = "docker-compose build"
@@ -84,8 +103,12 @@ def invoke_ecr_validation() -> str:
     return output
 
 
-def invoke_tag_image(image_name: str, image_tag: str, ecr_repo: str) -> str:
-    command = f"docker image tag {image_name} {ecr_repo}/{image_name}:{image_tag}"
+def invoke_tag_image(
+    origin_image: str,
+    update_image: str,
+    image_tag: str,
+) -> str:
+    command = f"docker image tag {origin_image} {update_image}:{image_tag}"
     output = exec_subprocess_command(command=command)
     return output
 
