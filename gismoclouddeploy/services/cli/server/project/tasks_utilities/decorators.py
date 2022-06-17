@@ -7,9 +7,8 @@ import time
 from .tasks_utils import (
     track_logs,
     publish_message_sns,
-    parse_messages_from_response,
     parse_subject_from_response,
-    append_taskid_to_message,
+    check_and_download_solver,
 )
 from models.ActionState import ActionState
 import logging
@@ -33,6 +32,7 @@ def tracklog_decorator(func):
             table_name = kwargs["dynamodb_tablename"]
             curr_process_file = kwargs["curr_process_file"]
             curr_process_column = kwargs["curr_process_column"]
+            solver = kwargs["solver"]
             aws_access_key = kwargs["aws_access_key"]
             aws_secret_access_key = kwargs["aws_secret_access_key"]
             aws_region = kwargs["aws_region"]
@@ -57,6 +57,17 @@ def tracklog_decorator(func):
                 aws_region=aws_region,
             )
 
+            check_and_download_solver(
+                solver_name=solver["solver_name"],
+                slover_lic_file_name=solver["solver_lic_file_name"],
+                solver_lic_target_path=solver["solver_lic_file_name"],
+                saved_solver_bucket=solver["saved_solver_bucket"],
+                saved_temp_path_in_bucket=solver["saved_temp_path_in_bucket"],
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region,
+            )
+
             # calls original function
             response = func(*args, **kwargs)
             args[0].update_state(
@@ -76,35 +87,20 @@ def tracklog_decorator(func):
                 aws_region=aws_region,
             )
 
-            # send message
-
-            # update_response = append_taskid_to_message(response=response, task_id=str(task_id))
-            # response_str = str(response).replace("\'", "\"")
-            # json_obj = json.loads(response_str)
-
-            # json_obj['Messages']['task_id'] = 1212312312
-
-            # mesage_id = publish_message_sns(
-            #     message=json.dumps(update_messages),
-            #     subject=parse_subject_from_response(response=response),
-            #     topic_arn=sns_topic,
-            #     aws_access_key=aws_access_key,
-            #     aws_secret_access_key=aws_secret_access_key,
-            #     aws_region=aws_region,
-            # )
-
         except Exception as e:
             response = {
                 "Subject": SNSSubjectsAlert.SYSTEM_ERROR.name,
-                "Messages": f"{e}",
+                "Messages": {"error": f"{e}"},
             }
-            logger.error("Publish SNS Error")
+            logger.error(f"Publish SNS Error{e}")
 
             # raise Exception(f"Publish SNS Error:{e}")
         update_messages = response["Messages"]
-        if isinstance(update_messages, dict):
-            update_messages["task_id"] = str(task_id)
-        mesage_id = publish_message_sns(
+        if not isinstance(update_messages, dict):
+            update_messages = {"error": f"message is not dict {update_messages}"}
+
+        update_messages["task_id"] = str(task_id)
+        message_id = publish_message_sns(
             message=json.dumps(update_messages),
             subject=parse_subject_from_response(response=response),
             topic_arn=sns_topic,
@@ -112,7 +108,7 @@ def tracklog_decorator(func):
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
-        logger.info(f" Send to SNS, message: {mesage_id}")
+        logger.info(f" Send to SNS, message: {message_id}")
 
     return wrapper
 

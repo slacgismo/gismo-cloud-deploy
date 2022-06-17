@@ -122,5 +122,5 @@ def loop_tasks_status_task(
     logger.info("------- All tasks are done !!! ---------")
 
     subject = SNSSubjectsAlert.All_TASKS_COMPLETED.name
-    message = SNSSubjectsAlert.All_TASKS_COMPLETED.name
+    message = {"task_id": task_id, "message": "loog tasks completes"}
     return tasks_utilities.tasks_utils.make_response(subject=subject, messages=message)

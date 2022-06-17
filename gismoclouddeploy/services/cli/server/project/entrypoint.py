@@ -29,8 +29,7 @@ def make_response(subject: str = None, messages: dict = None) -> dict:
 
 
 def entrypoint(*args, **kwargs) -> str:
-    task_id = args[0].request.id
     logging.info("----- This is template code , replaced this function")
     messages = {"solardatatools": "templates data"}
-    raise Exception("fake alert")
+    # raise Exception("fake alert")
     return make_response(subject=Alert.SAVED_DATA.name, messages=messages)

@@ -43,11 +43,16 @@ services_config_list:
 
 
 worker_config:
+  solver:
+    solver_name: "MOSEK"
+    saved_solver_bucket: "pv.insight.test"
+    solver_lic_local_path: "./config/license"
+    solver_lic_target_path: "/root/mosek"
+    saved_temp_path_in_bucket: "tempSolverLic"
+    solver_lic_file_name: "mosek.lic"
   data_bucket: "pv.insight.nrel"
   default_process_files: ["PVO/PVOutput/10059.csv"]
   process_column_keywords: ["Power(W)","(W)"] # partial match
-  solver: "MOSEK"
-  solver_local_path: "./config/license/mosek.lic"
   saved_bucket: "pv.insight.test"
   saved_tmp_path: "tmp"
   saved_target_path: "results"

@@ -1,7 +1,9 @@
+from genericpath import exists
 from re import A
 from typing import List, Dict
 import pandas as pd
 import json
+from botocore.exceptions import ClientError
 from .sqs import purge_queue
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
 from .k8s_utils import (
@@ -381,11 +383,11 @@ def update_config_json_image_name_and_tag_base_on_env(
         if service == "worker" or service == "server":
             if is_local:
                 imagePullPolicy = "IfNotPresent"
-                logger.info("update services config in local")
+                logger.info(f"update {service} config in local")
                 # update image policy
                 services_config_list[service]["imagePullPolicy"] = imagePullPolicy
             else:
-                logger.info("update services image on AWS")
+                logger.info(f"update {service} image on AWS")
                 image_base_url = f"{ecr_repo}/{service}"
                 services_config_list[service]["image_name"] = image_base_url
 
@@ -526,7 +528,15 @@ def initial_end_services(
         + "/"
         + worker_config.saved_logs_target_filename
     )
-
+    # remove solver lic
+    delete_solver_lic_from_bucket(
+        saved_solver_bucket=worker_config.solver.saved_solver_bucket,
+        solver_lic_file_name=worker_config.solver.solver_lic_file_name,
+        saved_temp_path_in_bucket=worker_config.solver.saved_temp_path_in_bucket,
+        aws_access_key=aws_config.aws_access_key,
+        aws_secret_access_key=aws_config.aws_secret_access_key,
+        aws_region=aws_config.aws_region,
+    )
     process_logs_from_s3(
         bucket=worker_config.saved_bucket,
         logs_file_path_name=logs_full_path_name,
@@ -562,7 +572,7 @@ def initial_end_services(
         )
         purge_queue(queue_url=aws_config.sqs_url, sqs_client=sqs_client)
     except Exception as e:
-        logger.error(f"Cannot purge queue :{e}")
+        logger.error(f"Cannot purge queue.{e}")
         return
     return
 
@@ -600,4 +610,87 @@ def remove_running_services(
                             image_name=service,
                             image_tag=image_tag,
                         )
+    return
+
+
+def check_solver_and_upload(
+    solver_name: str = None,
+    saved_solver_bucket: str = None,
+    solver_lic_file_name: str = None,
+    solver_lic_local_path: str = None,
+    saved_temp_path_in_bucket: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+) -> None:
+    if (
+        solver_name is None
+        or saved_solver_bucket is None
+        or solver_lic_file_name is None
+        or solver_lic_local_path is None
+        or saved_temp_path_in_bucket is None
+        or aws_access_key is None
+        or aws_secret_access_key is None
+        or aws_region is None
+    ):
+        logger.info("Solver info is None")
+        return
+
+    # check local solver lic
+    local_solver_file = solver_lic_local_path + "/" + solver_lic_file_name
+    if exists(local_solver_file) is False:
+        logger.warning("Local solver lic does not exist")
+        return
+
+    # upload solver
+    try:
+
+        s3_client = aws_utils.connect_aws_client(
+            client_name="s3",
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+        )
+        target_file_path_name = saved_temp_path_in_bucket + "/" + solver_lic_file_name
+        response = s3_client.upload_file(
+            local_solver_file, saved_solver_bucket, target_file_path_name
+        )
+    except ClientError as e:
+        logger.error(f"Update solver failed {e}")
+        raise e
+    logger.info(
+        f"Upload sover to {saved_solver_bucket}::{target_file_path_name} success"
+    )
+    return
+
+
+def delete_solver_lic_from_bucket(
+    saved_solver_bucket: str = None,
+    saved_temp_path_in_bucket: str = None,
+    solver_lic_file_name: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+) -> None:
+    if (
+        saved_solver_bucket is None
+        or saved_temp_path_in_bucket is None
+        or solver_lic_file_name is None
+        or aws_access_key is None
+        or aws_secret_access_key is None
+        or aws_region is None
+    ):
+        logger.warning("No input parameters")
+        return
+    try:
+        s3_client = aws_utils.connect_aws_client(
+            "s3", key_id=aws_access_key, secret=aws_secret_access_key, region=aws_region
+        )
+        full_path = saved_temp_path_in_bucket + "/" + solver_lic_file_name
+        delete_files_from_bucket(
+            bucket_name=saved_solver_bucket, full_path=full_path, s3_client=s3_client
+        )
+    except Exception as e:
+        logger.error(f"Delete solver lic errorf{e}")
+        raise e
     return

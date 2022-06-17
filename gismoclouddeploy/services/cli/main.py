@@ -386,10 +386,27 @@ def run_process_files(
         )
     )
 
+    # check solver
+    try:
+        modules.command_utils.check_solver_and_upload(
+            solver_name=worker_config_obj.solver.solver_name,
+            saved_solver_bucket=worker_config_obj.solver.saved_solver_bucket,
+            solver_lic_file_name=worker_config_obj.solver.solver_lic_file_name,
+            solver_lic_local_path=worker_config_obj.solver.solver_lic_local_path,
+            saved_temp_path_in_bucket=worker_config_obj.solver.saved_temp_path_in_bucket,
+            aws_access_key=aws_config_obj.aws_access_key,
+            aws_secret_access_key=aws_config_obj.aws_secret_access_key,
+            aws_region=aws_config_obj.aws_region,
+        )
+    except Exception as e:
+        logger.error(f"Upload Solver error:{e}")
+        return
+
     # check if build images.
     if is_build_image:
         rollout = True  # build image always rollout sevices
         temp_image_tag = socket.gethostname()
+
         if is_docker:
             logger.info("========= Build images and run in docker ========")
             modules.invoke_function.invoke_docker_compose_build_and_run()
