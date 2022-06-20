@@ -674,7 +674,7 @@ def run_process_files(
     for index, thread in enumerate(threads):
         thread.join()
         logging.info("%s thread done", thread.name)
-
+    logger.info(" ----- init end services process --------- ")
     modules.command_utils.initial_end_services(
         worker_config=worker_config_obj,
         aws_config=aws_config_obj,
