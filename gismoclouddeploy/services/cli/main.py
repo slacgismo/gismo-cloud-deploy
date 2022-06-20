@@ -195,7 +195,7 @@ def nodes_scale(min_nodes, configfile):
 
     # worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
     modules.eks_utils.scale_eks_nodes_and_wait(
-        scale_node_num=aws_config_obj.eks_nodes_number,
+        scale_node_num=int(min_nodes),
         total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
         delay=1,
         cluster_name=aws_config_obj.cluster_name,
