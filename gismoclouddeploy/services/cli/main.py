@@ -5,7 +5,7 @@ import click
 from os.path import exists
 import logging
 import os
-
+import json
 
 import modules
 from server.models.Configurations import (
@@ -201,31 +201,6 @@ def nodes_scale(min_nodes, configfile):
         cluster_name=aws_config_obj.cluster_name,
         nodegroup_name=aws_config_obj.nodegroup_name,
     )
-    # modules.eks_utils.scale_nodes_and_wait(
-    #     scale_node_num=min_nodes,
-    #     counter=aws_config_obj.scale_eks_nodes_wait_time,
-    #     delay=1,
-    #     aws_config=aws_config_obj,
-    # )
-
-    # try:
-    #     # config_obj = import_config_from_yaml(configfile)
-    #     config_params_obj = make_config_obj_from_yaml(
-    #         yaml_file=f"./config/{configfile}",
-    #         aws_access_key=AWS_ACCESS_KEY_ID,
-    #         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    #         aws_region=AWS_DEFAULT_REGION,
-    #         sns_topic=SNS_TOPIC,
-    #     )
-
-    # except Exception as e:
-    #     return logger.error(e)
-    # modules.eks_utils.scale_nodes_and_wait(
-    #     scale_node_num=min_nodes,
-    #     counter=int(config_params_obj.scale_eks_nodes_wait_time),
-    #     delay=1,
-    #     config_params_obj=config_params_obj,
-    # )
 
 
 # ***************************
@@ -637,16 +612,25 @@ def run_process_files(
     modules.sqs.clean_previous_sqs_message(
         sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1
     )
+    # start receive SNS message
+    # waiting to receive sns message
+
+    # send command to server and process files command.
+    total_task_num = modules.command_utils.get_total_task_number(
+        number=number,
+        aws_config=aws_config_obj,
+        worker_config_json=config_json["worker_config"],
+    )
+    logger.info(f"total_task_num {total_task_num}")
 
     try:
-        total_task_num = modules.command_utils.invoke_process_files_based_on_number(
+        modules.command_utils.invoke_process_files_based_on_number(
             number=number,
             aws_config=aws_config_obj,
             worker_config_json=config_json["worker_config"],
             deployment_services_list=services_config_list,
             is_docker=is_docker,
         )
-        print(total_task_num)
     except Exception as e:
         logger.error(f"Invoke process files error:{e}")
         return
@@ -663,7 +647,7 @@ def run_process_files(
         * (total_task_num)
         / worker_replicas
     )
-    # logger.info(f"==========>looping_wait_time :{looping_wait_time}")
+    logger.info(f"==========>looping_wait_time :{looping_wait_time}")
     try:
         x = threading.Thread(
             target=long_pulling_sqs(
@@ -684,11 +668,12 @@ def run_process_files(
     except Exception as e:
         logger.error(f"{e}")
         return
+    # send commnad to server to run process files command
 
     for index, thread in enumerate(threads):
         thread.join()
         logging.info("Wait sns %s thread done", thread.name)
-
+    logger.info("=========== Start clean services ==========")
     #  end services
     modules.command_utils.initial_end_services(
         worker_config=worker_config_obj,

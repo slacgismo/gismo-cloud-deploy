@@ -55,17 +55,13 @@ logging.basicConfig(
 )
 
 
-def invoke_process_files_based_on_number(
+def get_total_task_number(
     number: Union[int, None],
     aws_config: AWS_CONFIG = None,
     worker_config_json: str = None,
-    deployment_services_list: List[str] = None,
-    is_docker: bool = False,
 ) -> int:
-
     total_task_num = 0
 
-    total_task_num = 0
     if number is None:
         total_task_num = len(worker_config_json["default_process_files"]) + 1
         logger.info(" ========= Process default files in config.yam ========= ")
@@ -89,7 +85,43 @@ def invoke_process_files_based_on_number(
         else:
             logger.info(f" ========= Process first {number} files in bucket ========= ")
             total_task_num = int(number) + 1
-    logger.info(f"total_task_num :{total_task_num}")
+    return total_task_num
+
+
+def invoke_process_files_based_on_number(
+    number: Union[int, None],
+    aws_config: AWS_CONFIG = None,
+    worker_config_json: str = None,
+    deployment_services_list: List[str] = None,
+    is_docker: bool = False,
+) -> None:
+
+    logger.info("=========== Invoke process files command ==========")
+    # total_task_num = 0
+    # if number is None:
+    #     total_task_num = len(worker_config_json["default_process_files"]) + 1
+    #     logger.info(" ========= Process default files in config.yam ========= ")
+    # else:
+    #     if int(number) == 0:
+    #         s3_client = aws_utils.connect_aws_client(
+    #             client_name="s3",
+    #             key_id=aws_config.aws_access_key,
+    #             secret=aws_config.aws_secret_access_key,
+    #             region=aws_config.aws_region,
+    #         )
+
+    #         all_files = aws_utils.list_files_in_bucket(
+    #             bucket_name=worker_config_json["data_bucket"], s3_client=s3_client
+    #         )
+    #         number_files = len(all_files)
+    #         total_task_num = len(all_files) + 1
+    #         logger.info(
+    #             f" ========= Process all {number_files} files in bucket ========= "
+    #         )
+    #     else:
+    #         logger.info(f" ========= Process first {number} files in bucket ========= ")
+    #         total_task_num = int(number) + 1
+    # logger.info(f"total_task_num :{total_task_num}")
     worker_config_json["aws_access_key"] = aws_config.aws_access_key
     worker_config_json["aws_secret_access_key"] = aws_config.aws_secret_access_key
     worker_config_json["aws_region"] = aws_config.aws_region
@@ -128,8 +160,8 @@ def invoke_process_files_based_on_number(
             pod_name=server_name,
             first_n_files=number,
         )
-        # logger.info(k8s_resp)
-    return total_task_num
+        logger.info(k8s_resp)
+    return
 
 
 def process_logs_and_plot(config_params_obj: Configurations) -> None:
