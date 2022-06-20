@@ -669,7 +669,8 @@ def run_process_files(
         x.start()
         y.start()
     except Exception as e:
-        logger.error(e)
+        logger.error(f"Invoke process files in server error:{e}")
+        return
 
     for index, thread in enumerate(threads):
         thread.join()

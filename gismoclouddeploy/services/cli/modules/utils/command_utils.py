@@ -490,6 +490,7 @@ def initial_end_services(
         + worker_config.saved_logs_target_filename
     )
     # remove solver lic
+    logger.info("=========== delete solver lic in bucket ============ ")
     delete_solver_lic_from_bucket(
         saved_solver_bucket=worker_config.solver.saved_solver_bucket,
         solver_lic_file_name=worker_config.solver.solver_lic_file_name,
@@ -517,6 +518,7 @@ def initial_end_services(
         )
 
         # Remove services.
+
         remove_running_services(
             is_build_image=is_build_image,
             is_docker=is_docker,
@@ -556,7 +558,7 @@ def remove_running_services(
                 invoke_kubectl_delete_all_deployment()
                 invoke_kubectl_delete_all_services()
             else:
-                logger.info("Delete Temp ECR image")
+                logger.info("----------->.  Delete Temp ECR image ----------->")
                 ecr_client = aws_utils.connect_aws_client(
                     client_name="ecr",
                     key_id=aws_config.aws_access_key,
