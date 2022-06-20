@@ -97,31 +97,6 @@ def invoke_process_files_based_on_number(
 ) -> None:
 
     logger.info("=========== Invoke process files command ==========")
-    # total_task_num = 0
-    # if number is None:
-    #     total_task_num = len(worker_config_json["default_process_files"]) + 1
-    #     logger.info(" ========= Process default files in config.yam ========= ")
-    # else:
-    #     if int(number) == 0:
-    #         s3_client = aws_utils.connect_aws_client(
-    #             client_name="s3",
-    #             key_id=aws_config.aws_access_key,
-    #             secret=aws_config.aws_secret_access_key,
-    #             region=aws_config.aws_region,
-    #         )
-
-    #         all_files = aws_utils.list_files_in_bucket(
-    #             bucket_name=worker_config_json["data_bucket"], s3_client=s3_client
-    #         )
-    #         number_files = len(all_files)
-    #         total_task_num = len(all_files) + 1
-    #         logger.info(
-    #             f" ========= Process all {number_files} files in bucket ========= "
-    #         )
-    #     else:
-    #         logger.info(f" ========= Process first {number} files in bucket ========= ")
-    #         total_task_num = int(number) + 1
-    # logger.info(f"total_task_num :{total_task_num}")
     worker_config_json["aws_access_key"] = aws_config.aws_access_key
     worker_config_json["aws_secret_access_key"] = aws_config.aws_secret_access_key
     worker_config_json["aws_region"] = aws_config.aws_region
@@ -151,16 +126,13 @@ def invoke_process_files_based_on_number(
         )
         logger.info(docker_resp)
     else:
-        # command = f"kubectl exec {server_name} --stdin --tty -- python app.py oricess_files {worker_config_str} {number}"
-
-        # command = Command(command)
-        # command.run(timeout=1, shell=True)
         k8s_resp = invoke_exec_k8s_run_process_files(
             config_params_str=worker_config_str,
             pod_name=server_name,
             first_n_files=number,
         )
         logger.info(k8s_resp)
+    logger.info("=============== >Invoke processifles command done")
     return
 
 
