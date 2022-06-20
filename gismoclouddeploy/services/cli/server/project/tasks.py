@@ -1,3 +1,4 @@
+from cmath import log
 import re
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -26,14 +27,45 @@ from .entrypoint import entrypoint
 
 
 @shared_task(bind=True)
+def pong_worker(
+    *args,
+    **kwargs,
+):
+    return "ok"
+
+
+@shared_task(bind=True)
 @tracklog_decorator
 def process_data_task(
     *args,
     **kwargs,
 ):
+    try:
+        data_bucket = kwargs["data_bucket"]
+        curr_process_file = kwargs["curr_process_file"]
+        curr_process_column = kwargs["curr_process_column"]
+        aws_access_key = kwargs["aws_access_key"]
+        aws_secret_access_key = kwargs["aws_secret_access_key"]
+        aws_region = kwargs["aws_region"]
+        solver_name = kwargs["solver"]["solver_name"]
+        solver_file = (
+            kwargs["solver"]["solver_lic_target_path"]
+            + "/"
+            + kwargs["solver"]["solver_lic_file_name"]
+        )
+    except Exception as e:
+        raise Exception(f"Input key error:{e}")
 
-    print("------<<<<--------?>>>")
-    response = entrypoint(*args, kwargs)
+    response = entrypoint(
+        data_bucket=data_bucket,
+        curr_process_file=curr_process_file,
+        curr_process_column=curr_process_column,
+        solver_name=solver_name,
+        solver_file=solver_file,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region,
+    )
     return response
 
 
@@ -44,10 +76,8 @@ def loop_tasks_status_task(
     task_ids,
     **kwargs,
 ):
-    print("--------------?>>>")
-    logger.info("loop task status")
-    for id in task_ids:
-        print(id)
+    # for id in task_ids:
+    #     print(id)
 
     timestamp = str(time.time())
 
@@ -58,10 +88,6 @@ def loop_tasks_status_task(
         aws_region = str(kwargs["aws_region"])
         sns_topic = kwargs["sns_topic"]
         interval_of_max_timeout = kwargs["interval_of_exit_check_status"]
-        saved_bucket = kwargs["saved_bucket"]
-        saved_tmp_path = kwargs["saved_tmp_path"]
-        saved_target_path = kwargs["saved_target_path"]
-        saved_target_filename = kwargs["saved_target_filename"]
         interval_of_check_task_status = kwargs["interval_of_check_task_status"]
 
     except Exception as e:
@@ -75,10 +101,14 @@ def loop_tasks_status_task(
         for id in task_ids[:]:
             res = AsyncResult(str(id))
             status = str(res.status)
+
             if res.info is None:
-                logger.info("no info")
+                logger.info(
+                    f"=================={status}!!! This task has no info.It dose not start {res} "
+                )
             else:
                 try:
+                    # logger.info(f"========== has info === {res}")
                     star_time = res.info["timestamp"]
                     curr_time = time.time()
                     duration = int(curr_time - float(star_time))

@@ -5,7 +5,7 @@ import botocore
 import os
 import os.path
 from typing import List
-from mypy_boto3_s3 import S3Client
+
 import os
 from io import StringIO
 
@@ -236,7 +236,7 @@ def download_solver_licence_from_s3_and_save(
         raise e
 
 
-def list_files_in_bucket(bucket_name: str, s3_client: S3Client):
+def list_files_in_bucket(bucket_name: str, s3_client):
     """Get filename and size from S3 , remove non csv file"""
     response = s3_client.list_objects_v2(Bucket=bucket_name)
     files = response["Contents"]

@@ -28,9 +28,9 @@ def exec_docker_command(command: str) -> str:
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True)
 
     if result.returncode != 0:
-        print(result.returncode, result.stdout, result.stderr)
+        # print(result.returncode, result.stdout, result.stderr)
         raise Exception(f"Invalid result: { result.returncode } { result.stderr}")
-    print(result.returncode, result.stdout, result.stderr)
+    # print(result.returncode, result.stdout, result.stderr)
     return result.stdout
 
 
@@ -164,6 +164,45 @@ def invoke_exec_docker_run_process_files(
     return res
 
 
+def invoke_exec_docker_ping_worker(
+    service_name: str = None,
+) -> str:
+    # command = f"docker exec -it {image_name} python app.py ping_worker"
+    # output =exec_subprocess_command(command=command)
+    # print(output)
+    # print(output.decode("utf-8") )
+    # return output.decode("utf-8")
+    command = [
+        "docker",
+        "exec",
+        "-it",
+        service_name,
+        "python",
+        "app.py",
+        "ping_worker",
+    ]
+    res = exec_docker_command(command)
+    return res
+
+
+def invoke_exec_docker_check_task_status(
+    server_name: str = None,
+    task_id: str = None,
+) -> str:
+    command = [
+        "docker",
+        "exec",
+        "-it",
+        server_name,
+        "python",
+        "app.py",
+        "check_task_status",
+        f"{task_id}",
+    ]
+    res = exec_docker_command(command)
+    return res
+
+
 def invoke_exec_k8s_run_process_files(
     config_params_str: str = None,
     pod_name: str = None,
@@ -183,6 +222,45 @@ def invoke_exec_k8s_run_process_files(
         f"{first_n_files}",
     ]
 
+    res = exec_docker_command(command)
+    return res
+
+
+def invoke_exec_k8s_ping_worker(
+    service_name: str = None,
+) -> str:
+    command = [
+        "kubectl",
+        "exec",
+        service_name,
+        "--stdin",
+        "--tty",
+        "--",
+        "python",
+        "app.py",
+        "ping_worker",
+    ]
+
+    res = exec_docker_command(command)
+    return res
+
+
+def invoke_exec_k8s_check_task_status(
+    server_name: str = None,
+    task_id: str = None,
+) -> str:
+    command = [
+        "kubectl",
+        "exec",
+        server_name,
+        "--stdin",
+        "--tty",
+        "--",
+        "python",
+        "app.py",
+        "check_task_status",
+        f"{task_id}",
+    ]
     res = exec_docker_command(command)
     return res
 

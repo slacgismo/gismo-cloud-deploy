@@ -5,6 +5,7 @@ import copy
 import functools
 import time
 from .tasks_utils import (
+    parse_messages_from_response,
     track_logs,
     publish_message_sns,
     parse_subject_from_response,
@@ -14,6 +15,7 @@ from models.ActionState import ActionState
 import logging
 from models.WorkerState import WorkerState
 from models.SNSSubjectsAlert import SNSSubjectsAlert
+from decimal import Decimal
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -43,6 +45,7 @@ def tracklog_decorator(func):
             args[0].update_state(
                 state=WorkerState.PROCESS.name, meta={"timestamp": str(time.time())}
             )
+
             # track start
             inspect_and_tracklog_decorator(
                 function_name=func.__name__,
@@ -60,7 +63,7 @@ def tracklog_decorator(func):
             check_and_download_solver(
                 solver_name=solver["solver_name"],
                 slover_lic_file_name=solver["solver_lic_file_name"],
-                solver_lic_target_path=solver["solver_lic_file_name"],
+                solver_lic_target_path=solver["solver_lic_target_path"],
                 saved_solver_bucket=solver["saved_solver_bucket"],
                 saved_temp_path_in_bucket=solver["saved_temp_path_in_bucket"],
                 aws_access_key=aws_access_key,
@@ -70,6 +73,7 @@ def tracklog_decorator(func):
 
             # calls original function
             response = func(*args, **kwargs)
+
             args[0].update_state(
                 state=WorkerState.SUCCESS.name, meta={"timestamp": str(time.time())}
             )
@@ -77,7 +81,7 @@ def tracklog_decorator(func):
             inspect_and_tracklog_decorator(
                 function_name=func.__name__,
                 action=ActionState.ACTION_STOP.name,
-                messages=response,
+                messages=json.loads(json.dumps(response), parse_float=Decimal),
                 task_id=task_id,
                 process_file_name=curr_process_file,
                 table_name=table_name,
@@ -93,14 +97,20 @@ def tracklog_decorator(func):
                 "Messages": {"error": f"{e}"},
             }
             logger.error(f"Publish SNS Error{e}")
-
-            # raise Exception(f"Publish SNS Error:{e}")
+            args[0].update_state(
+                state=WorkerState.FAILED.name, meta={"timestamp": str(time.time())}
+            )
+        test_message = {"task_id": task_id}
+        # raise Exception(f"Publish SNS Error:{e}")
         update_messages = response["Messages"]
-        if not isinstance(update_messages, dict):
-            update_messages = {"error": f"message is not dict {update_messages}"}
+        # update_messages['task_id'] = task_id
+        # convert_json = json.loads(update_messages)
+        # if not isinstance(update_messages, dict):
+        #     update_messages = {"error": f"message is not dict {update_messages}"}
 
-        update_messages["task_id"] = str(task_id)
+        # update_messages["task_id"] = str(task_id)
         message_id = publish_message_sns(
+            # message=json.dumps(update_messages),
             message=json.dumps(update_messages),
             subject=parse_subject_from_response(response=response),
             topic_arn=sns_topic,
@@ -108,7 +118,7 @@ def tracklog_decorator(func):
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
-        logger.info(f" Send to SNS, message: {message_id}")
+        # logger.info(f" Send to SNS, message: {message_id}")
 
     return wrapper
 

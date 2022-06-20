@@ -7,12 +7,13 @@ from utils.app_utils import (
     get_process_filename_base_on_command,
     find_matched_column_name_set,
 )
+from celery.result import AsyncResult
 from flask.cli import FlaskGroup
 import click
 import time
 import os
 import re
-from project.tasks import process_data_task, loop_tasks_status_task
+from project.tasks import process_data_task, loop_tasks_status_task, pong_worker
 
 app = create_app()
 celery = ext_celery.celery
@@ -25,6 +26,25 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
 
+
+@cli.command("ping_worker")
+def ping_worker():
+    task_id = pong_worker.delay()
+    print(task_id)
+
+
+@cli.command("check_task_status")
+@click.argument("task_id", nargs=1)
+def check_task_status(task_id: str = None):
+    task_result = AsyncResult(str(task_id))
+    result = {
+        "task_id": task_id,
+        "task_status": task_result.status,
+        "task_result": task_result.result,
+    }
+    print(result)
+
+
 # ***************************
 # Process first n files : first_n_files is integer
 # Process all files  : first_n_files is 0
@@ -32,31 +52,11 @@ logging.basicConfig(
 # ***************************
 
 
-def make_decorators_kwargs(
-    dynamodb_tablename: str = None,
-    file_path_name: str = None,
-    column: str = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-    sns_topic: str = None,
-) -> dict:
-    return {
-        "dynamodb_tablename": dynamodb_tablename,
-        "file_path_name": file_path_name,
-        "column_name": column,
-        "aws_access_key": aws_access_key,
-        "aws_secret_access_key": aws_secret_access_key,
-        "aws_region": aws_region,
-        "sns_topic": sns_topic,
-    }
-
-
 @cli.command("process_files")
 @click.argument("worker_config_str", nargs=1)
 @click.argument("first_n_files", nargs=1)
 def process_files(worker_config_str: str, first_n_files: str):
-    logger.info("------------------")
+    # logger.info("------------------")
 
     worker_config_json = json.loads(worker_config_str)
     # logger.info(worker_config_str)
@@ -115,15 +115,37 @@ def revoke_task(task_id: str):
     celery.control.revoke(task_id, terminate=True, signal="SIGKILL")
 
 
-@app.cli.command("celery_worker")
-def celery_worker():
-    from watchgod import run_process
-    import subprocess
+# @app.cli.command("celery_worker")
+# def celery_worker():
+#     from watchgod import run_process
+#     import subprocess
 
-    def run_worker():
-        subprocess.call(["celery", "-A", "app.celery", "worker", "--loglevel=info"])
+#     def run_worker():
+#         subprocess.call(["celery", "-A", "app.celery", "worker", "--loglevel=info"])
 
-    run_process("./project", run_worker)
+#     run_process("./project", run_worker)
+
+
+@app.cli.command("get_celery_worker_status")
+def get_celery_worker_status():
+    ERROR_KEY = "ERROR"
+    try:
+        # from celery.task.control import inspect
+        # insp = inspect()
+        insp = celery.task.control.inspect()
+        d = insp.stats()
+        if not d:
+            d = {ERROR_KEY: "No running Celery workers were found."}
+    except IOError as e:
+        from errno import errorcode
+
+        msg = "Error connecting to the backend: " + str(e)
+        if len(e.args) > 0 and errorcode.get(e.args[0]) == "ECONNREFUSED":
+            msg += " Check that the RabbitMQ server is running."
+        d = {ERROR_KEY: msg}
+    except ImportError as e:
+        d = {ERROR_KEY: str(e)}
+    return d
 
 
 if __name__ == "__main__":

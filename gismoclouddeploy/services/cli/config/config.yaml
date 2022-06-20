@@ -1,18 +1,18 @@
-
+# AWS parameters used for cli.
 aws_config:
   cluster_name: "gcd-eks-cluster"
   nodegroup_name: "gcd-nodegroup"
   eks_nodes_number: 1 # total ec2 instances
   scale_eks_nodes_wait_time : 90 # in second
-  interval_of_check_sqs_in_second: 2 # in second
-  interval_of_total_wait_time_of_sqs: 360 # in second.
+  interval_of_check_sqs_in_second: 5 # in second
+  interval_of_total_wait_time_of_sqs: 1800 # in second.
   interval_of_wait_pod_ready: 90 # in second
 
 
-
+# Parameters used for cli in k8s config.
 services_config_list:
   worker:
-      desired_replicas: 1 # Define how many workers run parallel in k8s
+      desired_replicas: 2 # Define how many workers run parallel in k8s
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/worker.deployment.yaml"
       service_file: ""
@@ -41,7 +41,7 @@ services_config_list:
       image_name: "rabbitmq"
       image_tag: "latest"
 
-
+# Parameters pass to woker container.
 worker_config:
   solver:
     solver_name: "MOSEK"
@@ -62,5 +62,12 @@ worker_config:
   saved_logs_target_filename: "logs.csv"
   saved_rumtime_image_name_aws: "results/runtime.png"
   saved_rumtime_image_name_local: "plot/runtime.png"
-  interval_of_check_task_status: "1" # in second
-  interval_of_exit_check_status: "900" # in second. If the task status didn't update after this period. stop check individual status
+  interval_of_check_task_status: "10"    # in second
+  interval_of_exit_check_status: "900"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
+
+  curr_process_file : None      # It's a hint column that is generated in the CLI runtime. Do not change !!
+  curr_process_column : None    # It's a hint column that is generated in the CLI runtime. Do not change !!
+  aws_access_key : None         # It's a hint column that is generated in the CLI runtime. Do not change !!
+  aws_secret_access_key : None  # It's a hint column that is generated in the CLI runtime. Do not change !!
+  aws_region : None             # It's a hint column that is generated in the CLI runtime. Do not change !!
+  sns_topic : None              # It's a hint column that is generated in the CLI runtime. Do not change !!

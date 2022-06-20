@@ -1,135 +1,159 @@
-# from project.solardatatools.models.SolarParams import SolarParams
-# from project.solardatatools.models.SolarData import SolarData
+import logging
+import json
 import solardatatools
-import socket
+import pandas as pd
+import boto3
+import time
+from os.path import exists
 from datetime import datetime
 
-# from project.utils.tasks_utils import (
-#     save_solardata_to_file,
-#     check_solver_licence,
-
-# )
-# from utils.aws_utils import (
-#     read_csv_from_s3_with_column_and_time,
-#     connect_aws_client,
-# )
-# import solardata_models
-# import utils.aws_utils
-# import project.utils.tasks_utils
-from .solardata_models import SolarData, SolarParams
-from utils import aws_utils
-from project.tasks_utilities import tasks_utils
-import logging
-import time
-
-
-# logger config
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
+from decimal import Decimal
+import enum
 
 
-def entrypoint(*args, **kwargs) -> str:
+class Alert(enum.Enum):
+    PROCESS_FILE_ERROR = "PROCESS_FILE_ERROR"
+    SYSTEM_ERROR = "SYSTEM_ERROR"
+    TIMEOUT = "TIMEOUT"
+    SAVED_DATA = "SAVED_DATA"
 
+
+def make_response(subject: str = None, messages: dict = None) -> dict:
+    if subject is None:
+        subject = Alert.SYSTEM_ERROR.name
+        messages = "No subject in sns message"
+        raise Exception("Message Input Error")
+    # message_str = json.dumps(messages)
+    if not isinstance(messages, dict):
+        raise Exception("messages is not a json object")
+    response = {"Subject": subject, "Messages": messages}
+    return response
+
+
+def read_csv_from_s3_with_column_and_time(
+    bucket_name: str = None,
+    file_path_name: str = None,
+    column_name: str = None,
+    index_col: int = 0,
+    parse_dates=[0],
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+) -> pd.DataFrame:
     """
-    Process solardatatools from file with specific column name
-    :param : task id
+    Read csv file from s3 bucket with define column , and time column.
     :param : bucket_name
     :param : file_path_name
     :param : column_name
-    :param : start_time
-    :param : saved_bucket
-    :param : saved_file_path
-    :param : saved_filename
-    :param : solarParams. -> solardatatools parameters object
-    :return: success messages.
+    :param : index_col, column of index
+    :param : parse_dates, column of time
+    :param : aws_access_key
+    :param : aws_secret_access_key
+    :param : aws_region
+    :return: dataframe.
     """
-    try:
-        data_bucket = kwargs["data_bucket"]
-        solver = kwargs["MOSEK"]
 
-        saved_bucket = kwargs["saved_bucket"]
-        saved_tmp_path = kwargs["saved_tmp_path"]
-        saved_target_path = kwargs["saved_target_path"]
-        saved_target_filename = kwargs["saved_target_filename"]
-        dynamodb_tablename = kwargs["GCD-LOGS_TABLE"]
-        saved_logs_target_path = kwargs["results"]
-        saved_logs_target_filename = kwargs["logs.csv"]
-        saved_rumtime_image_name_aws = kwargs["results/runtime.png"]
-        saved_rumtime_image_name_local = kwargs["plot/runtime.png"]
-        curr_process_file = kwargs["curr_process_file"]
-        curr_process_column = kwargs["curr_process_column"]
-        temp_saved_filename = kwargs["temp_saved_filename"]
-        aws_access_key = kwargs["aws_access_key"]
-        aws_secret_access_key = kwargs["aws_secret_access_key"]
-        aws_region = kwargs["aws_region"]
-        sns_topic = kwargs["sns_topic"]
-
-    except Exception as e:
-        raise Exception(f"Input key error{e}")
-    error_message = ""
+    if (
+        bucket_name is None
+        or file_path_name is None
+        or column_name is None
+        or aws_access_key is None
+        or aws_secret_access_key is None
+        or aws_region is None
+    ):
+        return
     try:
-        s3_client = aws_utils.connect_aws_client(
-            client_name="s3",
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
+        s3_client = boto3.client(
+            "s3",
+            region_name=aws_region,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
         )
-    except Exception as e:
-        logger.error(f"Connect to AWS error: {e}")
-        raise e
+        response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
 
-    # check solver
-    try:
-        tasks_utils.check_solver_licence(solarParams=solarParams, s3_client=s3_client)
+        status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+        if status != 200:
+            return Exception(f"Unsuccessful S3 get_object response. Status - {status}")
+
+        result_df = pd.read_csv(
+            response.get("Body"),
+            index_col=index_col,
+            parse_dates=parse_dates,
+            usecols=["Time", column_name],
+        )
+        return result_df
     except Exception as e:
-        logger.error(f"Check solver error: {e}")
-        raise e
+        raise Exception(f"Read csv fialed:{e}")
+
+
+def entrypoint(
+    data_bucket: str = None,
+    curr_process_file: str = None,
+    curr_process_column: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+    solver_name: str = None,
+    solver_file: str = None,
+) -> dict:
+    # logger.info("----- This is template code.")
+    logger.info(
+        f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
+    )
+
+    # check solver file :
+    if solver_name is not None and (exists(solver_file) is False):
+        return Exception(f"solver_file:{solver_file} dose not exist")
 
     # read csv file from s3
     try:
-        df = aws_utils.read_csv_from_s3_with_column_and_time(
-            bucket_name=bucket_name,
-            file_path_name=file_path_name,
-            column_name=column_name,
-            s3_client=s3_client,
+        df = read_csv_from_s3_with_column_and_time(
+            bucket_name=data_bucket,
+            file_path_name=curr_process_file,
+            column_name=curr_process_column,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
         )
     except Exception as e:
-        error_message += f"read column and time error: {e}"
-        logger.error(f"read column and time error: {e}")
+        logger.error(f"Read column and time error: {e}")
         raise e
-
-    solarParams.power_col = column_name
 
     try:
         dh = solardatatools.DataHandler(df)
-        logger.info(f"run ======== code ===============: {solarParams.solver_name}")
-        logger.info(f"run solardatatools pipeline solver: {solarParams.solver_name}")
+        logger.info(f"run solardatatools pipeline solver: {solver_name}")
         dh.run_pipeline(
-            power_col=column_name,
-            min_val=solarParams.min_val,
-            max_val=solarParams.max_val,
-            zero_night=solarParams.zero_night,
-            interp_day=solarParams.interp_day,
-            fix_shifts=solarParams.fix_shifts,
-            density_lower_threshold=solarParams.density_lower_threshold,
-            density_upper_threshold=solarParams.density_upper_threshold,
-            linearity_threshold=solarParams.linearity_threshold,
-            clear_day_smoothness_param=solarParams.clear_day_smoothness_param,
-            clear_day_energy_param=solarParams.clear_day_energy_param,
-            verbose=solarParams.verbose,
-            start_day_ix=solarParams.start_day_ix,
-            end_day_ix=solarParams.end_day_ix,
-            c1=solarParams.c1,
-            c2=solarParams.c2,
-            solar_noon_estimator=solarParams.solar_noon_estimator,
-            correct_tz=solarParams.correct_tz,
-            extra_cols=solarParams.extra_cols,
-            daytime_threshold=solarParams.daytime_threshold,
-            units=solarParams.units,
-            solver=solarParams.solver_name,
+            power_col=curr_process_column,
+            min_val=-5,
+            max_val=None,
+            zero_night=True,
+            interp_day=True,
+            fix_shifts=True,
+            density_lower_threshold=0.6,
+            density_upper_threshold=1.05,
+            linearity_threshold=0.1,
+            clear_day_smoothness_param=0.9,
+            clear_day_energy_param=0.8,
+            verbose=False,
+            start_day_ix=None,
+            end_day_ix=None,
+            c1=None,
+            c2=500.0,
+            solar_noon_estimator="com",
+            correct_tz=True,
+            extra_cols=None,
+            daytime_threshold=0.1,
+            units="W",
+            solver=solver_name,
         )
+    except Exception as e:
+        raise Exception(f"Run run_pipeline fail:{e}")
+
+    try:
         length = float("{:.2f}".format(dh.num_days))
         if dh.num_days >= 365:
             length = float("{:.2f}".format(dh.num_days / 365))
@@ -152,53 +176,29 @@ def entrypoint(*args, **kwargs) -> str:
         inverter_clipping = bool(dh.inverter_clipping)
         normal_quality_scores = bool(dh.normal_quality_scores)
         capacity_changes = bool(dh.capacity_changes)
-        end_time = time.time()
-        process_time = float(end_time) - float(start_time)
-        end_time_date = datetime.fromtimestamp(end_time)
-        start_time_date = datetime.fromtimestamp(start_time)
 
-        hostname = socket.gethostname()
-        host_ip = socket.gethostbyname(hostname)
-
-        # save process result to s3 file
-        solarData = SolarData(
-            task_id=task_id,
-            hostname=hostname,
-            host_ip=host_ip,
-            stat_time=start_time_date,
-            end_time=end_time_date,
-            bucket_name=bucket_name,
-            file_path_name=file_path_name,
-            column_name=column_name,
-            process_time=process_time,
-            length=length,
-            power_units=power_units,
-            capacity_estimate=capacity_estimate,
-            data_sampling=data_sampling,
-            data_quality_score=data_quality_score,
-            data_clearness_score=data_clearness_score,
-            error_message=error_message,
-            time_shifts=time_shifts,
-            capacity_changes=capacity_changes,
-            num_clip_points=num_clip_points,
-            tz_correction=tz_correction,
-            inverter_clipping=inverter_clipping,
-            normal_quality_scores=normal_quality_scores,
-        )
-
-        tasks_utils.save_solardata_to_file(
-            solardata=solarData.to_json(),
-            saved_bucket=saved_bucket,
-            saved_file_path=saved_file_path,
-            saved_filename=saved_filename,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
-
-        return f"Success process file {file_path_name}: column :{column_name}"
+        # save data as json format
+        save_data = {
+            "bucket": f"{data_bucket}",
+            "file": f"{curr_process_file}",
+            "column": f"{curr_process_column}",
+            "solver": f"{solver_name}",
+            "length": f"{length}",
+            "capacity_estimate": f"{capacity_estimate}",
+            "power_units": f"{power_units}",
+            "data_sampling": f"{data_sampling}",
+            "data_quality_score": f"{data_quality_score}",
+            "data_clearness_score": f"{data_clearness_score}",
+            "time_shifts": f"{time_shifts}",
+            "num_clip_points": f"{num_clip_points}",
+            "tz_correction": f"{tz_correction}",
+            "inverter_clipping": f"{inverter_clipping}",
+            "normal_quality_scores": f"{normal_quality_scores}",
+            "capacity_changes": f"{capacity_changes}",
+        }
 
     except Exception as e:
-        error_message += str(e)
-        logger.error(f"Run solar data tools error {e}")
-        raise e
+        raise Exception(f"Save data error: {e}")
+    # length =float("{:.1f}".format(0.9* 1))
+    # save_data = {"length":length}
+    return make_response(subject=Alert.SAVED_DATA.name, messages=save_data)

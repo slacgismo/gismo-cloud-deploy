@@ -81,9 +81,9 @@ def publish_message_sns(
             Message=message,
         )
         message_id = message_res["MessageId"]
-        logger.info(
-            f"Message published to topic - {topic_arn} with message Id - {message_id}."
-        )
+        # logger.info(
+        #     # f"Message published to topic - {topic_arn} with message Id - {message_id}."
+        # )
         return message_id
     except Exception as e:
         logger.error(f"publish message fail : {e}")
@@ -104,7 +104,8 @@ def check_and_download_solver(
         logger.info("No solver name is specified")
         return
     # check if the file is exist in local directory
-    if exists(solver_lic_target_path) is False:
+    local_solver_file = solver_lic_target_path + "/" + slover_lic_file_name
+    if exists(local_solver_file) is False:
         logger.info(
             f"No solver in worker image. Download MOSEK Licence from {saved_solver_bucket} {saved_temp_path_in_bucket}"
         )
@@ -123,27 +124,13 @@ def check_and_download_solver(
                 saved_file_path=solver_lic_target_path,
                 saved_file_name=slover_lic_file_name,
             )
+            logger.info("=========== Download solver success ============== ")
+            return
         except Exception as e:
-            logger.info(f"{e}")
             raise f"Cannot download solver{solver_name} from {saved_solver_bucket}::{saved_temp_path_in_bucket}/{slover_lic_file_name}"
-        logger.info("=========== Download solver success ============== ")
-        return
-
-
-def str_to_bool(s: str):
-
-    if type(s) == type(True):
-        return s
-
-    if type(s) != str:
-        raise TypeError
-
-    if s == "True":
-        return True
-    elif s == "False":
-        return False
-    else:
-        raise ValueError
+    logger.info(f"{local_solver_file} exists")
+    return
+    #
 
 
 def track_logs(
@@ -205,14 +192,14 @@ def parse_messages_from_response(response: dict) -> str:
         raise e
 
 
-def append_taskid_to_message(response: dict, task_id: str = None) -> str:
-    if not isinstance(response, dict):
-        raise Exception("response is not a json object")
-    try:
-        json_obj = json.loads(response)
-        json_obj["Messages"]["task_id"] = task_id
-        return json_obj
-    except Exception as e:
-        logger.info("-------------------------")
-        logger.error("append task id error")
-        raise e
+# def append_taskid_to_message(response: dict, task_id: str = None) -> str:
+#     if not isinstance(response, dict):
+#         raise Exception("response is not a json object")
+#     try:
+#         json_obj = json.loads(response)
+#         json_obj["Messages"]["task_id"] = task_id
+#         return json_obj
+#     except Exception as e:
+#         logger.info("-------------------------")
+#         logger.error("append task id error")
+#         raise e

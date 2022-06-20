@@ -1,9 +1,14 @@
-from genericpath import exists
+from os.path import exists
 from re import A
+import re
 from typing import List, Dict
+from unittest import result
 import pandas as pd
+import sys, json
 import json
 from botocore.exceptions import ClientError
+
+from .process_log import read_all_csv_from_s3_and_parse_dates_from
 from .sqs import purge_queue
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
 from .k8s_utils import (
@@ -21,6 +26,10 @@ from .invoke_function import (
     invoke_docker_compose_down_and_remove,
     invoke_kubectl_delete_all_deployment,
     invoke_kubectl_delete_all_services,
+    invoke_exec_k8s_ping_worker,
+    invoke_exec_docker_check_task_status,
+    invoke_exec_docker_ping_worker,
+    invoke_exec_k8s_check_task_status,
 )
 from .process_log import process_logs_from_s3
 from server.models.Configurations import (
@@ -86,99 +95,38 @@ def invoke_process_files_based_on_number(
     worker_config_json["aws_region"] = aws_config.aws_region
     worker_config_json["sns_topic"] = aws_config.sns_topic
     worker_config_str = json.dumps(worker_config_json)
+
+    server_name = ""
     if is_docker:
-        logger.info("------docker -----------")
-        image_name = deployment_services_list["server"]["image_name"]
-        # image_tag = deployment_services_list["server"]["image_tag"]
-        # image_name_tag = f"{image_name}:{image_tag}"
+        server_name = deployment_services_list["server"]["image_name"]
+    else:
+        server_name = get_k8s_pod_name(pod_name="server")
+
+    if (
+        check_and_wait_server_ready(
+            is_docer=is_docker, server_name=server_name, wait_time=60, delay=1
+        )
+        is not True
+    ):
+        logger.error("Wait server ready failed")
+        raise Exception(f"Wait {server_name} failed")
+
+    if is_docker:
         docker_resp = invoke_exec_docker_run_process_files(
             config_params_str=worker_config_str,
-            image_name=image_name,
+            image_name=server_name,
             first_n_files=number,
         )
         logger.info(docker_resp)
     else:
-        logger.info("------ k8s -----------")
-        server_pod_name = get_k8s_pod_name(pod_name="server")
-        logger.info(f"server po name: {server_pod_name}")
         k8s_resp = invoke_exec_k8s_run_process_files(
             config_params_str=worker_config_str,
-            pod_name=str(server_pod_name),
+            pod_name=server_name,
             first_n_files=number,
         )
         logger.info(k8s_resp)
 
     return total_task_num
-
-
-# def invoke_process_files_based_on_number(
-#     number: Union[int, None],
-#     config_params_obj: Configurations = None,
-#     config_yaml: str = None,
-#     is_docker: bool = False,
-# ) -> int:
-
-#     total_task_num = 0
-#     try:
-#         config_params_str = import_yaml_and_convert_to_json_str(
-#             yaml_file=config_yaml,
-#             aws_access_key=config_params_obj.aws_access_key,
-#             aws_secret_access_key=config_params_obj.aws_secret_access_key,
-#             aws_region=config_params_obj.aws_region,
-#             sns_topic=config_params_obj.sns_topic,
-#         )
-#     except Exception as e:
-#         logger.error(f"Convert Configrations to json failed:{e}")
-#         raise e
-#     total_task_num = 0
-#     if number is None:
-#         total_task_num = len(config_params_obj.files) + 1
-#         logger.info(" ========= Process default files in config.yam ========= ")
-#     else:
-#         if int(number) == 0:
-#             s3_client = aws_utils.connect_aws_client(
-#                 client_name="s3",
-#                 key_id=config_params_obj.aws_access_key,
-#                 secret=config_params_obj.aws_secret_access_key,
-#                 region=config_params_obj.aws_region,
-#             )
-
-#             all_files = aws_utils.list_files_in_bucket(
-#                 bucket_name=config_params_obj.bucket, s3_client=s3_client
-#             )
-#             number_files = len(all_files)
-#             total_task_num = len(all_files) + 1
-#             logger.info(
-#                 f" ========= Process all {number_files} files in bucket ========= "
-#             )
-#         else:
-#             logger.info(f" ========= Process first {number} files in bucket ========= ")
-#             total_task_num = int(number) + 1
-#     logger.info(f"total_task_num :{total_task_num}")
-
-#     if is_docker:
-#         logger.info("------docker -----------")
-#         image_name = config_params_obj.deployment_services_list["server"]["image_name"]
-#         image_tag = config_params_obj.deployment_services_list["server"]["image_tag"]
-#         image_name_tag = f"{image_name}:{image_tag}"
-#         docker_resp = invoke_exec_docker_run_process_files(
-#             config_params_str=config_params_str,
-#             image_name=image_name,
-#             first_n_files=number,
-#         )
-#         logger.info(docker_resp)
-#     else:
-#         logger.info("------ k8s -----------")
-#         server_pod_name = get_k8s_pod_name(pod_name="server")
-#         logger.info(f"server po name: {server_pod_name}")
-#         k8s_resp = invoke_exec_k8s_run_process_files(
-#             config_params_str=config_params_str,
-#             pod_name=str(server_pod_name),
-#             first_n_files=number,
-#         )
-#         logger.info(k8s_resp)
-
-#     return total_task_num
 
 
 def process_logs_and_plot(config_params_obj: Configurations) -> None:
@@ -201,11 +149,7 @@ def process_logs_and_plot(config_params_obj: Configurations) -> None:
         logs_file_path_name=logs_full_path_name,
         saved_image_name_aws=config_params_obj.saved_rumtime_image_name_aws,
         saved_image_name_local=config_params_obj.saved_rumtime_image_name_local,
-        s3_client=s3_client
-        # config_params_obj.saved_bucket,
-        # logs_full_path_name,
-        # "results/runtime.png",
-        # s3_client,
+        s3_client=s3_client,
     )
     logger.info(
         f"Success process logs from {config_params_obj.saved_logs_target_filename}"
@@ -517,6 +461,9 @@ def initial_end_services(
         aws_secret_access_key=aws_config.aws_secret_access_key,
         aws_region=aws_config.aws_region,
     )
+
+    # get save data from log file
+
     s3_client = aws_utils.connect_aws_client(
         client_name="s3",
         key_id=aws_config.aws_access_key,
@@ -694,3 +641,74 @@ def delete_solver_lic_from_bucket(
         logger.error(f"Delete solver lic errorf{e}")
         raise e
     return
+
+
+def check_and_wait_server_ready(
+    is_docer: bool = False, server_name: str = None, wait_time: int = 30, delay: int = 1
+) -> bool:
+    while wait_time > 0:
+        task_id = ""
+        # ping server
+        try:
+            if is_docer:
+                task_id = invoke_exec_docker_ping_worker(service_name=server_name)
+            else:
+                task_id = invoke_exec_k8s_ping_worker(service_name=server_name)
+            if len(task_id) > 0:
+                (f"Ping {server_name} Success ")
+                break
+        except:
+            logger.info(f"Ping {server_name} failed, retry!!!")
+
+        wait_time -= delay
+        time.sleep(delay)
+        if wait_time <= 0:
+            logger.error(f"Ping {server_name} over time")
+            return
+
+    while wait_time > 0:
+
+        result = ""
+        if is_docer:
+            result = invoke_exec_docker_check_task_status(
+                server_name=server_name, task_id=str(task_id).strip("\n")
+            )
+        else:
+            logger.info("Chcek k8s worker status")
+            result = invoke_exec_k8s_check_task_status(
+                server_name=server_name, task_id=str(task_id).strip("\n")
+            )
+        # conver json to
+        res_json = {}
+        dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
+
+        try:
+            res_json = json.loads(dataform)
+            status = res_json["task_status"]
+            logger.info(f" ==== Check {server_name} Status: {status}====")
+            if status == "SUCCESS":
+                return True
+        except:
+            logger.info(f"load json failed res:{result}")
+            return False
+
+        wait_time -= delay
+        time.sleep(delay)
+    logger.error("check server reday orvertime")
+    return False
+
+
+def get_saved_data_from_logs(
+    logs_file_path_name: str = None,
+    s3_client=None,
+    saved_file_name: str = None,
+    bucket: str = None,
+) -> None:
+    df = read_all_csv_from_s3_and_parse_dates_from(
+        bucket_name=bucket,
+        file_path_name=logs_file_path_name,
+        dates_column_name="timestamp",
+        s3_client=s3_client,
+    )
+
+    print(df.head())

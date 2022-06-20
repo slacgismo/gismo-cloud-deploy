@@ -7,6 +7,7 @@ import boto3
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
 import pandas as pd
 from io import StringIO
+import re
 from server.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
@@ -156,8 +157,11 @@ def long_pulling_sqs(
 
                     temp_str = message_text.replace("'", '"')
                     json_obj = json.loads(temp_str)
-                    task_id = json_obj["task_id"]
-                    temp_filenmae = task_id.split("-")[-1]
+                    file_name = json_obj["file"]
+                    prefix = file_name.replace("/", "-")
+                    column = json_obj["column"]
+                    postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
+                    temp_filenmae = f"{prefix}-{postfix}"
                     temp_file_name = (
                         worker_config.saved_tmp_path + "/" + f"{temp_filenmae}.csv"
                     )
@@ -202,8 +206,9 @@ def long_pulling_sqs(
                     )
 
                 if (
-                    subject == SNSSubjectsAlert.All_TASKS_COMPLETED.name
-                    or subject == SNSSubjectsAlert.SYSTEM_ERROR.name
+                    subject
+                    == SNSSubjectsAlert.All_TASKS_COMPLETED.name
+                    # or subject == SNSSubjectsAlert.SYSTEM_ERROR.name
                 ):
                     # close program after tasks complete or system error
                     logger.info(f"subject:{subject} message: {message_text}")

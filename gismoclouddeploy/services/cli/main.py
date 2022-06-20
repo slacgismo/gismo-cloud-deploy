@@ -18,8 +18,6 @@ from server.utils.aws_utils import (
     check_aws_validity,
     connect_aws_client,
     check_environment_is_aws,
-    check_ecr_tag_exists,
-    delete_ecr_image,
 )
 
 from modules.utils.task_thread import (
@@ -265,21 +263,76 @@ def build_images(tag: str = None, push: bool = False):
 
 
 @main.command()
-def processlogs():
+@click.option(
+    "--configfile",
+    "-f",
+    help="Assign custom config files, Default files name is ./config/config.yaml",
+    default="config.yaml",
+)
+def processlogs(configfile):
     """Porcess logs.csv file on AWS"""
-    try:
-        config_params_obj = make_config_obj_from_yaml(
-            yaml_file="./config/config.yaml",
-            aws_access_key=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            aws_region=AWS_DEFAULT_REGION,
-            sns_topic=SNS_TOPIC,
-        )
+    # try:
+    #      = make_config_obj_from_yaml(
+    #         yaml_file="./config/config.yaml",
+    #         aws_access_key=AWS_ACCESS_KEY_ID,
+    #         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    #         aws_region=AWS_DEFAULT_REGION,
+    #         sns_topic=SNS_TOPIC,
+    #     )
 
+    # except Exception as e:
+    #     logger.error(f"Convert yaml  error:{e}")
+    #     return
+    # modules.command_utils.process_logs_and_plot(config_params_obj=config_params_obj)
+    try:
+        check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
     except Exception as e:
-        logger.error(f"Convert yaml  error:{e}")
+        logger.error(f"AWS credential failed: {e}")
         return
-    modules.command_utils.process_logs_and_plot(config_params_obj=config_params_obj)
+
+    # check config exist
+    config_yaml = f"./config/{configfile}"
+
+    if exists(config_yaml) is False:
+        logger.warning(
+            f"./config/{configfile} not exist, use default config.yaml instead"
+        )
+        config_yaml = f"./config/config.yaml"
+
+    config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    aws_config_obj = AWS_CONFIG(config_json["aws_config"])
+    aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
+    aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+    aws_config_obj.aws_region = AWS_DEFAULT_REGION
+    aws_config_obj.sns_topic = SNS_TOPIC
+    aws_config_obj.sqs_url = SQS_URL
+    aws_config_obj.dlq_url = DLQ_URL
+    aws_config_obj.ecr_repo = ECR_REPO
+
+    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
+
+    logs_file_path_name = (
+        worker_config_obj.saved_logs_target_path
+        + "/"
+        + worker_config_obj.saved_logs_target_filename
+    )
+    saved_file_name = (
+        worker_config_obj.saved_target_path
+        + "/"
+        + worker_config_obj.saved_target_filename
+    )
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=AWS_ACCESS_KEY_ID,
+        secret=AWS_SECRET_ACCESS_KEY,
+        region=AWS_DEFAULT_REGION,
+    )
+    modules.command_utils.get_saved_data_from_logs(
+        logs_file_path_name=logs_file_path_name,
+        s3_client=s3_client,
+        saved_file_name=saved_file_name,
+        bucket=worker_config_obj.saved_bucket,
+    )
 
 
 @main.command()
