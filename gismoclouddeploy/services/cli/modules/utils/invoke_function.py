@@ -224,6 +224,13 @@ def invoke_exec_docker_check_task_status(
     return res
 
 
+def invoke_eks_updagte_kubeconfig(cluster_name: str = None) -> None:
+    print("exec aws eks update-kubeconfig")
+    command = f"aws eks update-kubeconfig --name {cluster_name}"
+    output = exec_subprocess_command(command=command)
+    print(output)
+
+
 def invoke_exec_k8s_run_process_files(
     config_params_str: str = None,
     pod_name: str = None,

@@ -536,6 +536,10 @@ def run_process_files(
                     "Ruuning in local not AWS. Please use [-l] option command."
                 )
                 return
+            # update aws eks
+            modules.invoke_function.invoke_eks_updagte_kubeconfig(
+                cluster_name=aws_config_obj.cluster_name
+            )
             modules.eks_utils.scale_eks_nodes_and_wait(
                 scale_node_num=aws_config_obj.eks_nodes_number,
                 total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
