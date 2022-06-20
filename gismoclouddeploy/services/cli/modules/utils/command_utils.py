@@ -136,31 +136,34 @@ def invoke_process_files_based_on_number(
     return
 
 
-def process_logs_and_plot(config_params_obj: Configurations) -> None:
+def process_logs_and_plot(
+    worker_config: WORKER_CONFIG,
+    aws_access_key: str,
+    aws_secret_access_key: str,
+    aws_region: str,
+) -> None:
 
     s3_client = aws_utils.connect_aws_client(
         client_name="s3",
-        key_id=config_params_obj.aws_access_key,
-        secret=config_params_obj.aws_secret_access_key,
-        region=config_params_obj.aws_region,
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
     )
 
     logs_full_path_name = (
-        config_params_obj.saved_logs_target_path
+        worker_config.saved_logs_target_path
         + "/"
-        + config_params_obj.saved_logs_target_filename
+        + worker_config.saved_logs_target_filename
     )
 
     process_logs_from_s3(
-        bucket=config_params_obj.saved_bucket,
+        bucket=worker_config.saved_bucket,
         logs_file_path_name=logs_full_path_name,
-        saved_image_name_aws=config_params_obj.saved_rumtime_image_name_aws,
-        saved_image_name_local=config_params_obj.saved_rumtime_image_name_local,
+        saved_image_name_aws=worker_config.saved_rumtime_image_name_aws,
+        saved_image_name_local=worker_config.saved_rumtime_image_name_local,
         s3_client=s3_client,
     )
-    logger.info(
-        f"Success process logs from {config_params_obj.saved_logs_target_filename}"
-    )
+    logger.info(f"Success process logs from {worker_config.saved_logs_target_filename}")
 
 
 def print_dlq(

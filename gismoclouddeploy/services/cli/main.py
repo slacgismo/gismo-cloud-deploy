@@ -343,21 +343,67 @@ def processlogs(configfile):
         secret=AWS_SECRET_ACCESS_KEY,
         region=AWS_DEFAULT_REGION,
     )
-    modules.command_utils.get_saved_data_from_logs(
-        logs_file_path_name=logs_file_path_name,
-        s3_client=s3_client,
-        saved_file_name=saved_file_name,
-        bucket=worker_config_obj.saved_bucket,
+    modules.command_utils.process_logs_and_plot(
+        worker_config=worker_config_obj,
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_region=AWS_DEFAULT_REGION,
     )
+    # modules.command_utils.get_saved_data_from_logs(
+    #     logs_file_path_name=logs_file_path_name,
+    #     s3_client=s3_client,
+    #     saved_file_name=saved_file_name,
+    #     bucket=worker_config_obj.saved_bucket,
+    # )
 
 
 @main.command()
-def get_iam():
-    click.echo("get iam ")
-    # iam_client = connect_aws_client("iam")
-    # response = {"Subject":"SAVED_DATA", "Messages":{"ssda":"sdas2s"}}
-    # response['Messages']['test'] = 2
-    # print(response)
+@click.option(
+    "--configfile",
+    "-f",
+    help="Assign custom config files, Default files name is ./config/config.yaml",
+    default="config.yaml",
+)
+def combine_files(configfile):
+    click.echo("combine file from temp folder")
+
+    try:
+        check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
+    except Exception as e:
+        logger.error(f"AWS credential failed: {e}")
+        return
+
+    # check config exist
+    config_yaml = f"./config/{configfile}"
+
+    if exists(config_yaml) is False:
+        logger.warning(
+            f"./config/{configfile} not exist, use default config.yaml instead"
+        )
+        config_yaml = f"./config/config.yaml"
+
+    config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    aws_config_obj = AWS_CONFIG(config_json["aws_config"])
+    aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
+    aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+    aws_config_obj.aws_region = AWS_DEFAULT_REGION
+    aws_config_obj.sns_topic = SNS_TOPIC
+    aws_config_obj.sqs_url = SQS_URL
+    aws_config_obj.dlq_url = DLQ_URL
+    aws_config_obj.ecr_repo = ECR_REPO
+
+    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
+
+    combine_res = modules.command_utils.combine_files_to_file(
+        bucket_name=worker_config_obj.saved_bucket,
+        source_folder=worker_config_obj.saved_tmp_path,
+        target_folder=worker_config_obj.saved_target_path,
+        target_filename=worker_config_obj.saved_target_filename,
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_region=AWS_DEFAULT_REGION,
+    )
+    logger.info(combine_res)
 
 
 # ***************************
