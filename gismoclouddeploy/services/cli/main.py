@@ -612,11 +612,22 @@ def run_process_files(
 
     # waiting to receive sns message
     threads = list()
+    worker_replicas = 1
+    for key, value in services_config_list.items():
+        if key == "worker":
+            worker_replicas = value["desired_replicas"]
+            # logger.info(f"worker_replicas :{worker_replicas}")
+    looping_wait_time = int(
+        (aws_config_obj.interval_of_total_wait_time_of_sqs)
+        * (total_task_num)
+        / worker_replicas
+    )
+    # logger.info(f"==========>looping_wait_time :{looping_wait_time}")
     try:
         x = threading.Thread(
             target=long_pulling_sqs(
-                counter=aws_config_obj.interval_of_total_wait_time_of_sqs,
-                wait_time=aws_config_obj.interval_of_check_sqs_in_second,
+                wait_time=looping_wait_time,
+                delay=aws_config_obj.interval_of_check_sqs_in_second,
                 sqs_url=SQS_URL,
                 num_task=total_task_num,
                 worker_config=worker_config_obj,

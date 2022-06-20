@@ -116,8 +116,8 @@ def send_mesage_to_DLQ(
 
 
 def long_pulling_sqs(
-    counter: int,
     wait_time: int,
+    delay: int,
     sqs_url: str,
     num_task: int,
     worker_config: WORKER_CONFIG,
@@ -134,16 +134,16 @@ def long_pulling_sqs(
     )
     tasks = []
     num_task_completed = 0
-    while counter:
-        time.sleep(wait_time)
+    while wait_time:
+        time.sleep(delay)
         messages = receive_queue_message(
-            sqs_url, sqs_client, MaxNumberOfMessages=1, wait_time=wait_time
+            sqs_url, sqs_client, MaxNumberOfMessages=5, wait_time=delay
         )
         logger.info(
-            f"waiting ....counter: {counter - wait_time} \
+            f"waiting ....counter: {wait_time - delay} \
             Time: {time.ctime(time.time())}"
         )
-        counter -= int(wait_time)
+        wait_time -= int(delay)
         if "Messages" in messages:
             for msg in messages["Messages"]:
                 msg_body = json.loads(msg["Body"])

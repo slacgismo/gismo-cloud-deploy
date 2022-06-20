@@ -7,7 +7,7 @@ import pandas as pd
 import sys, json
 import json
 from botocore.exceptions import ClientError
-
+import threading
 from .process_log import read_all_csv_from_s3_and_parse_dates_from
 from .sqs import purge_queue
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
@@ -16,6 +16,7 @@ from .k8s_utils import (
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
 )
+import subprocess
 
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
@@ -118,13 +119,16 @@ def invoke_process_files_based_on_number(
         )
         logger.info(docker_resp)
     else:
+        # command = f"kubectl exec {server_name} --stdin --tty -- python app.py oricess_files {worker_config_str} {number}"
+
+        # command = Command(command)
+        # command.run(timeout=1, shell=True)
         k8s_resp = invoke_exec_k8s_run_process_files(
             config_params_str=worker_config_str,
             pod_name=server_name,
             first_n_files=number,
         )
-        logger.info(k8s_resp)
-
+        # logger.info(k8s_resp)
     return total_task_num
 
 
@@ -311,6 +315,7 @@ def create_or_update_k8s_deployment(
 
 def update_config_json_image_name_and_tag_base_on_env(
     is_local: bool = False,
+    is_docker: bool = False,
     image_tag: str = None,
     ecr_repo: str = None,
     ecr_client=None,
@@ -330,9 +335,15 @@ def update_config_json_image_name_and_tag_base_on_env(
                 # update image policy
                 services_config_list[service]["imagePullPolicy"] = imagePullPolicy
             else:
-                logger.info(f"update {service} image on AWS")
-                image_base_url = f"{ecr_repo}/{service}"
-                services_config_list[service]["image_name"] = image_base_url
+                if is_docker:
+                    imagePullPolicy = "IfNotPresent"
+                    logger.info(f"update {service} config in local")
+                    # update image policy
+                    services_config_list[service]["imagePullPolicy"] = imagePullPolicy
+                else:
+                    logger.info(f"update {service} image on AWS")
+                    image_base_url = f"{ecr_repo}/{service}"
+                    services_config_list[service]["image_name"] = image_base_url
 
             # Updated image tag
             services_config_list[service]["image_tag"] = image_tag
@@ -586,7 +597,7 @@ def check_solver_and_upload(
     local_solver_file = solver_lic_local_path + "/" + solver_lic_file_name
     if exists(local_solver_file) is False:
         logger.warning("Local solver lic does not exist")
-        return
+        raise Exception("Solver lic does not exist")
 
     # upload solver
     try:

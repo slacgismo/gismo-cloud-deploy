@@ -2,6 +2,35 @@ from subprocess import PIPE, run
 from server.models.Configurations import Configurations
 import subprocess
 import sys
+import threading
+
+
+class Command(object):
+    """
+    Enables to run subprocess commands in a different thread
+    with TIMEOUT option!
+    Based on jcollado's solution:
+    http://stackoverflow.com/questions/1191374/subprocess-with-timeout/4825933#4825933
+    """
+
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.process = None
+
+    def run(self, timeout=0, **kwargs):
+        def target(**kwargs):
+            self.process = subprocess.Popen(self.cmd, **kwargs)
+            self.process.communicate()
+
+        thread = threading.Thread(target=target, kwargs=kwargs)
+        thread.start()
+
+        thread.join(timeout)
+        if thread.is_alive():
+            self.process.terminate()
+            thread.join()
+
+        return self.process.returncode
 
 
 def exec_subprocess_command(command: str) -> str:
@@ -167,11 +196,7 @@ def invoke_exec_docker_run_process_files(
 def invoke_exec_docker_ping_worker(
     service_name: str = None,
 ) -> str:
-    # command = f"docker exec -it {image_name} python app.py ping_worker"
-    # output =exec_subprocess_command(command=command)
-    # print(output)
-    # print(output.decode("utf-8") )
-    # return output.decode("utf-8")
+
     command = [
         "docker",
         "exec",
@@ -207,7 +232,12 @@ def invoke_exec_k8s_run_process_files(
     config_params_str: str = None,
     pod_name: str = None,
     first_n_files: str = None,
-) -> str:
+) -> None:
+    # command = f"kubectl exec {pod_name} --stdin --tty -- python app.py oricess_files {config_params_str} {first_n_files}"
+
+    # command = Command(command)
+    # command.run(timeout=1, shell=True)
+    # return
     command = [
         "kubectl",
         "exec",
