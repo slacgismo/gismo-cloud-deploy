@@ -20,7 +20,6 @@ from .k8s_utils import (
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
     invoke_kubectl_delete_deployment,
-    invoke_docker_check_image_exist,
     invoke_exec_docker_run_process_files,
     invoke_exec_k8s_run_process_files,
     invoke_docker_compose_down_and_remove,
@@ -591,7 +590,7 @@ def check_solver_and_upload(
 
     # upload solver
     try:
-
+        logger.info("Upload solver success")
         s3_client = aws_utils.connect_aws_client(
             client_name="s3",
             key_id=aws_access_key,
@@ -602,6 +601,7 @@ def check_solver_and_upload(
         response = s3_client.upload_file(
             local_solver_file, saved_solver_bucket, target_file_path_name
         )
+        logger.info("Upload solver success")
     except ClientError as e:
         logger.error(f"Update solver failed {e}")
         raise e

@@ -127,6 +127,9 @@ def check_and_download_solver(
             logger.info("=========== Download solver success ============== ")
             return
         except Exception as e:
+            logger.error(
+                f"Cannot download solver{solver_name} from {saved_solver_bucket}::{saved_temp_path_in_bucket}/{slover_lic_file_name}"
+            )
             raise f"Cannot download solver{solver_name} from {saved_solver_bucket}::{saved_temp_path_in_bucket}/{slover_lic_file_name}"
     logger.info(f"{local_solver_file} exists")
     return
