@@ -8,11 +8,12 @@ metadata:
     project: pvinsight
     manage: eksctl
 
-
 nodeGroups:
   - name: gcd-nodegroup
     instanceType: t2.large
-    desiredCapacity: 1
+    desiredCapacity: 0
+    minSize: 0
+    maxSize: 20
     tags:
       project: pvinsight
       manage: eksctl

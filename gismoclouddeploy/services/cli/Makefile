@@ -18,3 +18,7 @@ rollout:
 	@echo "Rollout kubernetes images"
 	kubectl rollout restart deployment/worker
 	kubectl rollout restart deployment/webapp
+
+.PHONY: get-nodegroup
+get-nodegroup:
+	eksctl  get nodegroups --cluster=gcd-eks-cluster

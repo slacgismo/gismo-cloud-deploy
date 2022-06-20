@@ -161,10 +161,6 @@ def invoke_eksctl_scale_node(
         group_name,
         "--nodes",
         str(nodes),
-        "--nodes-max",
-        str(nodes_max),
-        "--nodes-min",
-        str(nodes_min),
     ]
 
     res = exec_docker_command(command)
