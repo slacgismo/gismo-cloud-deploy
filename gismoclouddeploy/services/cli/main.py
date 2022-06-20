@@ -670,71 +670,19 @@ def run_process_files(
     for index, thread in enumerate(threads):
         thread.join()
         logging.info("%s thread done", thread.name)
-    # try:
-    # modules.command_utils.invoke_process_files_based_on_number(
-    #     number=number,
-    #     aws_config=aws_config_obj,
-    #     worker_config_json=config_json["worker_config"],
-    #     deployment_services_list=services_config_list,
-    #     is_docker=is_docker,
-    # )
-    # except Exception as e:
-    #     logger.error(f"Invoke process files error:{e}")
-    #     return
 
-    # waiting to receive sns message
-    # threads = list()
-    # worker_replicas = 1
-    # for key, value in services_config_list.items():
-    #     if key == "worker":
-    #         worker_replicas = value["desired_replicas"]
-    #         # logger.info(f"worker_replicas :{worker_replicas}")
-    # looping_wait_time = int(
-    #     (aws_config_obj.interval_of_total_wait_time_of_sqs)
-    #     * (total_task_num)
-    #     / worker_replicas
-    # )
-    # logger.info(f"==========>looping_wait_time :{looping_wait_time}")
-    # try:
-    # x = threading.Thread(
-    #     target=long_pulling_sqs(
-    #         wait_time=looping_wait_time,
-    #         delay=aws_config_obj.interval_of_check_sqs_in_second,
-    #         sqs_url=SQS_URL,
-    #         num_task=total_task_num,
-    #         worker_config=worker_config_obj,
-    #         aws_config=aws_config_obj,
-    #         delete_nodes_after_processing=delete_nodes,
-    #         is_docker=is_docker,
-    #         dlq_url=DLQ_URL,
-    #     )
-    # )
+    modules.command_utils.initial_end_services(
+        worker_config=worker_config_obj,
+        aws_config=aws_config_obj,
+        is_docker=is_docker,
+        is_local=is_local,
+        delete_nodes_after_processing=delete_nodes,
+        is_build_image=is_build_image,
+        services_config_list=services_config_list,
+    )
+    logger.info("=========== Completed ==========")
 
-    #     x.name = "Receive SNS thread"
-    #     threads.append(x)
-    #     x.start()
-    # except Exception as e:
-    #     logger.error(f"{e}")
-    #     return
-    # # send commnad to server to run process files command
-
-    # for index, thread in enumerate(threads):
-    #     thread.join()
-    #     logging.info("Wait sns %s thread done", thread.name)
-    # logger.info("=========== Start clean services ==========")
-    # #  end services
-    # modules.command_utils.initial_end_services(
-    #     worker_config=worker_config_obj,
-    #     aws_config=aws_config_obj,
-    #     is_docker=is_docker,
-    #     is_local=is_local,
-    #     delete_nodes_after_processing=delete_nodes,
-    #     is_build_image=is_build_image,
-    #     services_config_list=services_config_list,
-    # )
-    # logger.info("=========== Completed ==========")
-
-    # return
+    return
 
 
 if __name__ == "__main__":
