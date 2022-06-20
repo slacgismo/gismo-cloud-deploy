@@ -2,7 +2,7 @@ import time
 
 from kubernetes import client, config
 
-# from server.models.Configurations import Configurations
+from server.models.Configurations import Configurations
 from server.models.Configurations import WORKER_CONFIG, AWS_CONFIG
 import logging
 from .k8s_utils import get_k8s_pod_info, read_k8s_yml
