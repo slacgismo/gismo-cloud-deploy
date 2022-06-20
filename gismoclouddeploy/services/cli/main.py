@@ -167,24 +167,65 @@ def run_files(
 def nodes_scale(min_nodes, configfile):
     """Increate or decrease nodes number"""
     logger.info(f"Scale nodes {min_nodes} {configfile}")
+    # check aws credential
     try:
-        # config_obj = import_config_from_yaml(configfile)
-        config_params_obj = make_config_obj_from_yaml(
-            yaml_file=f"./config/{configfile}",
-            aws_access_key=AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-            aws_region=AWS_DEFAULT_REGION,
-            sns_topic=SNS_TOPIC,
-        )
-
+        check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
     except Exception as e:
-        return logger.error(e)
-    modules.eks_utils.scale_nodes_and_wait(
-        scale_node_num=min_nodes,
-        counter=int(config_params_obj.scale_eks_nodes_wait_time),
+        logger.error(f"AWS credential failed: {e}")
+        return
+
+    # check config exist
+    config_yaml = f"./config/{configfile}"
+
+    if exists(config_yaml) is False:
+        logger.warning(
+            f"./config/{configfile} not exist, use default config.yaml instead"
+        )
+        config_yaml = f"./config/config.yaml"
+
+    config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    aws_config_obj = AWS_CONFIG(config_json["aws_config"])
+    aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
+    aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
+    aws_config_obj.aws_region = AWS_DEFAULT_REGION
+    aws_config_obj.sns_topic = SNS_TOPIC
+    aws_config_obj.sqs_url = SQS_URL
+    aws_config_obj.dlq_url = DLQ_URL
+    aws_config_obj.ecr_repo = ECR_REPO
+
+    # worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
+    modules.eks_utils.scale_eks_nodes_and_wait(
+        scale_node_num=aws_config_obj.eks_nodes_number,
+        total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
         delay=1,
-        config_params_obj=config_params_obj,
+        cluster_name=aws_config_obj.cluster_name,
+        nodegroup_name=aws_config_obj.nodegroup_name,
     )
+    # modules.eks_utils.scale_nodes_and_wait(
+    #     scale_node_num=min_nodes,
+    #     counter=aws_config_obj.scale_eks_nodes_wait_time,
+    #     delay=1,
+    #     aws_config=aws_config_obj,
+    # )
+
+    # try:
+    #     # config_obj = import_config_from_yaml(configfile)
+    #     config_params_obj = make_config_obj_from_yaml(
+    #         yaml_file=f"./config/{configfile}",
+    #         aws_access_key=AWS_ACCESS_KEY_ID,
+    #         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+    #         aws_region=AWS_DEFAULT_REGION,
+    #         sns_topic=SNS_TOPIC,
+    #     )
+
+    # except Exception as e:
+    #     return logger.error(e)
+    # modules.eks_utils.scale_nodes_and_wait(
+    #     scale_node_num=min_nodes,
+    #     counter=int(config_params_obj.scale_eks_nodes_wait_time),
+    #     delay=1,
+    #     config_params_obj=config_params_obj,
+    # )
 
 
 # ***************************
