@@ -698,7 +698,7 @@ def run_process_files(
         )
         x.name = "Invoker process files"
         x.start()
-    except Exception:
+    except Exception as e:
         logger.error(f"Invoke process files in server error:{e}")
         return
     threads = list()
