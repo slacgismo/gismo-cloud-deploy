@@ -2,7 +2,7 @@
 aws_config:
   cluster_name: "gcd-eks-cluster"
   nodegroup_name: "gcd-nodegroup"
-  eks_nodes_number: 1 # total ec2 instances
+  eks_nodes_number: 3 # total ec2 instances
   scale_eks_nodes_wait_time : 90 # in second
   interval_of_check_sqs_in_second: 3 # in second
   interval_of_total_wait_time_of_sqs: 300 # in second.
@@ -12,7 +12,7 @@ aws_config:
 # Parameters used for cli in k8s config.
 services_config_list:
   worker:
-      desired_replicas: 2 # Define how many workers run parallel in k8s
+      desired_replicas: 3 # Define how many workers run parallel in k8s
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/worker.deployment.yaml"
       service_file: ""
