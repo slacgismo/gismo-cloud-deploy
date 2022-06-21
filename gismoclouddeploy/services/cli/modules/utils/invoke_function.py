@@ -1,3 +1,4 @@
+from calendar import c
 from subprocess import PIPE, run
 from server.models.Configurations import Configurations
 import subprocess
@@ -236,7 +237,7 @@ def invoke_exec_k8s_run_process_files(
     pod_name: str = None,
     first_n_files: str = None,
 ) -> None:
-    # command = f"kubectl exec {pod_name} --stdin --tty -- python app.py oricess_files {config_params_str} {first_n_files}"
+    # command = f"kubectl exec {pod_name} --stdin --tty -- python app.py process_files \"{config_params_str}\" {first_n_files}"
 
     # command = Command(command)
     # command.run(timeout=1, shell=True)
@@ -254,9 +255,11 @@ def invoke_exec_k8s_run_process_files(
         f"{config_params_str}",
         f"{first_n_files}",
     ]
-
-    res = exec_docker_command(command)
-    return res
+    res = subprocess.Popen(command)
+    # res = exec_subprocess_command(command=command)
+    # res = exec_docker_command(command)
+    return
+    # return res
 
 
 def invoke_exec_k8s_ping_worker(

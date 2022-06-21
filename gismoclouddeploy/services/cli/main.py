@@ -7,7 +7,7 @@ from os.path import exists
 import logging
 import os
 import json
-
+import time
 import modules
 from server.models.Configurations import (
     make_config_obj_from_yaml,
@@ -458,6 +458,7 @@ def run_process_files(
                         If you would like to preserve images, please use build-image command instead
     """
     # check aws credential
+    start_time = time.time()
     try:
         check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
     except Exception as e:
@@ -710,6 +711,7 @@ def run_process_files(
         * (total_task_num)
         / worker_replicas
     )
+
     proces = list()
     try:
         logger.info("Running invoke process files commmand in multiprocess")
@@ -728,7 +730,7 @@ def run_process_files(
     except Exception as e:
         logger.error(f"Invoke process files in server error:{e}")
         return
-
+    initial_process_time = time.time() - start_time
     try:
         proces_y = Process(
             target=long_pulling_sqs(
@@ -763,6 +765,14 @@ def run_process_files(
         is_build_image=is_build_image,
         services_config_list=services_config_list,
     )
+    total_process_time = time.time() - start_time
+    logger.info(f"------- initial application took :{initial_process_time} sec--------")
+    logger.info(f"------- number of tasks :{total_task_num} --------")
+    logger.info(f"------- average of each task process time:")
+    logger.info(
+        f"------- Processing tasks in parallel, it took :{total_process_time} sec--------"
+    )
+    logger.info(f"------- If processing task in serial, it takes : sec")
     logger.info("=========== Completed ==========")
 
     return

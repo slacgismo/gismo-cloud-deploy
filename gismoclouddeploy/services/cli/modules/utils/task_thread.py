@@ -134,7 +134,7 @@ def long_pulling_sqs(
     )
     tasks = []
     num_task_completed = 0
-    while wait_time:
+    while wait_time > 0:
         time.sleep(delay)
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=5, wait_time=delay
