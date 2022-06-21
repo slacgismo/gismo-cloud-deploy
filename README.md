@@ -225,7 +225,7 @@ Options:
 
   -do, --docker  BOOL     Default value is False. If it is True, the services
                           run in docker environment. Otherwise, the services run
-                          in kubernetes environment.
+                          in kubernetes◊ environment.
 
   -l, --local    BOOL     Default value is False. If it is True, define running
                           environemnt in local. Otherwiser, define running

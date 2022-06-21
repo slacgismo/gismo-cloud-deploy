@@ -100,8 +100,8 @@ def tracklog_decorator(func):
             args[0].update_state(
                 state=WorkerState.FAILED.name, meta={"timestamp": str(time.time())}
             )
-        test_message = {"task_id": task_id}
-        # raise Exception(f"Publish SNS Error:{e}")
+
+            # raise Exception(f"Publish SNS Error:{e}")
         update_messages = response["Messages"]
         # update_messages['task_id'] = task_id
         # convert_json = json.loads(update_messages)
