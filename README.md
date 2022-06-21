@@ -221,6 +221,7 @@ gcd run-files -n 1 -d -b
 ```
 
 11. Check the save file in `./gismoclouddeploy/services/cli/results` folder. If you can see the save data in file, you have successfully build and run your custom code-blocks in this application on AWS EKS.
+    The `./gismoclouddeploy/services/cli/results/plot` folder contains a gantt plot that shows the details of this run-time's parallelism.
 
 12. To find out more information of this application, please follow the rest sections.
 
