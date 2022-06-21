@@ -132,7 +132,7 @@ def run_files(
     :param deletenodes: Enable deleting eks node after complete this application. Default value is False.
     :param configfile:  Define config file name. Default value is "./config/config.yaml"
     :param rollout:     Enable delete current k8s deployment and re-deployment. Default value is False
-    :param imagetag:    Specifiy the image tag. Default value is 'latest'
+    :param imagetag:    Specifiy the image tag. Default value is 'latest'.This option command did not work with [ -b | --build ] option command.
     :param docker:      Default value is False. If it is True, the services run in docker environment.
                         Otherwise, the services run in k8s environment.
     :param local:       Default value is False. If it is True, define running environemnt in local.
@@ -366,8 +366,11 @@ def processlogs(configfile):
     help="Assign custom config files, Default files name is ./config/config.yaml",
     default="config.yaml",
 )
-def combine_files(configfile):
-    click.echo("combine file from temp folder")
+def save_cached(configfile):
+    """
+    Save cached data from previous process.
+    """
+    click.echo("save cached data from previous process")
 
     try:
         check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
