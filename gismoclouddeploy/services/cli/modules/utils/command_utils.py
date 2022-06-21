@@ -561,7 +561,7 @@ def initial_end_services(
     if aws_utils.check_environment_is_aws() and delete_nodes_after_processing is True:
         logger.info("Delete node after processing")
         scale_eks_nodes_and_wait(
-            scale_node_num=aws_config.scale_eks_nodes_wait_time,
+            scale_node_num=aws_config.eks_nodes_number,
             total_wait_time=aws_config.scale_eks_nodes_wait_time,
             delay=2,
             cluster_name=aws_config.cluster_name,
