@@ -342,12 +342,14 @@ def update_config_json_image_name_and_tag_base_on_env(
                 # update image policy
                 services_config_list[service]["imagePullPolicy"] = imagePullPolicy
             else:
+
                 if is_docker:
                     imagePullPolicy = "IfNotPresent"
                     logger.info(f"update {service} config in local")
                     # update image policy
                     services_config_list[service]["imagePullPolicy"] = imagePullPolicy
                 else:
+                    imagePullPolicy = "Always"
                     logger.info(f"update {service} image on AWS")
                     image_base_url = f"{ecr_repo}/{service}"
                     services_config_list[service]["image_name"] = image_base_url

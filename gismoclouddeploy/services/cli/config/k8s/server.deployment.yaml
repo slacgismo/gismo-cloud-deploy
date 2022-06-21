@@ -17,7 +17,7 @@ spec:
       - name: server
         image: server:latest
         command: ["/start"]
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         env:
           - name: FLASK_APP
             value: app

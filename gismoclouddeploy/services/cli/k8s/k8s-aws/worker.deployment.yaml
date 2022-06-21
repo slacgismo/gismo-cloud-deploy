@@ -16,12 +16,11 @@ spec:
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
               type: worker
       containers:
-
       - name: worker
         image: 041414866712.dkr.ecr.us-east-2.amazonaws.com/worker:latest
         imagePullPolicy: Always

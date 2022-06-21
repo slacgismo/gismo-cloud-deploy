@@ -169,6 +169,7 @@ def get_k8s_image_and_tag_from_deployment(prefix: str = None) -> Tuple[str, str,
         if len(deployment) > 0:
             for po in deployment:
                 full_image_url = po.spec.template.spec.containers[0].image
+                logger.info(f"=========> {full_image_url}")
                 image, image_tag = full_image_url.split(":")
                 status = po.status
                 return image, image_tag, status
