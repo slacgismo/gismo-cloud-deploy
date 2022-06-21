@@ -56,12 +56,13 @@ worker_config:
   saved_bucket: "pv.insight.test"
   saved_tmp_path: "tmp"
   saved_target_path: "results"
+  saved_target_path_local: "results"
   saved_target_filename: "04262022_results.csv"
   dynamodb_tablename: "GCD-LOGS_TABLE" # pre-define in AWS us-east-2
   saved_logs_target_path: "results"
   saved_logs_target_filename: "logs.csv"
   saved_rumtime_image_name_aws: "results/runtime.png"
-  saved_rumtime_image_name_local: "plot/runtime.png"
+  saved_rumtime_image_name_local: "results/plot/runtime.png"
   interval_of_check_task_status: "10"    # in second
   interval_of_exit_check_status: "900"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
 

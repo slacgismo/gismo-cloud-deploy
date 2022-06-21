@@ -182,24 +182,21 @@ def entrypoint(
             "bucket": f"{data_bucket}",
             "file": f"{curr_process_file}",
             "column": f"{curr_process_column}",
-            "solver": f"{solver_name}",
-            "length": f"{length}",
-            "capacity_estimate": f"{capacity_estimate}",
-            "power_units": f"{power_units}",
-            "data_sampling": f"{data_sampling}",
-            "data_quality_score": f"{data_quality_score}",
-            "data_clearness_score": f"{data_clearness_score}",
-            "time_shifts": f"{time_shifts}",
-            "num_clip_points": f"{num_clip_points}",
-            "tz_correction": f"{tz_correction}",
-            "inverter_clipping": f"{inverter_clipping}",
-            "normal_quality_scores": f"{normal_quality_scores}",
-            "capacity_changes": f"{capacity_changes}",
-            "remove_me": "This is origin code template",
+            # "solver": f"{solver_name}",
+            # "length": f"{length}",
+            # "capacity_estimate": f"{capacity_estimate}",
+            # "power_units": f"{power_units}",
+            # "data_sampling": f"{data_sampling}",
+            # "data_quality_score": f"{data_quality_score}",
+            # "data_clearness_score": f"{data_clearness_score}",
+            # "time_shifts": f"{time_shifts}",
+            # "num_clip_points": f"{num_clip_points}",
+            # "tz_correction": f"{tz_correction}",
+            # "inverter_clipping": f"{inverter_clipping}",
+            # "normal_quality_scores": f"{normal_quality_scores}",
+            # "capacity_changes": f"{capacity_changes}",
         }
 
     except Exception as e:
         raise Exception(f"Save data error: {e}")
-    # length =float("{:.1f}".format(0.9* 1))
-    # save_data = {"length":length}
     return make_response(subject=Alert.SAVED_DATA.name, messages=save_data)

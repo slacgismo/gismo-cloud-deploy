@@ -1,3 +1,6 @@
+# These are necessary packages to build `server` and `worker`.
+# Please do not change them.
+# =================
 Flask==2.1.2
 celery==5.2.6
 redis==3.5.3
@@ -7,9 +10,11 @@ factory-boy==3.2.0
 Pillow==9.1.1
 pydantic==1.9.0
 click==8.1.3
+# ===================
 
-
-# solar-data-tools
+# These are packages for solar-data-tools
+# If you would like to add extra packages,
+# please add or modify them here.
 boto3==1.21.19
 scipy==1.7.3
 numpy==1.19.2

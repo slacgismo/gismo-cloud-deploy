@@ -420,6 +420,28 @@ def combine_files_to_file(
         raise e
 
 
+def download_file_from_s3(
+    bucket_name: str = None,
+    source_file: str = None,
+    target_file: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+):
+    try:
+        s3_client = aws_utils.connect_aws_client(
+            client_name="s3",
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+        )
+        # Download the file from S3
+        s3_client.download_file(bucket_name, source_file, target_file)
+        return
+    except Exception as e:
+        raise Exception(f"Download file failed{e}")
+
+
 def delete_all_files_in_foler_of_a_bucket(
     bucket_name: str = None,
     source_folder: str = None,
@@ -498,34 +520,61 @@ def initial_end_services(
     is_build_image: bool = False,
     services_config_list: List[str] = None,
 ):
+    try:
+        combine_files_to_file(
+            bucket_name=worker_config.saved_bucket,
+            source_folder=worker_config.saved_tmp_path,
+            target_folder=worker_config.saved_target_path,
+            target_filename=worker_config.saved_target_filename,
+            aws_access_key=aws_config.aws_access_key,
+            aws_secret_access_key=aws_config.aws_secret_access_key,
+            aws_region=aws_config.aws_region,
+        )
+    except Exception:
+        raise Exception("Combine file failed")
+    try:
+        source_file = (
+            worker_config.saved_target_path + "/" + worker_config.saved_target_filename
+        )
+        target_file = (
+            worker_config.saved_target_path_local
+            + "/"
+            + worker_config.saved_target_filename
+        )
 
-    combine_res = combine_files_to_file(
-        bucket_name=worker_config.saved_bucket,
-        source_folder=worker_config.saved_tmp_path,
-        target_folder=worker_config.saved_target_path,
-        target_filename=worker_config.saved_target_filename,
-        aws_access_key=aws_config.aws_access_key,
-        aws_secret_access_key=aws_config.aws_secret_access_key,
-        aws_region=aws_config.aws_region,
-    )
-
+        download_file_from_s3(
+            bucket_name=worker_config.saved_bucket,
+            source_file=source_file,
+            target_file=target_file,
+            aws_access_key=aws_config.aws_access_key,
+            aws_secret_access_key=aws_config.aws_secret_access_key,
+            aws_region=aws_config.aws_region,
+        )
+    except Exception:
+        raise Exception("Download saved file failed")
     # save logs from dynamodb to s3
-    save_res = aws_utils.save_logs_from_dynamodb_to_s3(
-        table_name=worker_config.dynamodb_tablename,
-        saved_bucket=worker_config.saved_bucket,
-        saved_file_path=worker_config.saved_logs_target_path,
-        saved_filename=worker_config.saved_logs_target_filename,
-        aws_access_key=aws_config.aws_access_key,
-        aws_secret_access_key=aws_config.aws_secret_access_key,
-        aws_region=aws_config.aws_region,
-    )
+    try:
+        aws_utils.save_logs_from_dynamodb_to_s3(
+            table_name=worker_config.dynamodb_tablename,
+            saved_bucket=worker_config.saved_bucket,
+            saved_file_path=worker_config.saved_logs_target_path,
+            saved_filename=worker_config.saved_logs_target_filename,
+            aws_access_key=aws_config.aws_access_key,
+            aws_secret_access_key=aws_config.aws_secret_access_key,
+            aws_region=aws_config.aws_region,
+        )
+    except Exception:
+        raise Exception("Save logs files failed")
     # remove dynamodb
-    remov_res = aws_utils.remove_all_items_from_dynamodb(
-        table_name=worker_config.dynamodb_tablename,
-        aws_access_key=aws_config.aws_access_key,
-        aws_secret_access_key=aws_config.aws_secret_access_key,
-        aws_region=aws_config.aws_region,
-    )
+    try:
+        aws_utils.remove_all_items_from_dynamodb(
+            table_name=worker_config.dynamodb_tablename,
+            aws_access_key=aws_config.aws_access_key,
+            aws_secret_access_key=aws_config.aws_secret_access_key,
+            aws_region=aws_config.aws_region,
+        )
+    except Exception:
+        raise Exception("Remove items from dynamodb failed")
 
     # get save data from log file
 
