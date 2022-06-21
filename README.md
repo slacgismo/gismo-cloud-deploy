@@ -190,29 +190,7 @@ If cluster does not exist, please follow [EKS configuration yaml files]() sectio
 
 9. Modify `entrypoint` function in `./gismoclouddeploy/services/cli/config/code-templates/entrypoint.py`.
 
-  Replace the save_data:
-  ~~~
-  save_data = {
-            "bucket": f"{data_bucket}",
-            "file": f"{curr_process_file}",
-            "column": f"{curr_process_column}",
-            "solver": f"{solver_name}",
-            "length": f"{length}",
-            "capacity_estimate": f"{capacity_estimate}",
-            "power_units": f"{power_units}",
-            "data_sampling": f"{data_sampling}",
-            "data_quality_score": f"{data_quality_score}",
-            "data_clearness_score": f"{data_clearness_score}",
-            "time_shifts": f"{time_shifts}",
-            "num_clip_points": f"{num_clip_points}",
-            "tz_correction": f"{tz_correction}",
-            "inverter_clipping": f"{inverter_clipping}",
-            "normal_quality_scores": f"{normal_quality_scores}",
-            "capacity_changes": f"{capacity_changes}",
-            "remove_me":"This is origin code-template",
-        }
-  ~~~
-  to
+Un-comment `save_data` to
   ~~~
   save_data = {
             "bucket": f"{data_bucket}",
@@ -241,10 +219,10 @@ If cluster does not exist, please follow [EKS configuration yaml files]() sectio
 ```bash
 gcd run-files -n 1 -d -b
 ```
-11. Check the save file in `./gismoclouddeploy/services/cli/results` folder.
- If the saved data does not include `remove_me` column in it, this application has successfully completed building and runing your custom code blocks.
 
-Read below for more informations.
+11. Check the save file in `./gismoclouddeploy/services/cli/results` folder. If you can see the save data in file, you have successfully build and run your custom code-blocks in this application on AWS EKS.
+
+12. To find out more information of this application, please follow the rest sections.
 
 ---
 
