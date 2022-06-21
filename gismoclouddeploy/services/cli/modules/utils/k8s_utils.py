@@ -108,7 +108,7 @@ def create_k8s_deployment_from_yaml(
         resp = apps_v1_api.create_namespaced_deployment(
             body=file_setting, namespace=namspace
         )
-        print("Created. status='%s'" % str(resp.status))
+        # print("Created. status='%s'" % str(resp.status))
         return True
     except Exception as e:
         logger.error(f"create k8s deployment error: {e}")

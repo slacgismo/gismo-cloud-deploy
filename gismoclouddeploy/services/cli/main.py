@@ -1,4 +1,5 @@
 from http import server
+from multiprocessing.dummy import Process
 import socket
 import threading
 import click
@@ -18,6 +19,7 @@ from server.utils.aws_utils import (
     check_aws_validity,
     connect_aws_client,
     check_environment_is_aws,
+    remove_all_items_from_dynamodb,
 )
 
 from modules.utils.task_thread import (
@@ -650,8 +652,32 @@ def run_process_files(
         for index, thread in enumerate(threads):
             thread.join()
             logging.info("Wait %s thread done", thread.name)
-
+    # clean previous save folder
+    try:
+        logger.info(" ========= Clean saved temp folder ========= ")
+        modules.command_utils.delete_all_files_in_foler_of_a_bucket(
+            bucket_name=worker_config_obj.saved_bucket,
+            source_folder=worker_config_obj.saved_tmp_path,
+            aws_access_key=aws_config_obj.aws_access_key,
+            aws_secret_access_key=aws_config_obj.aws_secret_access_key,
+            aws_region=aws_config_obj.aws_region,
+        )
+    except Exception as e:
+        logger.error(f"Clean saved temp folder failed:{e}")
+        return
+    logger.info(" ========= Clean dynamodb ========= ")
     # # clear sqs
+    try:
+        remove_all_items_from_dynamodb(
+            table_name=worker_config_obj.dynamodb_tablename,
+            aws_access_key=aws_config_obj.aws_access_key,
+            aws_secret_access_key=aws_config_obj.aws_secret_access_key,
+            aws_region=aws_config_obj.aws_region,
+        )
+    except Exception as e:
+        logger.error(f"Clean dynamodb failed:{e}")
+        return
+
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client(
         client_name="sqs",
@@ -684,10 +710,10 @@ def run_process_files(
         * (total_task_num)
         / worker_replicas
     )
-
+    proces = list()
     try:
-        logger.info("Running invoke process files commmand in thread")
-        x = threading.Thread(
+        logger.info("Running invoke process files commmand in multiprocess")
+        proc_x = Process(
             target=modules.command_utils.invoke_process_files_based_on_number(
                 number=number,
                 aws_config=aws_config_obj,
@@ -696,14 +722,15 @@ def run_process_files(
                 is_docker=is_docker,
             )
         )
-        x.name = "Invoker process files"
-        x.start()
+        proc_x.name = "Invoker process files"
+        # proces.append(proc_x)
+        proc_x.start()
     except Exception as e:
         logger.error(f"Invoke process files in server error:{e}")
         return
-    threads = list()
+
     try:
-        y = threading.Thread(
+        proces_y = Process(
             target=long_pulling_sqs(
                 wait_time=looping_wait_time,
                 delay=aws_config_obj.interval_of_check_sqs_in_second,
@@ -717,16 +744,15 @@ def run_process_files(
             )
         )
 
-        y.name = "Long pulling"
-        threads.append(y)
-
-        y.start()
+        proces_y.name = "Long pulling"
+        proces.append(proces_y)
+        proces_y.start()
     except Exception as e:
         logger.error(f"Long pulling sqs thread error:{e}")
         return
-    for index, thread in enumerate(threads):
-        thread.join()
-        logging.info("%s thread done", thread.name)
+    for index, proc in enumerate(proces):
+        proc.join()
+        logging.info("%s proc done", proc.name)
     logger.info(" ----- init end services process --------- ")
     modules.command_utils.initial_end_services(
         worker_config=worker_config_obj,

@@ -224,7 +224,7 @@ def clean_previous_sqs_message(
     while counter:
         messages = receive_queue_message(
             queue_url=sqs_url,
-            MaxNumberOfMessages=1,
+            MaxNumberOfMessages=10,
             sqs_client=sqs_client,
             wait_time=wait_time,
         )

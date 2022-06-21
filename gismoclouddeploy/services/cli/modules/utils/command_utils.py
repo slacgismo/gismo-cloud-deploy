@@ -16,7 +16,7 @@ from .k8s_utils import (
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
 )
-import subprocess
+from multiprocessing import Process
 
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
@@ -96,12 +96,17 @@ def invoke_process_files_based_on_number(
     is_docker: bool = False,
 ) -> None:
 
-    logger.info("=========== Invoke process files command ==========")
     worker_config_json["aws_access_key"] = aws_config.aws_access_key
     worker_config_json["aws_secret_access_key"] = aws_config.aws_secret_access_key
     worker_config_json["aws_region"] = aws_config.aws_region
     worker_config_json["sns_topic"] = aws_config.sns_topic
     worker_config_str = json.dumps(worker_config_json)
+    counter = 25
+    delay = 1
+    while counter > 0:
+        counter -= delay
+        logger.info(f"Wait ...{counter} sec")
+        time.sleep(delay)
 
     server_name = ""
     if is_docker:
@@ -412,6 +417,47 @@ def combine_files_to_file(
             delete_files_from_bucket(bucket_name, file, s3_client)
     except Exception as e:
         print(f"save to s3 error or delete files error ---> {e}")
+        raise e
+
+
+def delete_all_files_in_foler_of_a_bucket(
+    bucket_name: str = None,
+    source_folder: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+) -> None:
+
+    if (
+        bucket_name is None
+        or source_folder is None
+        or aws_access_key is None
+        or aws_secret_access_key is None
+        or aws_region is None
+    ):
+        raise Exception("Input is None")
+
+    s3_client = aws_utils.connect_aws_client(
+        client_name="s3",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    try:
+        filter_files = list_files_in_folder_of_bucket(
+            bucket_name, source_folder, s3_client
+        )
+        if len(filter_files) == 0:
+            logger.info("no files in source folder")
+            return
+    except Exception:
+        logger.info("No source folder")
+        return
+    try:
+        for file in filter_files:
+            delete_files_from_bucket(bucket_name, file, s3_client)
+    except Exception as e:
+        logger.error(f"delete files in {source_folder} failed ---> {e}")
         raise e
 
 
