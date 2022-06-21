@@ -684,8 +684,9 @@ def run_process_files(
         * (total_task_num)
         / worker_replicas
     )
-    threads = list()
+
     try:
+        logger.info("Running invoke process files commmand in thread")
         x = threading.Thread(
             target=modules.command_utils.invoke_process_files_based_on_number(
                 number=number,
@@ -695,6 +696,13 @@ def run_process_files(
                 is_docker=is_docker,
             )
         )
+        x.name = "Invoker process files"
+        x.start()
+    except Exception:
+        logger.error(f"Invoke process files in server error:{e}")
+        return
+    threads = list()
+    try:
         y = threading.Thread(
             target=long_pulling_sqs(
                 wait_time=looping_wait_time,
@@ -708,16 +716,14 @@ def run_process_files(
                 dlq_url=DLQ_URL,
             )
         )
-        x.name = "Invoker process files"
+
         y.name = "Long pulling"
-        threads.append(x)
         threads.append(y)
-        x.start()
+
         y.start()
     except Exception as e:
-        logger.error(f"Invoke process files in server error:{e}")
+        logger.error(f"Long pulling sqs thread error:{e}")
         return
-
     for index, thread in enumerate(threads):
         thread.join()
         logging.info("%s thread done", thread.name)
