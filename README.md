@@ -106,7 +106,7 @@ AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
 AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key-id>
 AWS_DEFAULT_REGION=<your-aws-default-region>
 SQS_URL=<your-sqs-url>
-SQS_ARN=<your-sqs-arn>
+DLQ_URL=<your-dlq-url>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
@@ -222,6 +222,7 @@ Options:
                           re-deployment services. Default value is False
 
   -i, --imagetag TEXT     Specifiy the image tag. Default value is 'latest'
+                          This option command did not work with [ -b | --build ] option command.
 
   -do, --docker  BOOL     Default value is False. If it is True, the services
                           run in docker environment. Otherwise, the services run
@@ -230,6 +231,12 @@ Options:
   -l, --local    BOOL     Default value is False. If it is True, define running
                           environemnt in local. Otherwiser, define running
                           environemt on AWS
+
+  -b, --build             Build a temp image and use it. If on AWS k8s
+                          environment,     build and push image to ECR with
+                          temp image tag. These images will be deleted after
+                          used.    If you would like to preserve images, please
+                          use build-image command instead
 
   --help                  Show this message and exit.
 ~~~
@@ -242,14 +249,32 @@ If `number=0`, it processes all files in the buckets.
 * The option command `[ --configfile | -f ] [filename]`  imports custom configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
 If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
 
+* The option command `[ --build | -b ] ` build custom images based on `./gismoclouddeply/services/cli/server` and `./gismoclouddeply/services/cli/config/code-templates` folder.
+  If your environment is on AWS, this option command builds and pushs `worker` and `server` service images to AWS ECR with temporary image tag.
+  This temporary tag will be deleted after this applicaiton completes processing. Please read section [Build and push images](#build-and-push-images) to get more information.
+
+
+
 Examples:
 
 ```bash
-(venv)$ gcd run-files -n 1 -d -f test_config.yaml
+(venv)$ gcd run-files -b -n 1 -d -f test_config.yaml
 ```
 
-The above command processes the bucket's `first 1` file defined in the `test_config.yaml`.
-Since the `-d` option command is assigned, all of the EKS nodes will be deleted after processing.
+Command details:
+
+On the AWS environment ,the above command starts the following processes:
+
+1. Since [-f] option commnad is specified, this application imports `./gismoclouddeply/services/cli/config/test_config.yaml` to replace default `./gismoclouddeply/services/cli/config/config.yaml` file.
+2. The AWS EKS fires up mutiple ec2-instandes(nodes) according to the custom config file.
+3. This application builds `server` and `worker` images from `./gismoclouddeply/services/cli/server` and `./gismoclouddeply/services/cli/config/code-templates` folder with a temporary image tag according to its hostname.
+4. After buidling images is completed, this application pushes those two images to AWS ECR with temporary images tage, such as `worker:my-hostname` and `server:my-hostname`.
+5. This AWS EKS pull down those temporary images and mounted into generated nodes.
+6. The `woker` service is the major service to process time consuming tasks, such as analyizing data with defined algorithm. In order to processing the time consuming tasks in parallel on AWS, developer can increase the `replicas` of the `worker`. This application spreads multiple `worker` services evenly among generated `nodes`(ec2-instances) of AWS EKS.
+7. Since [-n] <1> option command is specified, this application starts to proccess the `first 1` file of the defined buket in `test_config.yaml`.
+8. After the process is done, this application deletes temporary images on ECR.
+**NOTE** If developers would like to preserve builds images, please use `gcd build-images` command instead.
+9.  Since [-d] option command is specified, this application deletes all nodes(ec2-instances) of AWS EKS.
 
 ### Other support command
 
@@ -257,12 +282,13 @@ Since the `-d` option command is assigned, all of the EKS nodes will be deleted 
 - gcd nodes-scale [integer_number] [--help]
 - gcd build-images [-t|--tag] <image_tag> [-p|--push] [--help]
 - gcd check-nodes [--help]
+- gcd combine-files [--help]
 - gcd read-dlq  [-e] [--help]
 - gcd processlogs [--help]
 
 The `nodes-scale` command scales up or down the eks nodes.
 
-Then `build-images` command builds image from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
+The `build-images` command builds image from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
 
 The `check-nodes` command checks current nodes number.
 
@@ -271,9 +297,12 @@ The default value is `False`.
 
 The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
 
----
+The `combine-fies` command generates saved data file from the data of prvious run-time. During initializtion, this application erases any cached data of previous processing.
+If the previous process stoped for any reasons before it outputs saved data, this command helps to output those cached data from previous processing.
 
+---
 ### Configuration files
+
 
 Under `gismoclouddeploy/services/cli` folder, developers can modify parametes of the cli command tool.
 
