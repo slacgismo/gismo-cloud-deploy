@@ -29,7 +29,7 @@
 </tr>
 </table>
 
-Tools for performing multiple common tasks on solar PV data signals by running various EC2 instances in parallel on the AWS EKS platform.
+Tools for executing time consuming tasks with developer defined custom code blocks in parallel on the AWS EKS platform.
 
 ---
 
@@ -61,22 +61,26 @@ This image had been installed necessary dependenciues included:
 
 - After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
 
-1. Once the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs.
- - Change `pem-file` permission.
+
+1. When EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs.
+
+Change `pem-file` permission.
 
 ```bash
 cd /path-of-pem-file
 chmod 400 <pem-file>
 ```
- - Connect to the EC2
+
+Connect to the EC2
+
 ```bash
 ssh -i <path/pem-file> ec2-user@<Public IPv4 address>
 ```
 
-2. Once inside the instance, set up AWS credential to access EKS and ECR. **_NOTE:_** `(Reach out this project's owner to get the AWS credentials).`
+2. Inside the instance, set up AWS credential to access EKS and ECR. **_NOTE:_** `(Reach out this project's owner to get the AWS credentials).`
 
 ```bash
-$ aws configure
+aws configure
 ```
 
 ~~~
@@ -86,13 +90,13 @@ Default region name:
 Default output format [None]:
 ~~~
 
-3. Check if aws credentials are vaild by listing aws s3 bucket command.
+3. Listing aws s3 bucket, to varrify the AWS credentials.
 
 ``` bash
 aws s3 ls
 ```
 
-4. Change directory to `gismo-cloud-deploy`. Pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git), and run `git pull` command.
+4. In `gismo-cloud-deploy` directory, pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git), and run `git pull` command.
 
 5. Set up .env files for `cli` program usage.
 
@@ -110,8 +114,8 @@ DLQ_URL=<your-dlq-url>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
-6. The AMIs image should have pre-install all the python3 dependencies of `cli` in the environment.
-In case users need to re-install the dependencies of `cli`. Please follow the below command:
+6. The AMIs image should have installed all the python pacakages of `cli` tools in the environment.
+In case developers need to re-install the dependencies of `cli`, please follow the below command:
 
 - The python virtual environemnt was created Create virutal environment.
 
@@ -167,26 +171,78 @@ pip install -r requirements.txt
 pip install e .
 ```
 
-7.  Check the EKS cluster is existing.
+7. Check if the EKS cluster exists.
 
 ```bash
 eksctl get cluster
 ```
 
-If cluster is existing, it returns the output below.
+If cluster exists, it returns the output as below.
 
 ~~~
 NAME		REGION		EKSCTL CREATED
 gcd-eks-cluster	us-east-2	True
 ~~~
 
-If cluster is not existing, please follow `EKS configuration yaml files` section to create a cluster first.
+If cluster does not exist, please follow [EKS configuration yaml files]() section to create a cluster first.
 
-9.  Under the virutal environemnt, run `run-files` command to test it.
+8. Include solver license file under `./gismoclouddeploy/services/cli/config/license` folder. Please follow [Include MOSEK licence](#include-MOSEK-licence) sectrion to get more detail.
+
+9. Modify `entrypoint` function in `./gismoclouddeploy/services/cli/config/code-templates/entrypoint.py`.
+
+  Replace the save_data:
+  ~~~
+  save_data = {
+            "bucket": f"{data_bucket}",
+            "file": f"{curr_process_file}",
+            "column": f"{curr_process_column}",
+            "solver": f"{solver_name}",
+            "length": f"{length}",
+            "capacity_estimate": f"{capacity_estimate}",
+            "power_units": f"{power_units}",
+            "data_sampling": f"{data_sampling}",
+            "data_quality_score": f"{data_quality_score}",
+            "data_clearness_score": f"{data_clearness_score}",
+            "time_shifts": f"{time_shifts}",
+            "num_clip_points": f"{num_clip_points}",
+            "tz_correction": f"{tz_correction}",
+            "inverter_clipping": f"{inverter_clipping}",
+            "normal_quality_scores": f"{normal_quality_scores}",
+            "capacity_changes": f"{capacity_changes}",
+            "remove_me":"This is origin code-template",
+        }
+  ~~~
+  to
+  ~~~
+  save_data = {
+            "bucket": f"{data_bucket}",
+            "file": f"{curr_process_file}",
+            "column": f"{curr_process_column}",
+            "solver": f"{solver_name}",
+            "length": f"{length}",
+            "capacity_estimate": f"{capacity_estimate}",
+            "power_units": f"{power_units}",
+            "data_sampling": f"{data_sampling}",
+            "data_quality_score": f"{data_quality_score}",
+            "data_clearness_score": f"{data_clearness_score}",
+            "time_shifts": f"{time_shifts}",
+            "num_clip_points": f"{num_clip_points}",
+            "tz_correction": f"{tz_correction}",
+            "inverter_clipping": f"{inverter_clipping}",
+            "normal_quality_scores": f"{normal_quality_scores}",
+            "capacity_changes": f"{capacity_changes}",
+            "capacity_changes": f"{capacity_changes}",
+        }
+  ~~~
+
+
+10. Under the virutal environemnt `(venv)`, run `run-files` command to test it.
 
 ```bash
-(venv)$ gcd run-files -n 1 -d
+gcd run-files -n 1 -d -b
 ```
+11. Check the save file in `./gismoclouddeploy/services/cli/results` folder.
+ If the saved data does not include `remove_me` column in it, this application has successfully completed building and runing your custom code blocks.
 
 Read below for more informations.
 
@@ -274,7 +330,7 @@ On the AWS environment ,the above command starts the following processes:
 7. Since [-n] <1> option command is specified, this application starts to proccess the `first 1` file of the defined buket in `test_config.yaml`.
 8. After the process is done, this application deletes temporary images on ECR.
 **NOTE** If developers would like to preserve builds images, please use `gcd build-images` command instead.
-9.  Since [-d] option command is specified, this application deletes all nodes(ec2-instances) of AWS EKS.
+9. Since [-d] option command is specified, this application deletes all nodes(ec2-instances) of AWS EKS.
 
 ### Other support command
 
@@ -282,7 +338,7 @@ On the AWS environment ,the above command starts the following processes:
 - gcd nodes-scale [integer_number] [--help]
 - gcd build-images [-t|--tag] <image_tag> [-p|--push] [--help]
 - gcd check-nodes [--help]
-- gcd combine-files [--help]
+- gcd save-cached [--help]
 - gcd read-dlq  [-e] [--help]
 - gcd processlogs [--help]
 
@@ -297,22 +353,20 @@ The default value is `False`.
 
 The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
 
-The `combine-fies` command generates saved data file from the data of prvious run-time. During initializtion, this application erases any cached data of previous processing.
-If the previous process stoped for any reasons before it outputs saved data, this command helps to output those cached data from previous processing.
+The `save-cached` command generates saved cached data from the data of prvious run-time. During initializtion, this application erases any cached data on S3 of previous processing.
+If the previous process stoped for any reasons before it outputs cached data, this command helps to output those cached data to the save file defined in config.
 
 ---
-### Configuration files
 
+## Configuration files
 
-Under `gismoclouddeploy/services/cli` folder, developers can modify parametes of the cli command tool.
+Under `gismoclouddeploy/services/cli/config/config.yaml` folder, developers can modify parametes of the cli command tool.
 
-1. The `general` section contains all the environement variables settings.
-2. The `file_config` section contains all the config settings to run multiple files.
-3. The `algorithms` section contains all algorithms setting. The algorithm's parametes are defined under its name.
-   The `algorithm` name should match the `selected_algorithm` in `file_config`.
-4. The `aws_config` section contains basic eks settings. Developers can define the number of nodes in EKS.
-5. The `k8s_config` section contains basic kubernetes setting. Developers can define the replicas of workers in this file instead of modifying the `worker.deployment.yaml`.
-6. The `output` section contains the setting of all output file names, paths and target bucket.
+1. The `aws_config` section contains all the aws environement variables settings.
+2. The `worker_config` section contains all the parametes to `worker` services.
+3. The `services_config_list` section contains all `kubernetes` settings.
+
+**NOTE** The details information of each variables are defined in the `config.yaml` file.
 
 ### Kubernetes yaml files
 
@@ -334,7 +388,7 @@ make delete-cluster
 
 ---
 
-#### Include MOSEK licence to build docker image
+#### Include MOSEK licence
 
  MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
 
@@ -342,17 +396,40 @@ make delete-cluster
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
-Include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/server/licence`. The licence file is required to prove you have the licence.
+**NOTE** If developers defined `MOSEK` in `config.yaml` file. Please include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/cli/config/licence`.
+This lic file will upload to a temporary S3 folder and downlad into AWS EKS in run-time. The lic file will be deleted after process is done.
 
+---
+## Code block
+
+Custom code:
+
+Developers can build and run its own code in this application.
+In order to pass developer's custom code block to this application, the code block has to be inside the `./gismoclouddeploy/services/cli/config/code-templates` folder.
+The `entrypoint` function in `entrypoint.py` file is the start function of this application. When this application build images, it copies all the files inside `code-templates`folder and paste them to docker images.
+When developer invoke `run-files` commnad, this application pass config parameters from `server` service to `worker` service, and trigger `entrypoint` function in `entrypoint.py` file.
+Developers can includes any files or self defined python modules in `code-templates` folder. Those files, sub-folder and modules will be copied to the docker images as well.
+
+Please check the `entrypoint.py` files to get more informations of input parametes.
+
+
+Python packages:
+
+Please defined necessary python packages in `requirements.txt` under `./gismoclouddeploy/services/cli/config/code-templates`. This file will be copied to docker images, and the application will install python packages based on it.
+Somce packages are necessary to run flask server and celery worker. Please do not remove it. Please check `requirements.txt` to get more details.
+
+---
 
 ## Build and push images
 
-The AWS EKS hosts services based on the ECR images. If developers modify any code inside the server folder, developers have to build and push new images to ECR to see the changes.
+The AWS EKS hosts services based on the ECR images. If developers modify any code inside the `code-templates` folder, developers have to build and push new images to ECR to see the changes.
 
-In order to build images, developers have to use `build-images` command. This command is a python wrapper function to invoke `docker-compose build` command in shell.
+Developers can use`run-files` command wih [-b|--build] optino to build temporary images for quick start. However, this temporary images will be deleted after processing.
+If developers would like to preserver images, the `build-images` command can build and push images to ECR for next usage.
+The `build-images` command is a python wrapper function to invoke `docker-compose build` command in shell.
 
 ~~~
-Usage: main.py build-images [OPTIONS]
+Usage: gcd build-images [OPTIONS]
 
   Build image from docker-compose and push to ECR
 
@@ -360,6 +437,7 @@ Options:
   -t, --tag TEXT    Rollout and restart of webapp and worker pod of kubernetes
 
   -p, --push BOOL   Is pushing image to AWS ECR : Default is False
+
   --help            Show this message and exit.
 ~~~
 
@@ -377,6 +455,7 @@ In this example, two images with build and tag as `worker:test` and `server:test
 
 ---
 
+---
 
 ## Testing
 
