@@ -1,5 +1,0 @@
-,host_ip,filename,function_name,action,task_id,host_name,timestamp,pid,message,column_name,message.Subject,message.Messages.message,message.Messages.task_id,message.Messages.error
-0,10.1.5.93,PVO/PVOutput/11106.csv,loop_tasks_status_task,ACTION_START,a0898902-4fc8-4b12-8de5-153eb68d9db8,worker-7997b574d4-pj29t,1655882361.4250975,26,init function,Power(W),,,,
-1,10.1.5.93,PVO/PVOutput/11106.csv,loop_tasks_status_task,ACTION_STOP,a0898902-4fc8-4b12-8de5-153eb68d9db8,worker-7997b574d4-pj29t,1655882383.3072424,26,,Power(W),All_TASKS_COMPLETED,loog tasks completes,a0898902-4fc8-4b12-8de5-153eb68d9db8,
-2,10.1.5.92,PVO/PVOutput/11106.csv,process_data_task,ACTION_START,ccc5be58-5614-46b7-8d21-9acb6eb635b8,worker-7997b574d4-h77tk,1655882361.4227443,26,init function,Power(W),,,,
-3,10.1.5.92,PVO/PVOutput/11106.csv,process_data_task,ACTION_STOP,ccc5be58-5614-46b7-8d21-9acb6eb635b8,worker-7997b574d4-h77tk,1655882365.3556328,26,,Power(W),SYSTEM_ERROR,,,Run run_pipeline fail:index 0 is out of bounds for axis 0 with size 0
