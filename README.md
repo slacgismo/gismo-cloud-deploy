@@ -39,7 +39,7 @@ Tools for executing time consuming tasks with developer defined custom code bloc
 
 1. Login to `slac-gismo` AWS account.
 2. Go to `EC2` page in `us-east-2` region and select `AMIs` in `Images` tab in left option menu.
-3. Select the template called `pvinsight-eks-bastion-template` from AMIs private image and click `Lunach instance from AMIs`.
+3. Select the template called `pvinsight-eks-bastion-template` from AMIs private image and click `Luanch instance from AMIs`.
 This image had been installed necessary dependenciues included:
 - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
@@ -49,7 +49,7 @@ This image had been installed necessary dependenciues included:
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy)
 
-#### Launch instance notes
+#### Launch instance
 
 - This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
@@ -57,10 +57,11 @@ This image had been installed necessary dependenciues included:
 
 - Under `Key pair(login)` option, create a new key pair or use your existing key pair.
 
-- Click `Lunach instance` button to lanch a EC2 instance.
+- Click `Lanuch instance` button to lanch a EC2 instance.
 
 - After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
 
+#### Launch application
 
 1. When EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs.
 
@@ -147,31 +148,10 @@ cd ./gismoclouddeploy/services/cli
 python3.8 -m venv venv
 ```
 
-Upgrade pip
+Upgrade pip and install all dependencies.
 
-```bash
-pip install --upgrage pip
-```
 
-Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-- Install python dependencies
-
-```bash
-(venv)$ pip install -r requirements.txt
-```
-
-- install pysetup
-
-```bash
-pip install e .
-```
-
-7. Check if the EKS cluster exists.
+1. Check if the EKS cluster exists.
 
 ```bash
 eksctl get cluster
@@ -186,9 +166,9 @@ gcd-eks-cluster	us-east-2	True
 
 If cluster does not exist, please follow [EKS configuration yaml files]() section to create a cluster first.
 
-8. Include solver license file under `./gismoclouddeploy/services/cli/config/license` folder. Please follow [Include MOSEK licence](#include-MOSEK-licence) sectrion to get more detail.
+8. Include solver license file under `./gismoclouddeploy/services/cli/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) sectrion to get more detail.
 
-9. Modify `entrypoint` function in `./gismoclouddeploy/services/cli/config/code-templates/entrypoint.py`.
+9. In order to Purple, """"""""   Modify `entrypoint` function in `./gismoclouddeploy/services/cli/config/code-templates/entrypoint.py`.
 
 Un-comment `save_data` to
   ~~~
@@ -212,7 +192,6 @@ Un-comment `save_data` to
             "capacity_changes": f"{capacity_changes}",
         }
   ~~~
-
 
 10. Under the virutal environemnt `(venv)`, run `run-files` command to test it.
 
@@ -367,7 +346,7 @@ make delete-cluster
 
 ---
 
-#### Include MOSEK licence
+#### Include MOSEK license
 
  MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
 
