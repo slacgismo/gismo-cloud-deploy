@@ -480,6 +480,7 @@ def run_process_files(
     aws_config_obj.ecr_repo = ECR_REPO
 
     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
+    worker_config_obj.cli_hostname = socket.gethostname()
 
     services_config_list = config_json["services_config_list"]
     ecr_client = connect_aws_client(

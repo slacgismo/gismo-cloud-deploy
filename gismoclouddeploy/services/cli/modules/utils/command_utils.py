@@ -101,7 +101,7 @@ def invoke_process_files_based_on_number(
     worker_config_json["aws_region"] = aws_config.aws_region
     worker_config_json["sns_topic"] = aws_config.sns_topic
     worker_config_str = json.dumps(worker_config_json)
-    counter = 25
+    counter = 1
     delay = 1
     while counter > 0:
         counter -= delay
@@ -824,8 +824,8 @@ def check_and_wait_server_ready(
             logger.info(f" ==== Check {server_name} Status: {status}====")
             if status == "SUCCESS":
                 return True
-        except:
-            logger.info(f"load json failed res:{result}")
+        except Exception as e:
+            logger.info(f"load json failed res:{result} {e}")
             return False
 
         wait_time -= delay

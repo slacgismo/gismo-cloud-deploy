@@ -255,7 +255,12 @@ def invoke_exec_k8s_run_process_files(
         f"{config_params_str}",
         f"{first_n_files}",
     ]
-    res = subprocess.Popen(command)
+    try:
+        res = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
+    except KeyboardInterrupt:
+        res.terminate()
     # res = exec_subprocess_command(command=command)
     # res = exec_docker_command(command)
     return

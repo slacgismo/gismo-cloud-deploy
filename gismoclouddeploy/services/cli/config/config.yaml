@@ -72,3 +72,4 @@ worker_config:
   aws_secret_access_key : None  # It's a hint column that is generated in the CLI runtime. Do not change !!
   aws_region : None             # It's a hint column that is generated in the CLI runtime. Do not change !!
   sns_topic : None              # It's a hint column that is generated in the CLI runtime. Do not change !!
+  cli_hostname : None           # It's a hint column that is generated in the CLI runtime. Do not change !!
