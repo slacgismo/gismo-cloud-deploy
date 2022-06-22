@@ -9,6 +9,7 @@ import os
 import json
 import time
 import modules
+from terminaltables import AsciiTable
 from server.models.Configurations import (
     make_config_obj_from_yaml,
     convert_yaml_to_json,
@@ -759,24 +760,34 @@ def run_process_files(
         is_build_image=is_build_image,
         services_config_list=services_config_list,
     )
-    total_process_time = time.time() - start_time
-    logger.info(f"------- initial application took :{initial_process_time} sec--------")
-    logger.info(f"------- total process duration:{total_process_time} sec--------")
-    # logger.info(
-    #     f"------- Processing tasks in parallel, it took :{total_process_time} sec--------"
-    # )
-    # logger.info(f"------- If processing task in serial, it takes : sec")
-    # logger.info(f"------- number of tasks :{total_task_num} --------")
-    # logger.info(f"------- average of task's process time:")
-    # logger.info(f"------- shorest task process time:")
-    # logger.info(f"------- longest task process time:")
-    # logger.info(f"------- number of error tasks :")
-    # logger.info(f"------- number of success tasks :")
-    # logger.info(f"------ number of nodes:")
-    # logger.info(f"------ number of workers:")
-    # logger.info(f"------ instacne type:")
-    # logger.info("=========== Completed ==========")
 
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_config_obj.aws_access_key,
+        secret=aws_config_obj.aws_secret_access_key,
+        region=aws_config_obj.aws_region,
+    )
+    logs_file_path_name = (
+        worker_config_obj.saved_logs_target_path
+        + "/"
+        + worker_config_obj.saved_logs_target_filename
+    )
+    modules.process_log.analyze_logs_files(
+        bucket=worker_config_obj.saved_bucket,
+        logs_file_path_name=logs_file_path_name,
+        s3_client=s3_client,
+    )
+    total_process_time = time.time() - start_time
+    performance = [
+        ["Name", "Info"],
+        ["Initialize services duration", initial_process_time],
+        ["Total process durations", total_process_time],
+        ["Number of nodes", f"{aws_config_obj.eks_nodes_number}"],
+        ["Number of workers", f"{services_config_list['worker']['desired_replicas']}"],
+    ]
+    table2 = AsciiTable(performance)
+    print(table2.table)
+    print(" ======== Completed ========== ")
     return
 
 

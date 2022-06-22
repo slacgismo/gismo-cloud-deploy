@@ -299,66 +299,63 @@ def analyze_logs_files(
     longest_task = ""
     min_duration = float("inf")
     max_duration = 0
-    total_task_durtaion = 0
+    tasks_durtaion_sum = 0
     average_task_duration = 0
     worker_dict = process_df_for_gantt(df)
     total_tasks = 0
     min_start = float("inf")
     max_end = 0
-
     duration = 0
+    task_duration_in_parallelism = 0
+    effeciency = 0
+    for key, value in worker_dict.items():
+        start = float(value["start"].timestamp())
+        end = float(value["end"].timestamp())
+        duration = value["duration"]
+        task = value["task"]
+        if task == "loop_tasks_status_task":
+            continue
+        tasks_durtaion_sum += duration
+        if start < min_start:
+            min_start = start
+        if end > max_end:
+            max_end = end
 
+        if duration < min_duration:
+            min_duration = duration
+            shortest_task = task
+        if duration > max_duration:
+            max_duration = duration
+            longest_task = task
+        total_tasks += 1
+    task_duration_in_parallelism = max_end - min_start
+    if total_tasks > 0:
+        average_task_duration = tasks_durtaion_sum / total_tasks
+    else:
+        average_task_duration = tasks_durtaion_sum
 
-# user_idea = [
-# 		["Idea Info","Details"],
-# 		["Title",title],
-# 		["Detail",detail],
-# 		["Status",status],
-
-# ]
-# table1 = AsciiTable(user_idea)
-# click.echo(table1.table)
-
-# for key, value in worker_dict.items():
-#     print(key, value)
-#     if ("start" in value) is False:
-#         continue
-#     start = float(value['start'].timestamp())
-#     if ("end" in value) is False:
-#         continue
-#     end =  float(value['end'].timestamp())
-#     # print(start,end)
-#     if ("duration" in value) is False:
-#         continue
-#     duration = value['duration']
-#     task = value['task']
-#     if task == "loop_tasks_status_task":
-#         continue
-#     if start < min_start:
-#         min_start = start
-#     if end > max_end:
-#         max_end = end
-
-#     if duration < min_duration:
-#         min_duration = duration
-#         shortest_task = task
-#     if duration > max_duration:
-#         max_duration = duration
-#         longest_task = task
-#     total_tasks += 1
-# # print(max_end,min_start)
-# total_tasks_duration = max_end - min_start
-
-# if total_tasks > 0 :
-#     average_task_duration = total_tasks_duration/total_tasks
-# else:
-#     average_task_duration = total_tasks_duration
-
-
-# print(shortest_task , min_duration)
-# print(longest_task , max_duration)
-# print(total_tasks)
-# print(f"average_task_duration:{average_task_duration}")
-# print(total_tasks_duration)
-# print(average_task_duration)
-# print(total_tasks_duration)
+    if task_duration_in_parallelism > 0:
+        effeciency = (
+            (tasks_durtaion_sum - task_duration_in_parallelism)
+            / task_duration_in_parallelism
+        ) * 100
+    performance = [
+        ["Performance", "Results", "Info"],
+        ["Total tasks", total_tasks, ""],
+        ["Average task duration", f"{average_task_duration} sec"],
+        ["Min task duration", f"{min_duration} sec", shortest_task],
+        ["Max task duration", f"{max_duration} sec", longest_task],
+        [
+            "Process tasks duration(in parallel)",
+            f"{task_duration_in_parallelism} sec",
+            "Real data",
+        ],
+        [
+            "Process tasks duration(in serial)",
+            f"{tasks_durtaion_sum} sec",
+            "Estimation",
+        ],
+        ["Effeciency improvement", f"{effeciency}%"],
+    ]
+    table1 = AsciiTable(performance)
+    print(table1.table)

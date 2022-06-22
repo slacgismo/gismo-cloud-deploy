@@ -1,6 +1,7 @@
 import logging
 import json
-import solardatatools
+
+# import solardatatools
 import pandas as pd
 import boto3
 import time

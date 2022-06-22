@@ -312,7 +312,7 @@ def create_or_update_k8s_deployment(
                 # logger.info(output)
 
                 # re-create deplpoyment
-                print("====================")
+
                 create_k8s_deployment_from_yaml(
                     service_name=service_name,
                     image_url_tag=image_url,
