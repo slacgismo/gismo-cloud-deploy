@@ -3,6 +3,7 @@ from re import A
 import re
 from typing import List, Dict
 from unittest import result
+
 import pandas as pd
 import sys, json
 import json
@@ -521,93 +522,161 @@ def initial_end_services(
     services_config_list: List[str] = None,
 ):
     try:
-        combine_files_to_file(
-            bucket_name=worker_config.saved_bucket,
-            source_folder=worker_config.saved_tmp_path,
-            target_folder=worker_config.saved_target_path,
-            target_filename=worker_config.saved_target_filename,
-            aws_access_key=aws_config.aws_access_key,
-            aws_secret_access_key=aws_config.aws_secret_access_key,
-            aws_region=aws_config.aws_region,
-        )
-    except Exception:
-        raise Exception("Combine file failed")
-    try:
-        source_file = (
-            worker_config.saved_target_path + "/" + worker_config.saved_target_filename
-        )
-        target_file = (
-            worker_config.saved_target_path_local
+        save_data_file = (
+            worker_config.saved_data_target_path_local
             + "/"
             + worker_config.saved_target_filename
         )
-        # download results data
-        download_file_from_s3(
-            bucket_name=worker_config.saved_bucket,
-            source_file=source_file,
-            target_file=target_file,
-            aws_access_key=aws_config.aws_access_key,
-            aws_secret_access_key=aws_config.aws_secret_access_key,
-            aws_region=aws_config.aws_region,
-        )
-    except Exception:
-        raise Exception("Download saved file failed")
-    # save logs from dynamodb to s3
-    try:
-        aws_utils.save_logs_from_dynamodb_to_s3(
-            table_name=worker_config.dynamodb_tablename,
-            saved_bucket=worker_config.saved_bucket,
-            saved_file_path=worker_config.saved_logs_target_path,
-            saved_filename=worker_config.saved_logs_target_filename,
-            aws_access_key=aws_config.aws_access_key,
-            aws_secret_access_key=aws_config.aws_secret_access_key,
-            aws_region=aws_config.aws_region,
-        )
-        # download logs data
-        source_log_file = (
+        save_logs_file = (
             worker_config.saved_logs_target_path
             + "/"
             + worker_config.saved_logs_target_filename
         )
-        target_log_file = (
-            worker_config.saved_target_path_local
+        aws_utils.save_user_logs_data_from_dynamodb(
+            table_name=worker_config.dynamodb_tablename,
+            user_id=worker_config.user_id,
+            saved_bucket=worker_config.saved_bucket,
+            save_data_file=save_data_file,
+            save_logs_file=save_logs_file,
+            aws_access_key=aws_config.aws_access_key,
+            aws_secret_key=aws_config.aws_secret_access_key,
+            aws_region=aws_config.aws_region,
+        )
+    except Exception as e:
+        logger.error(f"Failed to save data and logs from dynamodb {e}")
+        raise e
+    try:
+        # download logs data
+        source_log_file_s3 = (
+            worker_config.saved_logs_target_path
+            + "/"
+            + worker_config.saved_logs_target_filename
+        )
+        target_log_file_local = (
+            worker_config.saved_data_target_path_local
             + "/"
             + worker_config.saved_logs_target_filename
         )
         download_file_from_s3(
             bucket_name=worker_config.saved_bucket,
-            source_file=source_log_file,
-            target_file=target_log_file,
+            source_file=source_log_file_s3,
+            target_file=target_log_file_local,
             aws_access_key=aws_config.aws_access_key,
             aws_secret_access_key=aws_config.aws_secret_access_key,
             aws_region=aws_config.aws_region,
         )
-    except Exception:
-        raise Exception("Save logs files failed")
-    # remove dynamodb
+    except Exception as e:
+        logger.error(f"Failed to download logs from s3 {e}")
+        raise e
     try:
-        aws_utils.remove_all_items_from_dynamodb(
-            table_name=worker_config.dynamodb_tablename,
+        # download results data
+        data_source_file_s3 = (
+            worker_config.saved_data_target_path
+            + "/"
+            + worker_config.saved_target_filename
+        )
+        data_target_file_local = (
+            worker_config.saved_data_target_path_local
+            + "/"
+            + worker_config.saved_target_filename
+        )
+        download_file_from_s3(
+            bucket_name=worker_config.saved_bucket,
+            source_file=data_source_file_s3,
+            target_file=data_target_file_local,
             aws_access_key=aws_config.aws_access_key,
             aws_secret_access_key=aws_config.aws_secret_access_key,
             aws_region=aws_config.aws_region,
         )
-    except Exception:
-        raise Exception("Remove items from dynamodb failed")
+    except Exception as e:
+        logger.error(f"Failed to download data file from s3 {e}")
+        raise e
+    # try:
+    #     combine_files_to_file(
+    #         bucket_name=worker_config.saved_bucket,
+    #         source_folder=worker_config.saved_tmp_path,
+    #         target_folder=worker_config.saved_data_target_path,
+    #         target_filename=worker_config.saved_target_filename,
+    #         aws_access_key=aws_config.aws_access_key,
+    #         aws_secret_access_key=aws_config.aws_secret_access_key,
+    #         aws_region=aws_config.aws_region,
+    #     )
+    # except Exception:
+    #     raise Exception("Combine file failed")
+    # try:
+    #     source_file = (
+    #         worker_config.saved_data_target_path + "/" + worker_config.saved_target_filename
+    #     )
+    #     target_file = (
+    #         worker_config.saved_data_target_path_local
+    #         + "/"
+    #         + worker_config.saved_target_filename
+    #     )
+    # # download results data
+    # download_file_from_s3(
+    #     bucket_name=worker_config.saved_bucket,
+    #     source_file=source_file,
+    #     target_file=target_file,
+    #     aws_access_key=aws_config.aws_access_key,
+    #     aws_secret_access_key=aws_config.aws_secret_access_key,
+    #     aws_region=aws_config.aws_region,
+    # )
+    # except Exception:
+    #     raise Exception("Download saved file failed")
+    # save logs from dynamodb to s3
+    # try:
+    #     logger.info("========= query logs from user")
+    #     # aws_utils.query_user_items_from_dynamodb(
+    #     #     table_name=worker_config.dynamodb_tablename,
+    #     #     user=worker_config.user_id,
+    #     #     aws_access_key=aws_config.aws_access_key,
+    #     #     aws_secret_key= aws_config.aws_secret_access_key,
+    #     #     aws_region=aws_config.aws_region
+    #     # )
+    #     # aws_utils.save_logs_from_dynamodb_to_s3(
+    #     #     table_name=worker_config.dynamodb_tablename,
+    #     #     saved_bucket=worker_config.saved_bucket,
+    #     #     saved_file_path=worker_config.saved_logs_target_path,
+    #     #     saved_filename=worker_config.saved_logs_target_filename,
+    #     #     aws_access_key=aws_config.aws_access_key,
+    #     #     aws_secret_access_key=aws_config.aws_secret_access_key,
+    #     #     aws_region=aws_config.aws_region,
+    #     # )
+    # # download logs data
+    # source_log_file = (
+    #     worker_config.saved_logs_target_path
+    #     + "/"
+    #     + worker_config.saved_logs_target_filename
+    # )
+    # target_log_file = (
+    #     worker_config.saved_data_target_path_local
+    #     + "/"
+    #     + worker_config.saved_logs_target_filename
+    # )
+    # download_file_from_s3(
+    #     bucket_name=worker_config.saved_bucket,
+    #     source_file=source_log_file,
+    #     target_file=target_log_file,
+    #     aws_access_key=aws_config.aws_access_key,
+    #     aws_secret_access_key=aws_config.aws_secret_access_key,
+    #     aws_region=aws_config.aws_region,
+    # )
+    # except Exception:
+    #     raise Exception("Save logs files failed")
+    # remove dynamodb
+    # try:
+    #     aws_utils.remove_all_items_from_dynamodb(
+    #         user = worker_config.user_id,
+    #         table_name=worker_config.dynamodb_tablename,
+    #         aws_access_key=aws_config.aws_access_key,
+    #         aws_secret_access_key=aws_config.aws_secret_access_key,
+    #         aws_region=aws_config.aws_region,
+    #     )
+    # except Exception:
+    #     raise Exception("Remove items from dynamodb failed")
 
     # get save data from log file
 
-    s3_client = aws_utils.connect_aws_client(
-        client_name="s3",
-        key_id=aws_config.aws_access_key,
-        secret=aws_config.aws_secret_access_key,
-        region=aws_config.aws_region,
-    )
-    logs_full_path_name = (
-        worker_config.saved_logs_target_path
-        + "/"
-        + worker_config.saved_logs_target_filename
-    )
     # remove solver lic
     logger.info("=========== delete solver lic in bucket ============ ")
     delete_solver_lic_from_bucket(
@@ -617,6 +686,17 @@ def initial_end_services(
         aws_access_key=aws_config.aws_access_key,
         aws_secret_access_key=aws_config.aws_secret_access_key,
         aws_region=aws_config.aws_region,
+    )
+    logs_full_path_name = (
+        worker_config.saved_logs_target_path
+        + "/"
+        + worker_config.saved_logs_target_filename
+    )
+    s3_client = aws_utils.connect_aws_client(
+        client_name="s3",
+        key_id=aws_config.aws_access_key,
+        secret=aws_config.aws_secret_access_key,
+        region=aws_config.aws_region,
     )
     process_logs_from_s3(
         bucket=worker_config.saved_bucket,

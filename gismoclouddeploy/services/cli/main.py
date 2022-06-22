@@ -21,13 +21,13 @@ from server.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
     remove_all_items_from_dynamodb,
+    save_user_logs_data_from_dynamodb,
 )
 
 from modules.utils.task_thread import (
     long_pulling_sqs,
 )
-
-
+import uuid
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -323,7 +323,7 @@ def processlogs(configfile):
         + worker_config_obj.saved_logs_target_filename
     )
     saved_file_name = (
-        worker_config_obj.saved_target_path
+        worker_config_obj.saved_data_target_path
         + "/"
         + worker_config_obj.saved_target_filename
     )
@@ -394,7 +394,7 @@ def save_cached(configfile):
     combine_res = modules.command_utils.combine_files_to_file(
         bucket_name=worker_config_obj.saved_bucket,
         source_folder=worker_config_obj.saved_tmp_path,
-        target_folder=worker_config_obj.saved_target_path,
+        target_folder=worker_config_obj.saved_data_target_path,
         target_filename=worker_config_obj.saved_target_filename,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
@@ -470,6 +470,7 @@ def run_process_files(
         config_yaml = f"./config/config.yaml"
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    config_json["worker_config"]["user_id"] = str(socket.gethostname())
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
     aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
     aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
@@ -480,7 +481,6 @@ def run_process_files(
     aws_config_obj.ecr_repo = ECR_REPO
 
     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
-    worker_config_obj.cli_hostname = socket.gethostname()
 
     services_config_list = config_json["services_config_list"]
     ecr_client = connect_aws_client(
@@ -489,7 +489,22 @@ def run_process_files(
         secret=AWS_SECRET_ACCESS_KEY,
         region=AWS_DEFAULT_REGION,
     )
-    #  check environments , check image name and tag exist. Update images name and tag to object
+    # check environments , check image name and tag exist. Update images name and tag to object
+
+    # save_data_file = worker_config_obj.saved_data_target_path_local +"/" +worker_config_obj.saved_target_filename
+    # save_logs_file = worker_config_obj.saved_logs_target_path +"/" +worker_config_obj.saved_logs_target_filename
+    # save_user_logs_data_from_dynamodb(
+    #     table_name=worker_config_obj.dynamodb_tablename,
+    #     user_id=worker_config_obj.user_id,
+    #     saved_bucket=worker_config_obj.saved_bucket,
+    #     save_data_file=save_data_file,
+    #     save_logs_file = save_logs_file,
+    #     aws_access_key=aws_config_obj.aws_access_key,
+    #     aws_secret_key= aws_config_obj.aws_secret_access_key,
+    #     aws_region=aws_config_obj.aws_region
+    # )
+    # return
+
     services_config_list = (
         modules.command_utils.update_config_json_image_name_and_tag_base_on_env(
             is_local=is_local,
@@ -650,30 +665,31 @@ def run_process_files(
             thread.join()
             logging.info("Wait %s thread done", thread.name)
     # clean previous save folder
-    try:
-        logger.info(" ========= Clean saved temp folder ========= ")
-        modules.command_utils.delete_all_files_in_foler_of_a_bucket(
-            bucket_name=worker_config_obj.saved_bucket,
-            source_folder=worker_config_obj.saved_tmp_path,
-            aws_access_key=aws_config_obj.aws_access_key,
-            aws_secret_access_key=aws_config_obj.aws_secret_access_key,
-            aws_region=aws_config_obj.aws_region,
-        )
-    except Exception as e:
-        logger.error(f"Clean saved temp folder failed:{e}")
-        return
-    logger.info(" ========= Clean dynamodb ========= ")
-    # # clear sqs
-    try:
-        remove_all_items_from_dynamodb(
-            table_name=worker_config_obj.dynamodb_tablename,
-            aws_access_key=aws_config_obj.aws_access_key,
-            aws_secret_access_key=aws_config_obj.aws_secret_access_key,
-            aws_region=aws_config_obj.aws_region,
-        )
-    except Exception as e:
-        logger.error(f"Clean dynamodb failed:{e}")
-        return
+    # try:
+    #     logger.info(" ========= Clean saved temp folder ========= ")
+    #     modules.command_utils.delete_all_files_in_foler_of_a_bucket(
+    #         bucket_name=worker_config_obj.saved_bucket,
+    #         source_folder=worker_config_obj.saved_tmp_path,
+    #         aws_access_key=aws_config_obj.aws_access_key,
+    #         aws_secret_access_key=aws_config_obj.aws_secret_access_key,
+    #         aws_region=aws_config_obj.aws_region,
+    #     )
+    # except Exception as e:
+    #     logger.error(f"Clean saved temp folder failed:{e}")
+    #     return
+    # logger.info(" ========= Clean dynamodb ========= ")
+    # # # clear sqs
+    # try:
+    #     remove_all_items_from_dynamodb(
+    #         user=worker_config_obj.user_id,
+    #         table_name=worker_config_obj.dynamodb_tablename,
+    #         aws_access_key=aws_config_obj.aws_access_key,
+    #         aws_secret_access_key=aws_config_obj.aws_secret_access_key,
+    #         aws_region=aws_config_obj.aws_region,
+    #     )
+    # except Exception as e:
+    #     logger.error(f"Clean dynamodb failed:{e}")
+    #     return
 
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client(
@@ -682,9 +698,15 @@ def run_process_files(
         secret=aws_config_obj.aws_secret_access_key,
         region=aws_config_obj.aws_region,
     )
-    modules.sqs.clean_previous_sqs_message(
-        sqs_url=SQS_URL, sqs_client=sqs_client, wait_time=2, counter=60, delay=1
+    modules.sqs.clean_user_previous_sqs_message(
+        sqs_url=SQS_URL,
+        sqs_client=sqs_client,
+        wait_time=2,
+        counter=60,
+        delay=1,
+        user_id=worker_config_obj.user_id,
     )
+
     # start receive SNS message
     # waiting to receive sns message
 

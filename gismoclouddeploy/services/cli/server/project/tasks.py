@@ -19,7 +19,7 @@ logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
-
+from .tasks_utilities.decorators import make_sns_response
 
 import json
 
@@ -53,10 +53,12 @@ def process_data_task(
             + "/"
             + kwargs["solver"]["solver_lic_file_name"]
         )
+        user_id = kwargs["user_id"]
     except Exception as e:
         raise Exception(f"Input key error:{e}")
 
     response = entrypoint(
+        user_id=user_id,
         data_bucket=data_bucket,
         curr_process_file=curr_process_file,
         curr_process_column=curr_process_column,
@@ -89,6 +91,7 @@ def loop_tasks_status_task(
         sns_topic = kwargs["sns_topic"]
         interval_of_max_timeout = kwargs["interval_of_exit_check_status"]
         interval_of_check_task_status = kwargs["interval_of_check_task_status"]
+        user_id = kwargs["user_id"]
 
     except Exception as e:
         return tasks_utilities.tasks_utils.make_response(
@@ -118,10 +121,15 @@ def loop_tasks_status_task(
                         task_ids.remove(id)
                         try:
                             data = {}
-                            data["task_id"] = f"{id}"
+                            #
+                            subject = {
+                                "alert_type": SNSSubjectsAlert.TIMEOUT.name,
+                                "user_id": user_id,
+                            }
+                            message = {"user_id": user_id, "task_id": task_id}
                             tasks_utilities.publish_message_sns(
-                                message=json.dumps(data),
-                                subject=SNSSubjectsAlert.TIMEOUT.name,
+                                message=json.dumps(message),
+                                subject=json.dumps(subject),
                                 topic_arn=sns_topic,
                                 aws_access_key=aws_access_key,
                                 aws_secret_access_key=aws_secret_access_key,
@@ -151,6 +159,12 @@ def loop_tasks_status_task(
 
     logger.info("------- All tasks are done !!! ---------")
 
-    subject = SNSSubjectsAlert.All_TASKS_COMPLETED.name
-    message = {"task_id": task_id, "message": "loog tasks completes"}
-    return tasks_utilities.tasks_utils.make_response(subject=subject, messages=message)
+    # subject = SNSSubjectsAlert.All_TASKS_COMPLETED.name
+    # message = {"task_id": task_id, "message": "loog tasks completes"}
+
+    # return tasks_utilities.tasks_utils.make_response(subject=subject, messages=message)
+    return make_sns_response(
+        alert_type=SNSSubjectsAlert.All_TASKS_COMPLETED.name,
+        messages={"task_id": task_id},
+        user_id=user_id,
+    )

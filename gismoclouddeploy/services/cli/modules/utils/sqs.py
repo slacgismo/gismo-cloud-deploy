@@ -2,6 +2,7 @@ from botocore.exceptions import ClientError
 import logging
 import time
 import botocore
+import json
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -214,12 +215,13 @@ def configure_queue_long_polling(
         return response
 
 
-def clean_previous_sqs_message(
+def clean_user_previous_sqs_message(
     sqs_url: str,
     sqs_client: "botocore.client.SQS",
     wait_time: int,
     counter: int,
     delay: int,
+    user_id: str,
 ):
     while counter:
         messages = receive_queue_message(
@@ -231,10 +233,35 @@ def clean_previous_sqs_message(
         # print(messages)
         if "Messages" in messages:
             for msg in messages["Messages"]:
-                msg_body = msg["Body"]
+                # msg_body = msg["Body"]
+                msg_body = json.loads(msg["Body"])
                 receipt_handle = msg["ReceiptHandle"]
+                subject = (
+                    msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
+                )
+                try:
+                    subject_info = json.loads(subject)
+                    sns_user_id = subject_info["user_id"]
+                    if sns_user_id == user_id:
+                        delete_queue_message(sqs_url, receipt_handle, sqs_client)
+
+                except Exception as e:
+                    logger.warning(
+                        f"Delet this {subject} !!, This subject is not json format {e}"
+                    )
+                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                # message_text = msg_body["Message"]
+                # logger.info(f"================= : {subject_info['user_id']}")
+                # subject_info = json.loads(subject)
+                # logger.info(f"=========>. >>> user_id : {subject_info['user_id']}")
+                # logger.info(subject)
+                # logger.info(subject['user_id'])
+                # logger.info(f"The message : {message_text}")
+                # subjcet_json_data = json.dumps(subject)
+                # if subjcet_json_data['user_id'] == worker_config.user_id:
                 # logger.info(f"The message body: {msg_body}")
-                delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                # delete_queue_message(sqs_url, receipt_handle, sqs_client)
+
                 # logger.info(f"Received and deleted message(s) from {sqs_url}.")
                 # print(receipt_handle)
         else:

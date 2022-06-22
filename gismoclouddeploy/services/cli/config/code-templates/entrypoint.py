@@ -14,6 +14,7 @@ logging.basicConfig(
 
 
 def entrypoint(
+    user_id: str = None,
     data_bucket: str = None,
     curr_process_file: str = None,
     curr_process_column: str = None,
@@ -120,7 +121,11 @@ def entrypoint(
             "normal_quality_scores": normal_quality_scores,
             "capacity_changes": capacity_changes,
         }
-
     except Exception as e:
         raise Exception(f"Save data error: {e}")
-    return make_response(subject=Alert.SAVED_DATA.name, messages=save_data)
+    # return make_response(subject=Alert.SAVED_DATA.name, messages=save_data)
+    return make_response(
+        alert_type=Alert.SAVED_DATA.name,
+        messages=save_data,
+        user_id=user_id,
+    )

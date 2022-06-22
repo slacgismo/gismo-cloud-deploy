@@ -1,11 +1,10 @@
-from doctest import Example
 import boto3
 import pandas as pd
 import botocore
 import os
 import os.path
 from typing import List
-
+from boto3.dynamodb.conditions import Key, Attr
 import os
 from io import StringIO
 
@@ -280,6 +279,7 @@ def save_logs_from_dynamodb_to_s3(
         table_name=table_name, dynamo_client=dynamo_client
     )
     df = pd.json_normalize(all_items)
+
     csv_buffer = StringIO()
     df.to_csv(csv_buffer)
     content = csv_buffer.getvalue()
@@ -310,6 +310,95 @@ def save_logs_from_dynamodb_to_s3(
         raise e
 
 
+def save_dataframe_csv_on_s3(
+    dataframe: pd,
+    saved_bucket: str,
+    saved_file: str,
+    aws_access_key: str,
+    aws_secret_access_key: str,
+    aws_region: str,
+) -> None:
+    csv_buffer = StringIO()
+    dataframe.to_csv(csv_buffer)
+    content = csv_buffer.getvalue()
+    # remove preivous logs.csv
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    try:
+        s3_client.put_object(Bucket=saved_bucket, Key=saved_file, Body=content)
+    except Exception as e:
+        raise f"Save dataframe to s3 failed:{e}"
+
+    return
+
+
+def save_user_logs_data_from_dynamodb(
+    table_name: str,
+    user_id: str,
+    saved_bucket: str,
+    save_data_file: str,
+    save_logs_file: str,
+    aws_access_key: str,
+    aws_secret_key: str,
+    aws_region: str,
+) -> None:
+
+    dynamodb = boto3.resource("dynamodb", region_name=aws_region)
+    table = dynamodb.Table(table_name)
+    response = table.query(KeyConditionExpression=Key("user_id").eq(user_id))
+
+    save_data = []
+    all_logs = []
+    for i in response["Items"]:
+        all_logs.append(i)
+        if (
+            i["action"] == "ACTION_STOP"
+            and i["message"]["Subject"]["alert_type"] == "SAVED_DATA"
+        ):
+            save_data.append(i["message"]["Messages"])
+
+    # delete dynamodb items
+    try:
+        with table.batch_writer() as batch:
+            for each in response["Items"]:
+                batch.delete_item(
+                    Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
+                )
+        print(f"remove all items of {user_id} from dynamodb completed")
+    except Exception as e:
+        raise Exception(f"Delete items from dynamodb failed{e}")
+
+    try:
+        # save data
+        save_data_df = pd.json_normalize(save_data)
+        save_dataframe_csv_on_s3(
+            dataframe=save_data_df,
+            saved_bucket=saved_bucket,
+            saved_file=save_data_file,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+            aws_region=aws_region,
+        )
+        # save logs
+        logs_df = pd.json_normalize(all_logs)
+
+        save_dataframe_csv_on_s3(
+            dataframe=logs_df,
+            saved_bucket=saved_bucket,
+            saved_file=save_logs_file,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_key,
+            aws_region=aws_region,
+        )
+    except Exception as e:
+        raise Exception(f"Save data to s3 failed{e}")
+    return
+
+
 def retrive_all_item_from_dyanmodb(
     table_name: str, dynamo_client: "botocore.client.dynamo"
 ):
@@ -333,7 +422,11 @@ def scan_table(dynamo_client, *, TableName, **kwargs):
 
 
 def remove_all_items_from_dynamodb(
-    table_name: str, aws_access_key: str, aws_secret_access_key: str, aws_region: str
+    table_name: str,
+    aws_access_key: str,
+    aws_secret_access_key: str,
+    aws_region: str,
+    user: str,
 ):
     try:
         dynamodb_resource = connect_aws_resource(
@@ -347,7 +440,7 @@ def remove_all_items_from_dynamodb(
         with table.batch_writer() as batch:
             for each in scan["Items"]:
                 batch.delete_item(
-                    Key={"host_ip": each["host_ip"], "timestamp": each["timestamp"]}
+                    Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
                 )
         print("remove all items from dynamodb completed")
     except Exception as e:

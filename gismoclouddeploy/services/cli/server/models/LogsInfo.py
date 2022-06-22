@@ -4,6 +4,7 @@ import enum
 class LogsInfo(object):
     def __init__(
         self,
+        user_id,
         host_name,
         host_ip,
         task_id,
@@ -15,7 +16,7 @@ class LogsInfo(object):
         filename="",
         column_name="",
     ):
-
+        self.user_id = user_id
         self.host_name = host_name
         self.host_ip = host_ip
         self.task_id = task_id
@@ -30,6 +31,7 @@ class LogsInfo(object):
     def to_json(self):
 
         return {
+            "user_id": self.user_id,
             "host_name": self.host_name,
             "host_ip": self.host_ip,
             "task_id": self.task_id,
@@ -48,8 +50,8 @@ def make_logsinfo_object_from_dataframe(dataframe):
     for row in dataframe.itertuples(index=True, name="Pandas"):
         if row.task_id == "":
             row.task_id = "scheduler"
-
         worker = LogsInfo(
+            user_id=row.user_id,
             host_name=row.host_name,
             host_ip=row.host_ip,
             task_id=row.task_id,

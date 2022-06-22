@@ -144,41 +144,68 @@ def long_pulling_sqs(
             Time: {time.ctime(time.time())}"
         )
         wait_time -= int(delay)
+        alert_type = ""
         if "Messages" in messages:
             for msg in messages["Messages"]:
                 msg_body = json.loads(msg["Body"])
-                # msg_body = msg['Body']
+
                 receipt_handle = msg["ReceiptHandle"]
-                subject = msg_body["Subject"]
-                message_text = msg_body["Message"]
-                logger.info(f"The subject : {subject}")
-                logger.info(f"The message : {message_text}")
-                if subject == SNSSubjectsAlert.SAVED_DATA.name:
+                subject = (
+                    msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
+                )
+                message_text = (
+                    msg_body["Message"].strip("'<>() ").replace("'", '"').strip("\n")
+                )
+                try:
+                    subject_info = json.loads(subject)
+                    sns_user_id = subject_info["user_id"]
+                    alert_type = subject_info["alert_type"]
 
-                    temp_str = message_text.replace("'", '"')
-                    json_obj = json.loads(temp_str)
-                    file_name = json_obj["file"]
-                    prefix = file_name.replace("/", "-")
-                    column = json_obj["column"]
-                    postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
-                    temp_filenmae = f"{prefix}-{postfix}"
-                    temp_file_name = (
-                        worker_config.saved_tmp_path + "/" + f"{temp_filenmae}.csv"
+                    if sns_user_id == worker_config.user_id:
+                        logger.info(f"subject: {subject_info}")
+                        logger.info(f"message_text: {message_text}")
+                        delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                    else:
+                        continue
+
+                except Exception as e:
+                    logger.warning(
+                        f"Delet this {subject} !!, This subject is not json format {e}"
                     )
+                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                # msg_body = json.loads(msg["Body"])
+                # # msg_body = msg['Body']
+                # receipt_handle = msg["ReceiptHandle"]
+                # subject = msg_body["Subject"]
+                # message_text = msg_body["Message"]
+                # logger.info(f"The subject : {subject}")
+                # logger.info(f"The message : {message_text}")
+                # subjcet_json_data = json.dumps(subject)
+                # if subjcet_json_data['user_id'] == worker_config.user_id:
 
-                    save_messages_to_s3(
-                        messages=message_text,
-                        save_bucket=worker_config.saved_bucket,
-                        saved_file_path_and_name=temp_file_name,
-                        aws_access_key=aws_config.aws_access_key,
-                        aws_secret_access_key=aws_config.aws_secret_access_key,
-                        aws_region=aws_config.aws_region,
-                    )
+                # temp_str = message_text.replace("'", '"')
+                # json_obj = json.loads(temp_str)
+                # file_name = json_obj["file"]
+                # prefix = file_name.replace("/", "-")
+                # column = json_obj["column"]
+                # postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
+                # temp_filenmae = f"{prefix}-{postfix}"
+                # temp_file_name = (
+                #     worker_config.saved_tmp_path + "/" + f"{temp_filenmae}.csv"
+                # )
 
-                delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                # save_messages_to_s3(
+                #     messages=message_text,
+                #     save_bucket=worker_config.saved_bucket,
+                #     saved_file_path_and_name=temp_file_name,
+                #     aws_access_key=aws_config.aws_access_key,
+                #     aws_secret_access_key=aws_config.aws_secret_access_key,
+                #     aws_region=aws_config.aws_region,
+                # )
+                # delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 tasks.append(message_text)
                 num_task_completed += 1
-                if subject == SNSSubjectsAlert.TIMEOUT.name:
+                if alert_type == SNSSubjectsAlert.TIMEOUT.name:
                     logger.info(f"======> force {message_text} to reovke ")
                     task_id_dict = json.loads(message_text)
                     if "task_id" in task_id_dict:
@@ -194,8 +221,8 @@ def long_pulling_sqs(
                                 pod_name="server", task_id=task_id
                             )
                 if (
-                    subject == SNSSubjectsAlert.PROCESS_FILE_ERROR.name
-                    or subject == SNSSubjectsAlert.SYSTEM_ERROR.name
+                    alert_type == SNSSubjectsAlert.PROCESS_FILE_ERROR.name
+                    or alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
                 ):
                     # send error message to DLQ ,
                     send_mesage_to_DLQ(
@@ -206,7 +233,7 @@ def long_pulling_sqs(
                     )
 
                 if (
-                    subject
+                    alert_type
                     == SNSSubjectsAlert.All_TASKS_COMPLETED.name
                     # or subject == SNSSubjectsAlert.SYSTEM_ERROR.name
                 ):

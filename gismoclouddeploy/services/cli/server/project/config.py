@@ -11,8 +11,8 @@ class BaseConfig:
 
     CELERY_broker_url = os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
     result_backend = os.environ.get("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/0")
-    BROKER_CONNECTION_RETRY = True
-    BROKER_CONNECTION_MAX_RETRIES = 0
+    BROKER_CONNECTION_RETRY = True  #  retry whenever it fails
+    BROKER_CONNECTION_MAX_RETRIES = 0  # disable the retry limit.
 
 
 class DevelopmentConfig(BaseConfig):

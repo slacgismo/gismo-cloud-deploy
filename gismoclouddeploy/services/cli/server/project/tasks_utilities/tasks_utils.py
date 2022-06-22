@@ -1,4 +1,5 @@
 import botocore
+from matplotlib import use
 from utils.aws_utils import (
     connect_aws_client,
     connect_aws_resource,
@@ -44,6 +45,7 @@ def put_item_to_dynamodb(
     table = dynamodb_resource.Table(table_name)
     response = table.put_item(
         Item={
+            "user_id": LogsInfo.user_id,
             "host_name": LogsInfo.host_name,
             "host_ip": LogsInfo.host_ip,
             "task_id": str(LogsInfo.task_id),
@@ -57,6 +59,38 @@ def put_item_to_dynamodb(
         }
     )
     return response
+
+
+# def put_item_to_dynamodb(
+#     table_name: str,
+#     LogsInfo: LogsInfo,
+#     aws_access_key: str,
+#     aws_secret_access_key: str,
+#     aws_region: str,
+# ):
+#     dynamodb_resource = connect_aws_resource(
+#         resource_name="dynamodb",
+#         key_id=aws_access_key,
+#         secret=aws_secret_access_key,
+#         region=aws_region,
+#     )
+#     table = dynamodb_resource.Table(table_name)
+#     response = table.put_item(
+#         Item={
+#             "user":LogsInfo.user,
+#             "host_name": LogsInfo.host_name,
+#             "host_ip": LogsInfo.host_ip,
+#             "task_id": str(LogsInfo.task_id),
+#             "pid": LogsInfo.pid,
+#             "function_name": LogsInfo.function_name,
+#             "action": LogsInfo.action,
+#             "timestamp": LogsInfo.time,
+#             "message": LogsInfo.message,
+#             "filename": LogsInfo.filename,
+#             "column_name": LogsInfo.column_name,
+#         }
+#     )
+#     return response
 
 
 def publish_message_sns(
@@ -81,6 +115,9 @@ def publish_message_sns(
             Message=message,
         )
         message_id = message_res["MessageId"]
+        logger.info(f"subject {subject}")
+        logger.info(f"message {message}")
+        logger.info(f"publish message_res :{message_res}")
         # logger.info(
         #     # f"Message published to topic - {topic_arn} with message Id - {message_id}."
         # )
@@ -138,6 +175,7 @@ def check_and_download_solver(
 
 def track_logs(
     task_id: str,
+    user_id: str,
     function_name: str,
     time: str,
     action: str,
@@ -154,6 +192,7 @@ def track_logs(
     host_ip = socket.gethostbyname(hostname)
     pid = os.getpid()
     start_status = LogsInfo(
+        user_id=user_id,
         host_name=hostname,
         task_id=task_id,
         host_ip=host_ip,

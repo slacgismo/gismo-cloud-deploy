@@ -80,5 +80,5 @@ from .sqs import (
     delete_queue_message,
     read_from_sqs_queue,
     configure_queue_long_polling,
-    clean_previous_sqs_message,
+    clean_user_previous_sqs_message,
 )
