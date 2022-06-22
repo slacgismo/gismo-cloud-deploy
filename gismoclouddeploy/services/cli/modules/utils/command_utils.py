@@ -102,7 +102,7 @@ def invoke_process_files_based_on_number(
     worker_config_json["aws_region"] = aws_config.aws_region
     worker_config_json["sns_topic"] = aws_config.sns_topic
     worker_config_str = json.dumps(worker_config_json)
-    counter = 1
+    counter = 25
     delay = 1
     while counter > 0:
         counter -= delay
