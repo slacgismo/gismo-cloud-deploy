@@ -78,18 +78,6 @@ def tracklog_decorator(func):
                 state=WorkerState.SUCCESS.name, meta={"timestamp": str(time.time())}
             )
             # track end
-            inspect_and_tracklog_decorator(
-                function_name=func.__name__,
-                action=ActionState.ACTION_STOP.name,
-                messages=json.loads(json.dumps(response), parse_float=Decimal),
-                task_id=task_id,
-                process_file_name=curr_process_file,
-                table_name=table_name,
-                column_name=curr_process_column,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
 
         except Exception as e:
             response = {
@@ -100,16 +88,21 @@ def tracklog_decorator(func):
             args[0].update_state(
                 state=WorkerState.FAILED.name, meta={"timestamp": str(time.time())}
             )
+        inspect_and_tracklog_decorator(
+            function_name=func.__name__,
+            action=ActionState.ACTION_STOP.name,
+            messages=json.loads(json.dumps(response), parse_float=Decimal),
+            task_id=task_id,
+            process_file_name=curr_process_file,
+            table_name=table_name,
+            column_name=curr_process_column,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
 
-            # raise Exception(f"Publish SNS Error:{e}")
         update_messages = response["Messages"]
-        # update_messages['task_id'] = task_id
-        # convert_json = json.loads(update_messages)
-        # if not isinstance(update_messages, dict):
-        #     update_messages = {"error": f"message is not dict {update_messages}"}
-
-        # update_messages["task_id"] = str(task_id)
-        message_id = publish_message_sns(
+        publish_message_sns(
             # message=json.dumps(update_messages),
             message=json.dumps(update_messages),
             subject=parse_subject_from_response(response=response),

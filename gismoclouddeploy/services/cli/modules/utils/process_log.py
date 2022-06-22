@@ -1,13 +1,14 @@
 from asyncio.log import logger
+
 import pandas as pd
 
-
+from typing import List
 from modules.utils.eks_utils import match_pod_ip_to_node_name
 from server.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
 from server.models.LogsInfo import LogsInfo
-
+import datetime
 from server import models
-
+from terminaltables import AsciiTable
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
 import plotly.express as px
@@ -132,7 +133,11 @@ def process_df_for_gantt(df: pd):
     key_pid = "pid"
     for worker in LogsInfo_list:
         # print(worker.task_id)
+
         task_id = worker.task_id
+        if task_id == "3820789a-40a4-42cb-8bc4-38a02c9b9479":
+            print(worker.action)
+            print(worker.filename)
         if task_id in worker_dict:
             if key_start in worker_dict[task_id]:
                 worker_dict[task_id][key_end] = worker.time
@@ -141,14 +146,14 @@ def process_df_for_gantt(df: pd):
             # get duration from datetime
             end = pd.to_datetime(worker_dict[task_id][key_end])
             start = pd.to_datetime(worker_dict[task_id][key_start])
-            worker_dict[task_id]["duration"] = int(round((end - start).total_seconds()))
+            worker_dict[task_id]["duration"] = (end - start).total_seconds()
 
         else:
             info_dict = {}
-            if pd.isnull(worker.filename):
+            if worker.function_name != "process_data_task":
                 info_dict[key_task] = worker.function_name
             else:
-                info_dict[key_task] = worker.filename
+                info_dict[key_task] = worker.filename + "/" + worker.column_name
             info_dict[key_host_ip] = worker.host_ip
             info_dict[key_pid] = worker.pid
             if worker.action == models.ActionState.ACTION_STOP.name:
@@ -275,3 +280,85 @@ def process_logs_from_s3(
     s3_client.put_object(
         Bucket=bucket, Key=saved_image_name_aws, Body=img_data, ContentType="image/png"
     )
+
+
+def analyze_logs_files(
+    bucket: str = None,
+    logs_file_path_name: str = None,
+    s3_client: "botocore.client.S3" = None,
+) -> List[str]:
+
+    df = read_all_csv_from_s3_and_parse_dates_from(
+        bucket_name=bucket,
+        file_path_name=logs_file_path_name,
+        dates_column_name="timestamp",
+        s3_client=s3_client,
+    )
+
+    shortest_task = ""
+    longest_task = ""
+    min_duration = float("inf")
+    max_duration = 0
+    total_task_durtaion = 0
+    average_task_duration = 0
+    worker_dict = process_df_for_gantt(df)
+    total_tasks = 0
+    min_start = float("inf")
+    max_end = 0
+
+    duration = 0
+
+
+# user_idea = [
+# 		["Idea Info","Details"],
+# 		["Title",title],
+# 		["Detail",detail],
+# 		["Status",status],
+
+# ]
+# table1 = AsciiTable(user_idea)
+# click.echo(table1.table)
+
+# for key, value in worker_dict.items():
+#     print(key, value)
+#     if ("start" in value) is False:
+#         continue
+#     start = float(value['start'].timestamp())
+#     if ("end" in value) is False:
+#         continue
+#     end =  float(value['end'].timestamp())
+#     # print(start,end)
+#     if ("duration" in value) is False:
+#         continue
+#     duration = value['duration']
+#     task = value['task']
+#     if task == "loop_tasks_status_task":
+#         continue
+#     if start < min_start:
+#         min_start = start
+#     if end > max_end:
+#         max_end = end
+
+#     if duration < min_duration:
+#         min_duration = duration
+#         shortest_task = task
+#     if duration > max_duration:
+#         max_duration = duration
+#         longest_task = task
+#     total_tasks += 1
+# # print(max_end,min_start)
+# total_tasks_duration = max_end - min_start
+
+# if total_tasks > 0 :
+#     average_task_duration = total_tasks_duration/total_tasks
+# else:
+#     average_task_duration = total_tasks_duration
+
+
+# print(shortest_task , min_duration)
+# print(longest_task , max_duration)
+# print(total_tasks)
+# print(f"average_task_duration:{average_task_duration}")
+# print(total_tasks_duration)
+# print(average_task_duration)
+# print(total_tasks_duration)

@@ -289,19 +289,6 @@ def build_images(tag: str = None, push: bool = False):
 )
 def processlogs(configfile):
     """Porcess logs.csv file on AWS"""
-    # try:
-    #      = make_config_obj_from_yaml(
-    #         yaml_file="./config/config.yaml",
-    #         aws_access_key=AWS_ACCESS_KEY_ID,
-    #         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-    #         aws_region=AWS_DEFAULT_REGION,
-    #         sns_topic=SNS_TOPIC,
-    #     )
-
-    # except Exception as e:
-    #     logger.error(f"Convert yaml  error:{e}")
-    #     return
-    # modules.command_utils.process_logs_and_plot(config_params_obj=config_params_obj)
     try:
         check_aws_validity(key_id=AWS_ACCESS_KEY_ID, secret=AWS_SECRET_ACCESS_KEY)
     except Exception as e:
@@ -351,12 +338,16 @@ def processlogs(configfile):
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
     )
-    # modules.command_utils.get_saved_data_from_logs(
-    #     logs_file_path_name=logs_file_path_name,
-    #     s3_client=s3_client,
-    #     saved_file_name=saved_file_name,
-    #     bucket=worker_config_obj.saved_bucket,
-    # )
+    logs_file_path_name = (
+        worker_config_obj.saved_logs_target_path
+        + "/"
+        + worker_config_obj.saved_logs_target_filename
+    )
+    modules.process_log.analyze_logs_files(
+        bucket=worker_config_obj.saved_bucket,
+        logs_file_path_name=logs_file_path_name,
+        s3_client=s3_client,
+    )
 
 
 @main.command()
@@ -770,13 +761,21 @@ def run_process_files(
     )
     total_process_time = time.time() - start_time
     logger.info(f"------- initial application took :{initial_process_time} sec--------")
-    logger.info(f"------- number of tasks :{total_task_num} --------")
-    logger.info(f"------- average of each task process time:")
-    logger.info(
-        f"------- Processing tasks in parallel, it took :{total_process_time} sec--------"
-    )
-    logger.info(f"------- If processing task in serial, it takes : sec")
-    logger.info("=========== Completed ==========")
+    logger.info(f"------- total process duration:{total_process_time} sec--------")
+    # logger.info(
+    #     f"------- Processing tasks in parallel, it took :{total_process_time} sec--------"
+    # )
+    # logger.info(f"------- If processing task in serial, it takes : sec")
+    # logger.info(f"------- number of tasks :{total_task_num} --------")
+    # logger.info(f"------- average of task's process time:")
+    # logger.info(f"------- shorest task process time:")
+    # logger.info(f"------- longest task process time:")
+    # logger.info(f"------- number of error tasks :")
+    # logger.info(f"------- number of success tasks :")
+    # logger.info(f"------ number of nodes:")
+    # logger.info(f"------ number of workers:")
+    # logger.info(f"------ instacne type:")
+    # logger.info("=========== Completed ==========")
 
     return
 

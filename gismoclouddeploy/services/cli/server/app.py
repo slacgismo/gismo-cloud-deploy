@@ -115,17 +115,6 @@ def revoke_task(task_id: str):
     celery.control.revoke(task_id, terminate=True, signal="SIGKILL")
 
 
-# @app.cli.command("celery_worker")
-# def celery_worker():
-#     from watchgod import run_process
-#     import subprocess
-
-#     def run_worker():
-#         subprocess.call(["celery", "-A", "app.celery", "worker", "--loglevel=info"])
-
-#     run_process("./project", run_worker)
-
-
 @app.cli.command("get_celery_worker_status")
 def get_celery_worker_status():
     ERROR_KEY = "ERROR"

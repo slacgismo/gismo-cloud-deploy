@@ -179,22 +179,22 @@ def entrypoint(
 
         # save data as json format
         save_data = {
-            "bucket": f"{data_bucket}",
-            "file": f"{curr_process_file}",
-            "column": f"{curr_process_column}",
-            # "solver": f"{solver_name}",
-            # "length": f"{length}",
-            # "capacity_estimate": f"{capacity_estimate}",
-            # "power_units": f"{power_units}",
-            # "data_sampling": f"{data_sampling}",
-            # "data_quality_score": f"{data_quality_score}",
-            # "data_clearness_score": f"{data_clearness_score}",
-            # "time_shifts": f"{time_shifts}",
-            # "num_clip_points": f"{num_clip_points}",
-            # "tz_correction": f"{tz_correction}",
-            # "inverter_clipping": f"{inverter_clipping}",
-            # "normal_quality_scores": f"{normal_quality_scores}",
-            # "capacity_changes": f"{capacity_changes}",
+            "bucket": data_bucket,
+            "file": curr_process_file,
+            "column": curr_process_column,
+            "solver": solver_name,
+            "length": length,
+            "capacity_estimate": capacity_estimate,
+            "power_units": power_units,
+            "data_sampling": data_sampling,
+            "data_quality_score": data_quality_score,
+            "data_clearness_score": data_clearness_score,
+            "time_shifts": time_shifts,
+            "num_clip_points": num_clip_points,
+            "tz_correction": tz_correction,
+            "inverter_clipping": inverter_clipping,
+            "normal_quality_scores": normal_quality_scores,
+            "capacity_changes": capacity_changes,
         }
 
     except Exception as e:

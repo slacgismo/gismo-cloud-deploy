@@ -541,7 +541,7 @@ def initial_end_services(
             + "/"
             + worker_config.saved_target_filename
         )
-
+        # download results data
         download_file_from_s3(
             bucket_name=worker_config.saved_bucket,
             source_file=source_file,
@@ -559,6 +559,25 @@ def initial_end_services(
             saved_bucket=worker_config.saved_bucket,
             saved_file_path=worker_config.saved_logs_target_path,
             saved_filename=worker_config.saved_logs_target_filename,
+            aws_access_key=aws_config.aws_access_key,
+            aws_secret_access_key=aws_config.aws_secret_access_key,
+            aws_region=aws_config.aws_region,
+        )
+        # download logs data
+        source_log_file = (
+            worker_config.saved_logs_target_path
+            + "/"
+            + worker_config.saved_logs_target_filename
+        )
+        target_log_file = (
+            worker_config.saved_target_path_local
+            + "/"
+            + worker_config.saved_logs_target_filename
+        )
+        download_file_from_s3(
+            bucket_name=worker_config.saved_bucket,
+            source_file=source_log_file,
+            target_file=target_log_file,
             aws_access_key=aws_config.aws_access_key,
             aws_secret_access_key=aws_config.aws_secret_access_key,
             aws_region=aws_config.aws_region,

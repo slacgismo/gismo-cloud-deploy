@@ -33,6 +33,7 @@ log-symbols==0.0.14
 MarkupSafe==2.1.1
 mccabe==0.6.1
 moto==3.1.12
+terminaltables==3.1.10
 
 mypy-boto3-dynamodb==1.24.0
 mypy-boto3-s3==1.24.0
