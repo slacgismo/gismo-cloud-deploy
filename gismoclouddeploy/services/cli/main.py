@@ -753,21 +753,26 @@ def run_process_files(
         + "/"
         + worker_config_obj.saved_logs_target_filename
     )
+    total_process_time = time.time() - start_time
     modules.process_log.analyze_logs_files(
         bucket=worker_config_obj.saved_bucket,
         logs_file_path_name=logs_file_path_name,
+        initial_process_time=initial_process_time,
+        total_process_time=total_process_time,
+        eks_nodes_number=aws_config_obj.eks_nodes_number,
+        num_workers=services_config_list["worker"]["desired_replicas"],
         s3_client=s3_client,
     )
-    total_process_time = time.time() - start_time
-    performance = [
-        ["Name", "Info"],
-        ["Initialize services duration", initial_process_time],
-        ["Total process durations", total_process_time],
-        ["Number of nodes", f"{aws_config_obj.eks_nodes_number}"],
-        ["Number of workers", f"{services_config_list['worker']['desired_replicas']}"],
-    ]
-    table2 = AsciiTable(performance)
-    print(table2.table)
+
+    # performance = [
+    #     ["Name", "Info"],
+    #     ["Initialize services duration", initial_process_time],
+    #     ["Total process durations", total_process_time],
+    #     ["Number of nodes", f"{aws_config_obj.eks_nodes_number}"],
+    #     ["Number of workers", f"{services_config_list['worker']['desired_replicas']}"],
+    # ]
+    # table2 = AsciiTable(performance)
+    # print(table2.table)
     print(" ======== Completed ========== ")
     return
 

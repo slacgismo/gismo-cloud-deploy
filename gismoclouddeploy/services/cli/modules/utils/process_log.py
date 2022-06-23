@@ -1,5 +1,5 @@
 from asyncio.log import logger
-
+import sys
 import pandas as pd
 
 from typing import List
@@ -286,6 +286,10 @@ def analyze_logs_files(
     bucket: str = None,
     logs_file_path_name: str = None,
     s3_client: "botocore.client.S3" = None,
+    initial_process_time: float = 0,
+    total_process_time: float = 0,
+    eks_nodes_number: int = 0,
+    num_workers: int = 0,
 ) -> List[str]:
 
     df = read_all_csv_from_s3_and_parse_dates_from(
@@ -295,20 +299,27 @@ def analyze_logs_files(
         s3_client=s3_client,
     )
 
+    # get error task
+
+    error_task = df[(df["message.Subject.alert_type"] == "SYSTEM_ERROR")]
+    num_error_task = len(error_task)
+
+    worker_dict = process_df_for_gantt(df)
     shortest_task = ""
     longest_task = ""
     min_duration = float("inf")
     max_duration = 0
     tasks_durtaion_sum = 0
     average_task_duration = 0
-    worker_dict = process_df_for_gantt(df)
     total_tasks = 0
     min_start = float("inf")
     max_end = 0
     duration = 0
     task_duration_in_parallelism = 0
     effeciency = 0
+
     for key, value in worker_dict.items():
+
         start = float(value["start"].timestamp())
         end = float(value["end"].timestamp())
         duration = value["duration"]
@@ -335,16 +346,20 @@ def analyze_logs_files(
         average_task_duration = tasks_durtaion_sum
 
     if task_duration_in_parallelism > 0:
-        effeciency = (
-            (tasks_durtaion_sum - task_duration_in_parallelism)
-            / task_duration_in_parallelism
-        ) * 100
+        effeciency = int(
+            (
+                (tasks_durtaion_sum - task_duration_in_parallelism)
+                / task_duration_in_parallelism
+            )
+            * 100
+        )
     performance = [
         ["Performance", "Results", "Info"],
         ["Total tasks", total_tasks, ""],
         ["Average task duration", f"{average_task_duration} sec"],
         ["Min task duration", f"{min_duration} sec", shortest_task],
         ["Max task duration", f"{max_duration} sec", longest_task],
+        ["Number of error tasks", f"{num_error_task}"],
         [
             "Process tasks duration(in parallel)",
             f"{task_duration_in_parallelism} sec",
@@ -355,7 +370,14 @@ def analyze_logs_files(
             f"{tasks_durtaion_sum} sec",
             "Estimation",
         ],
-        ["Effeciency improvement", f"{effeciency}%"],
+        ["Effeciency improvement", f"{effeciency} %"],
+        ["Initialize services duration", f"{initial_process_time} sec"],
+        ["Total process durations", f"{total_process_time} sec"],
+        ["Number of nodes", f"{eks_nodes_number}"],
+        ["Number of workers", f"{num_workers}"],
     ]
     table1 = AsciiTable(performance)
     print(table1.table)
+    with open("results/performance.txt", "w") as file:
+        print(table1.table, file=file)
+        file.close()
