@@ -1,5 +1,6 @@
 from asyncio.log import logger
 import sys
+from numpy import number
 import pandas as pd
 
 from typing import List
@@ -261,7 +262,7 @@ def process_logs_from_s3(
                 Duration=value["duration"],
             )
         except Exception as e:
-            logger.warning(f"Missing Key {e} in {value}")
+            # logger.warning(f"Missing Key {e} in {value}")
             continue
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
@@ -318,9 +319,11 @@ def analyze_logs_files(
     duration = 0
     task_duration_in_parallelism = 0
     effeciency = 0
-
+    num_unfinished_task = 0
     for key, value in worker_dict.items():
-
+        if ("end" in value) is False:
+            num_unfinished_task += 1
+            continue
         start = float(value["start"].timestamp())
         end = float(value["end"].timestamp())
         duration = value["duration"]
@@ -361,6 +364,7 @@ def analyze_logs_files(
         ["Min task duration", f"{min_duration} sec", shortest_task],
         ["Max task duration", f"{max_duration} sec", longest_task],
         ["Number of error tasks", f"{num_error_task}"],
+        ["Number of unfinished tasks", f"{num_unfinished_task}"],
         [
             "Process tasks duration(in parallel)",
             f"{task_duration_in_parallelism} sec",
