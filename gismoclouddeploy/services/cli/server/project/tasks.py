@@ -84,7 +84,7 @@ def loop_tasks_status_task(
     timestamp = str(time.time())
 
     try:
-        task_id = self.request.id
+        loop_task_id = self.request.id
         aws_access_key = str(kwargs["aws_access_key"])
         aws_secret_access_key = str(kwargs["aws_secret_access_key"])
         aws_region = str(kwargs["aws_region"])
@@ -98,8 +98,7 @@ def loop_tasks_status_task(
             subject=SNSSubjectsAlert.SYSTEM_ERROR.name, messages=f"Loop task error:{e}"
         )
 
-    task_id = self.request.id
-    subject = task_id
+    subject = ""
     while len(task_ids) > 0:
         for id in task_ids[:]:
             res = AsyncResult(str(id))
@@ -126,7 +125,7 @@ def loop_tasks_status_task(
                                 "alert_type": SNSSubjectsAlert.TIMEOUT.name,
                                 "user_id": user_id,
                             }
-                            message = {"user_id": user_id, "task_id": task_id}
+                            message = {"user_id": user_id, "task_id": id}
                             tasks_utilities.publish_message_sns(
                                 message=json.dumps(message),
                                 subject=json.dumps(subject),
@@ -165,6 +164,6 @@ def loop_tasks_status_task(
     # return tasks_utilities.tasks_utils.make_response(subject=subject, messages=message)
     return make_sns_response(
         alert_type=SNSSubjectsAlert.All_TASKS_COMPLETED.name,
-        messages={"task_id": task_id},
+        messages={"task_id": loop_task_id},
         user_id=user_id,
     )
