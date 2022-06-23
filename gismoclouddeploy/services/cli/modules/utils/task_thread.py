@@ -5,6 +5,7 @@ import json
 import botocore
 import boto3
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
+from .k8s_utils import get_k8s_pod_name
 import pandas as pd
 from io import StringIO
 import re
@@ -217,8 +218,9 @@ def long_pulling_sqs(
                             )
                         else:
                             logger.info("reovk k8s task")
+                            server_name = get_k8s_pod_name(pod_name="server")
                             revoke_resp = invoke_ks8_exec_revoke_task(
-                                pod_name="server", task_id=task_id
+                                pod_name=server_name, task_id=task_id
                             )
                 if (
                     alert_type == SNSSubjectsAlert.PROCESS_FILE_ERROR.name
