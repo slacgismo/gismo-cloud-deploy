@@ -235,8 +235,8 @@ def long_pulling_sqs(
                     )
 
                 if (
-                    alert_type
-                    == SNSSubjectsAlert.All_TASKS_COMPLETED.name
+                    alert_type == SNSSubjectsAlert.All_TASKS_COMPLETED.name
+                    or num_task_completed > num_task
                     # or subject == SNSSubjectsAlert.SYSTEM_ERROR.name
                 ):
                     # close program after tasks complete or system error
