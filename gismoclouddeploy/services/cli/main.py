@@ -585,13 +585,17 @@ def run_process_files(
             modules.invoke_function.invoke_eks_updagte_kubeconfig(
                 cluster_name=aws_config_obj.cluster_name
             )
-            modules.eks_utils.scale_eks_nodes_and_wait(
-                scale_node_num=aws_config_obj.eks_nodes_number,
-                total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
-                delay=1,
-                cluster_name=aws_config_obj.cluster_name,
-                nodegroup_name=aws_config_obj.nodegroup_name,
-            )
+            try:
+                modules.eks_utils.scale_eks_nodes_and_wait(
+                    scale_node_num=aws_config_obj.eks_nodes_number,
+                    total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
+                    delay=1,
+                    cluster_name=aws_config_obj.cluster_name,
+                    nodegroup_name=aws_config_obj.nodegroup_name,
+                )
+            except Exception as e:
+                logger("Scale nodes error")
+                return
         # updae k8s
         # check worker deployment
         # loop k8s services list , create or update k8s depolyment and services
