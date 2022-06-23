@@ -21,4 +21,4 @@ rollout:
 
 .PHONY: get-nodegroup
 get-nodegroup:
-	eksctl  get nodegroups --cluster=gcd-eks-cluster
+	eksctl  get nodegroups --cluster=gcd-eks

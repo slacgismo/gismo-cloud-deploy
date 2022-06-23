@@ -2,7 +2,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: gcd-eks-cluster
+  name: gcd-eks
   region: us-east-2
   tags:
     project: pvinsight
