@@ -100,12 +100,12 @@ def main():
     is_flag=True,
     help="Default value is False. If it is True, the services run in docker environment.Otherwise, the services run in k8s environment.",
 )
-@click.option(
-    "--local",
-    "-l",
-    is_flag=True,
-    help="Default value is False. If it is True, define running environemnt in local.Otherwiser, define running environemt on AWS",
-)
+# @click.option(
+#     "--local",
+#     "-l",
+#     is_flag=True,
+#     help="Default value is False. If it is True, define running environemnt in local.Otherwiser, define running environemt on AWS",
+# )
 @click.option(
     "--build",
     "-b",
@@ -121,7 +121,7 @@ def run_files(
     rollout: str = False,
     imagetag: str = "latest",
     docker: bool = False,
-    local: bool = False,
+    # local: bool = False,
     build: bool = False,
 ):
     """
@@ -136,8 +136,6 @@ def run_files(
     :param imagetag:    Specifiy the image tag. Default value is 'latest'.This option command did not work with [ -b | --build ] option command.
     :param docker:      Default value is False. If it is True, the services run in docker environment.
                         Otherwise, the services run in k8s environment.
-    :param local:       Default value is False. If it is True, define running environemnt in local.
-                        Otherwiser, define running environemt on AWS
     :param build:       Build a temp image and use it. If on AWS k8s environment, \
                         build and push image to ECR with temp image tag. These images will be deleted after used.\
                         If you would like to preserve images, please use build-image command instead
@@ -149,7 +147,7 @@ def run_files(
         rollout=rollout,
         image_tag=imagetag,
         is_docker=docker,
-        is_local=local,
+        # is_local=local,
         is_build_image=build,
     )
 
@@ -442,8 +440,6 @@ def run_process_files(
     :param image_tag:   Specifiy the image tag. Default value is 'latest'
     :param is_docker:   Default value is False. If it is True, the services run in docker environment.
                         Otherwise, the services run in k8s environment.
-    :param is_local:    Default value is False. If it is True, define running environemnt in local.
-                        Otherwiser, define running environemt on AWS
     :param is_build_image:    Build a temp image and use it. If on AWS k8s environment, \
                         build and push image to ECR with temp image tag. These images will be deleted after used.\
                         If you would like to preserve images, please use build-image command instead
@@ -486,6 +482,10 @@ def run_process_files(
         region=AWS_DEFAULT_REGION,
     )
     # check environments , check image name and tag exist. Update images name and tag to object
+    is_local = True
+    if check_environment_is_aws():
+        logger.info("======== Running on AWS ========")
+        is_local = False
 
     services_config_list = (
         modules.command_utils.update_config_json_image_name_and_tag_base_on_env(
