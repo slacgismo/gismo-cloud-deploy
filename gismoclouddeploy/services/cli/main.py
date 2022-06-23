@@ -522,9 +522,9 @@ def run_process_files(
             logger.info("========= Build images and run in docker ========")
             modules.invoke_function.invoke_docker_compose_build_and_run()
         else:
-            logger.info("========= Build image ========")
+            # logger.info("========= Build image ========")
             modules.utils.invoke_docker_compose_build()
-            logger.info(f"========= tag image {temp_image_tag} ========")
+            # logger.info(f"========= tag image {temp_image_tag} ========")
             for service in services_config_list:
                 # only inspect worker and server
                 if service == "worker" or service == "server":
@@ -550,6 +550,9 @@ def run_process_files(
             push_thread = list()
             try:
                 for service in services_config_list:
+                    logger.info(
+                        f" ============= Push image to {ECR_REPO}/{service}:{temp_image_tag} =================="
+                    )
                     x = threading.Thread(
                         target=modules.utils.invoke_push_image,
                         args=(service, temp_image_tag, ECR_REPO),

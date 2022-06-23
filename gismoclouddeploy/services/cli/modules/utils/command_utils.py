@@ -645,15 +645,30 @@ def initial_end_services(
             nodegroup_name=aws_config.nodegroup_name,
         )
 
-        # Remove services.
-
-        remove_running_services(
-            is_build_image=is_build_image,
-            is_docker=is_docker,
-            is_local=is_local,
-            aws_config=aws_config,
-            services_config_list=services_config_list,
+    # Remove services.
+    if aws_utils.check_environment_is_aws() and is_build_image:
+        logger.info("----------->.  Delete Temp ECR image ----------->")
+        ecr_client = aws_utils.connect_aws_client(
+            client_name="ecr",
+            key_id=aws_config.aws_access_key,
+            secret=aws_config.aws_secret_access_key,
+            region=aws_config.aws_region,
         )
+        for service in services_config_list:
+            if service == "worker" or service == "server":
+                image_tag = services_config_list[service]["image_tag"]
+                aws_utils.delete_ecr_image(
+                    ecr_client=ecr_client,
+                    image_name=service,
+                    image_tag=image_tag,
+                )
+    # remove_running_services(
+    #     is_docker=is_docker,
+    #     is_local=is_local,
+    #     aws_config=aws_config,
+    #     services_config_list=services_config_list,
+    # )
+
     try:
         sqs_client = aws_utils.connect_aws_client(
             client_name="sqs",
@@ -681,26 +696,26 @@ def remove_running_services(
             logger.info("Delete local docker image")
             invoke_docker_compose_down_and_remove()
         else:
-            if is_local:
-                logger.info("Remove local k8s svc and deployment")
-                invoke_kubectl_delete_all_deployment()
-                invoke_kubectl_delete_all_services()
-            else:
-                logger.info("----------->.  Delete Temp ECR image ----------->")
-                ecr_client = aws_utils.connect_aws_client(
-                    client_name="ecr",
-                    key_id=aws_config.aws_access_key,
-                    secret=aws_config.aws_secret_access_key,
-                    region=aws_config.aws_region,
-                )
-                for service in services_config_list:
-                    if service == "worker" or service == "server":
-                        image_tag = services_config_list[service]["image_tag"]
-                        aws_utils.delete_ecr_image(
-                            ecr_client=ecr_client,
-                            image_name=service,
-                            image_tag=image_tag,
-                        )
+            # if is_local:
+            #     logger.info("Remove local k8s svc and deployment")
+            #     invoke_kubectl_delete_all_deployment()
+            #     invoke_kubectl_delete_all_services()
+            # else:
+            logger.info("----------->.  Delete Temp ECR image ----------->")
+            ecr_client = aws_utils.connect_aws_client(
+                client_name="ecr",
+                key_id=aws_config.aws_access_key,
+                secret=aws_config.aws_secret_access_key,
+                region=aws_config.aws_region,
+            )
+            for service in services_config_list:
+                if service == "worker" or service == "server":
+                    image_tag = services_config_list[service]["image_tag"]
+                    aws_utils.delete_ecr_image(
+                        ecr_client=ecr_client,
+                        image_name=service,
+                        image_tag=image_tag,
+                    )
     return
 
 
