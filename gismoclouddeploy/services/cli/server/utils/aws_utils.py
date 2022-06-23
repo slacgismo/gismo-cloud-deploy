@@ -496,6 +496,6 @@ def delete_ecr_image(
     ]
     # print(delete_image_ids)
     delete_resp = ecr_client.batch_delete_image(
-        repositoryName="localstack-centos", imageIds=delete_image_ids
+        repositoryName=image_name, imageIds=delete_image_ids
     )
     return delete_resp
