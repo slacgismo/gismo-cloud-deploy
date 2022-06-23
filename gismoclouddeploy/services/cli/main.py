@@ -390,17 +390,12 @@ def save_cached(configfile):
     aws_config_obj.ecr_repo = ECR_REPO
 
     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
-
-    combine_res = modules.command_utils.combine_files_to_file(
-        bucket_name=worker_config_obj.saved_bucket,
-        source_folder=worker_config_obj.saved_tmp_path,
-        target_folder=worker_config_obj.saved_data_target_path,
-        target_filename=worker_config_obj.saved_target_filename,
+    modules.command_utils.download_logs_saveddata_from_dynamodb(
+        worker_config=worker_config_obj,
         aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_secret_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
     )
-    logger.info(combine_res)
 
 
 # ***************************
@@ -490,20 +485,6 @@ def run_process_files(
         region=AWS_DEFAULT_REGION,
     )
     # check environments , check image name and tag exist. Update images name and tag to object
-
-    # save_data_file = worker_config_obj.saved_data_target_path_local +"/" +worker_config_obj.saved_target_filename
-    # save_logs_file = worker_config_obj.saved_logs_target_path +"/" +worker_config_obj.saved_logs_target_filename
-    # save_user_logs_data_from_dynamodb(
-    #     table_name=worker_config_obj.dynamodb_tablename,
-    #     user_id=worker_config_obj.user_id,
-    #     saved_bucket=worker_config_obj.saved_bucket,
-    #     save_data_file=save_data_file,
-    #     save_logs_file = save_logs_file,
-    #     aws_access_key=aws_config_obj.aws_access_key,
-    #     aws_secret_key= aws_config_obj.aws_secret_access_key,
-    #     aws_region=aws_config_obj.aws_region
-    # )
-    # return
 
     services_config_list = (
         modules.command_utils.update_config_json_image_name_and_tag_base_on_env(
@@ -635,7 +616,9 @@ def run_process_files(
                 if not modules.utils.k8s_utils.check_k8s_services_exists(
                     name=service_name
                 ):
-                    logger.info(f"========= Create services{service_file} =========== ")
+                    logger.info(
+                        f"========= Create {service_file} services =========== "
+                    )
                     modules.utils.k8s_utils.create_k8s_svc_from_yaml(
                         full_path_name=service_file
                     )
@@ -664,32 +647,6 @@ def run_process_files(
         for index, thread in enumerate(threads):
             thread.join()
             logging.info("Wait %s thread done", thread.name)
-    # clean previous save folder
-    # try:
-    #     logger.info(" ========= Clean saved temp folder ========= ")
-    #     modules.command_utils.delete_all_files_in_foler_of_a_bucket(
-    #         bucket_name=worker_config_obj.saved_bucket,
-    #         source_folder=worker_config_obj.saved_tmp_path,
-    #         aws_access_key=aws_config_obj.aws_access_key,
-    #         aws_secret_access_key=aws_config_obj.aws_secret_access_key,
-    #         aws_region=aws_config_obj.aws_region,
-    #     )
-    # except Exception as e:
-    #     logger.error(f"Clean saved temp folder failed:{e}")
-    #     return
-    # logger.info(" ========= Clean dynamodb ========= ")
-    # # # clear sqs
-    # try:
-    #     remove_all_items_from_dynamodb(
-    #         user=worker_config_obj.user_id,
-    #         table_name=worker_config_obj.dynamodb_tablename,
-    #         aws_access_key=aws_config_obj.aws_access_key,
-    #         aws_secret_access_key=aws_config_obj.aws_secret_access_key,
-    #         aws_region=aws_config_obj.aws_region,
-    #     )
-    # except Exception as e:
-    #     logger.error(f"Clean dynamodb failed:{e}")
-    #     return
 
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client(
@@ -750,6 +707,7 @@ def run_process_files(
         return
     initial_process_time = time.time() - start_time
     try:
+        logger.info(" ========= Long pulling SQS ========= ")
         proces_y = Process(
             target=long_pulling_sqs(
                 wait_time=looping_wait_time,

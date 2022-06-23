@@ -346,7 +346,13 @@ def save_user_logs_data_from_dynamodb(
     aws_secret_key: str,
     aws_region: str,
 ) -> None:
-
+    # dynamodb_client = connect_aws_client(
+    #     client_name="dynamodb",
+    #     key_id=aws_access_key,
+    #     secret=aws_secret_key,
+    #     region=aws_region,
+    # )
+    # response = dynamodb_client.get_item(TableName=table_name, Key={'user_id':{'S':str(user_id)}})
     dynamodb = boto3.resource("dynamodb", region_name=aws_region)
     table = dynamodb.Table(table_name)
     response = table.query(KeyConditionExpression=Key("user_id").eq(user_id))
