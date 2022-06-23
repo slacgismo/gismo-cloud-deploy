@@ -348,6 +348,7 @@ def processlogs(configfile):
         bucket=worker_config_obj.saved_bucket,
         logs_file_path_name=logs_file_path_name,
         s3_client=s3_client,
+        save_file_path_name=worker_config_obj.saved_performance_file_local,
     )
 
 
@@ -762,17 +763,9 @@ def run_process_files(
         eks_nodes_number=aws_config_obj.eks_nodes_number,
         num_workers=services_config_list["worker"]["desired_replicas"],
         s3_client=s3_client,
+        save_file_path_name=worker_config_obj.saved_performance_file_local,
     )
 
-    # performance = [
-    #     ["Name", "Info"],
-    #     ["Initialize services duration", initial_process_time],
-    #     ["Total process durations", total_process_time],
-    #     ["Number of nodes", f"{aws_config_obj.eks_nodes_number}"],
-    #     ["Number of workers", f"{services_config_list['worker']['desired_replicas']}"],
-    # ]
-    # table2 = AsciiTable(performance)
-    # print(table2.table)
     print(" ======== Completed ========== ")
     return
 

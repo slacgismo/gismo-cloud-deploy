@@ -62,6 +62,7 @@ worker_config:
   saved_logs_target_filename: "logs.csv"
   saved_rumtime_image_name_aws: "results/runtime.png"
   saved_rumtime_image_name_local: "results/plot/runtime.png"
+  saved_performance_file_local: "results/performance.txt"
   interval_of_check_task_status: "5"    # in second
   interval_of_exit_check_status: "900"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
 

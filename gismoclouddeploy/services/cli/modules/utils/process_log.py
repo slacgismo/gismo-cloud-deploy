@@ -290,6 +290,7 @@ def analyze_logs_files(
     total_process_time: float = 0,
     eks_nodes_number: int = 0,
     num_workers: int = 0,
+    save_file_path_name: str = "results/performance.txt",
 ) -> List[str]:
 
     df = read_all_csv_from_s3_and_parse_dates_from(
@@ -378,6 +379,6 @@ def analyze_logs_files(
     ]
     table1 = AsciiTable(performance)
     print(table1.table)
-    with open("results/performance.txt", "w") as file:
+    with open(save_file_path_name, "w") as file:
         print(table1.table, file=file)
         file.close()
