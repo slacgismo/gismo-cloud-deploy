@@ -353,8 +353,15 @@ def save_user_logs_data_from_dynamodb(
     #     region=aws_region,
     # )
     # response = dynamodb_client.get_item(TableName=table_name, Key={'user_id':{'S':str(user_id)}})
-    dynamodb = boto3.resource("dynamodb", region_name=aws_region)
-    table = dynamodb.Table(table_name)
+    # dynamodb = boto3.resource("dynamodb", region_name=aws_region)
+    dynamodb_resource = connect_aws_resource(
+        resource_name="dynamodb",
+        key_id=aws_access_key,
+        secret=aws_secret_key,
+        region=aws_region,
+    )
+
+    table = dynamodb_resource.Table(table_name)
     response = table.query(KeyConditionExpression=Key("user_id").eq(user_id))
 
     save_data = []
@@ -432,7 +439,7 @@ def remove_all_items_from_dynamodb(
     aws_access_key: str,
     aws_secret_access_key: str,
     aws_region: str,
-    user: str,
+    user_id: str,
 ):
     try:
         dynamodb_resource = connect_aws_resource(
