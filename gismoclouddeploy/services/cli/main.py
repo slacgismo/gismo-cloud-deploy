@@ -20,7 +20,7 @@ from server.utils.aws_utils import (
     check_aws_validity,
     connect_aws_client,
     check_environment_is_aws,
-    remove_all_items_from_dynamodb,
+    remove_all_user_items_from_dynamodb,
     save_user_logs_data_from_dynamodb,
 )
 
@@ -303,7 +303,26 @@ def processlogs(configfile):
         )
         config_yaml = f"./config/config.yaml"
 
+    """
+    Generated unique file name and folder to save data, logs, solver's lic and plot
+    """
+
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    user_id = str(socket.gethostname())
+    config_json["worker_config"]["user_id"] = user_id
+    config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
+        config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"]
+        + "/"
+        + user_id
+    )
+    config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}.png"
+    config_json["worker_config"][
+        "saved_performance_file"
+    ] = f"performance-{user_id}.txt"
+    config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
+    config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
+
+    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
     aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
     aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
@@ -378,7 +397,26 @@ def save_cached(configfile):
         )
         config_yaml = f"./config/config.yaml"
 
+    """
+    Generated unique file name and folder to save data, logs, solver's lic and plot
+    """
+
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    user_id = str(socket.gethostname())
+    config_json["worker_config"]["user_id"] = user_id
+    config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
+        config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"]
+        + "/"
+        + user_id
+    )
+    config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}.png"
+    config_json["worker_config"][
+        "saved_performance_file"
+    ] = f"performance-{user_id}.txt"
+    config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
+    config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
+
+    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
     aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
     aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
@@ -387,8 +425,6 @@ def save_cached(configfile):
     aws_config_obj.sqs_url = SQS_URL
     aws_config_obj.dlq_url = DLQ_URL
     aws_config_obj.ecr_repo = ECR_REPO
-
-    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
     modules.command_utils.download_logs_saveddata_from_dynamodb(
         worker_config=worker_config_obj,
         aws_access_key=AWS_ACCESS_KEY_ID,
@@ -673,7 +709,7 @@ def run_process_files(
             thread.join()
             logging.info("Wait %s thread done", thread.name)
     logger.info(" ========= Remove dynamodb ========= ")
-    remove_all_items_from_dynamodb(
+    remove_all_user_items_from_dynamodb(
         table_name=worker_config_obj.dynamodb_tablename,
         aws_access_key=aws_config_obj.aws_access_key,
         aws_secret_access_key=aws_config_obj.aws_secret_access_key,

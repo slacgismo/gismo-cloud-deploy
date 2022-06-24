@@ -196,20 +196,23 @@ def print_dlq(
 
     while wait_time:
         messages = receive_queue_message(
-            queue_url=dlq_url, MaxNumberOfMessages=1, sqs_client=sqs_client, wait_time=1
+            queue_url=dlq_url,
+            MaxNumberOfMessages=10,
+            sqs_client=sqs_client,
+            wait_time=1,
         )
         if "Messages" in messages:
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 receipt_handle = msg["ReceiptHandle"]
-                logger.info(f"The message body: {msg_body}")
+                logger.info(f"The message body:\n {msg_body}")
 
                 # logger.info('Deleting message from the queue...')
                 if delete_messages:
                     delete_queue_message(dlq_url, receipt_handle, sqs_client)
 
-                logger.info(f"Received and deleted message(s) from {dlq_url}.")
-                print(receipt_handle)
+                # logger.info(f"Received and deleted message(s) from {dlq_url}.")
+                # print(receipt_handle)
         else:
             logger.info("Clean DLQ message completed")
             return

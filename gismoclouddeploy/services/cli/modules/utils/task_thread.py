@@ -13,7 +13,6 @@ from server.utils.aws_utils import (
     connect_aws_client,
     check_environment_is_aws,
     save_logs_from_dynamodb_to_s3,
-    remove_all_items_from_dynamodb,
     delete_ecr_image,
 )
 

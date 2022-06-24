@@ -148,6 +148,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
             parse_dates=["timestamp"],
             infer_datetime_format=True,
         )
+        print(result_df.head())
         result_df["timestamp"] = pd.to_datetime(result_df["timestamp"], unit="s")
 
     else:
@@ -434,30 +435,59 @@ def scan_table(dynamo_client, *, TableName, **kwargs):
         yield from page["Items"]
 
 
-def remove_all_items_from_dynamodb(
+def remove_all_user_items_from_dynamodb(
     table_name: str,
     aws_access_key: str,
     aws_secret_access_key: str,
     aws_region: str,
     user_id: str,
 ):
+    dynamodb_resource = connect_aws_resource(
+        resource_name="dynamodb",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+
+    table = dynamodb_resource.Table(table_name)
+    response = table.query(KeyConditionExpression=Key("user_id").eq(user_id))
+    # delete dynamodb items
     try:
-        dynamodb_resource = connect_aws_resource(
-            resource_name="dynamodb",
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
-        )
-        table = dynamodb_resource.Table(table_name)
-        scan = table.scan()
         with table.batch_writer() as batch:
-            for each in scan["Items"]:
+            for each in response["Items"]:
                 batch.delete_item(
                     Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
                 )
-        print("remove all items from dynamodb completed")
+        print(f"remove all items of {user_id} from dynamodb completed")
     except Exception as e:
-        raise e
+        raise Exception(f"Delete items from dynamodb failed{e}")
+    return
+
+
+# def remove_all_items_from_dynamodb(
+#     table_name: str,
+#     aws_access_key: str,
+#     aws_secret_access_key: str,
+#     aws_region: str,
+#     user_id: str,
+# ):
+#     try:
+#         dynamodb_resource = connect_aws_resource(
+#             resource_name="dynamodb",
+#             key_id=aws_access_key,
+#             secret=aws_secret_access_key,
+#             region=aws_region,
+#         )
+#         table = dynamodb_resource.Table(table_name)
+#         scan = table.scan()
+#         with table.batch_writer() as batch:
+#             for each in scan["Items"]:
+#                 batch.delete_item(
+#                     Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
+#                 )
+#         print("remove all items from dynamodb completed")
+#     except Exception as e:
+#         raise e
 
 
 def check_ecr_tag_exists(
