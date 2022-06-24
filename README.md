@@ -221,7 +221,6 @@ After it completed, the termainal prints out the results as below:
 
 11. Check the saved data file, gantt plot and tasks performance in `./gismoclouddeploy/services/cli/results` folder.
 
-
 ---
 
 ## Command
@@ -348,15 +347,22 @@ All kubernetes deployment and service files are listed under `gismoclouddeploy/s
 
 The create cluster command will create an EKS cluster based on the configuration file in `gismoclouddeploy/services/cli/config/eks/cluster.yaml`.
 
+***NOTE*** The `max_size` variable under `nodeGroups` limits the maximum nodes number that can be scale in this application. The default is `20`.
+In order to update the cluster setting, developers have to remove olde cluster and create a new cluster.
+Delete a cluster
+
+```bash
+make delete-cluster
+```
+
+Create a cluster
+
 ```bash
 make create-cluster
 ```
 
 If users create a cluster based on the `cluster.yaml` file, and if they need to delete the cluster later, it's recommended to delete the cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.
 
-```bash
-make delete-cluster
-```
 
 ---
 
@@ -369,7 +375,7 @@ make delete-cluster
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
 **NOTE** If developers defined `MOSEK` in `config.yaml` file. Please include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/cli/config/licence`.
-This lic file will upload to a temporary S3 folder and downlad into AWS EKS in run-time. The lic file will be deleted after process is done.
+This lic file will be uploaded to a temporary S3 folder and downlad into AWS EKS worker during run-time. The license file will be deleted after the process is done.
 
 ---
 ## Code blocks
@@ -382,7 +388,6 @@ The `entrypoint` function in `entrypoint.py` file is the start function of this 
 Developers can includes any files or self defined python modules in `code-templates` folder. Those files, sub-folder and modules will be copied to the docker images as well.
 
 Please check the `entrypoint.py` files to get more informations of input parametes.
-
 
 Python packages:
 
