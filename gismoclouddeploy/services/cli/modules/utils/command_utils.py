@@ -157,16 +157,17 @@ def process_logs_and_plot(
     )
 
     logs_full_path_name = (
-        worker_config.saved_logs_target_path
-        + "/"
-        + worker_config.saved_logs_target_filename
+        worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
+    )
+    plot_full_path_name = (
+        worker_config.saved_path + "/" + worker_config.saved_rumtime_image_name
     )
 
     process_logs_from_s3(
         bucket=worker_config.saved_bucket,
         logs_file_path_name=logs_full_path_name,
-        saved_image_name_aws=worker_config.saved_rumtime_image_name_aws,
-        saved_image_name_local=worker_config.saved_rumtime_image_name_local,
+        saved_image_name_aws=plot_full_path_name,
+        saved_image_name_local=plot_full_path_name,
         s3_client=s3_client,
     )
     logger.info(f"Success process logs from {worker_config.saved_logs_target_filename}")
@@ -520,14 +521,10 @@ def download_logs_saveddata_from_dynamodb(
 ) -> None:
     try:
         save_data_file = (
-            worker_config.saved_data_target_path_local
-            + "/"
-            + worker_config.saved_target_filename
+            worker_config.saved_path + "/" + worker_config.saved_data_target_filename
         )
         save_logs_file = (
-            worker_config.saved_logs_target_path
-            + "/"
-            + worker_config.saved_logs_target_filename
+            worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
         )
         aws_utils.save_user_logs_data_from_dynamodb(
             table_name=worker_config.dynamodb_tablename,
@@ -545,14 +542,10 @@ def download_logs_saveddata_from_dynamodb(
     try:
         # download logs data
         source_log_file_s3 = (
-            worker_config.saved_logs_target_path
-            + "/"
-            + worker_config.saved_logs_target_filename
+            worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
         )
         target_log_file_local = (
-            worker_config.saved_data_target_path_local
-            + "/"
-            + worker_config.saved_logs_target_filename
+            worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
         )
         download_file_from_s3(
             bucket_name=worker_config.saved_bucket,
@@ -568,14 +561,10 @@ def download_logs_saveddata_from_dynamodb(
     try:
         # download results data
         data_source_file_s3 = (
-            worker_config.saved_data_target_path
-            + "/"
-            + worker_config.saved_target_filename
+            worker_config.saved_path + "/" + worker_config.saved_data_target_filename
         )
         data_target_file_local = (
-            worker_config.saved_data_target_path_local
-            + "/"
-            + worker_config.saved_target_filename
+            worker_config.saved_path + "/" + worker_config.saved_data_target_filename
         )
         download_file_from_s3(
             bucket_name=worker_config.saved_bucket,
@@ -617,9 +606,7 @@ def initial_end_services(
         aws_region=aws_config.aws_region,
     )
     logs_full_path_name = (
-        worker_config.saved_logs_target_path
-        + "/"
-        + worker_config.saved_logs_target_filename
+        worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
     )
     s3_client = aws_utils.connect_aws_client(
         client_name="s3",
@@ -627,11 +614,16 @@ def initial_end_services(
         secret=aws_config.aws_secret_access_key,
         region=aws_config.aws_region,
     )
+
+    plot_full_path_name = (
+        worker_config.saved_path + "/" + worker_config.saved_rumtime_image_name
+    )
+
     process_logs_from_s3(
         bucket=worker_config.saved_bucket,
         logs_file_path_name=logs_full_path_name,
-        saved_image_name_local=worker_config.saved_rumtime_image_name_local,
-        saved_image_name_aws=worker_config.saved_rumtime_image_name_aws,
+        saved_image_name_local=plot_full_path_name,
+        saved_image_name_aws=plot_full_path_name,
         s3_client=s3_client,
     )
 

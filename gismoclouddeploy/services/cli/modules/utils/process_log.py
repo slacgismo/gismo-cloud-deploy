@@ -1,4 +1,5 @@
 from asyncio.log import logger
+from cmath import log
 import sys
 from numpy import number
 import pandas as pd
@@ -321,6 +322,9 @@ def analyze_logs_files(
     effeciency = 0
     num_unfinished_task = 0
     for key, value in worker_dict.items():
+        if ("start" in value) is False:
+            logger.warning(f"missing 'start' key in task {key}")
+            continue
         if ("end" in value) is False:
             num_unfinished_task += 1
             continue

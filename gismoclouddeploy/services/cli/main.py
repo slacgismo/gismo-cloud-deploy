@@ -316,14 +316,14 @@ def processlogs(configfile):
     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
 
     logs_file_path_name = (
-        worker_config_obj.saved_logs_target_path
+        worker_config_obj.saved_path
         + "/"
         + worker_config_obj.saved_logs_target_filename
     )
     saved_file_name = (
-        worker_config_obj.saved_data_target_path
+        worker_config_obj.saved_path
         + "/"
-        + worker_config_obj.saved_target_filename
+        + worker_config_obj.saved_data_target_filename
     )
     s3_client = connect_aws_client(
         client_name="s3",
@@ -338,7 +338,7 @@ def processlogs(configfile):
         aws_region=AWS_DEFAULT_REGION,
     )
     logs_file_path_name = (
-        worker_config_obj.saved_logs_target_path
+        worker_config_obj.saved_path
         + "/"
         + worker_config_obj.saved_logs_target_filename
     )
@@ -346,7 +346,7 @@ def processlogs(configfile):
         bucket=worker_config_obj.saved_bucket,
         logs_file_path_name=logs_file_path_name,
         s3_client=s3_client,
-        save_file_path_name=worker_config_obj.saved_performance_file_local,
+        save_file_path_name=worker_config_obj.saved_performance_file,
     )
 
 
@@ -461,11 +461,25 @@ def run_process_files(
         )
         config_yaml = f"./config/config.yaml"
 
+    """
+    Generated unique file name and folder to save data, logs, solver's lic and plot
+    """
+
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
-    config_json["worker_config"]["user_id"] = str(socket.gethostname())
-    config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = str(
-        socket.gethostname()
+    user_id = str(socket.gethostname())
+    config_json["worker_config"]["user_id"] = user_id
+    config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
+        config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"]
+        + "/"
+        + user_id
     )
+    config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}.png"
+    config_json["worker_config"][
+        "saved_performance_file"
+    ] = f"performance-{user_id}.txt"
+    config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
+    config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
+
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
     aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
     aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
@@ -760,10 +774,14 @@ def run_process_files(
         region=aws_config_obj.aws_region,
     )
     logs_file_path_name = (
-        worker_config_obj.saved_logs_target_path
+        worker_config_obj.saved_path
         + "/"
         + worker_config_obj.saved_logs_target_filename
     )
+    performance_path_name = (
+        worker_config_obj.saved_path + "/" + worker_config_obj.saved_performance_file
+    )
+
     total_process_time = time.time() - start_time
     modules.process_log.analyze_logs_files(
         bucket=worker_config_obj.saved_bucket,
@@ -773,7 +791,7 @@ def run_process_files(
         eks_nodes_number=aws_config_obj.eks_nodes_number,
         num_workers=services_config_list["worker"]["desired_replicas"],
         s3_client=s3_client,
-        save_file_path_name=worker_config_obj.saved_performance_file_local,
+        save_file_path_name=performance_path_name,
     )
 
     print(" ======== Completed ========== ")

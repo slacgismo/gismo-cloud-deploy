@@ -19,14 +19,14 @@ services_config_list:
       image_name: "worker"
       image_tag: "latest"
   server:
-      desired_replicas: 1
+      desired_replicas: 2
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/server.deployment.yaml"
       service_file: "./config/k8s/server.services.yaml"
       image_name: "server"
       image_tag: "latest"
   redis:
-      desired_replicas: 1
+      desired_replicas: 2
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/redis.deployment.yaml"
       service_file: "./config/k8s/redis.services.yaml"
@@ -34,7 +34,7 @@ services_config_list:
       image_tag: "latest"
 
   rabbitmq:
-      desired_replicas: 1
+      desired_replicas: 2
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
       service_file: "./config/k8s/rabbitmq.services.yaml"
@@ -48,28 +48,24 @@ worker_config:
     saved_solver_bucket: "pv.insight.test"
     solver_lic_local_path: "./config/license"
     solver_lic_target_path: "/root/mosek"
-    saved_temp_path_in_bucket: None # grenerated in run-time.
+    saved_temp_path_in_bucket: "lic_temp" # grenerated in run-time.
     solver_lic_file_name: "mosek.lic"
   data_bucket: "pv.insight.nrel"
   default_process_files: ["PVO/PVOutput/40588.csv"]
   process_column_keywords: ["Power(W)","(W)"] # partial match
   saved_bucket: "pv.insight.test"
-  saved_data_target_path: "results"
-  saved_data_target_path_local: "results"
-  saved_target_filename: "04262022_results.csv"
+  saved_path: "results"
   dynamodb_tablename: "gcd_logs_dynamodb" # pre-define in AWS us-east-2
-  saved_logs_target_path: "results"
-  saved_logs_target_filename: "logs.csv"
-  saved_rumtime_image_name_aws: "results/runtime.png"
-  saved_rumtime_image_name_local: "results/plot/runtime.png"
-  saved_performance_file_local: "results/performance.txt"
   interval_of_check_task_status: "5"    # in second
-  interval_of_exit_check_status: "10"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
-
-  curr_process_file : None      # It's a hint column that is generated in the CLI runtime. Do not change !!
-  curr_process_column : None    # It's a hint column that is generated in the CLI runtime. Do not change !!
-  aws_access_key : None         # It's a hint column that is generated in the CLI runtime. Do not change !!
-  aws_secret_access_key : None  # It's a hint column that is generated in the CLI runtime. Do not change !!
-  aws_region : None             # It's a hint column that is generated in the CLI runtime. Do not change !!
-  sns_topic : None              # It's a hint column that is generated in the CLI runtime. Do not change !!
-  user_id : None           # It's a hint column that is generated in the CLI runtime. Do not change !!
+  interval_of_exit_check_status: "900"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
+  saved_rumtime_image_name: None          # runtime-{user_id}.png"
+  saved_performance_file: None            #"performance-{user_id}.txt"
+  saved_data_target_filename: None        #"results-{user_id}.csv"
+  saved_logs_target_filename: None        #"logs-{user_id}.csv"
+  curr_process_file : None      # It's a hint column that is generated in the CLI run-time.
+  curr_process_column : None    # It's a hint column that is generated in the CLI run-time.
+  aws_access_key : None         # It's a hint column that is generated in the CLI run-time.
+  aws_secret_access_key : None  # It's a hint column that is generated in the CLI run-time.
+  aws_region : None             # It's a hint column that is generated in the CLI run-time.
+  sns_topic : None              # It's a hint column that is generated in the CLI run-time.
+  user_id : None           # It's a hint column that is generated in the CLI run-ime.
