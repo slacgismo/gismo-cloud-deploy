@@ -24,13 +24,26 @@ def entrypoint(
     solver_name: str = None,
     solver_file: str = None,
 ) -> dict:
+    """
+    Entrypoint function to wrap your code
+    :param str user_id: This user_id is generated in cli command and pass to here(worker). This user id is required to used in sns, dynamodb and sqs services
+    :param str data_bucket: This data_bucket is the s3 bucket that contains data files.
+    :param str curr_process_file: Current process file. This file name is one of the column name in logs file.()
+    :param str curr_process_column: Current proccess column name. This column name is one of the column name in logs file.
+    :param str aws_access_key:
+    :param str aws_secret_access_key:
+    :param str aws_region:
+    :param str solver_name: The solver name that defined in config.yaml
+    :param str solver_file: The solver file location inside worker. This file location is defined in config.yaml.
+    :return dict json_message: Return a json format object contain user_id (This message is used to publish sns message and track logs in dynamodb)
+    """
 
-    # logger.info("----- This is template code.")
+    ## ==================== Modify your code below ==================== ##
     logger.info(
         f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
     )
 
-    # check solver file :
+    # check solver file exist: The download function is inside `check_and_download_solver` function ""
     if solver_name is not None and (exists(solver_file) is False):
         return Exception(f"solver_file:{solver_file} dose not exist")
 
@@ -102,7 +115,8 @@ def entrypoint(
         normal_quality_scores = bool(dh.normal_quality_scores)
         capacity_changes = bool(dh.capacity_changes)
 
-        # save data as json format
+        ## ==================== Save data in json format is required  your code above ==================== ##
+
         save_data = {
             "bucket": data_bucket,
             "file": curr_process_file,
@@ -142,6 +156,10 @@ def entrypoint(
     #     "normal_quality_scores": 1,
     #     "capacity_changes": 1,
     # }
+
+    #
+    ## ==================== Modify your code above ==================== ##
+
     return make_response(
         alert_type=Alert.SAVED_DATA.name,
         messages=save_data,
