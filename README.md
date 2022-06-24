@@ -474,6 +474,21 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 
 3. Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
 
+4. Monitoring the CUP and memory.
+
+Install and apply metrics server if the system didn't installed before.
+
+```bash
+git clone https://github.com/kubernetes-incubator/metrics-server.git
+kubectl apply -f kubernetes-metrics-server
+```
+
+Check specific pod's memory and CPU usgage. For example, if you would like to check pod, `worker-6d47d89f94-zv8pt`, memory and CPU. Use the following command:
+
+```bash
+kubectl top pod worker-6d47d89f94-zv8pt
+```
+
 ---
 
 ## Testing
