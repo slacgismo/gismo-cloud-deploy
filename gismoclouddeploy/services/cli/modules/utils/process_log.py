@@ -137,6 +137,7 @@ def process_df_for_gantt(df: pd):
         # print(worker.task_id)
 
         task_id = worker.task_id
+
         if task_id in worker_dict:
             if key_start in worker_dict[task_id]:
                 worker_dict[task_id][key_end] = worker.time
