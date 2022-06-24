@@ -161,7 +161,7 @@ If cluster exists, it returns the output as below.
 
 ~~~
 NAME		REGION		EKSCTL CREATED
-gcd-eks-cluster	us-east-2	True
+gcd-eks	us-east-2	True
 ~~~
 
 If cluster does not exist, please follow [EKS configuration yaml files]() section to create a cluster first.
@@ -198,11 +198,29 @@ Un-comment `save_data` to
 ```bash
 gcd run-files -n 1 -d -b
 ```
+After it completed, the termainal prints out the results as below:
+~~~
++-------------------------------------+-----------------------+---------------------------------+
+| Performance                         | Results               | Info                            |
++-------------------------------------+-----------------------+---------------------------------+
+| Total tasks                         | 2                     |                                 |
+| Average task duration               | 2.046194 sec          |                                 |
+| Min task duration                   | 1.915406 sec          | PVO/PVOutput/10059.csv/Power(W) |
+| Max task duration                   | 2.176982 sec          | PVO/PVOutput/10010.csv/Power(W) |
+| Number of error tasks               | 0                     |                                 |
+| Number of unfinished tasks          | 0                     |                                 |
+| Process tasks duration(in parallel) | 3.479771137237549 sec | Real data                       |
+| Process tasks duration(in serial)   | 4.092388 sec          | Estimation                      |
+| Effeciency improvement              | 17 %                  |                                 |
+| Initialize services duration        | 60.2083740234375 sec  |                                 |
+| Total process durations             | 76.75437307357788 sec |                                 |
+| Number of nodes                     | 5                     |                                 |
+| Number of workers                   | 5                     |                                 |
++-------------------------------------+-----------------------+---------------------------------+
+~~~
 
-11. Check the save file in `./gismoclouddeploy/services/cli/results` folder. If you can see the save data in file, you have successfully build and run your custom code-blocks in this application on AWS EKS.
-    The `./gismoclouddeploy/services/cli/results/plot` folder contains a gantt plot that shows the details of this run-time's parallelism.
+11. Check the saved data file, gantt plot and tasks performance in `./gismoclouddeploy/services/cli/results` folder.
 
-12. To find out more information of this application, please follow the rest sections.
 
 ---
 
@@ -241,10 +259,6 @@ Options:
   -do, --docker  BOOL     Default value is False. If it is True, the services
                           run in docker environment. Otherwise, the services run
                           in kubernetes◊ environment.
-
-  -l, --local    BOOL     Default value is False. If it is True, define running
-                          environemnt in local. Otherwiser, define running
-                          environemt on AWS
 
   -b, --build             Build a temp image and use it. If on AWS k8s
                           environment,     build and push image to ECR with
@@ -412,6 +426,49 @@ In this example, two images with build and tag as `worker:test` and `server:test
 > Developers cannot push images with `latest` and `develop` tags from local to AWS ECR.
 
 ---
+
+## Debug
+
+### Get previous error output
+
+The `gcd read-dlq` command prints out the error ouput from previous run-time.
+
+### Use kubectl debug in real time
+
+Get the logs information of workers in real time needs a serial steps as follow:
+
+1. Open new terminal, list all running worker services' name as command below:
+
+```bash
+kubectl get pod
+```
+It print out:
+~~~
+NAME                       READY   STATUS    RESTARTS   AGE
+rabbitmq-84669dd8f-rc2fx   1/1     Running   0          10h
+rabbitmq-84669dd8f-xm597   1/1     Running   0          10h
+redis-697477d557-8jdz2     1/1     Running   0          10h
+redis-697477d557-mxtpx     1/1     Running   0          10h
+server-65bf8bc584-h885f    1/1     Running   0          10h
+server-65bf8bc584-kc6zs    1/1     Running   0          10h
+worker-6d47d89f94-r7drj    1/1     Running   0          10h
+worker-6d47d89f94-zh8pq    1/1     Running   0          10h
+worker-6d47d89f94-zv8pt    1/1     Running   0          10h
+~~~
+
+
+***NOTE*** The worker's (`worker-<random id>`) name changed when this application restarts the services.
+
+2. Logs out the `worker-6d47d89f94-r7drj` information in terminal.
+
+  ```bash
+  kubectl logs -f worker-6d47d89f94-r7drj
+  ```
+
+  It prints out the logs detail of `worker-6d47d89f94-r7drj`.Repeat this step to print out the rest two workers in different terminal.
+
+
+3. Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
 
 ---
 
