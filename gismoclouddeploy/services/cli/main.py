@@ -463,6 +463,9 @@ def run_process_files(
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
     config_json["worker_config"]["user_id"] = str(socket.gethostname())
+    config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = str(
+        socket.gethostname()
+    )
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
     aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
     aws_config_obj.aws_secret_access_key = AWS_SECRET_ACCESS_KEY
@@ -595,7 +598,7 @@ def run_process_files(
                 )
             except Exception as e:
                 logger("Scale nodes error")
-                return
+
         # updae k8s
         # check worker deployment
         # loop k8s services list , create or update k8s depolyment and services

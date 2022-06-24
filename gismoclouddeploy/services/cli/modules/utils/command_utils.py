@@ -611,7 +611,7 @@ def initial_end_services(
     delete_solver_lic_from_bucket(
         saved_solver_bucket=worker_config.solver.saved_solver_bucket,
         solver_lic_file_name=worker_config.solver.solver_lic_file_name,
-        saved_temp_path_in_bucket=worker_config.solver.saved_temp_path_in_bucket,
+        saved_temp_path_in_bucket=worker_config.user_id,
         aws_access_key=aws_config.aws_access_key,
         aws_secret_access_key=aws_config.aws_secret_access_key,
         aws_region=aws_config.aws_region,

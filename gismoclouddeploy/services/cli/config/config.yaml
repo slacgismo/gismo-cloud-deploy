@@ -48,10 +48,10 @@ worker_config:
     saved_solver_bucket: "pv.insight.test"
     solver_lic_local_path: "./config/license"
     solver_lic_target_path: "/root/mosek"
-    saved_temp_path_in_bucket: "tempSolverLic"
+    saved_temp_path_in_bucket: None # grenerated in run-time.
     solver_lic_file_name: "mosek.lic"
   data_bucket: "pv.insight.nrel"
-  default_process_files: ["PVO/PVOutput/11106.csv"]
+  default_process_files: ["PVO/PVOutput/40588.csv"]
   process_column_keywords: ["Power(W)","(W)"] # partial match
   saved_bucket: "pv.insight.test"
   saved_data_target_path: "results"
@@ -64,7 +64,7 @@ worker_config:
   saved_rumtime_image_name_local: "results/plot/runtime.png"
   saved_performance_file_local: "results/performance.txt"
   interval_of_check_task_status: "5"    # in second
-  interval_of_exit_check_status: "900"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
+  interval_of_exit_check_status: "10"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
 
   curr_process_file : None      # It's a hint column that is generated in the CLI runtime. Do not change !!
   curr_process_column : None    # It's a hint column that is generated in the CLI runtime. Do not change !!
