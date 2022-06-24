@@ -115,7 +115,7 @@ def entrypoint(
         normal_quality_scores = bool(dh.normal_quality_scores)
         capacity_changes = bool(dh.capacity_changes)
 
-        ## ==================== Save data in json format is required  your code above ==================== ##
+        ## ==================== Save data in json format is required  ==================== ##
 
         save_data = {
             "bucket": data_bucket,
