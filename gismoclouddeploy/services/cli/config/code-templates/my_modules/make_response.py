@@ -4,6 +4,12 @@ from .Alert import Alert
 def make_response(
     alert_type: str = None, messages: dict = None, user_id: str = None
 ) -> dict:
+    """
+    Make json message for SNS
+    :param str alert_type: The alert types in Subject of SNS message.
+    :param dict messages: The message contents of SNS message.
+    :param str user_id: The user id generated from CLI. This used id is attached into Message and Subject of SNS message.
+    """
     subject = {"alert_type": alert_type, "user_id": user_id}
     messages["user_id"] = user_id
 
