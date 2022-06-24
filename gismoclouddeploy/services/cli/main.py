@@ -714,7 +714,9 @@ def run_process_files(
 
     proces = list()
     try:
-        logger.info("Running invoke process files commmand in multiprocess")
+        logger.info(
+            "============ Running invoke process files commmand in multiprocess ==========="
+        )
         proc_x = Process(
             target=modules.command_utils.invoke_process_files_based_on_number(
                 number=number,

@@ -103,9 +103,11 @@ def process_files(worker_config_str: str, first_n_files: str):
             task_input_json["temp_saved_filename"] = temp_saved_filename
             task_id = process_data_task.delay(**task_input_json)
             task_ids.append(str(task_id))
+            print(task_id)
+            time.sleep(0.1)
     # loop task ids and check status
-    time.sleep(1)
-    loop_tasks_status_task.apply_async([task_ids], kwargs=worker_config_json)
+    # time.sleep(1)
+    # loop_tasks_status_task.apply_async([task_ids], kwargs=worker_config_json)
 
 
 @cli.command("revoke_task")

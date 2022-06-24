@@ -138,7 +138,7 @@ def long_pulling_sqs(
     while wait_time > 0:
         time.sleep(delay)
         messages = receive_queue_message(
-            sqs_url, sqs_client, MaxNumberOfMessages=5, wait_time=delay
+            sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
         )
         logger.info(
             f"waiting ....counter: {wait_time - delay} \

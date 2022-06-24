@@ -79,13 +79,13 @@ def get_total_task_number(
                 bucket_name=worker_config_json["data_bucket"], s3_client=s3_client
             )
             number_files = len(all_files)
-            total_task_num = len(all_files) + 1
+            total_task_num = len(all_files)
             logger.info(
                 f" ========= Process all {number_files} files in bucket ========= "
             )
         else:
             logger.info(f" ========= Process first {number} files in bucket ========= ")
-            total_task_num = int(number) + 1
+            total_task_num = int(number)
     return total_task_num
 
 
