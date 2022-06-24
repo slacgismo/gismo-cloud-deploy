@@ -372,14 +372,13 @@ make delete-cluster
 This lic file will upload to a temporary S3 folder and downlad into AWS EKS in run-time. The lic file will be deleted after process is done.
 
 ---
-## Code block
+## Code blocks
 
 Custom code:
 
 Developers can build and run its own code in this application.
 In order to pass developer's custom code block to this application, the code block has to be inside the `./gismoclouddeploy/services/cli/config/code-templates` folder.
 The `entrypoint` function in `entrypoint.py` file is the start function of this application. When this application build images, it copies all the files inside `code-templates`folder and paste them to docker images.
-When developer invoke `run-files` commnad, this application pass config parameters from `server` service to `worker` service, and trigger `entrypoint` function in `entrypoint.py` file.
 Developers can includes any files or self defined python modules in `code-templates` folder. Those files, sub-folder and modules will be copied to the docker images as well.
 
 Please check the `entrypoint.py` files to get more informations of input parametes.
