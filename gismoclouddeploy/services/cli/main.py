@@ -100,12 +100,6 @@ def main():
     is_flag=True,
     help="Default value is False. If it is True, the services run in docker environment.Otherwise, the services run in k8s environment.",
 )
-# @click.option(
-#     "--local",
-#     "-l",
-#     is_flag=True,
-#     help="Default value is False. If it is True, define running environemnt in local.Otherwiser, define running environemt on AWS",
-# )
 @click.option(
     "--build",
     "-b",
@@ -121,7 +115,6 @@ def run_files(
     rollout: str = False,
     imagetag: str = "latest",
     docker: bool = False,
-    # local: bool = False,
     build: bool = False,
 ):
     """
@@ -147,7 +140,6 @@ def run_files(
         rollout=rollout,
         image_tag=imagetag,
         is_docker=docker,
-        # is_local=local,
         is_build_image=build,
     )
 

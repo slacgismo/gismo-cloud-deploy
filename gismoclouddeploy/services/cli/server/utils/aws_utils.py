@@ -148,7 +148,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
             parse_dates=["timestamp"],
             infer_datetime_format=True,
         )
-        print(result_df.head())
+        # print(result_df.head())
         result_df["timestamp"] = pd.to_datetime(result_df["timestamp"], unit="s")
 
     else:

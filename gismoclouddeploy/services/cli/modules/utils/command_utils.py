@@ -853,17 +853,17 @@ def check_and_wait_server_ready(
     return False
 
 
-def get_saved_data_from_logs(
-    logs_file_path_name: str = None,
-    s3_client=None,
-    saved_file_name: str = None,
-    bucket: str = None,
-) -> None:
-    df = read_all_csv_from_s3_and_parse_dates_from(
-        bucket_name=bucket,
-        file_path_name=logs_file_path_name,
-        dates_column_name="timestamp",
-        s3_client=s3_client,
-    )
+# def get_saved_data_from_logs(
+#     logs_file_path_name: str = None,
+#     s3_client=None,
+#     saved_file_name: str = None,
+#     bucket: str = None,
+# ) -> None:
+#     df = read_all_csv_from_s3_and_parse_dates_from(
+#         bucket_name=bucket,
+#         file_path_name=logs_file_path_name,
+#         dates_column_name="timestamp",
+#         s3_client=s3_client,
+#     )
 
-    print(df.head())
+#     print(df.head())

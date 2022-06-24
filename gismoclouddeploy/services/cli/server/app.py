@@ -38,9 +38,9 @@ def ping_worker():
 def check_task_status(task_id: str = None):
     task_result = AsyncResult(str(task_id))
     result = {
-        "task_id": task_id,
-        "task_status": task_result.status,
-        "task_result": task_result.result,
+        "task_id": str(task_id),
+        "task_status": str(task_result.status),
+        "task_result": str(task_result.result),
     }
     print(result)
 
