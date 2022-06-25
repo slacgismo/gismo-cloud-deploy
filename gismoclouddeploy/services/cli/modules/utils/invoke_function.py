@@ -259,8 +259,10 @@ def invoke_exec_k8s_run_process_files(
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
+        out, err = res.communicate()
     except KeyboardInterrupt:
         res.terminate()
+    return out
     # res = exec_subprocess_command(command=command)
     # res = exec_docker_command(command)
     return
