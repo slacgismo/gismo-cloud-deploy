@@ -479,7 +479,7 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 Install and apply metrics server if the system didn't installed before.
 
 ```bash
-git clone https://github.com/kubernetes-incubator/metrics-server.git
+git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git
 kubectl apply -f kubernetes-metrics-server
 ```
 
