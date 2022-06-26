@@ -1077,15 +1077,19 @@ def long_pulling_sqs_and_check_tasks(
     delete_nodes_after_processing: bool,
     is_docker: bool,
     dlq_url: str,
+    acccepted_idle_time: int,
 ) -> None:
     task_ids_set = set(task_ids)
+    total_task_length = len(task_ids_set)
     sqs_client = aws_utils.connect_aws_client(
         client_name="sqs",
         key_id=aws_config.aws_access_key,
         secret=aws_config.aws_secret_access_key,
         region=aws_config.aws_region,
     )
-
+    previous_messages_time = time.time()
+    numb_tasks_completed = 0
+    task_completion = 0
     while wait_time > 0:
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
@@ -1116,13 +1120,17 @@ def long_pulling_sqs_and_check_tasks(
                         logger.info(f"Get message=====>")
                         logger.info(f"subject: {subject_info}")
                         logger.info(f"message_text: {message_text}")
+                        previous_messages_time = time.time()
                         try:
                             message_json = json.loads(message_text)
                             task_id = message_json["task_id"]
                             print(f"task id: {task_id}")
                             if task_id in task_ids_set:
                                 task_ids_set.remove(task_id)
-
+                                numb_tasks_completed += 1
+                                task_completion = int(
+                                    numb_tasks_completed * 100 / total_task_length
+                                )
                         except Exception as e:
                             logger.info(f"Parse message failed {e}")
                         delete_queue_message(sqs_url, receipt_handle, sqs_client)
@@ -1134,8 +1142,16 @@ def long_pulling_sqs_and_check_tasks(
                         f"Delet this {subject} !!, This subject is not json format {e}"
                     )
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
-
+        logger.info(f"===== Task completion: {task_completion} =========")
         if len(task_ids_set) == 0:
-            logger.info("All task completed")
+            logger.info("===== All task completed ====")
+            return
+        idle_time = time.time() - previous_messages_time
+        if idle_time >= acccepted_idle_time:
+            logger.info("===== SQS Idle over time ====")
+            logger.info("===== Unfinish tasks ====")
+            for id in task_ids_set:
+                logger.info(id)
             return
         wait_time -= int(delay)
+    return
