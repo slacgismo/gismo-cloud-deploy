@@ -241,12 +241,12 @@ def invoke_process_files_to_server(
             pod_name=server_name,
             first_n_files=number,
         )
-    print(_resp)
+    # print(_resp)
     _resp_str = _resp.decode("utf-8")
     _temp_array = re.split(r"[~\r\n]+", _resp_str)
     task_ids = _temp_array[0:-1]
-    for id in task_ids:
-        print(id)
+    # for id in task_ids:
+    #     print(id)
     # print(task_ids)
     return task_ids
 
