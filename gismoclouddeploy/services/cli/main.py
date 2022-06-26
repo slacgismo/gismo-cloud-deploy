@@ -767,7 +767,8 @@ def run_process_files(
         delete_nodes_after_processing=delete_nodes,
         is_docker=is_docker,
         dlq_url=DLQ_URL,
-        acccepted_idle_time=60,
+        acccepted_idle_time=int(worker_config_obj.acccepted_idle_time),
+        server_name=ready_server_name,
     )
     logger.info(" ----- init end services process --------- ")
     modules.command_utils.initial_end_services(

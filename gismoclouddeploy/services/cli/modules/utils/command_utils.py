@@ -1,7 +1,8 @@
+from cmath import e
 from os.path import exists
 from re import A
 import re
-from typing import List, Dict
+from typing import List, Dict, Set
 from unittest import result
 
 import pandas as pd
@@ -99,11 +100,18 @@ def checck_server_ready_and_get_name(
     if is_docker:
         server_name = deployment_services_list["server"]["image_name"]
     else:
+        wait_time = 25
+        delay = 1
+        while wait_time > 0:
+            wait_time -= delay
+            logger.info(f"Wait {wait_time} sec")
+            time.sleep(delay)
         server_name = get_k8s_pod_name(pod_name="server")
         logger.info(f"server name ====> {server_name}")
         if server_name == None:
             logger.error("Cannot find server pod")
             raise Exception("Find k8s pod server error")
+
     if (
         check_and_wait_server_ready(
             is_docer=is_docker, server_name=server_name, wait_time=60, delay=1
@@ -112,6 +120,7 @@ def checck_server_ready_and_get_name(
     ):
         logger.error("Wait server ready failed")
         raise Exception(f"Wait {server_name} failed")
+
     return server_name
 
 
@@ -1047,6 +1056,7 @@ def check_and_wait_server_ready(
             result = invoke_exec_k8s_check_task_status(
                 server_name=server_name, task_id=str(task_id).strip("\n")
             )
+        logger.info(result)
         # conver json to
         res_json = {}
         dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
@@ -1078,6 +1088,7 @@ def long_pulling_sqs_and_check_tasks(
     is_docker: bool,
     dlq_url: str,
     acccepted_idle_time: int,
+    server_name: str,
 ) -> None:
     task_ids_set = set(task_ids)
     total_task_length = len(task_ids_set)
@@ -1093,10 +1104,6 @@ def long_pulling_sqs_and_check_tasks(
     while wait_time > 0:
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
-        )
-        logger.info(
-            f"waiting ....counter: {wait_time - delay} \
-            Time: {time.ctime(time.time())}"
         )
 
         alert_type = ""
@@ -1142,16 +1149,65 @@ def long_pulling_sqs_and_check_tasks(
                         f"Delet this {subject} !!, This subject is not json format {e}"
                     )
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
-        logger.info(f"===== Task completion: {task_completion} =========")
+        # logger.info(f"===== Task completion: {task_completion} =========")
+        logger.info(
+            f"Task completion: {task_completion} % \
+            Waiting .: {wait_time - delay} \
+            Time: {time.ctime(time.time())} "
+        )
         if len(task_ids_set) == 0:
             logger.info("===== All task completed ====")
             return
         idle_time = time.time() - previous_messages_time
         if idle_time >= acccepted_idle_time:
-            logger.info("===== SQS Idle over time ====")
-            logger.info("===== Unfinish tasks ====")
-            for id in task_ids_set:
-                logger.info(id)
-            return
+            logger.info(f"===== No messages receive over time {idle_time} sec ====")
+            logger.info(f"===== number of unfinished tasks {len(task_ids_set)} ====")
+            logger.info(f"===== Check tasks status directly ====")
+            unfinished_tasks_set = check_tasks_status(
+                is_docker=is_docker, server_name=server_name, task_ids_set=task_ids_set
+            )
+            return unfinished_tasks_set
         wait_time -= int(delay)
-    return
+    return task_ids_set
+
+
+def check_tasks_status(
+    is_docker: bool = False,
+    server_name: str = None,
+    # task_id :str = None,
+    task_ids_set: Set[str] = None,
+) -> str:
+    # unfinish_task_id_set = Set()
+    unfinished_task_set = set()
+    for task_id in task_ids_set:
+        result = ""
+        try:
+            if is_docker:
+                result = invoke_exec_docker_check_task_status(
+                    server_name=server_name, task_id=str(task_id).strip("\n")
+                )
+            else:
+                logger.info("Chcek k8s worker status")
+                result = invoke_exec_k8s_check_task_status(
+                    server_name=server_name, task_id=str(task_id).strip("\n")
+                )
+        except Exception as e:
+            logger.error(f"Invokker check task status failed{e}")
+            raise e
+        logger.info(result)
+        # conver json to
+        res_json = {}
+        dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
+        try:
+            logger.info(f" ==== Id {task_id} Status: {res_json}====")
+            res_json = json.loads(dataform)
+            status = res_json["task_status"]
+
+            if status != "SUCCESS":
+                unfinished_task_set.add(task_id)
+            else:
+                logger.info(f"{task_id} success")
+        except Exception as e:
+            raise e
+    logger.info(f"{len(unfinished_task_set)} of tasks unfinished.")
+    return unfinished_task_set
