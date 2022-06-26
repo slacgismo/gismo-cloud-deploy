@@ -1,3 +1,4 @@
+from asyncio.log import logger
 from calendar import c
 from subprocess import PIPE, run
 from server.models.Configurations import Configurations
@@ -185,9 +186,20 @@ def invoke_exec_docker_run_process_files(
         f"{config_params_str}",
         f"{first_n_files}",
     ]
-
-    res = exec_docker_command(command)
-    return res
+    try:
+        # print(command)
+        res = subprocess.Popen(
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+        )
+        out, err = res.communicate()
+    except KeyboardInterrupt:
+        logger.error(f"Invoke process file error:{err}")
+        res.terminate()
+    print("output")
+    print(out)
+    return out
+    # res = exec_docker_command(command)
+    # return res
 
 
 def invoke_exec_docker_ping_worker(
@@ -261,6 +273,7 @@ def invoke_exec_k8s_run_process_files(
         )
         out, err = res.communicate()
     except KeyboardInterrupt:
+        logger.error(f"Invoke process file error:{err}")
         res.terminate()
     return out
     # res = exec_subprocess_command(command=command)

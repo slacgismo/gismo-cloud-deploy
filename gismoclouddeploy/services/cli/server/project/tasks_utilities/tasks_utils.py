@@ -115,9 +115,7 @@ def publish_message_sns(
             Message=message,
         )
         message_id = message_res["MessageId"]
-        logger.info(f"subject {subject}")
-        logger.info(f"message {message}")
-        logger.info(f"publish message_res :{message_res}")
+        logger.info(f"----- Publish subject {subject} message {message}")
         # logger.info(
         #     # f"Message published to topic - {topic_arn} with message Id - {message_id}."
         # )
@@ -219,11 +217,21 @@ def make_response(subject: str = None, messages: str = None) -> dict:
     return response
 
 
-def parse_subject_from_response(response: dict) -> str:
+def parse_subject_from_response(response: dict, task_id: str) -> str:
+    # response["Subject"]['task_id'] = task_id
+    # sub = str(response["Subject"]).strip("'<>() ").replace("'", '"').strip("\n")
+    # subject = json.loads(sub)
+    # print("---------------->>>>")
+    # subject['task_id'] = str(task_id)
+
+    # print(f"subject :{subject}")
     try:
         return str(response["Subject"])
+        # subject_str = json.dumps(subject)
     except Exception as e:
+        logger.error(f"===>dumps to json error:{e} ")
         raise e
+    return subject_str
 
 
 def parse_messages_from_response(response: dict) -> str:

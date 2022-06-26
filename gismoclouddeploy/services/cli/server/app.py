@@ -1,5 +1,7 @@
+from email.policy import default
 import json
 import logging
+from telnetlib import STATUS
 
 from project import create_app, ext_celery
 from utils.aws_utils import connect_aws_client
@@ -36,13 +38,21 @@ def ping_worker():
 @cli.command("check_task_status")
 @click.argument("task_id", nargs=1)
 def check_task_status(task_id: str = None):
-    task_result = AsyncResult(str(task_id))
+    response = AsyncResult(id=str(task_id))
+    status = response.state
+    result = response.get()
+    info = response.info
+    if result is None:
+        result = "None"
+    if info is None:
+        info = "None"
     result = {
-        "task_id": str(task_id),
-        "task_status": str(task_result.status),
-        "task_result": str(task_result.result),
+        "task_id": task_id,
+        "task_status": status,
+        "task_result": result,
+        "task_info": info,
     }
-    print(result)
+    print(str(result))
 
 
 # ***************************
@@ -57,9 +67,13 @@ def check_task_status(task_id: str = None):
 @click.argument("first_n_files", nargs=1)
 def process_files(worker_config_str: str, first_n_files: str):
     # logger.info("------------------")
-
-    worker_config_json = json.loads(worker_config_str)
-    # logger.info(worker_config_str)
+    try:
+        worker_config_json = json.loads(worker_config_str)
+    except Exception as e:
+        logger.error(f"Parse worker config failed {e}")
+        raise
+    default_files = json.loads(worker_config_json["default_process_files"])
+    # print(default_files_str)
     try:
         s3_client = connect_aws_client(
             client_name="s3",
@@ -69,42 +83,72 @@ def process_files(worker_config_str: str, first_n_files: str):
         )
         # print(worker_config_json)
     except Exception as e:
+        logger.error(f"AWS validation failed {e}")
         return "AWS validation fail"
-    task_ids = []
-    try:
-        n_files = get_process_filename_base_on_command(
-            first_n_files=first_n_files,
-            bucket=worker_config_json["data_bucket"],
-            default_files=worker_config_json["default_process_files"],
-            s3_client=s3_client,
-        )
 
-        # logger.info(n_files)
-    except Exception as e:
-        return f"Get filenames error: {e}"
-    for file in n_files:
-        # implement partial match
+    # print(default_files)
+    for file in default_files:
+        # print("==========")
+        # print(file)
         matched_column_set = find_matched_column_name_set(
             bucket_name=worker_config_json["data_bucket"],
             columns_key=worker_config_json["process_column_keywords"],
             file_path_name=file,
             s3_client=s3_client,
         )
+        # print(f"matched_column_set {matched_column_set}")
         for column in matched_column_set:
-            path, filename = os.path.split(file)
-            prefix = path.replace("/", "-")
-            # remove special characters
-            postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
-            temp_saved_filename = f"{prefix}-{postfix}-{filename}"
-            start_time = time.time()
             task_input_json = worker_config_json
             task_input_json["curr_process_file"] = file
             task_input_json["curr_process_column"] = column
-            task_input_json["temp_saved_filename"] = temp_saved_filename
             task_id = process_data_task.delay(**task_input_json)
-            task_ids.append(str(task_id))
-            print(task_id)
-            time.sleep(0.1)
+            print(str(task_id))
+    # logger.info(worker_config_str)
+    # try:
+    #     s3_client = connect_aws_client(
+    #         client_name="s3",
+    #         key_id=worker_config_json["aws_access_key"],
+    #         secret=worker_config_json["aws_secret_access_key"],
+    #         region=worker_config_json["aws_region"],
+    #     )
+    #     # print(worker_config_json)
+    # except Exception as e:
+    #     return "AWS validation fail"
+    # task_ids = []
+    # try:
+    #     n_files = get_process_filename_base_on_command(
+    #         first_n_files=first_n_files,
+    #         bucket=worker_config_json["data_bucket"],
+    #         default_files=worker_config_json["default_process_files"],
+    #         s3_client=s3_client,
+    #     )
+
+    #     # logger.info(n_files)
+    # except Exception as e:
+    #     return f"Get filenames error: {e}"
+    # for file in n_files:
+    #     # implement partial match
+    # matched_column_set = find_matched_column_name_set(
+    #     bucket_name=worker_config_json["data_bucket"],
+    #     columns_key=worker_config_json["process_column_keywords"],
+    #     file_path_name=file,
+    #     s3_client=s3_client,
+    # )
+    #     for column in matched_column_set:
+    #         path, filename = os.path.split(file)
+    #         prefix = path.replace("/", "-")
+    #         # remove special characters
+    #         postfix = re.sub(r'[\\/*?:"<>|()]', "", column)
+    #         temp_saved_filename = f"{prefix}-{postfix}-{filename}"
+    #         start_time = time.time()
+    # task_input_json = worker_config_json
+    # task_input_json["curr_process_file"] = file
+    # task_input_json["curr_process_column"] = column
+    # task_input_json["temp_saved_filename"] = temp_saved_filename
+    # task_id = process_data_task.delay(**task_input_json)
+    #         task_ids.append(str(task_id))
+    #         print(task_id)
+    # time.sleep(0.1)
     # loop task ids and check status
     # time.sleep(1)
     # loop_tasks_status_task.apply_async([task_ids], kwargs=worker_config_json)

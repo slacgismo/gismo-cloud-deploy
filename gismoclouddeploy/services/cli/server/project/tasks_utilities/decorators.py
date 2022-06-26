@@ -44,10 +44,10 @@ def tracklog_decorator(func):
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
         try:
-            args[0].update_state(
-                state=WorkerState.PROCESS.name, meta={"timestamp": str(time.time())}
-            )
-
+            # args[0].update_state(
+            #     state=WorkerState.PROCESS.name, meta={"timestamp": str(time.time())}
+            # )
+            start_time = str(time.time())
             # track start
             inspect_and_tracklog_decorator(
                 function_name=func.__name__,
@@ -77,25 +77,20 @@ def tracklog_decorator(func):
             # calls original function
             response = func(*args, **kwargs)
 
-            args[0].update_state(
-                state=WorkerState.SUCCESS.name, meta={"timestamp": str(time.time())}
-            )
+            # args[0].update_state(
+            #     state=WorkerState.SUCCESS.name, meta={"timestamp": str(time.time())}
+            # )
+            args[0].update_state(state=WorkerState.SUCCESS.name)
             # track end
 
         except Exception as e:
-            # response = {
-            #     "Subject": SNSSubjectsAlert.SYSTEM_ERROR.name,
-            #     "Messages": {"error": f"{e}"},
-            # }
             response = make_sns_response(
                 alert_type=SNSSubjectsAlert.SYSTEM_ERROR.name,
                 messages={"error": f"{e}"},
                 user_id=user_id,
             )
             logger.error(f"Publish SNS Error{e}")
-            args[0].update_state(
-                state=WorkerState.FAILED.name, meta={"timestamp": str(time.time())}
-            )
+            args[0].update_state(state=WorkerState.FAILED.name)
 
         inspect_and_tracklog_decorator(
             function_name=func.__name__,
@@ -110,12 +105,19 @@ def tracklog_decorator(func):
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
-
+        # subject_str = parse_subject_from_response(response=response,task_id=task_id)
+        end_time = str(time.time())
         update_messages = response["Messages"]
+        update_messages["task_id"] = str(task_id)
+        update_messages["start_time"] = start_time
+        update_messages["end_time"] = end_time
+        logger.info(update_messages)
+        subject = response["Subject"]
+
         publish_message_sns(
             # message=json.dumps(update_messages),
             message=json.dumps(update_messages),
-            subject=parse_subject_from_response(response=response),
+            subject=json.dumps(subject),
             topic_arn=sns_topic,
             aws_access_key=aws_access_key,
             aws_secret_access_key=aws_secret_access_key,

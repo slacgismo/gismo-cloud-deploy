@@ -29,6 +29,7 @@ def find_matched_column_name_set(
             bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client
         )
     except Exception as e:
+        logger.error(f"read column from s3 failed :{e}")
         raise e
     matched_column_set = set()
     for column in total_columns:
@@ -46,6 +47,7 @@ def find_matched_column_name_set(
                 s3_client=s3_client,
             )
         except Exception as e:
+            logger.error(f"read csv from s3 failed :{e}")
             raise e
         if len(tmp_df) == 0:
             logger.info(f" ==== > {key} has no value === ")

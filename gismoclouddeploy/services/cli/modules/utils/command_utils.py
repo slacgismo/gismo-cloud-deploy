@@ -89,6 +89,168 @@ def get_total_task_number(
     return total_task_num
 
 
+def checck_server_ready_and_get_name(
+    aws_config: AWS_CONFIG = None,
+    worker_config_json: str = None,
+    deployment_services_list: List[str] = None,
+    is_docker: bool = False,
+) -> str:
+    server_name = ""
+    if is_docker:
+        server_name = deployment_services_list["server"]["image_name"]
+    else:
+        server_name = get_k8s_pod_name(pod_name="server")
+        logger.info(f"server name ====> {server_name}")
+        if server_name == None:
+            logger.error("Cannot find server pod")
+            raise Exception("Find k8s pod server error")
+    if (
+        check_and_wait_server_ready(
+            is_docer=is_docker, server_name=server_name, wait_time=60, delay=1
+        )
+        is not True
+    ):
+        logger.error("Wait server ready failed")
+        raise Exception(f"Wait {server_name} failed")
+    return server_name
+
+
+def send_command_to_server(
+    server_name: str = None,
+    number: int = Union[int, None],
+    aws_config: AWS_CONFIG = None,
+    worker_config_json: str = None,
+    deployment_services_list: List[str] = None,
+    is_docker: bool = False,
+    num_file_to_process_per_round: int = 10,
+) -> List[str]:
+    worker_config_json["aws_access_key"] = aws_config.aws_access_key
+    worker_config_json["aws_secret_access_key"] = aws_config.aws_secret_access_key
+    worker_config_json["aws_region"] = aws_config.aws_region
+    worker_config_json["sns_topic"] = aws_config.sns_topic
+
+    s3_client = aws_utils.connect_aws_client(
+        client_name="s3",
+        key_id=worker_config_json["aws_access_key"],
+        secret=worker_config_json["aws_secret_access_key"],
+        region=worker_config_json["aws_region"],
+    )
+    n_files = return_process_filename_base_on_command(
+        first_n_files=number,
+        bucket=worker_config_json["data_bucket"],
+        default_files=worker_config_json["default_process_files"],
+        s3_client=s3_client,
+    )
+    start_index = 0
+    end_index = num_file_to_process_per_round
+    if end_index > len(n_files):
+        end_index = len(n_files)
+    total_tasks_ids = []
+    while start_index < len(n_files):
+        process_files_list = []
+        for file in n_files[start_index:end_index]:
+            process_files_list.append(file)
+            # print(f"--------------{file}")
+        #
+        worker_config_json["default_process_files"] = json.dumps(process_files_list)
+        worker_config_str = json.dumps(worker_config_json)
+        # invoke process files
+        task_ids = invoke_process_files_to_server(
+            is_docker=is_docker,
+            server_name=server_name,
+            worker_config_str=worker_config_str,
+            number=None,
+        )
+
+        total_tasks_ids += task_ids
+        percentage = int(end_index * 100 / len(n_files))
+        start_index = end_index
+        end_index = start_index + num_file_to_process_per_round
+        if end_index > len(n_files):
+            end_index = len(n_files)
+
+        print(
+            f"process from {start_index}, to {end_index} files, send tasks command percentage:  {percentage}%"
+        )
+    # for id in total_tasks_ids:
+    #     print(id)
+    return total_tasks_ids
+
+
+def return_process_filename_base_on_command(
+    first_n_files: str,
+    bucket: str,
+    default_files: List[str],
+    s3_client: "botocore.client.S3",
+) -> List[str]:
+
+    n_files = []
+    files_dict = list_files_in_bucket(bucket_name=bucket, s3_client=s3_client)
+
+    if first_n_files is None:
+        n_files = default_files
+    else:
+        try:
+            if int(first_n_files) == 0:
+                logger.info(f"Process all files in {bucket}")
+                for file in files_dict:
+                    n_files.append(file["Key"])
+            else:
+                logger.info(f"Process first {first_n_files} files")
+                for file in files_dict[0 : int(first_n_files)]:
+                    n_files.append(file["Key"])
+        except Exception as e:
+            logger.error(f"Input {first_n_files} is not an integer")
+            raise e
+    return n_files
+
+
+def list_files_in_bucket(bucket_name: str, s3_client):
+    """Get filename and size from S3 , remove non csv file"""
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    files = response["Contents"]
+    filterFiles = []
+    for file in files:
+        split_tup = os.path.splitext(file["Key"])
+        file_extension = split_tup[1]
+        if file_extension == ".csv":
+            obj = {
+                "Key": file["Key"],
+                "Size": file["Size"],
+            }
+            filterFiles.append(obj)
+    return filterFiles
+
+
+def invoke_process_files_to_server(
+    is_docker: bool = False,
+    server_name: str = None,
+    worker_config_str: str = None,
+    number: int = None,
+) -> str:
+
+    if is_docker:
+        _resp = invoke_exec_docker_run_process_files(
+            config_params_str=worker_config_str,
+            image_name=server_name,
+            first_n_files=number,
+        )
+    else:
+        _resp = invoke_exec_k8s_run_process_files(
+            config_params_str=worker_config_str,
+            pod_name=server_name,
+            first_n_files=number,
+        )
+    print(_resp)
+    _resp_str = _resp.decode("utf-8")
+    _temp_array = re.split(r"[~\r\n]+", _resp_str)
+    task_ids = _temp_array[0:-1]
+    for id in task_ids:
+        print(id)
+    # print(task_ids)
+    return task_ids
+
+
 def invoke_process_files_based_on_number(
     number: Union[int, None],
     aws_config: AWS_CONFIG = None,
@@ -102,19 +264,22 @@ def invoke_process_files_based_on_number(
     worker_config_json["aws_region"] = aws_config.aws_region
     worker_config_json["sns_topic"] = aws_config.sns_topic
     worker_config_str = json.dumps(worker_config_json)
-    counter = 25
-    delay = 1
-    while counter > 0:
-        counter -= delay
-        logger.info(f"Wait ...{counter} sec")
-        time.sleep(delay)
+    # counter = 15
+    # delay = 1
+    # while counter > 0:
+    #     counter -= delay
+    #     logger.info(f"Wait ...{counter} sec")
+    #     time.sleep(delay)
 
     server_name = ""
     if is_docker:
         server_name = deployment_services_list["server"]["image_name"]
     else:
         server_name = get_k8s_pod_name(pod_name="server")
-
+        logger.info(f"server name ====> {server_name}")
+        if server_name == None:
+            logger.error("Cannot find server pod")
+            raise Exception("Find k8s pod server error")
     if (
         check_and_wait_server_ready(
             is_docer=is_docker, server_name=server_name, wait_time=60, delay=1
@@ -123,23 +288,72 @@ def invoke_process_files_based_on_number(
     ):
         logger.error("Wait server ready failed")
         raise Exception(f"Wait {server_name} failed")
-
+    logger.info("Start send command to server")
     if is_docker:
-        docker_resp = invoke_exec_docker_run_process_files(
+        _resp = invoke_exec_docker_run_process_files(
             config_params_str=worker_config_str,
             image_name=server_name,
             first_n_files=number,
         )
-        logger.info(docker_resp)
+        logger.info(_resp)
     else:
-        k8s_resp = invoke_exec_k8s_run_process_files(
+        _resp = invoke_exec_k8s_run_process_files(
             config_params_str=worker_config_str,
             pod_name=server_name,
             first_n_files=number,
         )
-        logger.info(k8s_resp)
-    logger.info("=============== >Invoke processifles command done")
-    return
+    print(_resp)
+    _temp_array = re.split(r"[~\r\n]+", _resp)
+    task_ids = _temp_array[1:-1]
+    time.sleep(5)
+    updated_task_ids = loop_tasks_status(
+        task_ids=task_ids, is_docker=is_docker, server_name=server_name
+    )
+    for idx, id in enumerate(updated_task_ids):
+        print(idx, id)
+    # if len(updated_task_ids) == 0:
+    #     logger.info("=============== >All tasks completed !!!")
+    #     return
+    # else:
+    #     for task_id in updated_task_ids:
+    #         print(task_id)
+    # logger.info("=============== >Invoke processifles command done")
+    return task_ids
+
+
+def loop_tasks_status(
+    task_ids: List[str] = None,
+    is_docker: bool = False,
+    server_name: str = None,
+) -> None:
+    if len(task_ids) == 0 or server_name is None:
+        raise Exception("Input value error")
+    update_tasks_id = []
+
+    for task_id in task_ids:
+        try:
+            result = ""
+            if is_docker:
+                result = invoke_exec_docker_check_task_status(
+                    server_name=server_name, task_id=str(task_id).strip("\n")
+                )
+            else:
+                logger.info("Chcek k8s worker status")
+                result = invoke_exec_k8s_check_task_status(
+                    server_name=server_name, task_id=str(task_id).strip("\n")
+                )
+                # logger.info(result)
+                # conver json to
+            res_json = {}
+            dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
+            res_json = json.loads(dataform)
+            status = res_json["task_status"]
+            logger.info(f" ==== Check {task_id} Status: {dataform} ====")
+            if status != "SUCCESS":
+                update_tasks_id.append(task_id)
+        except Exception as e:
+            raise Exception(f"Invoke check tasks status failed {e}")
+    return update_tasks_id
 
 
 def process_logs_and_plot(
@@ -840,7 +1054,7 @@ def check_and_wait_server_ready(
         try:
             res_json = json.loads(dataform)
             status = res_json["task_status"]
-            logger.info(f" ==== Check {server_name} Status: {status}====")
+            # logger.info(f" ==== Check {server_name} Status: {res_json}====")
             if status == "SUCCESS":
                 return True
         except Exception as e:
@@ -853,17 +1067,75 @@ def check_and_wait_server_ready(
     return False
 
 
-# def get_saved_data_from_logs(
-#     logs_file_path_name: str = None,
-#     s3_client=None,
-#     saved_file_name: str = None,
-#     bucket: str = None,
-# ) -> None:
-#     df = read_all_csv_from_s3_and_parse_dates_from(
-#         bucket_name=bucket,
-#         file_path_name=logs_file_path_name,
-#         dates_column_name="timestamp",
-#         s3_client=s3_client,
-#     )
+def long_pulling_sqs_and_check_tasks(
+    task_ids: List[str],
+    wait_time: int,
+    delay: int,
+    sqs_url: str,
+    worker_config: WORKER_CONFIG,
+    aws_config: AWS_CONFIG,
+    delete_nodes_after_processing: bool,
+    is_docker: bool,
+    dlq_url: str,
+) -> None:
+    task_ids_set = set(task_ids)
+    sqs_client = aws_utils.connect_aws_client(
+        client_name="sqs",
+        key_id=aws_config.aws_access_key,
+        secret=aws_config.aws_secret_access_key,
+        region=aws_config.aws_region,
+    )
 
-#     print(df.head())
+    while wait_time > 0:
+        messages = receive_queue_message(
+            sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
+        )
+        logger.info(
+            f"waiting ....counter: {wait_time - delay} \
+            Time: {time.ctime(time.time())}"
+        )
+
+        alert_type = ""
+        if "Messages" in messages:
+            for msg in messages["Messages"]:
+                msg_body = json.loads(msg["Body"])
+
+                receipt_handle = msg["ReceiptHandle"]
+                subject = (
+                    msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
+                )
+                message_text = (
+                    msg_body["Message"].strip("'<>() ").replace("'", '"').strip("\n")
+                )
+                try:
+                    subject_info = json.loads(subject)
+                    sns_user_id = subject_info["user_id"]
+                    alert_type = subject_info["alert_type"]
+
+                    if sns_user_id == worker_config.user_id:
+                        logger.info(f"Get message=====>")
+                        logger.info(f"subject: {subject_info}")
+                        logger.info(f"message_text: {message_text}")
+                        try:
+                            message_json = json.loads(message_text)
+                            task_id = message_json["task_id"]
+                            print(f"task id: {task_id}")
+                            if task_id in task_ids_set:
+                                task_ids_set.remove(task_id)
+
+                        except Exception as e:
+                            logger.info(f"Parse message failed {e}")
+                        delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                    else:
+                        continue
+
+                except Exception as e:
+                    logger.warning(
+                        f"Delet this {subject} !!, This subject is not json format {e}"
+                    )
+                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
+
+        if len(task_ids_set) == 0:
+            logger.info("All task completed")
+            return
+        wait_time -= int(delay)

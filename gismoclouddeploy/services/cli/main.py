@@ -2,12 +2,14 @@ from http import server
 from multiprocessing.dummy import Process
 import socket
 import threading
+
 import click
 from os.path import exists
 import logging
 import os
 import json
 import time
+
 import modules
 from terminaltables import AsciiTable
 from server.models.Configurations import (
@@ -723,51 +725,164 @@ def run_process_files(
         delay=1,
         user_id=worker_config_obj.user_id,
     )
+    # check server ready and return running server name.
+    ready_server_name = modules.command_utils.checck_server_ready_and_get_name(
+        aws_config=aws_config_obj,
+        worker_config_json=config_json["worker_config"],
+        deployment_services_list=services_config_list,
+        is_docker=is_docker,
+    )
+
+    # send command to server and get task IDs
+    worker_replicas = 1
+    for key, value in services_config_list.items():
+        if key == "worker":
+            worker_replicas = value["desired_replicas"]
+    worker_replicas = value["desired_replicas"]
+    initial_process_time = time.time() - start_time
+    total_tasks_ids = modules.command_utils.send_command_to_server(
+        server_name=ready_server_name,
+        number=number,
+        aws_config=aws_config_obj,
+        worker_config_json=config_json["worker_config"],
+        deployment_services_list=services_config_list,
+        is_docker=is_docker,
+        num_file_to_process_per_round=worker_replicas * 2,
+    )
+
+    # long looping SQS
+
+    looping_wait_time = int(
+        (aws_config_obj.interval_of_total_wait_time_of_sqs)
+        * (len(total_tasks_ids))
+        / worker_replicas
+    )
+    unfinished_tasks_ids = modules.command_utils.long_pulling_sqs_and_check_tasks(
+        task_ids=total_tasks_ids,
+        wait_time=looping_wait_time,
+        delay=aws_config_obj.interval_of_check_sqs_in_second,
+        sqs_url=SQS_URL,
+        worker_config=worker_config_obj,
+        aws_config=aws_config_obj,
+        delete_nodes_after_processing=delete_nodes,
+        is_docker=is_docker,
+        dlq_url=DLQ_URL,
+    )
+    logger.info(" ----- init end services process --------- ")
+    modules.command_utils.initial_end_services(
+        worker_config=worker_config_obj,
+        aws_config=aws_config_obj,
+        is_docker=is_docker,
+        is_local=is_local,
+        delete_nodes_after_processing=delete_nodes,
+        is_build_image=is_build_image,
+        services_config_list=services_config_list,
+    )
+
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_config_obj.aws_access_key,
+        secret=aws_config_obj.aws_secret_access_key,
+        region=aws_config_obj.aws_region,
+    )
+    logs_file_path_name = (
+        worker_config_obj.saved_path
+        + "/"
+        + worker_config_obj.saved_logs_target_filename
+    )
+    performance_path_name = (
+        worker_config_obj.saved_path + "/" + worker_config_obj.saved_performance_file
+    )
+
+    total_process_time = time.time() - start_time
+    modules.process_log.analyze_logs_files(
+        bucket=worker_config_obj.saved_bucket,
+        logs_file_path_name=logs_file_path_name,
+        initial_process_time=initial_process_time,
+        total_process_time=total_process_time,
+        eks_nodes_number=aws_config_obj.eks_nodes_number,
+        num_workers=services_config_list["worker"]["desired_replicas"],
+        s3_client=s3_client,
+        save_file_path_name=performance_path_name,
+    )
+
+    print(" ======== Completed ========== ")
+    return
 
     # start receive SNS message
     # waiting to receive sns message
 
     # send command to server and process files command.
-    total_task_num = modules.command_utils.get_total_task_number(
-        number=number,
-        aws_config=aws_config_obj,
-        worker_config_json=config_json["worker_config"],
-    )
-    logger.info(f"total_task_num {total_task_num}")
+    # total_task_num = modules.command_utils.get_total_task_number(
+    #     number=number,
+    #     aws_config=aws_config_obj,
+    #     worker_config_json=config_json["worker_config"],
+    # )
+    # logger.info(f"total_task_num {total_task_num}")
     # waiting to receive sns message
-    threads = list()
-    worker_replicas = 1
-    for key, value in services_config_list.items():
-        if key == "worker":
-            worker_replicas = value["desired_replicas"]
-            # logger.info(f"worker_replicas :{worker_replicas}")
-    looping_wait_time = int(
-        (aws_config_obj.interval_of_total_wait_time_of_sqs)
-        * (total_task_num)
-        / worker_replicas
-    )
+    # threads = list()
+    # worker_replicas = 1
+    # for key, value in services_config_list.items():
+    #     if key == "worker":
+    #         worker_replicas = value["desired_replicas"]
+    #         # logger.info(f"worker_replicas :{worker_replicas}")
+    # looping_wait_time = int(
+    #     (aws_config_obj.interval_of_total_wait_time_of_sqs)
+    #     * (total_task_num)
+    #     / worker_replicas
+    # )
+    # task_ids = modules.command_utils.invoke_process_files_based_on_number(
+    #     number=number,
+    #     aws_config=aws_config_obj,
+    #     worker_config_json=config_json["worker_config"],
+    #     deployment_services_list=services_config_list,
+    #     is_docker=is_docker,
+    # )
 
-    proces = list()
-    try:
-        logger.info(
-            "============ Running invoke process files commmand in multiprocess ==========="
-        )
-        proc_x = Process(
-            target=modules.command_utils.invoke_process_files_based_on_number(
-                number=number,
-                aws_config=aws_config_obj,
-                worker_config_json=config_json["worker_config"],
-                deployment_services_list=services_config_list,
-                is_docker=is_docker,
-            )
-        )
-        proc_x.name = "Invoker process files"
-        # proces.append(proc_x)
-        proc_x.start()
-    except Exception as e:
-        logger.error(f"Invoke process files in server error:{e}")
-        return
-    initial_process_time = time.time() - start_time
+    # for id in task_ids:
+    #     print(id)
+    # modules.command_utils.long_pulling_sqs_and_check_tasks(
+    #     task_ids=task_ids,
+    #     wait_time=60,
+    #     delay=aws_config_obj.interval_of_check_sqs_in_second,
+    #     sqs_url=SQS_URL,
+    #     worker_config=worker_config_obj,
+    #     aws_config=aws_config_obj,
+    #     delete_nodes_after_processing=delete_nodes,
+    #     is_docker=is_docker,
+    #     dlq_url=DLQ_URL,
+    # )
+    # modules.command_utils.loop_tasks_status(
+    #     task_ids = task_ids,
+    #     is_docker=is_docker,
+    #     server_name=
+    # )
+
+    # proces = list()
+    # try:
+    #     logger.info(
+    #         "============ Running invoke process files commmand in multiprocess ==========="
+    #     )
+    #     proc_x = Process(
+    # target=modules.command_utils.invoke_process_files_based_on_number(
+    #     number=number,
+    #     aws_config=aws_config_obj,
+    #     worker_config_json=config_json["worker_config"],
+    #     deployment_services_list=services_config_list,
+    #     is_docker=is_docker,
+    # )
+    #     )
+    #     proc_x.name = "Invoker process files"
+    #     # proces.append(proc_x)
+    #     proc_x.start()
+    # except Exception as e:
+    #     logger.error(f"Invoke process files in server error:{e}")
+    #     return
+    # initial_process_time = time.time() - start_time
+    # command_utils.loop_tasks_status(
+
+    # )
+
     try:
         logger.info(" ========= Long pulling SQS ========= ")
         proces_y = Process(

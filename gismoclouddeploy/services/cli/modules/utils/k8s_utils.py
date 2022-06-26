@@ -194,8 +194,11 @@ def get_k8s_pod_name(pod_name: str = None) -> str:
     v1 = client.CoreV1Api()
     ret = v1.list_pod_for_all_namespaces(watch=False)
     for i in ret.items:
+        status = i.status.conditions[-1].status
         podname = i.metadata.name.split("-")[0]
-        if podname == pod_name:
+        if podname == pod_name and status == "True":
+            status = i.status.conditions
+            # print(status)
             return i.metadata.name
 
     return None
