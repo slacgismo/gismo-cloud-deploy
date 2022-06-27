@@ -352,7 +352,7 @@ def loop_tasks_status(
                     server_name=server_name, task_id=str(task_id).strip("\n")
                 )
             else:
-                logger.info("Chcek k8s worker status")
+                logger.info(f"Check task: {task_id} status")
                 result = invoke_exec_k8s_check_task_status(
                     server_name=server_name, task_id=str(task_id).strip("\n")
                 )
@@ -1200,9 +1200,15 @@ def long_pulling_sqs_and_check_tasks(
             logger.info(f"===== Check tasks status directly ====")
             for id in task_ids_set:
                 logger.info(f"== Check id :{id} ==")
-            unfinished_tasks_set = check_tasks_status(
-                is_docker=is_docker, server_name=server_name, task_ids_set=task_ids_set
-            )
+            try:
+                unfinished_tasks_set = check_tasks_status(
+                    is_docker=is_docker,
+                    server_name=server_name,
+                    task_ids_set=task_ids_set,
+                )
+            except Exception as e:
+                logger.error(f"Check task status failed :{e}")
+                return unfinished_tasks_set
             return unfinished_tasks_set
         wait_time -= int(delay)
     return task_ids_set
@@ -1224,7 +1230,7 @@ def check_tasks_status(
                     server_name=server_name, task_id=str(task_id).strip("\n")
                 )
             else:
-                logger.info("Chcek k8s worker status")
+                logger.info(f"Chcek--> {task_id} status")
                 result = invoke_exec_k8s_check_task_status(
                     server_name=server_name, task_id=str(task_id).strip("\n")
                 )
