@@ -110,6 +110,12 @@ def main():
     build and push image to ECR with temp image tag. These images will be deleted after used.\
     If you would like to preserve images, please use build-image command instead ",
 )
+@click.option(
+    "--nodesscale",
+    "-sc",
+    help="Scale up eks nodes and worker replcas as the same number. This input number replaces the worker_repliacs and eks_nodes_number in config files",
+    default=None,
+)
 def run_files(
     number: int = 1,
     deletenodes: bool = False,
@@ -118,6 +124,7 @@ def run_files(
     imagetag: str = "latest",
     docker: bool = False,
     build: bool = False,
+    nodesscale: int = None,
 ):
     """
     Proccess files in defined bucket
@@ -134,6 +141,8 @@ def run_files(
     :param build:       Build a temp image and use it. If on AWS k8s environment, \
                         build and push image to ECR with temp image tag. These images will be deleted after used.\
                         If you would like to preserve images, please use build-image command instead
+    :param nodesscale:  Scale up eks nodes and worker replcas as the same number. \
+                        This input number replaces the worker_repliacs and eks_nodes_number in config files
     """
     run_process_files(
         number=number,
@@ -143,6 +152,7 @@ def run_files(
         image_tag=imagetag,
         is_docker=docker,
         is_build_image=build,
+        nodesscale=nodesscale,
     )
 
 
@@ -457,6 +467,7 @@ def run_process_files(
     is_docker: bool = False,
     is_local: bool = False,
     is_build_image: bool = False,
+    nodesscale: int = None,
 ) -> None:
     """
     Proccess files in defined bucket
@@ -497,6 +508,13 @@ def run_process_files(
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
     user_id = str(socket.gethostname())
+    if nodesscale is not None and check_environment_is_aws():
+        logger.info(f"Update nodes eks and worker replicas to{nodesscale}")
+        config_json["aws_config"]["eks_nodes_number"] = int(nodesscale)
+        config_json["services_config_list"]["worker"]["desired_replicas"] = int(
+            nodesscale
+        )
+
     config_json["worker_config"]["user_id"] = user_id
     config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
         config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"]
