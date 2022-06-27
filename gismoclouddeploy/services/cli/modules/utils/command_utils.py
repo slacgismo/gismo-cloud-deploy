@@ -173,17 +173,16 @@ def send_command_to_server(
             worker_config_str=worker_config_str,
             number=None,
         )
-
-        total_tasks_ids += task_ids
         percentage = int(end_index * 100 / len(n_files))
+        print(
+            f"process from {start_index}, to {end_index} files, send tasks command percentage:  {percentage}%"
+        )
+        total_tasks_ids += task_ids
         start_index = end_index
         end_index = start_index + num_file_to_process_per_round
         if end_index > len(n_files):
             end_index = len(n_files)
 
-        print(
-            f"process from {start_index}, to {end_index} files, send tasks command percentage:  {percentage}%"
-        )
     # for id in total_tasks_ids:
     #     print(id)
     return total_tasks_ids

@@ -108,7 +108,7 @@ def process_files(worker_config_str: str, first_n_files: str):
             # return str(task_id)
             # print(str(task_id))
 
-            time.sleep(0.5)
+            time.sleep(0.2)
 
     for id in task_ids:
         print(id)

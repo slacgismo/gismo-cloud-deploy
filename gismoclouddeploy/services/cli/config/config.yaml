@@ -12,7 +12,7 @@ aws_config:
 # Parameters used for cli in k8s config.
 services_config_list:
   worker:
-      desired_replicas: 2 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
+      desired_replicas: 10 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/worker.deployment.yaml"
       service_file: ""
@@ -52,7 +52,7 @@ worker_config:
     solver_lic_file_name: "mosek.lic"
   data_bucket: "pv.insight.nrel"                      # Bucket contains origin data files.
   default_process_files: ["PVO/PVOutput/40588.csv"]   # Default process files. If users do not use option -n command.
-  process_column_keywords: ["Power(W)","WS_5"]         # partial match. Process all matched column name "WS_5"WS_5_DateUTC
+  process_column_keywords: ["Power(W)"]         # partial match. Process all matched column name "WS_5"WS_5_DateUTC
   saved_bucket: "pv.insight.test"                     # Bucket of saved files.
   saved_path: "results"                               # Path of saved files in bucket
   dynamodb_tablename: "gcd_logs_dynamodb" # pre-define in AWS us-east-2
