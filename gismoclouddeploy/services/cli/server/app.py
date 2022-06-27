@@ -87,6 +87,7 @@ def process_files(worker_config_str: str, first_n_files: str):
         return "AWS validation fail"
 
     # print(default_files)
+    task_ids = []
     for file in default_files:
         # print("==========")
         # print(file)
@@ -102,7 +103,15 @@ def process_files(worker_config_str: str, first_n_files: str):
             task_input_json["curr_process_file"] = file
             task_input_json["curr_process_column"] = column
             task_id = process_data_task.delay(**task_input_json)
-            print(str(task_id))
+            task_ids.append(str(task_id))
+            # print(column)
+            # return str(task_id)
+            # print(str(task_id))
+
+            time.sleep(0.1)
+
+    for id in task_ids:
+        print(id)
     # logger.info(worker_config_str)
     # try:
     #     s3_client = connect_aws_client(

@@ -1,4 +1,5 @@
 from copy import copy
+from distutils.log import error
 import json
 import sys
 import copy
@@ -47,7 +48,23 @@ def tracklog_decorator(func):
             # args[0].update_state(
             #     state=WorkerState.PROCESS.name, meta={"timestamp": str(time.time())}
             # )
+            # logger.info(f"-----------------------column: {curr_process_column} ---------------------")
             start_time = str(time.time())
+            # init_message  = make_sns_response(
+            #     alert_type=SNSSubjectsAlert.TASK_START.name,
+            #     messages={"start_time":start_time , "task_id":str(task_id), "file":curr_process_file, "column":curr_process_column},
+            #     user_id=user_id,
+            # )
+            # publish_message_sns(
+            #     # message=json.dumps(update_messages),
+            #     message=json.dumps(init_message["Messages"]),
+            #     subject=json.dumps(init_message['Subject']),
+            #     topic_arn=sns_topic,
+            #     aws_access_key=aws_access_key,
+            #     aws_secret_access_key=aws_secret_access_key,
+            #     aws_region=aws_region,
+            # )
+
             # track start
             inspect_and_tracklog_decorator(
                 function_name=func.__name__,
@@ -84,9 +101,16 @@ def tracklog_decorator(func):
             # track end
 
         except Exception as e:
+            error_output = str(e).replace('"', " ").replace("'", " ")
+            logger.error(f"Error :{error_output}")
+            error_str = {"error_output": error_output}
             response = make_sns_response(
                 alert_type=SNSSubjectsAlert.SYSTEM_ERROR.name,
-                messages={"error": f"{e}"},
+                messages={
+                    "error": error_output,
+                    "file": curr_process_file,
+                    "column": curr_process_column,
+                },
                 user_id=user_id,
             )
             logger.error(f"Publish SNS Error{e}")
@@ -107,13 +131,17 @@ def tracklog_decorator(func):
         )
         # subject_str = parse_subject_from_response(response=response,task_id=task_id)
         end_time = str(time.time())
+
+        logger.info(response)
+        # update_subject = response["Subject"]
+        # update_subject["task_id"]  = str(task_id)
+
         update_messages = response["Messages"]
         update_messages["task_id"] = str(task_id)
         update_messages["start_time"] = start_time
         update_messages["end_time"] = end_time
-        logger.info(update_messages)
+        # logger.info(update_messages)
         subject = response["Subject"]
-
         publish_message_sns(
             # message=json.dumps(update_messages),
             message=json.dumps(update_messages),

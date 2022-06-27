@@ -738,6 +738,8 @@ def run_process_files(
     for key, value in services_config_list.items():
         if key == "worker":
             worker_replicas = value["desired_replicas"]
+    logger.info(worker_replicas)
+
     worker_replicas = value["desired_replicas"]
     initial_process_time = time.time() - start_time
     total_tasks_ids = modules.command_utils.send_command_to_server(
@@ -749,7 +751,7 @@ def run_process_files(
         is_docker=is_docker,
         num_file_to_process_per_round=worker_replicas * 2,
     )
-
+    logger.info(f"Total tasks :{len(total_tasks_ids)}")
     # long looping SQS
 
     looping_wait_time = int(
@@ -757,6 +759,7 @@ def run_process_files(
         * (len(total_tasks_ids))
         / worker_replicas
     )
+
     unfinished_tasks_ids = modules.command_utils.long_pulling_sqs_and_check_tasks(
         task_ids=total_tasks_ids,
         wait_time=looping_wait_time,

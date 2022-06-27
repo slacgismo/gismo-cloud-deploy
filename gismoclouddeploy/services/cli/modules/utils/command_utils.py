@@ -1,4 +1,5 @@
 from cmath import e
+from http import server
 from os.path import exists
 from re import A
 import re
@@ -10,6 +11,8 @@ import sys, json
 import json
 from botocore.exceptions import ClientError
 import threading
+from server.models.SNSSubjectsAlert import SNSSubjectsAlert
+
 from .process_log import read_all_csv_from_s3_and_parse_dates_from
 from .sqs import purge_queue
 from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
@@ -250,10 +253,15 @@ def invoke_process_files_to_server(
             pod_name=server_name,
             first_n_files=number,
         )
-    # print(_resp)
+    print(_resp)
     _resp_str = _resp.decode("utf-8")
     _temp_array = re.split(r"[~\r\n]+", _resp_str)
-    task_ids = _temp_array[0:-1]
+    task_ids = _temp_array[:-1]
+    index = 0
+    for id in task_ids:
+        print(f"index: {index} id :{id}")
+        index += 1
+    # logger.info(f"------------> total_tasks :{len(task_ids)} {index}")
     # for id in task_ids:
     #     print(id)
     # print(task_ids)
@@ -1090,6 +1098,9 @@ def long_pulling_sqs_and_check_tasks(
     acccepted_idle_time: int,
     server_name: str,
 ) -> None:
+    start_task_id_set = set()
+    num_task_start = 0
+
     task_ids_set = set(task_ids)
     total_task_length = len(task_ids_set)
     sqs_client = aws_utils.connect_aws_client(
@@ -1121,22 +1132,44 @@ def long_pulling_sqs_and_check_tasks(
                 try:
                     subject_info = json.loads(subject)
                     sns_user_id = subject_info["user_id"]
-                    alert_type = subject_info["alert_type"]
+                except Exception as e:
+                    logger.error(f"Cannot parse {subject_info} from SQS {e}")
+                    raise e
+                if sns_user_id != worker_config.user_id:
+                    continue
+                # parse Message
+                try:
+                    message_json = json.loads(message_text)
+                except Exception as e:
+                    logger.error(f"Cannot parse {message_json} from SQS {e}")
+                    logger.error(
+                        f"Cannot parse task id. But we consider this task completed"
+                    )
+                    numb_tasks_completed += 1
+                    continue
+                    # raise Exception(f"Failed to loads json from sns messages and subhet: {e}")
+                try:
 
-                    if sns_user_id == worker_config.user_id:
-                        logger.info(f"Get message=====>")
-                        logger.info(f"subject: {subject_info}")
-                        logger.info(f"message_text: {message_text}")
+                    alert_type = subject_info["alert_type"]
+                    # logger.info(f"-------- > message_json: {message_json}")
+                    task_id = message_json["task_id"]
+
+                    if (
+                        alert_type == SNSSubjectsAlert.SAVED_DATA.name
+                        or alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
+                    ):
                         previous_messages_time = time.time()
+                        logger.info(message_json)
                         try:
-                            message_json = json.loads(message_text)
-                            task_id = message_json["task_id"]
-                            print(f"task id: {task_id}")
+                            # print(f"task id: {task_id}")
                             if task_id in task_ids_set:
                                 task_ids_set.remove(task_id)
                                 numb_tasks_completed += 1
                                 task_completion = int(
                                     numb_tasks_completed * 100 / total_task_length
+                                )
+                                logger.info(
+                                    f"Complete task: {numb_tasks_completed} totl:{total_task_length} task_completion: {task_completion} %"
                                 )
                         except Exception as e:
                             logger.info(f"Parse message failed {e}")
@@ -1151,18 +1184,23 @@ def long_pulling_sqs_and_check_tasks(
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
         # logger.info(f"===== Task completion: {task_completion} =========")
         logger.info(
-            f"Task completion: {task_completion} % \
-            Waiting .: {wait_time - delay} \
+            f" Waiting .: {wait_time - delay} \
             Time: {time.ctime(time.time())} "
         )
-        if len(task_ids_set) == 0:
+        if numb_tasks_completed == total_task_length:
             logger.info("===== All task completed ====")
+            if len(task_ids_set) > 0:
+                for id in task_ids_set:
+                    logger.info(f"Cannot parse message from {id}!!. Somehing wrong!! ")
             return
         idle_time = time.time() - previous_messages_time
         if idle_time >= acccepted_idle_time:
             logger.info(f"===== No messages receive over time {idle_time} sec ====")
-            logger.info(f"===== number of unfinished tasks {len(task_ids_set)} ====")
+            logger.info(f"===== Number of unfinished tasks {len(task_ids_set)} ====")
+            # logger.info(f"===== number of start_task_id  {len(start_task_id_set)} ====")
             logger.info(f"===== Check tasks status directly ====")
+            for id in task_ids_set:
+                logger.info(f"== Check id :{id} ==")
             unfinished_tasks_set = check_tasks_status(
                 is_docker=is_docker, server_name=server_name, task_ids_set=task_ids_set
             )

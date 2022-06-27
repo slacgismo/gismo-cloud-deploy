@@ -29,31 +29,31 @@ def find_matched_column_name_set(
             bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client
         )
     except Exception as e:
-        logger.error(f"read column from s3 failed :{e}")
+        # logger.error(f"read column from s3 failed :{e}")
         raise e
     matched_column_set = set()
     for column in total_columns:
         for key in columns_key:
             if key in column:
                 matched_column_set.add(column)
-    validated_column_set = set()
-    for key in matched_column_set:
-        # check if column has value.
-        try:
-            tmp_df = read_csv_from_s3_with_column_name(
-                bucket_name=bucket_name,
-                file_path_name=file_path_name,
-                column_name=key,
-                s3_client=s3_client,
-            )
-        except Exception as e:
-            logger.error(f"read csv from s3 failed :{e}")
-            raise e
-        if len(tmp_df) == 0:
-            logger.info(f" ==== > {key} has no value === ")
-            continue
-        validated_column_set.add(key)
-    return validated_column_set
+    # validated_column_set = set()
+    # for key in matched_column_set:
+    #     # check if column has value.
+    #     try:
+    #         tmp_df = read_csv_from_s3_with_column_name(
+    #             bucket_name=bucket_name,
+    #             file_path_name=file_path_name,
+    #             column_name=key,
+    #             s3_client=s3_client,
+    #         )
+    #     except Exception as e:
+    #         # logger.error(f"read csv from s3 failed :{e}")
+    #         raise e
+    #     if len(tmp_df) == 0:
+    #         # logger.info(f" ==== > {key} has no value === ")
+    #         continue
+    #     validated_column_set.add(key)
+    return matched_column_set
 
 
 def get_process_filename_base_on_command(

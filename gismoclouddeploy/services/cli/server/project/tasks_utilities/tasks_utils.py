@@ -108,7 +108,6 @@ def publish_message_sns(
             secret=aws_secret_access_key,
             region=aws_region,
         )
-
         message_res = sns_client.publish(
             TopicArn=topic_arn,
             Subject=subject,
