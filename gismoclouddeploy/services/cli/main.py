@@ -734,13 +734,14 @@ def run_process_files(
     )
 
     # send command to server and get task IDs
-    worker_replicas = 1
+    worker_replicas = 0
     for key, value in services_config_list.items():
         if key == "worker":
             worker_replicas = value["desired_replicas"]
-    logger.info(worker_replicas)
+    logger.info(f"Current worker replica:{worker_replicas}")
+    if worker_replicas == 0:
+        logger.error(f"Number of worker error:{worker_replicas} ")
 
-    worker_replicas = value["desired_replicas"]
     initial_process_time = time.time() - start_time
     total_tasks_ids = modules.command_utils.send_command_to_server(
         server_name=ready_server_name,

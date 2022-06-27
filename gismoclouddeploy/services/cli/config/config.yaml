@@ -58,7 +58,7 @@ worker_config:
   dynamodb_tablename: "gcd_logs_dynamodb" # pre-define in AWS us-east-2
   interval_of_check_task_status: "5"    # in second
   interval_of_exit_check_status: "900"  # in second. If a task status does not update in thia period. stop check individual status and revoke this task.
-  acccepted_idle_time: "120"
+  acccepted_idle_time: "240"
   saved_rumtime_image_name: None          # "runtime-{user_id}.png"
   saved_performance_file: None            # "performance-{user_id}.txt"
   saved_data_target_filename: None        # "results-{user_id}.csv"
