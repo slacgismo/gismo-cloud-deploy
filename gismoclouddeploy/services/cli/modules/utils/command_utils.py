@@ -253,18 +253,15 @@ def invoke_process_files_to_server(
             pod_name=server_name,
             first_n_files=number,
         )
-    print(_resp)
+
     _resp_str = _resp.decode("utf-8")
     _temp_array = re.split(r"[~\r\n]+", _resp_str)
     task_ids = _temp_array[:-1]
     index = 0
     for id in task_ids:
-        print(f"index: {index} id :{id}")
+        print(f"Task {index} :{id}")
         index += 1
-    # logger.info(f"------------> total_tasks :{len(task_ids)} {index}")
-    # for id in task_ids:
-    #     print(id)
-    # print(task_ids)
+
     return task_ids
 
 
@@ -1159,7 +1156,9 @@ def long_pulling_sqs_and_check_tasks(
                         or alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
                     ):
                         previous_messages_time = time.time()
-                        logger.info(message_json)
+                        if alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name:
+                            # log out error message
+                            logger.info(message_json)
                         try:
                             # print(f"task id: {task_id}")
                             if task_id in task_ids_set:
