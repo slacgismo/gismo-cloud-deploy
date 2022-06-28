@@ -9,17 +9,14 @@ import time
 import os
 import socket
 from .tasks_utils import (
-    parse_messages_from_response,
-    track_logs,
     publish_message_sns,
-    parse_subject_from_response,
     check_and_download_solver,
 )
-from models.ActionState import ActionState
+
 import logging
 from models.WorkerState import WorkerState
 from models.SNSSubjectsAlert import SNSSubjectsAlert
-from decimal import Decimal
+
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -35,7 +32,6 @@ def tracklog_decorator(func):
         """updates special attributes e.g. __name__,__doc__"""
         try:
             task_id = args[0].request.id
-
             table_name = kwargs["dynamodb_tablename"]
             curr_process_file = kwargs["curr_process_file"]
             curr_process_column = kwargs["curr_process_column"]
@@ -45,6 +41,7 @@ def tracklog_decorator(func):
             aws_region = kwargs["aws_region"]
             sns_topic = kwargs["sns_topic"]
             user_id = kwargs["user_id"]
+
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
         start_time = str(time.time())
@@ -60,7 +57,6 @@ def tracklog_decorator(func):
             user_id=user_id,
         )
         publish_message_sns(
-            # message=json.dumps(update_messages),
             message=json.dumps(init_message["Messages"]),
             subject=json.dumps(init_message["Subject"]),
             topic_arn=sns_topic,
@@ -187,40 +183,6 @@ def put_item_to_dynamodb(
         }
     )
     return response
-
-
-def inspect_and_tracklog_decorator(
-    function_name,
-    user_id,
-    action,
-    messages,
-    task_id,
-    process_file_name,
-    table_name,
-    column_name,
-    aws_access_key,
-    aws_secret_access_key,
-    aws_region,
-):
-    """inspect function name, parameters"""
-
-    try:
-        track_logs(
-            task_id=task_id,
-            user_id=user_id,
-            function_name=function_name,
-            time=str(time.time()),
-            action=action,
-            message=messages,
-            process_file_name=process_file_name,
-            table_name=table_name,
-            column_name=column_name,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
-    except Exception as e:
-        raise Exception(f"Tack log error:{e}")
 
 
 def make_sns_response(

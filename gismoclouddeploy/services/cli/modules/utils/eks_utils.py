@@ -2,15 +2,12 @@ import time
 
 from kubernetes import client, config
 
-from server.models.Configurations import Configurations
-from server.models.Configurations import WORKER_CONFIG, AWS_CONFIG
+
 import logging
-from .k8s_utils import get_k8s_pod_info, read_k8s_yml
+from .k8s_utils import read_k8s_yml
 
 from modules.utils.invoke_function import (
-    invoke_kubectl_apply,
     invoke_eksctl_scale_node,
-    invoke_kubectl_rollout,
 )
 
 logger = logging.getLogger()
@@ -66,46 +63,12 @@ def wait_pod_ready(
     raise Exception("Wait over time")
 
 
-def scale_nodes_and_wait(
-    scale_node_num: int, counter: int, delay: int, aws_config: AWS_CONFIG
-) -> bool:
-    try:
-        target_node_number = int(scale_node_num)
-
-        num_nodes = num_of_nodes_ready()
-        logger.info(
-            f"scale node {target_node_number}, current node number: {num_nodes}"
-        )
-        if num_nodes == target_node_number:
-            logger.info(
-                f"current node number is {num_nodes}, and target node number is {target_node_number}. Scale node success!!!"
-            )
-            return True
-        # num_node is not equal ,
-        logger.info(f"scale node num: {target_node_number}")
-        scale_node_number(
-            min_nodes=target_node_number,
-            cluster_name=aws_config.cluster_name,
-            nodegroup_name=aws_config.nodegroup_name,
-        )
-
-        while counter:
-            num_nodes = num_of_nodes_ready()
-            print(
-                f"waiting {target_node_number} ready , current num_nodes:{num_nodes}  ....counter: {counter} Time: {time.ctime(time.time())}"
-            )
-            if num_nodes == target_node_number:
-                return True
-            counter -= delay
-            time.sleep(delay)
-        return False
-    except Exception as e:
-        logger.error(f"scale node number error: {e}")
-        return False
-
-
 # def scale_nodes_and_wait(
-#     scale_node_num: int, counter: int, delay: int, config_params_obj: Configurations
+#     scale_node_num: int,
+#     counter: int,
+#     delay: int,
+#     cluster_name:str,
+#     nodegroup_name:str
 # ) -> bool:
 #     try:
 #         target_node_number = int(scale_node_num)
@@ -123,8 +86,8 @@ def scale_nodes_and_wait(
 #         logger.info(f"scale node num: {target_node_number}")
 #         scale_node_number(
 #             min_nodes=target_node_number,
-#             cluster_name=config_params_obj.cluster_name,
-#             nodegroup_name=config_params_obj.nodegroup_name,
+#             cluster_name=cluster_name,
+#             nodegroup_name=nodegroup_name,
 #         )
 
 #         while counter:
@@ -245,6 +208,7 @@ def replace_k8s_yaml_with_replicas(
             raise e
 
 
+'''
 def create_or_update_k8s(
     config_params_obj: Configurations,
     rollout: bool = True,
@@ -361,6 +325,8 @@ def create_or_update_k8s(
                 if is_pod_ready is False:
                     logger.error(f"Waiting {pod_name} pod ready over time")
                     raise Exception("Waiting over time")
+
+'''
 
 
 def scale_eks_nodes_and_wait(

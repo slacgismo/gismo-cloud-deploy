@@ -1,6 +1,6 @@
 import time
 from kubernetes import client, config
-from server.models.Configurations import Configurations
+
 from typing import Tuple
 import logging
 import yaml

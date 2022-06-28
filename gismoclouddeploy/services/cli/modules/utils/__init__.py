@@ -1,21 +1,17 @@
 from .command_utils import (
-    invoke_process_files_based_on_number,
     process_logs_and_plot,
     print_dlq,
     check_nodes_status,
 )
 
-from .task_thread import TaskThread
-
 
 from .eks_utils import (
     num_pod_ready,
     wait_pod_ready,
-    scale_nodes_and_wait,
+    # scale_nodes_and_wait,
     num_of_nodes_ready,
     scale_node_number,
     match_pod_ip_to_node_name,
-    create_or_update_k8s,
     replace_k8s_yaml_with_replicas,
 )
 
@@ -50,8 +46,6 @@ from .invoke_function import (
 )
 
 from .process_log import (
-    process_df_for_gantt_separate_worker,
-    process_logs_subplot,
     process_df_for_gantt,
     process_logs_from_local,
     process_logs_from_s3,

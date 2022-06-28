@@ -3,19 +3,18 @@ from http import server
 from os.path import exists
 from re import A
 import re
-from typing import List, Dict, Set
+from typing import List, Set
 from unittest import result
-
+import yaml
 import pandas as pd
-import sys, json
 import json
 from botocore.exceptions import ClientError
-import threading
+import socket
 from server.models.SNSSubjectsAlert import SNSSubjectsAlert
-
-from .process_log import read_all_csv_from_s3_and_parse_dates_from
+from .WORKER_CONFIG import WORKER_CONFIG
 from .sqs import purge_queue
-from server.models.Configurations import AWS_CONFIG, WORKER_CONFIG
+
+from .check_aws import check_aws_validity, check_environment_is_aws
 from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
@@ -29,17 +28,13 @@ from .invoke_function import (
     invoke_exec_docker_run_process_files,
     invoke_exec_k8s_run_process_files,
     invoke_docker_compose_down_and_remove,
-    invoke_kubectl_delete_all_deployment,
-    invoke_kubectl_delete_all_services,
     invoke_exec_k8s_ping_worker,
     invoke_exec_docker_check_task_status,
     invoke_exec_docker_ping_worker,
     invoke_exec_k8s_check_task_status,
 )
 from .process_log import process_logs_from_s3
-from server.models.Configurations import (
-    Configurations,
-)
+
 from server.utils import aws_utils
 import time
 from kubernetes import client, config
@@ -60,42 +55,42 @@ logging.basicConfig(
 )
 
 
-def get_total_task_number(
-    number: Union[int, None],
-    aws_config: AWS_CONFIG = None,
-    worker_config_json: str = None,
-) -> int:
-    total_task_num = 0
+# def get_total_task_number(
+#     number: Union[int, None],
+#     worker_config_json: str = None,
+#     aws_access_key:str = None,
+#     aws_secret_access_key:str = None,
+#     aws_region:str = None
+# ) -> int:
+#     total_task_num = 0
 
-    if number is None:
-        total_task_num = len(worker_config_json["default_process_files"]) + 1
-        logger.info(" ========= Process default files in config.yam ========= ")
-    else:
-        if int(number) == 0:
-            s3_client = aws_utils.connect_aws_client(
-                client_name="s3",
-                key_id=aws_config.aws_access_key,
-                secret=aws_config.aws_secret_access_key,
-                region=aws_config.aws_region,
-            )
+#     if number is None:
+#         total_task_num = len(worker_config_json["default_process_files"]) + 1
+#         logger.info(" ========= Process default files in config.yam ========= ")
+#     else:
+#         if int(number) == 0:
+#             s3_client = aws_utils.connect_aws_client(
+#                 client_name="s3",
+#                 key_id=aws_access_key,
+#                 secret=aws_secret_access_key,
+#                 region=aws_region,
+#             )
 
-            all_files = aws_utils.list_files_in_bucket(
-                bucket_name=worker_config_json["data_bucket"], s3_client=s3_client
-            )
-            number_files = len(all_files)
-            total_task_num = len(all_files)
-            logger.info(
-                f" ========= Process all {number_files} files in bucket ========= "
-            )
-        else:
-            logger.info(f" ========= Process first {number} files in bucket ========= ")
-            total_task_num = int(number)
-    return total_task_num
+#             all_files = aws_utils.list_files_in_bucket(
+#                 bucket_name=worker_config_json["data_bucket"], s3_client=s3_client
+#             )
+#             number_files = len(all_files)
+#             total_task_num = len(all_files)
+#             logger.info(
+#                 f" ========= Process all {number_files} files in bucket ========= "
+#             )
+#         else:
+#             logger.info(f" ========= Process first {number} files in bucket ========= ")
+#             total_task_num = int(number)
+#     return total_task_num
 
 
 def checck_server_ready_and_get_name(
-    aws_config: AWS_CONFIG = None,
-    worker_config_json: str = None,
     deployment_services_list: List[str] = None,
     is_docker: bool = False,
 ) -> str:
@@ -130,16 +125,18 @@ def checck_server_ready_and_get_name(
 def send_command_to_server(
     server_name: str = None,
     number: int = Union[int, None],
-    aws_config: AWS_CONFIG = None,
     worker_config_json: str = None,
-    deployment_services_list: List[str] = None,
     is_docker: bool = False,
     num_file_to_process_per_round: int = 10,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+    sns_topic: str = None,
 ) -> List[str]:
-    worker_config_json["aws_access_key"] = aws_config.aws_access_key
-    worker_config_json["aws_secret_access_key"] = aws_config.aws_secret_access_key
-    worker_config_json["aws_region"] = aws_config.aws_region
-    worker_config_json["sns_topic"] = aws_config.sns_topic
+    worker_config_json["aws_access_key"] = aws_access_key
+    worker_config_json["aws_secret_access_key"] = aws_secret_access_key
+    worker_config_json["aws_region"] = aws_region
+    worker_config_json["sns_topic"] = sns_topic
 
     s3_client = aws_utils.connect_aws_client(
         client_name="s3",
@@ -261,76 +258,6 @@ def invoke_process_files_to_server(
         print(f"Task {index} :{id}")
         index += 1
 
-    return task_ids
-
-
-def invoke_process_files_based_on_number(
-    number: Union[int, None],
-    aws_config: AWS_CONFIG = None,
-    worker_config_json: str = None,
-    deployment_services_list: List[str] = None,
-    is_docker: bool = False,
-) -> None:
-
-    worker_config_json["aws_access_key"] = aws_config.aws_access_key
-    worker_config_json["aws_secret_access_key"] = aws_config.aws_secret_access_key
-    worker_config_json["aws_region"] = aws_config.aws_region
-    worker_config_json["sns_topic"] = aws_config.sns_topic
-    worker_config_str = json.dumps(worker_config_json)
-    # counter = 15
-    # delay = 1
-    # while counter > 0:
-    #     counter -= delay
-    #     logger.info(f"Wait ...{counter} sec")
-    #     time.sleep(delay)
-
-    server_name = ""
-    if is_docker:
-        server_name = deployment_services_list["server"]["image_name"]
-    else:
-        server_name = get_k8s_pod_name(pod_name="server")
-        logger.info(f"server name ====> {server_name}")
-        if server_name == None:
-            logger.error("Cannot find server pod")
-            raise Exception("Find k8s pod server error")
-    if (
-        check_and_wait_server_ready(
-            is_docer=is_docker, server_name=server_name, wait_time=60, delay=1
-        )
-        is not True
-    ):
-        logger.error("Wait server ready failed")
-        raise Exception(f"Wait {server_name} failed")
-    logger.info("Start send command to server")
-    if is_docker:
-        _resp = invoke_exec_docker_run_process_files(
-            config_params_str=worker_config_str,
-            image_name=server_name,
-            first_n_files=number,
-        )
-        logger.info(_resp)
-    else:
-        _resp = invoke_exec_k8s_run_process_files(
-            config_params_str=worker_config_str,
-            pod_name=server_name,
-            first_n_files=number,
-        )
-    print(_resp)
-    _temp_array = re.split(r"[~\r\n]+", _resp)
-    task_ids = _temp_array[1:-1]
-    time.sleep(5)
-    updated_task_ids = loop_tasks_status(
-        task_ids=task_ids, is_docker=is_docker, server_name=server_name
-    )
-    for idx, id in enumerate(updated_task_ids):
-        print(idx, id)
-    # if len(updated_task_ids) == 0:
-    #     logger.info("=============== >All tasks completed !!!")
-    #     return
-    # else:
-    #     for task_id in updated_task_ids:
-    #         print(task_id)
-    # logger.info("=============== >Invoke processifles command done")
     return task_ids
 
 
@@ -743,113 +670,20 @@ def delete_files_from_bucket(
         raise e
 
 
-def download_logs_saveddata_from_dynamodb(
-    worker_config: WORKER_CONFIG = None,
-    aws_access_key: str = None,
-    aws_secret_key: str = None,
-    aws_region: str = None,
-) -> None:
-    try:
-        save_data_file = (
-            worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-        )
-        save_logs_file = (
-            worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-        )
-        save_error_file = (
-            worker_config.saved_path + "/" + worker_config.saved_error_target_filename
-        )
-        aws_utils.save_user_logs_data_from_dynamodb(
-            table_name=worker_config.dynamodb_tablename,
-            user_id=worker_config.user_id,
-            saved_bucket=worker_config.saved_bucket,
-            save_data_file=save_data_file,
-            save_logs_file=save_logs_file,
-            save_error_file=save_error_file,
-            aws_access_key=aws_access_key,
-            aws_secret_key=aws_secret_key,
-            aws_region=aws_region,
-        )
-    except Exception as e:
-        logger.error(f"Failed to save data and logs from dynamodb {e}")
-        raise e
-
-
-# def download_logs_saveddata_from_dynamodb(
-#     worker_config: WORKER_CONFIG = None,
-#     aws_access_key: str = None,
-#     aws_secret_key: str = None,
-#     aws_region: str = None,
-# ) -> None:
-#     try:
-#         save_data_file = (
-#             worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-#         )
-#         save_logs_file = (
-#             worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-#         )
-#         aws_utils.save_user_logs_data_from_dynamodb(
-#             table_name=worker_config.dynamodb_tablename,
-#             user_id=worker_config.user_id,
-#             saved_bucket=worker_config.saved_bucket,
-#             save_data_file=save_data_file,
-#             save_logs_file=save_logs_file,
-#             aws_access_key=aws_access_key,
-#             aws_secret_key=aws_secret_key,
-#             aws_region=aws_region,
-#         )
-#     except Exception as e:
-#         logger.error(f"Failed to save data and logs from dynamodb {e}")
-#         raise e
-#     try:
-#         # download logs data
-#         source_log_file_s3 = (
-#             worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-#         )
-#         target_log_file_local = (
-#             worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-#         )
-#         download_file_from_s3(
-#             bucket_name=worker_config.saved_bucket,
-#             source_file=source_log_file_s3,
-#             target_file=target_log_file_local,
-#             aws_access_key=aws_access_key,
-#             aws_secret_access_key=aws_secret_key,
-#             aws_region=aws_region,
-#         )
-#     except Exception as e:
-#         logger.error(f"Failed to download logs from s3 {e}")
-#         raise e
-#     try:
-#         # download results data
-#         data_source_file_s3 = (
-#             worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-#         )
-#         data_target_file_local = (
-#             worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-#         )
-#         download_file_from_s3(
-#             bucket_name=worker_config.saved_bucket,
-#             source_file=data_source_file_s3,
-#             target_file=data_target_file_local,
-#             aws_access_key=aws_access_key,
-#             aws_secret_access_key=aws_secret_key,
-#             aws_region=aws_region,
-#         )
-#     except Exception as e:
-#         logger.error(f"Failed to download data file from s3 {e}")
-#         raise e
-#     return
-
-
 def initial_end_services(
     worker_config: WORKER_CONFIG = None,
-    aws_config: AWS_CONFIG = None,
     is_local: bool = False,
     is_docker: bool = False,
     delete_nodes_after_processing: bool = False,
     is_build_image: bool = False,
     services_config_list: List[str] = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+    sqs_url: str = None,
+    scale_eks_nodes_wait_time: int = None,
+    cluster_name: str = None,
+    nodegroup_name: str = None,
 ):
 
     logger.info("=========== delete solver lic in bucket ============ ")
@@ -857,18 +691,18 @@ def initial_end_services(
         saved_solver_bucket=worker_config.solver.saved_solver_bucket,
         solver_lic_file_name=worker_config.solver.solver_lic_file_name,
         saved_temp_path_in_bucket=worker_config.user_id,
-        aws_access_key=aws_config.aws_access_key,
-        aws_secret_access_key=aws_config.aws_secret_access_key,
-        aws_region=aws_config.aws_region,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region,
     )
     logs_full_path_name = (
         worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
     )
     s3_client = aws_utils.connect_aws_client(
         client_name="s3",
-        key_id=aws_config.aws_access_key,
-        secret=aws_config.aws_secret_access_key,
-        region=aws_config.aws_region,
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
     )
 
     plot_full_path_name = (
@@ -882,24 +716,24 @@ def initial_end_services(
         s3_client=s3_client,
     )
 
-    if aws_utils.check_environment_is_aws() and delete_nodes_after_processing is True:
+    if check_environment_is_aws() and delete_nodes_after_processing is True:
         logger.info("======= >Delete node after processing")
         scale_eks_nodes_and_wait(
             scale_node_num=0,
-            total_wait_time=aws_config.scale_eks_nodes_wait_time,
+            total_wait_time=scale_eks_nodes_wait_time,
             delay=3,
-            cluster_name=aws_config.cluster_name,
-            nodegroup_name=aws_config.nodegroup_name,
+            cluster_name=cluster_name,
+            nodegroup_name=nodegroup_name,
         )
 
     # Remove services.
-    if aws_utils.check_environment_is_aws() and is_build_image:
+    if check_environment_is_aws() and is_build_image:
         logger.info("----------->.  Delete Temp ECR image ----------->")
         ecr_client = aws_utils.connect_aws_client(
             client_name="ecr",
-            key_id=aws_config.aws_access_key,
-            secret=aws_config.aws_secret_access_key,
-            region=aws_config.aws_region,
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
         )
         for service in services_config_list:
             if service == "worker" or service == "server":
@@ -909,21 +743,22 @@ def initial_end_services(
                     image_name=service,
                     image_tag=image_tag,
                 )
-    # remove_running_services(
-    #     is_docker=is_docker,
-    #     is_local=is_local,
-    #     aws_config=aws_config,
-    #     services_config_list=services_config_list,
-    # )
+    remove_running_services(
+        is_docker=is_docker,
+        services_config_list=services_config_list,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region,
+    )
 
     try:
         sqs_client = aws_utils.connect_aws_client(
             client_name="sqs",
-            key_id=aws_config.aws_access_key,
-            secret=aws_config.aws_secret_access_key,
-            region=aws_config.aws_region,
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
         )
-        purge_queue(queue_url=aws_config.sqs_url, sqs_client=sqs_client)
+        purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
     except Exception as e:
         logger.error(f"Cannot purge queue.{e}")
         return
@@ -933,9 +768,10 @@ def initial_end_services(
 def remove_running_services(
     is_build_image: bool = False,
     is_docker: bool = False,
-    is_local: bool = False,
-    aws_config: AWS_CONFIG = None,
     services_config_list: List[str] = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
 ) -> None:
     if is_build_image:
         if is_docker:
@@ -943,17 +779,13 @@ def remove_running_services(
             logger.info("Delete local docker image")
             invoke_docker_compose_down_and_remove()
         else:
-            # if is_local:
-            #     logger.info("Remove local k8s svc and deployment")
-            #     invoke_kubectl_delete_all_deployment()
-            #     invoke_kubectl_delete_all_services()
-            # else:
+
             logger.info("----------->.  Delete Temp ECR image ----------->")
             ecr_client = aws_utils.connect_aws_client(
                 client_name="ecr",
-                key_id=aws_config.aws_access_key,
-                secret=aws_config.aws_secret_access_key,
-                region=aws_config.aws_region,
+                key_id=aws_access_key,
+                secret=aws_secret_access_key,
+                region=aws_region,
             )
             for service in services_config_list:
                 if service == "worker" or service == "server":
@@ -1112,23 +944,21 @@ def long_pulling_sqs_and_check_tasks(
     delay: int,
     sqs_url: str,
     worker_config: WORKER_CONFIG,
-    aws_config: AWS_CONFIG,
-    delete_nodes_after_processing: bool,
     is_docker: bool,
-    dlq_url: str,
     acccepted_idle_time: int,
     server_name: str,
+    aws_access_key: str,
+    aws_secret_access_key: str,
+    aws_region: str,
 ) -> None:
-    start_task_id_set = set()
-    num_task_start = 0
 
     task_ids_set = set(task_ids)
     total_task_length = len(task_ids_set)
     sqs_client = aws_utils.connect_aws_client(
         client_name="sqs",
-        key_id=aws_config.aws_access_key,
-        secret=aws_config.aws_secret_access_key,
-        region=aws_config.aws_region,
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
     )
     previous_messages_time = time.time()
     numb_tasks_completed = 0
@@ -1234,6 +1064,7 @@ def long_pulling_sqs_and_check_tasks(
                 logger.error(f"Check task status failed :{e}")
                 return unfinished_tasks_set
             return unfinished_tasks_set
+        time.sleep(delay)
         wait_time -= int(delay)
     return task_ids_set
 
@@ -1278,3 +1109,12 @@ def check_tasks_status(
             raise e
     logger.info(f"{len(unfinished_task_set)} of tasks unfinished.")
     return unfinished_task_set
+
+
+def convert_yaml_to_json(yaml_file: str = None):
+    try:
+        with open(yaml_file, "r") as stream:
+            config_json = yaml.safe_load(stream)
+        return config_json
+    except IOError as e:
+        raise f"I/O error:{e}"

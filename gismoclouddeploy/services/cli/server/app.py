@@ -15,7 +15,7 @@ import click
 import time
 import os
 import re
-from project.tasks import process_data_task, loop_tasks_status_task, pong_worker
+from project.tasks import process_data_task, pong_worker
 
 app = create_app()
 celery = ext_celery.celery

@@ -1,7 +1,7 @@
 from asyncio.log import logger
 from calendar import c
 from subprocess import PIPE, run
-from server.models.Configurations import Configurations
+
 import subprocess
 import sys
 import threading

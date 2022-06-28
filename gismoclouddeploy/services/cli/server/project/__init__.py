@@ -5,9 +5,6 @@ from flask_celeryext import FlaskCeleryExt
 from project.celery_utils import make_celery
 from project.config import config
 
-# import project.tasks_utilities
-# from .solardata import process_solardatatools, solardata_models
-
 ext_celery = FlaskCeleryExt(create_celery_app=make_celery)
 
 
