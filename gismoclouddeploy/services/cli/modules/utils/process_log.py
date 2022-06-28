@@ -122,47 +122,71 @@ def process_logs_subplot():
 
 
 def process_df_for_gantt(df: pd):
-    LogsInfo_list = models.make_logsinfo_object_from_dataframe(df)
 
-    # process timestamp into linear
-    # find min
-    # combine task from
     worker_dict = {}
-    key_start = "start"
-    key_end = "end"
-    key_task = "task"
-    key_host_ip = "host_ip"
-    key_pid = "pid"
-    for worker in LogsInfo_list:
-        # print(worker.task_id)
 
-        task_id = worker.task_id
-
-        if task_id in worker_dict:
-            if key_start in worker_dict[task_id]:
-                worker_dict[task_id][key_end] = worker.time
-            else:
-                worker_dict[task_id][key_start] = worker.time
-            # get duration from datetime
-            end = pd.to_datetime(worker_dict[task_id][key_end])
-            start = pd.to_datetime(worker_dict[task_id][key_start])
-            worker_dict[task_id]["duration"] = (end - start).total_seconds()
-
-        else:
-            info_dict = {}
-            if worker.function_name != "process_data_task":
-                info_dict[key_task] = worker.function_name
-            else:
-                info_dict[key_task] = worker.filename + "/" + worker.column_name
-            info_dict[key_host_ip] = worker.host_ip
-            info_dict[key_pid] = worker.pid
-            if worker.action == models.ActionState.ACTION_STOP.name:
-                info_dict[key_end] = worker.time
-            else:
-                info_dict[key_start] = worker.time
-            worker_dict[worker.task_id] = info_dict
+    for row in df.itertuples(index=True, name="Pandas"):
+        task_id = str(row.task_id)
+        start = row.start_time
+        end = row.end_time
+        duration = end - start
+        host_ip = row.host_ip
+        pid = row.pid
+        task = row.file_name + "/" + row.column_name
+        worker_dict[task_id] = {
+            "start": start,
+            "end": end,
+            "duration": duration,
+            "host_ip": host_ip,
+            "pid": pid,
+            "task": task,
+        }
 
     return worker_dict
+
+
+# def process_df_for_gantt(df: pd):
+#     LogsInfo_list = models.make_logsinfo_object_from_dataframe(df)
+
+#     # process timestamp into linear
+#     # find min
+#     # combine task from
+#     worker_dict = {}
+#     key_start = "start"
+#     key_end = "end"
+#     key_task = "task"
+#     key_host_ip = "host_ip"
+#     key_pid = "pid"
+#     for worker in LogsInfo_list:
+#         # print(worker.task_id)
+
+#         task_id = worker.task_id
+
+#         if task_id in worker_dict:
+#             if key_start in worker_dict[task_id]:
+#                 worker_dict[task_id][key_end] = worker.time
+#             else:
+#                 worker_dict[task_id][key_start] = worker.time
+#             # get duration from datetime
+#             end = pd.to_datetime(worker_dict[task_id][key_end])
+#             start = pd.to_datetime(worker_dict[task_id][key_start])
+#             worker_dict[task_id]["duration"] = (end - start).total_seconds()
+
+#         else:
+#             info_dict = {}
+#             if worker.function_name != "process_data_task":
+#                 info_dict[key_task] = worker.function_name
+#             else:
+#                 info_dict[key_task] = worker.filename + "/" + worker.column_name
+#             info_dict[key_host_ip] = worker.host_ip
+#             info_dict[key_pid] = worker.pid
+#             if worker.action == models.ActionState.ACTION_STOP.name:
+#                 info_dict[key_end] = worker.time
+#             else:
+#                 info_dict[key_start] = worker.time
+#             worker_dict[worker.task_id] = info_dict
+
+#     return worker_dict
 
 
 def process_logs_from_local():
@@ -235,11 +259,13 @@ def process_logs_from_s3(
 
     pods_name_prefix_set = ("worker", "webapp")
     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
+    # print(pods_info_dict)
     worker_dict = process_df_for_gantt(df)
     # # # # Show dataframe
 
     gantt_list = []
     for key, value in worker_dict.items():
+        # print(value)
         try:
             pod_ip = value["host_ip"]
             node_name = ""
@@ -250,10 +276,22 @@ def process_logs_from_s3(
             task = f"{node_name}: {value['host_ip']}: {value['pid']}"
             if "duration" in value:
                 label = f"{value['task']}: duration:{value['duration']}s"
+            try:
+                start_time = datetime.datetime.fromtimestamp(
+                    (value["start"])
+                ).isoformat()
+                end_time = datetime.datetime.fromtimestamp((value["end"])).isoformat()
+            except Exception as e:
+                logger.error(f"error {e}")
+                raise e
+            # end_time = value["end"]
+            # print(f"start: {start_time}, end:{end_time}")
+            # start_time = datetime.fromtimestamp(value["start"])
+            # print(start_time)
             item = dict(
                 Task=task,
-                Start=(value["start"]),
-                Finish=(value["end"]),
+                Start=start_time,
+                Finish=end_time,
                 Resource=value["task"],
                 Node=node_name,
                 Label=label,
@@ -276,10 +314,74 @@ def process_logs_from_s3(
         fig, saved_image_name_local, format="png", scale=1, width=2400, height=1600
     )
 
-    img_data = open(saved_image_name_local, "rb")
-    s3_client.put_object(
-        Bucket=bucket, Key=saved_image_name_aws, Body=img_data, ContentType="image/png"
-    )
+    # img_data = open(saved_image_name_local, "rb")
+    # s3_client.put_object(
+    #     Bucket=bucket, Key=saved_image_name_aws, Body=img_data, ContentType="image/png"
+    # )
+
+
+# def process_logs_from_s3(
+#     bucket: str = None,
+#     logs_file_path_name: str = None,
+#     saved_image_name_local: str = None,
+#     saved_image_name_aws: str = None,
+#     s3_client: "botocore.client.S3" = None,
+# ):
+
+#     df = read_all_csv_from_s3_and_parse_dates_from(
+#         bucket_name=bucket,
+#         file_path_name=logs_file_path_name,
+#         dates_column_name="timestamp",
+#         s3_client=s3_client,
+#     )
+
+#     pods_name_prefix_set = ("worker", "webapp")
+#     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
+#     worker_dict = process_df_for_gantt(df)
+#     # # # # Show dataframe
+
+#     gantt_list = []
+#     for key, value in worker_dict.items():
+#         try:
+#             pod_ip = value["host_ip"]
+#             node_name = ""
+#             # get node name
+#             if pod_ip in pods_info_dict:
+#                 node_name = pods_info_dict[pod_ip]["NOD_NAME"]
+
+#             task = f"{node_name}: {value['host_ip']}: {value['pid']}"
+#             if "duration" in value:
+#                 label = f"{value['task']}: duration:{value['duration']}s"
+#             item = dict(
+#                 Task=task,
+#                 Start=(value["start"]),
+#                 Finish=(value["end"]),
+#                 Resource=value["task"],
+#                 Node=node_name,
+#                 Label=label,
+#                 Host=value["host_ip"],
+#                 Duration=value["duration"],
+#             )
+#         except Exception as e:
+#             # logger.warning(f"Missing Key {e} in {value}")
+#             continue
+#         gantt_list.append(item)
+#     gantt_df = pd.DataFrame(gantt_list)
+#     fig = px.timeline(
+#         gantt_df, x_start="Start", x_end="Finish", y="Task", color="Node", text="Label"
+#     )
+#     fig.update_yaxes(
+#         autorange="reversed"
+#     )  # otherwise tasks are listed from the bottom up
+
+#     pio.write_image(
+#         fig, saved_image_name_local, format="png", scale=1, width=2400, height=1600
+#     )
+
+#     img_data = open(saved_image_name_local, "rb")
+#     s3_client.put_object(
+#         Bucket=bucket, Key=saved_image_name_aws, Body=img_data, ContentType="image/png"
+#     )
 
 
 def analyze_logs_files(
@@ -302,7 +404,7 @@ def analyze_logs_files(
 
     # get error task
 
-    error_task = df[(df["message.Subject.alert_type"] == "SYSTEM_ERROR")]
+    error_task = df[(df["alert_type"] == "SYSTEM_ERROR")]
     num_error_task = len(error_task)
 
     worker_dict = process_df_for_gantt(df)
@@ -326,8 +428,8 @@ def analyze_logs_files(
         if ("end" in value) is False:
             num_unfinished_task += 1
             continue
-        start = float(value["start"].timestamp())
-        end = float(value["end"].timestamp())
+        start = float(value["start"])
+        end = float(value["end"])
         duration = value["duration"]
         task = value["task"]
         if task == "loop_tasks_status_task":

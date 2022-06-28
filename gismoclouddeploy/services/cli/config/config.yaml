@@ -63,6 +63,7 @@ worker_config:
   saved_performance_file: None            # "performance-{user_id}.txt"
   saved_data_target_filename: None        # "results-{user_id}.csv"
   saved_logs_target_filename: None        # "logs-{user_id}.csv"
+  saved_error_target_filename: None        # "error-{user_id}.csv"
   curr_process_file : None      # It's a hint column that is generated in the CLI run-time.
   curr_process_column : None    # It's a hint column that is generated in the CLI run-time.
   aws_access_key : None         # It's a hint column that is generated in the CLI run-time.

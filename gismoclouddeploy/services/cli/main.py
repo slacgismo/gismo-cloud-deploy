@@ -325,6 +325,7 @@ def processlogs(configfile):
     ] = f"performance-{user_id}.txt"
     config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
     config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
+    config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}.csv"
 
     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
@@ -360,6 +361,7 @@ def processlogs(configfile):
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
     )
+
     logs_file_path_name = (
         worker_config_obj.saved_path
         + "/"
@@ -419,7 +421,7 @@ def save_cached(configfile):
     ] = f"performance-{user_id}.txt"
     config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
     config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
-
+    config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}.csv"
     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
     aws_config_obj.aws_access_key = AWS_ACCESS_KEY_ID
@@ -429,6 +431,7 @@ def save_cached(configfile):
     aws_config_obj.sqs_url = SQS_URL
     aws_config_obj.dlq_url = DLQ_URL
     aws_config_obj.ecr_repo = ECR_REPO
+
     modules.command_utils.download_logs_saveddata_from_dynamodb(
         worker_config=worker_config_obj,
         aws_access_key=AWS_ACCESS_KEY_ID,

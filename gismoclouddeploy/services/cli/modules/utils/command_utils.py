@@ -756,12 +756,16 @@ def download_logs_saveddata_from_dynamodb(
         save_logs_file = (
             worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
         )
+        save_error_file = (
+            worker_config.saved_path + "/" + worker_config.saved_error_target_filename
+        )
         aws_utils.save_user_logs_data_from_dynamodb(
             table_name=worker_config.dynamodb_tablename,
             user_id=worker_config.user_id,
             saved_bucket=worker_config.saved_bucket,
             save_data_file=save_data_file,
             save_logs_file=save_logs_file,
+            save_error_file=save_error_file,
             aws_access_key=aws_access_key,
             aws_secret_key=aws_secret_key,
             aws_region=aws_region,
@@ -769,45 +773,112 @@ def download_logs_saveddata_from_dynamodb(
     except Exception as e:
         logger.error(f"Failed to save data and logs from dynamodb {e}")
         raise e
-    try:
-        # download logs data
-        source_log_file_s3 = (
-            worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-        )
-        target_log_file_local = (
-            worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-        )
-        download_file_from_s3(
-            bucket_name=worker_config.saved_bucket,
-            source_file=source_log_file_s3,
-            target_file=target_log_file_local,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-            aws_region=aws_region,
-        )
-    except Exception as e:
-        logger.error(f"Failed to download logs from s3 {e}")
-        raise e
-    try:
-        # download results data
-        data_source_file_s3 = (
-            worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-        )
-        data_target_file_local = (
-            worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-        )
-        download_file_from_s3(
-            bucket_name=worker_config.saved_bucket,
-            source_file=data_source_file_s3,
-            target_file=data_target_file_local,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-            aws_region=aws_region,
-        )
-    except Exception as e:
-        logger.error(f"Failed to download data file from s3 {e}")
-        raise e
-    return
+    # try:
+    #     # download logs data
+    #     source_log_file_s3 = (
+    #         worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
+    #     )
+    #     target_log_file_local = (
+    #         worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
+    #     )
+    #     download_file_from_s3(
+    #         bucket_name=worker_config.saved_bucket,
+    #         source_file=source_log_file_s3,
+    #         target_file=target_log_file_local,
+    #         aws_access_key=aws_access_key,
+    #         aws_secret_access_key=aws_secret_key,
+    #         aws_region=aws_region,
+    #     )
+    # except Exception as e:
+    #     logger.error(f"Failed to download logs from s3 {e}")
+    #     raise e
+    # try:
+    #     # download results data
+    #     data_source_file_s3 = (
+    #         worker_config.saved_path + "/" + worker_config.saved_data_target_filename
+    #     )
+    #     data_target_file_local = (
+    #         worker_config.saved_path + "/" + worker_config.saved_data_target_filename
+    #     )
+    #     download_file_from_s3(
+    #         bucket_name=worker_config.saved_bucket,
+    #         source_file=data_source_file_s3,
+    #         target_file=data_target_file_local,
+    #         aws_access_key=aws_access_key,
+    #         aws_secret_access_key=aws_secret_key,
+    #         aws_region=aws_region,
+    #     )
+    # except Exception as e:
+    #     logger.error(f"Failed to download data file from s3 {e}")
+    #     raise e
+    # return
+
+
+# def download_logs_saveddata_from_dynamodb(
+#     worker_config: WORKER_CONFIG = None,
+#     aws_access_key: str = None,
+#     aws_secret_key: str = None,
+#     aws_region: str = None,
+# ) -> None:
+#     try:
+#         save_data_file = (
+#             worker_config.saved_path + "/" + worker_config.saved_data_target_filename
+#         )
+#         save_logs_file = (
+#             worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
+#         )
+#         aws_utils.save_user_logs_data_from_dynamodb(
+#             table_name=worker_config.dynamodb_tablename,
+#             user_id=worker_config.user_id,
+#             saved_bucket=worker_config.saved_bucket,
+#             save_data_file=save_data_file,
+#             save_logs_file=save_logs_file,
+#             aws_access_key=aws_access_key,
+#             aws_secret_key=aws_secret_key,
+#             aws_region=aws_region,
+#         )
+#     except Exception as e:
+#         logger.error(f"Failed to save data and logs from dynamodb {e}")
+#         raise e
+#     try:
+#         # download logs data
+#         source_log_file_s3 = (
+#             worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
+#         )
+#         target_log_file_local = (
+#             worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
+#         )
+#         download_file_from_s3(
+#             bucket_name=worker_config.saved_bucket,
+#             source_file=source_log_file_s3,
+#             target_file=target_log_file_local,
+#             aws_access_key=aws_access_key,
+#             aws_secret_access_key=aws_secret_key,
+#             aws_region=aws_region,
+#         )
+#     except Exception as e:
+#         logger.error(f"Failed to download logs from s3 {e}")
+#         raise e
+#     try:
+#         # download results data
+#         data_source_file_s3 = (
+#             worker_config.saved_path + "/" + worker_config.saved_data_target_filename
+#         )
+#         data_target_file_local = (
+#             worker_config.saved_path + "/" + worker_config.saved_data_target_filename
+#         )
+#         download_file_from_s3(
+#             bucket_name=worker_config.saved_bucket,
+#             source_file=data_source_file_s3,
+#             target_file=data_target_file_local,
+#             aws_access_key=aws_access_key,
+#             aws_secret_access_key=aws_secret_key,
+#             aws_region=aws_region,
+#         )
+#     except Exception as e:
+#         logger.error(f"Failed to download data file from s3 {e}")
+#         raise e
+#     return
 
 
 def initial_end_services(

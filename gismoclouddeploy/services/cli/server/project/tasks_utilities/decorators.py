@@ -2,9 +2,12 @@ from copy import copy
 from distutils.log import error
 import json
 import sys
+import boto3
 import copy
 import functools
 import time
+import os
+import socket
 from .tasks_utils import (
     parse_messages_from_response,
     track_logs,
@@ -44,42 +47,28 @@ def tracklog_decorator(func):
             user_id = kwargs["user_id"]
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
+        start_time = str(time.time())
+        # fire task start sns
+        init_message = make_sns_response(
+            alert_type=SNSSubjectsAlert.TASK_START.name,
+            messages={
+                "start_time": start_time,
+                "task_id": str(task_id),
+                "file": curr_process_file,
+                "column": curr_process_column,
+            },
+            user_id=user_id,
+        )
+        publish_message_sns(
+            # message=json.dumps(update_messages),
+            message=json.dumps(init_message["Messages"]),
+            subject=json.dumps(init_message["Subject"]),
+            topic_arn=sns_topic,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
         try:
-            # args[0].update_state(
-            #     state=WorkerState.PROCESS.name, meta={"timestamp": str(time.time())}
-            # )
-            # logger.info(f"-----------------------column: {curr_process_column} ---------------------")
-            start_time = str(time.time())
-            # init_message  = make_sns_response(
-            #     alert_type=SNSSubjectsAlert.TASK_START.name,
-            #     messages={"start_time":start_time , "task_id":str(task_id), "file":curr_process_file, "column":curr_process_column},
-            #     user_id=user_id,
-            # )
-            # publish_message_sns(
-            #     # message=json.dumps(update_messages),
-            #     message=json.dumps(init_message["Messages"]),
-            #     subject=json.dumps(init_message['Subject']),
-            #     topic_arn=sns_topic,
-            #     aws_access_key=aws_access_key,
-            #     aws_secret_access_key=aws_secret_access_key,
-            #     aws_region=aws_region,
-            # )
-
-            # track start
-            inspect_and_tracklog_decorator(
-                function_name=func.__name__,
-                action=ActionState.ACTION_START.name,
-                user_id=user_id,
-                messages="init function",
-                task_id=task_id,
-                process_file_name=curr_process_file,
-                table_name=table_name,
-                column_name=curr_process_column,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
-
             check_and_download_solver(
                 solver_name=solver["solver_name"],
                 slover_lic_file_name=solver["solver_lic_file_name"],
@@ -94,16 +83,12 @@ def tracklog_decorator(func):
             # calls original function
             response = func(*args, **kwargs)
 
-            # args[0].update_state(
-            #     state=WorkerState.SUCCESS.name, meta={"timestamp": str(time.time())}
-            # )
-            args[0].update_state(state=WorkerState.SUCCESS.name)
-            # track end
+            # args[0].update_state(state=WorkerState.SUCCESS.name)
 
         except Exception as e:
             error_output = str(e).replace('"', " ").replace("'", " ")
             logger.error(f"Error :{error_output}")
-            error_str = {"error_output": error_output}
+            # error_str = {"error_output": error_output}
             response = make_sns_response(
                 alert_type=SNSSubjectsAlert.SYSTEM_ERROR.name,
                 messages={
@@ -116,32 +101,16 @@ def tracklog_decorator(func):
             logger.error(f"Publish SNS Error{e}")
             args[0].update_state(state=WorkerState.FAILED.name)
 
-        inspect_and_tracklog_decorator(
-            function_name=func.__name__,
-            action=ActionState.ACTION_STOP.name,
-            user_id=user_id,
-            messages=json.loads(json.dumps(response), parse_float=Decimal),
-            task_id=task_id,
-            process_file_name=curr_process_file,
-            table_name=table_name,
-            column_name=curr_process_column,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
-        # subject_str = parse_subject_from_response(response=response,task_id=task_id)
         end_time = str(time.time())
 
         logger.info(response)
-        # update_subject = response["Subject"]
-        # update_subject["task_id"]  = str(task_id)
-
         update_messages = response["Messages"]
         update_messages["task_id"] = str(task_id)
         update_messages["start_time"] = start_time
         update_messages["end_time"] = end_time
         # logger.info(update_messages)
         subject = response["Subject"]
+        alert_type = subject["alert_type"]
         publish_message_sns(
             # message=json.dumps(update_messages),
             message=json.dumps(update_messages),
@@ -152,8 +121,72 @@ def tracklog_decorator(func):
             aws_region=aws_region,
         )
         # logger.info(f" Send to SNS, message: {message_id}")
+        hostname = socket.gethostname()
+        host_ip = socket.gethostbyname(hostname)
+        pid = os.getpid()
+
+        put_item_to_dynamodb(
+            table_name=table_name,
+            user_id=user_id,
+            task_id=task_id,
+            host_ip=host_ip,
+            alert_type=alert_type,
+            pid=pid,
+            host_name=hostname,
+            start_time=start_time,
+            end_time=end_time,
+            messages=json.dumps(update_messages),
+            file_name=curr_process_file,
+            column_name=curr_process_column,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
 
     return wrapper
+
+
+def put_item_to_dynamodb(
+    table_name: str,
+    user_id: str,
+    task_id: str,
+    host_ip: str,
+    alert_type: str,
+    pid: str,
+    host_name: str,
+    start_time: str,
+    end_time: str,
+    messages: str,
+    file_name: str,
+    column_name: str,
+    aws_access_key: str,
+    aws_secret_access_key: str,
+    aws_region: str,
+):
+    dynamodb_resource = boto3.resource(
+        "dynamodb",
+        region_name=aws_region,
+        aws_access_key_id=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+    )
+    table = dynamodb_resource.Table(table_name)
+    response = table.put_item(
+        Item={
+            "user_id": user_id,
+            "timestamp": str(time.time()),
+            "host_name": host_name,
+            "host_ip": host_ip,
+            "task_id": task_id,
+            "alert_type": alert_type,
+            "pid": pid,
+            "start_time": start_time,
+            "end_time": end_time,
+            "messages": messages,
+            "file_name": file_name,
+            "column_name": column_name,
+        }
+    )
+    return response
 
 
 def inspect_and_tracklog_decorator(

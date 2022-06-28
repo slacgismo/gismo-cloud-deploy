@@ -1,3 +1,4 @@
+from asyncio import log
 import boto3
 import pandas as pd
 import botocore
@@ -9,6 +10,8 @@ import os
 from io import StringIO
 
 from boto3.dynamodb.types import TypeDeserializer
+
+# from server.models.SNSSubjectsAlert import SNSSubjectsAlert
 
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
@@ -343,18 +346,12 @@ def save_user_logs_data_from_dynamodb(
     saved_bucket: str,
     save_data_file: str,
     save_logs_file: str,
+    save_error_file: str,
     aws_access_key: str,
     aws_secret_key: str,
     aws_region: str,
 ) -> None:
-    # dynamodb_client = connect_aws_client(
-    #     client_name="dynamodb",
-    #     key_id=aws_access_key,
-    #     secret=aws_secret_key,
-    #     region=aws_region,
-    # )
-    # response = dynamodb_client.get_item(TableName=table_name, Key={'user_id':{'S':str(user_id)}})
-    # dynamodb = boto3.resource("dynamodb", region_name=aws_region)
+
     dynamodb_resource = connect_aws_resource(
         resource_name="dynamodb",
         key_id=aws_access_key,
@@ -367,13 +364,14 @@ def save_user_logs_data_from_dynamodb(
 
     save_data = []
     all_logs = []
+    error_logs = []
     for i in response["Items"]:
         all_logs.append(i)
-        if (
-            i["action"] == "ACTION_STOP"
-            and i["message"]["Subject"]["alert_type"] == "SAVED_DATA"
-        ):
-            save_data.append(i["message"]["Messages"])
+        # print(i)
+        if i["alert_type"] == "SAVED_DATA":
+            save_data.append(i["messages"])
+        if i["alert_type"] == "SYSTEM_ERROR":
+            error_logs.append(i)
 
     # delete dynamodb items
     try:
@@ -408,9 +406,97 @@ def save_user_logs_data_from_dynamodb(
             aws_secret_access_key=aws_secret_key,
             aws_region=aws_region,
         )
+        # save error
+        if len(error_logs) > 0:
+            error_df = pd.json_normalize(error_logs)
+
+            save_dataframe_csv_on_s3(
+                dataframe=error_df,
+                saved_bucket=saved_bucket,
+                saved_file=save_error_file,
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_key,
+                aws_region=aws_region,
+            )
     except Exception as e:
         raise Exception(f"Save data to s3 failed{e}")
     return
+
+
+# def save_user_logs_data_from_dynamodb(
+#     table_name: str,
+#     user_id: str,
+#     saved_bucket: str,
+#     save_data_file: str,
+#     save_logs_file: str,
+#     aws_access_key: str,
+#     aws_secret_key: str,
+#     aws_region: str,
+# ) -> None:
+#     # dynamodb_client = connect_aws_client(
+#     #     client_name="dynamodb",
+#     #     key_id=aws_access_key,
+#     #     secret=aws_secret_key,
+#     #     region=aws_region,
+#     # )
+#     # response = dynamodb_client.get_item(TableName=table_name, Key={'user_id':{'S':str(user_id)}})
+#     # dynamodb = boto3.resource("dynamodb", region_name=aws_region)
+#     dynamodb_resource = connect_aws_resource(
+#         resource_name="dynamodb",
+#         key_id=aws_access_key,
+#         secret=aws_secret_key,
+#         region=aws_region,
+#     )
+
+#     table = dynamodb_resource.Table(table_name)
+#     response = table.query(KeyConditionExpression=Key("user_id").eq(user_id))
+
+#     save_data = []
+#     all_logs = []
+#     for i in response["Items"]:
+#         all_logs.append(i)
+#         if (
+#             i["action"] == "ACTION_STOP"
+#             and i["message"]["Subject"]["alert_type"] == "SAVED_DATA"
+#         ):
+#             save_data.append(i["message"]["Messages"])
+
+#     # delete dynamodb items
+#     try:
+#         with table.batch_writer() as batch:
+#             for each in response["Items"]:
+#                 batch.delete_item(
+#                     Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
+#                 )
+#         print(f"remove all items of {user_id} from dynamodb completed")
+#     except Exception as e:
+#         raise Exception(f"Delete items from dynamodb failed{e}")
+
+#     try:
+#         # save data
+#         save_data_df = pd.json_normalize(save_data)
+#         save_dataframe_csv_on_s3(
+#             dataframe=save_data_df,
+#             saved_bucket=saved_bucket,
+#             saved_file=save_data_file,
+#             aws_access_key=aws_access_key,
+#             aws_secret_access_key=aws_secret_key,
+#             aws_region=aws_region,
+#         )
+#         # save logs
+#         logs_df = pd.json_normalize(all_logs)
+
+#         save_dataframe_csv_on_s3(
+#             dataframe=logs_df,
+#             saved_bucket=saved_bucket,
+#             saved_file=save_logs_file,
+#             aws_access_key=aws_access_key,
+#             aws_secret_access_key=aws_secret_key,
+#             aws_region=aws_region,
+#         )
+#     except Exception as e:
+#         raise Exception(f"Save data to s3 failed{e}")
+#     return
 
 
 def retrive_all_item_from_dyanmodb(
