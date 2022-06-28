@@ -88,7 +88,7 @@ def save_user_logs_data_from_dynamodb(
     aws_access_key: str = None,
     aws_secret_key: str = None,
     aws_region: str = None,
-) -> None:
+) -> bool:
 
     dynamodb_resource = connect_aws_resource(
         resource_name="dynamodb",
@@ -113,7 +113,8 @@ def save_user_logs_data_from_dynamodb(
 
     if len(data) == 0:
         print("No data in dynamodb")
-        return
+        return False
+
     save_data = []
     all_logs = []
     error_logs = []
@@ -162,6 +163,8 @@ def save_user_logs_data_from_dynamodb(
             )
     except Exception as e:
         raise Exception(f"Save data to s3 failed{e}")
+
+    return True
     # delete dynamodb items
     print(f"Deleting dyanmodb items")
     try:

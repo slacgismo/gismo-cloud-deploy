@@ -1,19 +1,15 @@
 from multiprocessing.dummy import Process
-import socket
-import threading
 
 import click
-from os.path import exists
 import logging
 import os
-import time
 
 import modules
 from modules.utils.AWS_CONFIG import AWS_CONFIG
 from modules.utils.WORKER_CONFIG import WORKER_CONFIG
-
-
 from modules.utils.run_process_files import run_process_files
+from modules.utils.save_cached_and_plot import save_cached_and_plot
+from modules.utils.modiy_config_parameters import modiy_config_parameters
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -164,7 +160,7 @@ def nodes_scale(min_nodes, configfile):
     """Increate or decrease nodes number"""
     logger.info(f"Scale nodes {min_nodes} {configfile}")
     # check aws credential
-    config_json = modiy_config_parametes_based_on_command(
+    config_json = modiy_config_parameters(
         configfile=configfile,
         nodesscale=None,
         aws_access_key=AWS_ACCESS_KEY_ID,
@@ -333,49 +329,15 @@ def save_cached(configfile):
     """
     click.echo("save cached data from previous process")
 
-    config_json = modiy_config_parametes_based_on_command(
+    save_cached_and_plot(
         configfile=configfile,
-        nodesscale=None,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
         sqs_url=SQS_URL,
         sns_topic=SNS_TOPIC,
-        dlq_url=DLQ_URL,
         ecr_repo=ECR_REPO,
-    )
-    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
-    modules.command_utils.download_logs_saveddata_from_dynamodb(
-        worker_config=worker_config_obj,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-    )
-
-    modules.command_utils.process_logs_and_plot(
-        worker_config=worker_config_obj,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-    )
-
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=AWS_ACCESS_KEY_ID,
-        secret=AWS_SECRET_ACCESS_KEY,
-        region=AWS_DEFAULT_REGION,
-    )
-
-    logs_file_path_name = (
-        worker_config_obj.saved_path
-        + "/"
-        + worker_config_obj.saved_logs_target_filename
-    )
-    modules.process_log.analyze_logs_files(
-        bucket=worker_config_obj.saved_bucket,
-        logs_file_path_name=logs_file_path_name,
-        s3_client=s3_client,
-        save_file_path_name=worker_config_obj.saved_performance_file,
+        dlq_url=DLQ_URL,
     )
 
 
