@@ -341,15 +341,15 @@ def save_dataframe_csv_on_s3(
 
 
 def save_user_logs_data_from_dynamodb(
-    table_name: str,
-    user_id: str,
-    saved_bucket: str,
-    save_data_file: str,
-    save_logs_file: str,
-    save_error_file: str,
-    aws_access_key: str,
-    aws_secret_key: str,
-    aws_region: str,
+    table_name: str = None,
+    user_id: str = None,
+    saved_bucket: str = None,
+    save_data_file: str = None,
+    save_logs_file: str = None,
+    save_error_file: str = None,
+    aws_access_key: str = None,
+    aws_secret_key: str = None,
+    aws_region: str = None,
 ) -> None:
 
     dynamodb_resource = connect_aws_resource(
@@ -358,13 +358,14 @@ def save_user_logs_data_from_dynamodb(
         secret=aws_secret_key,
         region=aws_region,
     )
-
+    # print(f"Load from db ---------------> ")
     table = dynamodb_resource.Table(table_name)
     response = table.query(KeyConditionExpression=Key("user_id").eq(user_id))
 
     save_data = []
     all_logs = []
     error_logs = []
+    # print(f"Load from db {response} -------> ")
     for i in response["Items"]:
         all_logs.append(i)
         # print(i)
@@ -372,17 +373,6 @@ def save_user_logs_data_from_dynamodb(
             save_data.append(i["messages"])
         if i["alert_type"] == "SYSTEM_ERROR":
             error_logs.append(i)
-
-    # delete dynamodb items
-    try:
-        with table.batch_writer() as batch:
-            for each in response["Items"]:
-                batch.delete_item(
-                    Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
-                )
-        print(f"remove all items of {user_id} from dynamodb completed")
-    except Exception as e:
-        raise Exception(f"Delete items from dynamodb failed{e}")
 
     try:
         # save data
@@ -397,7 +387,7 @@ def save_user_logs_data_from_dynamodb(
         )
         # save logs
         logs_df = pd.json_normalize(all_logs)
-
+        # print(f"---> logs_df {logs_df}")
         save_dataframe_csv_on_s3(
             dataframe=logs_df,
             saved_bucket=saved_bucket,
@@ -420,6 +410,16 @@ def save_user_logs_data_from_dynamodb(
             )
     except Exception as e:
         raise Exception(f"Save data to s3 failed{e}")
+    # delete dynamodb items
+    try:
+        with table.batch_writer() as batch:
+            for each in response["Items"]:
+                batch.delete_item(
+                    Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
+                )
+        print(f"remove all items of {user_id} from dynamodb completed")
+    except Exception as e:
+        raise Exception(f"Delete items from dynamodb failed{e}")
     return
 
 
