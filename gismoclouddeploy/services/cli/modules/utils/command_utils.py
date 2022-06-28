@@ -881,9 +881,7 @@ def initial_end_services(
         saved_image_name_aws=plot_full_path_name,
         s3_client=s3_client,
     )
-    # logger.info(
-    #     f"delete_nodes_after_processing {delete_nodes_after_processing} AWS:{aws_utils.check_environment_is_aws()}"
-    # )
+
     if aws_utils.check_environment_is_aws() and delete_nodes_after_processing is True:
         logger.info("======= >Delete node after processing")
         scale_eks_nodes_and_wait(

@@ -805,27 +805,7 @@ def run_process_files(
         aws_secret_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
     )
-    # save_data_file = (
-    #     worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-    # )
-    # save_logs_file = (
-    #     worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-    # )
-    # save_error_file = (
-    #     worker_config.saved_path + "/" + worker_config.saved_error_target_filename
-    # )
-    # logger.info(f"user_id: {worker_config.user_id}")
-    # aws_utils.save_user_logs_data_from_dynamodb(
-    #     table_name=worker_config.dynamodb_tablename,
-    #     user_id=worker_config.user_id,
-    #     saved_bucket=worker_config.saved_bucket,
-    #     save_data_file=save_data_file,
-    #     save_logs_file=save_logs_file,
-    #     save_error_file=save_error_file,
-    #     aws_access_key=aws_config.aws_access_key,
-    #     aws_secret_key=aws_config.aws_secret_access_key,
-    #     aws_region=aws_config.aws_region,
-    # )
+
     modules.command_utils.initial_end_services(
         worker_config=worker_config_obj,
         aws_config=aws_config_obj,
