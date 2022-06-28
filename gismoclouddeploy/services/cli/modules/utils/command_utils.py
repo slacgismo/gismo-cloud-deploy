@@ -851,33 +851,6 @@ def initial_end_services(
     is_build_image: bool = False,
     services_config_list: List[str] = None,
 ):
-    # save_data_file = (
-    #     worker_config.saved_path + "/" + worker_config.saved_data_target_filename
-    # )
-    # save_logs_file = (
-    #     worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-    # )
-    # save_error_file = (
-    #     worker_config.saved_path + "/" + worker_config.saved_error_target_filename
-    # )
-    # logger.info(f"user_id: {worker_config.user_id}")
-    # aws_utils.save_user_logs_data_from_dynamodb(
-    #     table_name=worker_config.dynamodb_tablename,
-    #     user_id=worker_config.user_id,
-    #     saved_bucket=worker_config.saved_bucket,
-    #     save_data_file=save_data_file,
-    #     save_logs_file=save_logs_file,
-    #     save_error_file=save_error_file,
-    #     aws_access_key=aws_config.aws_access_key,
-    #     aws_secret_key=aws_config.aws_secret_access_key,
-    #     aws_region=aws_config.aws_region,
-    # )
-    # download_logs_saveddata_from_dynamodb(
-    #     worker_config=worker_config,
-    #     aws_access_key=aws_config.aws_access_key,
-    #     aws_secret_key=aws_config.aws_secret_access_key,
-    #     aws_region=aws_config.aws_region,
-    # )
 
     logger.info("=========== delete solver lic in bucket ============ ")
     delete_solver_lic_from_bucket(
@@ -908,15 +881,15 @@ def initial_end_services(
         saved_image_name_aws=plot_full_path_name,
         s3_client=s3_client,
     )
-    logger.info(
-        f"delete_nodes_after_processing {delete_nodes_after_processing} AWS:{aws_utils.check_environment_is_aws()}"
-    )
+    # logger.info(
+    #     f"delete_nodes_after_processing {delete_nodes_after_processing} AWS:{aws_utils.check_environment_is_aws()}"
+    # )
     if aws_utils.check_environment_is_aws() and delete_nodes_after_processing is True:
         logger.info("======= >Delete node after processing")
         scale_eks_nodes_and_wait(
-            scale_node_num=aws_config.eks_nodes_number,
+            scale_node_num=0,
             total_wait_time=aws_config.scale_eks_nodes_wait_time,
-            delay=2,
+            delay=3,
             cluster_name=aws_config.cluster_name,
             nodegroup_name=aws_config.nodegroup_name,
         )
