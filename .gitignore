@@ -71,4 +71,4 @@ override.tf.json
 .dev-sample
 secret.yaml
 runtime.png
-gismoclouddeploy/services/cli/results/
+gismoclouddeploy/services/results/
