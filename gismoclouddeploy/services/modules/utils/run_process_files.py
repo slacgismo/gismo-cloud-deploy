@@ -1,5 +1,6 @@
-import imp
 import time
+
+from .long_pulling_sqs import long_pulling_sqs
 
 from .command_utils import (
     check_solver_and_upload,
@@ -7,9 +8,8 @@ from .command_utils import (
     create_or_update_k8s_deployment,
     checck_server_ready_and_get_name,
     send_command_to_server,
-    long_pulling_sqs_and_check_tasks,
-    initial_end_services,
 )
+from .initial_end_services import initial_end_services
 from .dynamodb_utils import (
     remove_all_user_items_from_dynamodb,
     download_logs_saveddata_from_dynamodb,
@@ -331,8 +331,7 @@ def run_process_files(
         * (len(total_tasks_ids))
         / worker_replicas
     )
-
-    unfinished_tasks_ids = long_pulling_sqs_and_check_tasks(
+    unfinished_tasks_ids = long_pulling_sqs(
         task_ids=total_tasks_ids,
         wait_time=looping_wait_time,
         delay=aws_config_obj.interval_of_check_sqs_in_second,
@@ -345,6 +344,19 @@ def run_process_files(
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region,
     )
+    # unfinished_tasks_ids = long_pulling_sqs_and_check_tasks(
+    #     task_ids=total_tasks_ids,
+    #     wait_time=looping_wait_time,
+    #     delay=aws_config_obj.interval_of_check_sqs_in_second,
+    #     sqs_url=sqs_url,
+    #     worker_config=worker_config_obj,
+    #     is_docker=is_docker,
+    #     acccepted_idle_time=int(worker_config_obj.acccepted_idle_time),
+    #     server_name=ready_server_name,
+    #     aws_access_key=aws_access_key,
+    #     aws_secret_access_key=aws_secret_access_key,
+    #     aws_region=aws_region,
+    # )
     logger.info(" ----- init end services process --------- ")
 
     time.sleep(10)

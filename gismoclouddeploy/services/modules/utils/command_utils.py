@@ -1,34 +1,25 @@
-from cmath import e
-from http import server
 from os.path import exists
-from re import A
+
 import re
-from typing import List, Set
-from unittest import result
+from typing import List
+
 import yaml
 import pandas as pd
 import json
 from botocore.exceptions import ClientError
-import socket
-from server.models.SNSSubjectsAlert import SNSSubjectsAlert
-from .WORKER_CONFIG import WORKER_CONFIG
-from .sqs import purge_queue
 
-from .check_aws import check_aws_validity, check_environment_is_aws
+from .WORKER_CONFIG import WORKER_CONFIG
 from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
-    get_k8s_deployment,
 )
 from multiprocessing import Process
 
-from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
     invoke_kubectl_delete_deployment,
     invoke_exec_docker_run_process_files,
     invoke_exec_k8s_run_process_files,
-    invoke_docker_compose_down_and_remove,
     invoke_exec_k8s_ping_worker,
     invoke_exec_docker_check_task_status,
     invoke_exec_docker_ping_worker,
@@ -38,7 +29,6 @@ from .process_log import process_logs_from_s3
 
 from server.utils import aws_utils
 import time
-from kubernetes import client, config
 from .sqs import (
     receive_queue_message,
     delete_queue_message,
@@ -229,39 +219,39 @@ def invoke_process_files_to_server(
     return task_ids
 
 
-def loop_tasks_status(
-    task_ids: List[str] = None,
-    is_docker: bool = False,
-    server_name: str = None,
-) -> None:
-    if len(task_ids) == 0 or server_name is None:
-        raise Exception("Input value error")
-    update_tasks_id = []
+# def loop_tasks_status(
+#     task_ids: List[str] = None,
+#     is_docker: bool = False,
+#     server_name: str = None,
+# ) -> None:
+#     if len(task_ids) == 0 or server_name is None:
+#         raise Exception("Input value error")
+#     update_tasks_id = []
 
-    for task_id in task_ids:
-        try:
-            result = ""
-            if is_docker:
-                result = invoke_exec_docker_check_task_status(
-                    server_name=server_name, task_id=str(task_id).strip("\n")
-                )
-            else:
-                logger.info(f"Check task: {task_id} status")
-                result = invoke_exec_k8s_check_task_status(
-                    server_name=server_name, task_id=str(task_id).strip("\n")
-                )
-                # logger.info(result)
-                # conver json to
-            res_json = {}
-            dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
-            res_json = json.loads(dataform)
-            status = res_json["task_status"]
-            logger.info(f" ==== Check {task_id} Status: {dataform} ====")
-            if status != "SUCCESS":
-                update_tasks_id.append(task_id)
-        except Exception as e:
-            raise Exception(f"Invoke check tasks status failed {e}")
-    return update_tasks_id
+#     for task_id in task_ids:
+#         try:
+#             result = ""
+#             if is_docker:
+#                 result = invoke_exec_docker_check_task_status(
+#                     server_name=server_name, task_id=str(task_id).strip("\n")
+#                 )
+#             else:
+#                 logger.info(f"Check task: {task_id} status")
+#                 result = invoke_exec_k8s_check_task_status(
+#                     server_name=server_name, task_id=str(task_id).strip("\n")
+#                 )
+#                 # logger.info(result)
+#                 # conver json to
+#             res_json = {}
+#             dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
+#             res_json = json.loads(dataform)
+#             status = res_json["task_status"]
+#             logger.info(f" ==== Check {task_id} Status: {dataform} ====")
+#             if status != "SUCCESS":
+#                 update_tasks_id.append(task_id)
+#         except Exception as e:
+#             raise Exception(f"Invoke check tasks status failed {e}")
+#     return update_tasks_id
 
 
 def process_logs_and_plot(
@@ -341,42 +331,6 @@ def print_dlq(
 
         wait_time -= 1
         time.sleep(delay)
-
-
-def check_nodes_status():
-    """
-    Check EKS node status
-    """
-    config.load_kube_config()
-    v1 = client.CoreV1Api()
-    response = v1.list_node()
-    nodes = []
-    # check confition
-    for node in response.items:
-        cluster = node.metadata.labels["alpha.eksctl.io/cluster-name"]
-        nodegroup = node.metadata.labels["alpha.eksctl.io/nodegroup-name"]
-        hostname = node.metadata.labels["kubernetes.io/hostname"]
-        instance_type = node.metadata.labels["beta.kubernetes.io/instance-type"]
-        region = node.metadata.labels["topology.kubernetes.io/region"]
-        status = node.status.conditions[-1].status  # only looks the last
-        status_type = node.status.conditions[-1].type  # only looks the last
-        node_obj = Node(
-            cluster=cluster,
-            nodegroup=nodegroup,
-            hostname=hostname,
-            instance_type=instance_type,
-            region=region,
-            status=status,
-            status_type=status_type,
-        )
-
-        nodes.append(node_obj)
-        if bool(status) is not True:
-            logger.info(f"{hostname} is not ready status:{status}")
-            return False
-    for node in nodes:
-        logger.info(f"{node.hostname} is ready")
-    return True
 
 
 def create_or_update_k8s_deployment(
@@ -638,134 +592,6 @@ def delete_files_from_bucket(
         raise e
 
 
-def initial_end_services(
-    worker_config: WORKER_CONFIG = None,
-    is_local: bool = False,
-    is_docker: bool = False,
-    delete_nodes_after_processing: bool = False,
-    is_build_image: bool = False,
-    services_config_list: List[str] = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-    sqs_url: str = None,
-    scale_eks_nodes_wait_time: int = None,
-    cluster_name: str = None,
-    nodegroup_name: str = None,
-):
-
-    logger.info("=========== delete solver lic in bucket ============ ")
-    delete_solver_lic_from_bucket(
-        saved_solver_bucket=worker_config.solver.saved_solver_bucket,
-        solver_lic_file_name=worker_config.solver.solver_lic_file_name,
-        saved_temp_path_in_bucket=worker_config.user_id,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
-    logs_full_path_name = (
-        worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
-    )
-    s3_client = aws_utils.connect_aws_client(
-        client_name="s3",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-
-    plot_full_path_name = (
-        worker_config.saved_path + "/" + worker_config.saved_rumtime_image_name
-    )
-    process_logs_from_s3(
-        bucket=worker_config.saved_bucket,
-        logs_file_path_name=logs_full_path_name,
-        saved_image_name_local=plot_full_path_name,
-        saved_image_name_aws=plot_full_path_name,
-        s3_client=s3_client,
-    )
-
-    if check_environment_is_aws() and delete_nodes_after_processing is True:
-        logger.info("======= >Delete node after processing")
-        scale_eks_nodes_and_wait(
-            scale_node_num=0,
-            total_wait_time=scale_eks_nodes_wait_time,
-            delay=3,
-            cluster_name=cluster_name,
-            nodegroup_name=nodegroup_name,
-        )
-
-    # Remove services.
-    if check_environment_is_aws() and is_build_image:
-        logger.info("----------->.  Delete Temp ECR image ----------->")
-        ecr_client = aws_utils.connect_aws_client(
-            client_name="ecr",
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
-        )
-        for service in services_config_list:
-            if service == "worker" or service == "server":
-                image_tag = services_config_list[service]["image_tag"]
-                aws_utils.delete_ecr_image(
-                    ecr_client=ecr_client,
-                    image_name=service,
-                    image_tag=image_tag,
-                )
-    remove_running_services(
-        is_docker=is_docker,
-        services_config_list=services_config_list,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
-
-    try:
-        sqs_client = aws_utils.connect_aws_client(
-            client_name="sqs",
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
-        )
-        purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
-    except Exception as e:
-        logger.error(f"Cannot purge queue.{e}")
-        return
-    return
-
-
-def remove_running_services(
-    is_build_image: bool = False,
-    is_docker: bool = False,
-    services_config_list: List[str] = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-) -> None:
-    if is_build_image:
-        if is_docker:
-            # delete local docker images
-            logger.info("Delete local docker image")
-            invoke_docker_compose_down_and_remove()
-        else:
-
-            logger.info("----------->.  Delete Temp ECR image ----------->")
-            ecr_client = aws_utils.connect_aws_client(
-                client_name="ecr",
-                key_id=aws_access_key,
-                secret=aws_secret_access_key,
-                region=aws_region,
-            )
-            for service in services_config_list:
-                if service == "worker" or service == "server":
-                    image_tag = services_config_list[service]["image_tag"]
-                    aws_utils.delete_ecr_image(
-                        ecr_client=ecr_client,
-                        image_name=service,
-                        image_tag=image_tag,
-                    )
-    return
-
-
 def check_solver_and_upload(
     solver_name: str = None,
     saved_solver_bucket: str = None,
@@ -815,38 +641,6 @@ def check_solver_and_upload(
     logger.info(
         f"Upload sover to {saved_solver_bucket}::{target_file_path_name} success"
     )
-    return
-
-
-def delete_solver_lic_from_bucket(
-    saved_solver_bucket: str = None,
-    saved_temp_path_in_bucket: str = None,
-    solver_lic_file_name: str = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-) -> None:
-    if (
-        saved_solver_bucket is None
-        or saved_temp_path_in_bucket is None
-        or solver_lic_file_name is None
-        or aws_access_key is None
-        or aws_secret_access_key is None
-        or aws_region is None
-    ):
-        logger.warning("No input parameters")
-        return
-    try:
-        s3_client = aws_utils.connect_aws_client(
-            "s3", key_id=aws_access_key, secret=aws_secret_access_key, region=aws_region
-        )
-        full_path = saved_temp_path_in_bucket + "/" + solver_lic_file_name
-        delete_files_from_bucket(
-            bucket_name=saved_solver_bucket, full_path=full_path, s3_client=s3_client
-        )
-    except Exception as e:
-        logger.error(f"Delete solver lic errorf{e}")
-        raise e
     return
 
 
@@ -904,179 +698,6 @@ def check_and_wait_server_ready(
         time.sleep(delay)
     logger.error("check server reday orvertime")
     return False
-
-
-def long_pulling_sqs_and_check_tasks(
-    task_ids: List[str],
-    wait_time: int,
-    delay: int,
-    sqs_url: str,
-    worker_config: WORKER_CONFIG,
-    is_docker: bool,
-    acccepted_idle_time: int,
-    server_name: str,
-    aws_access_key: str,
-    aws_secret_access_key: str,
-    aws_region: str,
-) -> None:
-
-    task_ids_set = set(task_ids)
-    total_task_length = len(task_ids_set)
-    sqs_client = aws_utils.connect_aws_client(
-        client_name="sqs",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-    previous_messages_time = time.time()
-    numb_tasks_completed = 0
-    task_completion = 0
-    while wait_time > 0:
-        messages = receive_queue_message(
-            sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
-        )
-
-        alert_type = ""
-        if "Messages" in messages:
-            for msg in messages["Messages"]:
-                msg_body = json.loads(msg["Body"])
-
-                receipt_handle = msg["ReceiptHandle"]
-                subject = (
-                    msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
-                )
-                message_text = (
-                    msg_body["Message"].strip("'<>() ").replace("'", '"').strip("\n")
-                )
-                try:
-                    subject_info = json.loads(subject)
-                    sns_user_id = subject_info["user_id"]
-                except Exception as e:
-                    logger.error(f"Cannot parse {subject_info} from SQS {e}")
-                    raise e
-                if sns_user_id != worker_config.user_id:
-                    continue
-                # parse Message
-                try:
-                    message_json = json.loads(message_text)
-                except Exception as e:
-                    logger.error(f"Cannot parse {message_json} from SQS {e}")
-                    logger.error(
-                        f"Cannot parse task id. But we consider this task completed"
-                    )
-                    numb_tasks_completed += 1
-                    continue
-                    # raise Exception(f"Failed to loads json from sns messages and subhet: {e}")
-                try:
-
-                    alert_type = subject_info["alert_type"]
-                    # logger.info(f"-------- > message_json: {message_json}")
-                    task_id = message_json["task_id"]
-
-                    if (
-                        alert_type == SNSSubjectsAlert.SAVED_DATA.name
-                        or alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
-                    ):
-                        previous_messages_time = time.time()
-                        if alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name:
-                            # log out error message
-                            logger.info(message_json)
-                        try:
-                            # print(f"task id: {task_id}")
-                            if task_id in task_ids_set:
-                                task_ids_set.remove(task_id)
-                                numb_tasks_completed += 1
-                                task_completion = int(
-                                    numb_tasks_completed * 100 / total_task_length
-                                )
-                                logger.info(
-                                    f"Complete task: {numb_tasks_completed} totl:{total_task_length} task_completion: {task_completion} %"
-                                )
-                        except Exception as e:
-                            logger.info(f"Parse message failed {e}")
-                        delete_queue_message(sqs_url, receipt_handle, sqs_client)
-                    else:
-                        continue
-
-                except Exception as e:
-                    logger.warning(
-                        f"Delet this {subject} !!, This subject is not json format {e}"
-                    )
-                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
-        # logger.info(f"===== Task completion: {task_completion} =========")
-        logger.info(
-            f" Waiting .: {wait_time - delay} \
-            Time: {time.ctime(time.time())} "
-        )
-        if numb_tasks_completed == total_task_length:
-            logger.info("===== All task completed ====")
-            if len(task_ids_set) > 0:
-                for id in task_ids_set:
-                    logger.info(f"Cannot parse message from {id}!!. Somehing wrong!! ")
-            return
-        idle_time = time.time() - previous_messages_time
-        if idle_time >= acccepted_idle_time:
-            logger.info(f"===== No messages receive over time {idle_time} sec ====")
-            logger.info(f"===== Number of unfinished tasks {len(task_ids_set)} ====")
-            # logger.info(f"===== number of start_task_id  {len(start_task_id_set)} ====")
-            logger.info(f"===== Check tasks status directly ====")
-            for id in task_ids_set:
-                logger.info(f"== Check id :{id} ==")
-            try:
-                unfinished_tasks_set = check_tasks_status(
-                    is_docker=is_docker,
-                    server_name=server_name,
-                    task_ids_set=task_ids_set,
-                )
-            except Exception as e:
-                logger.error(f"Check task status failed :{e}")
-                return unfinished_tasks_set
-            return unfinished_tasks_set
-        time.sleep(delay)
-        wait_time -= int(delay)
-    return task_ids_set
-
-
-def check_tasks_status(
-    is_docker: bool = False,
-    server_name: str = None,
-    # task_id :str = None,
-    task_ids_set: Set[str] = None,
-) -> str:
-    # unfinish_task_id_set = Set()
-    unfinished_task_set = set()
-    for task_id in task_ids_set:
-        result = ""
-        try:
-            if is_docker:
-                result = invoke_exec_docker_check_task_status(
-                    server_name=server_name, task_id=str(task_id).strip("\n")
-                )
-            else:
-                logger.info(f"Chcek--> {task_id} status")
-                result = invoke_exec_k8s_check_task_status(
-                    server_name=server_name, task_id=str(task_id).strip("\n")
-                )
-        except Exception as e:
-            logger.error(f"Invokker check task status failed{e}")
-            raise e
-        logger.info(result)
-        # conver json to
-        res_json = {}
-        dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
-        try:
-            logger.info(f" ==== Id {task_id} Status: {res_json}====")
-            res_json = json.loads(dataform)
-            status = res_json["task_status"]
-
-            if status != "SUCCESS":
-                unfinished_task_set.add(task_id)
-            else:
-                logger.info(f"{task_id} success")
-        except Exception as e:
-            raise e
-    logger.info(f"{len(unfinished_task_set)} of tasks unfinished.")
-    return unfinished_task_set
 
 
 def convert_yaml_to_json(yaml_file: str = None):

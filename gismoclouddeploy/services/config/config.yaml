@@ -4,7 +4,7 @@ aws_config:
   nodegroup_name: "gcd-nodegroup"         # The nodegroup name has to be matched to `eks/cluster.yaml`
   eks_nodes_number: 5                     # Total ec2 instances
   scale_eks_nodes_wait_time : 90          # in second
-  interval_of_check_sqs_in_second: 3      # in second
+  interval_of_check_sqs_in_second: 1      # in second
   interval_of_total_wait_time_of_sqs: 300 # in second.
   interval_of_wait_pod_ready: 90          # in second
 

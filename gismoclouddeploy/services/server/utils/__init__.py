@@ -12,5 +12,4 @@ from .aws_utils import (
     read_csv_from_s3,
     download_solver_licence_from_s3_and_save,
     list_files_in_bucket,
-    check_ecr_tag_exists,
 )

@@ -112,7 +112,6 @@ def num_of_nodes_ready() -> int:
     response = v1.list_node()
     num_of_node_ready = 0
     for node in response.items:
-
         # print(node.metadata.labels['kubernetes.io/hostname'])
         # cluster = node.metadata.labels["alpha.eksctl.io/cluster-name"]
         # nodegroup = node.metadata.labels["alpha.eksctl.io/nodegroup-name"]
@@ -120,7 +119,7 @@ def num_of_nodes_ready() -> int:
         # instance_type = node.metadata.labels["beta.kubernetes.io/instance-type"]
         # region = node.metadata.labels["topology.kubernetes.io/region"]
         status = node.status.conditions[-1].status  # only looks the last
-        # status_type = node.status.conditions[-1].type  # only looks the last
+
         if bool(status) is True:
             num_of_node_ready += 1
     return num_of_node_ready
@@ -206,127 +205,6 @@ def replace_k8s_yaml_with_replicas(
         except Exception as e:
             print(f"no deplyment.yaml or wait over time{e}")
             raise e
-
-
-'''
-def create_or_update_k8s(
-    config_params_obj: Configurations,
-    rollout: bool = True,
-    env: str = "local",
-    image_tag: str = "latest",
-):
-    """Read worker config, if the replicas of woker is between from config.yaml and k8s/k8s-aws or k8s/k8s-local
-    Update the replicas number
-    """
-    k8s_path = ""
-    try:
-        if env == "local":
-            k8s_path = "./k8s/k8s-local"
-        else:
-            k8s_path = "./k8s/k8s-aws"
-    except Exception as e:
-        raise Exception(f"K8s path not exist {e}")
-
-    logger.info(" ========= Check K8s is status ========= ")
-    # deployment_pod_name_list = ["worker", "webapp", "redis", "rabbitmq"]
-    deployment_services_list = config_params_obj.deployment_services_list
-    logger.info(deployment_services_list)
-    apply_k8s_flag = False
-    # if one of the pod is missing , re init all the k8s services
-    for pod_name in deployment_services_list:
-        pod_info = get_k8s_pod_info(prefix=pod_name)
-        if pod_info["pod_name"] is None:
-            apply_k8s_flag = True
-            break
-
-    if apply_k8s_flag:
-        # invoke kubectl apply -f .(folder)
-        response = invoke_kubectl_apply(k8s_path)
-
-        # wait pod ready
-        for pod_name in deployment_services_list:
-            pod_info = get_k8s_pod_info(prefix=pod_name)
-            if pod_name == "worker":
-                try:
-                    worker_setting = read_k8s_yml(
-                        file_path=k8s_path, file_name="worker.deployment.yaml"
-                    )
-                except Exception as e:
-                    raise e
-                worker_default_replicas = worker_setting["spec"]["replicas"]
-                is_pod_ready = wait_pod_ready(
-                    num_container=worker_default_replicas,
-                    container_prefix=pod_name,
-                    counter=60,
-                    delay=1,
-                )
-                if is_pod_ready is False:
-                    logger.error(f"Waiting {pod_name} pod ready over time")
-                    raise Exception("Waiting over time")
-            else:
-                is_pod_ready = wait_pod_ready(
-                    num_container=1, container_prefix=pod_name, counter=60, delay=1
-                )
-                if is_pod_ready is False:
-                    logger.error(f"Waiting {pod_name} pod ready over time")
-                    raise Exception("Waiting over time")
-
-    logger.info(" ========= Compare k8s Worker Setting with config.yaml ========= ")
-
-    current_woker_replicas = num_pod_ready(container_prefix="worker")
-
-    if (
-        current_woker_replicas == int(config_params_obj.worker_replicas)
-        and rollout is False
-    ):
-        logger.info("current worker replicas = config_params_obj.worker_replicas ")
-        return
-
-    try:
-        replace_k8s_yaml_with_replicas(
-            file_path=k8s_path,
-            file_name="worker.deployment.yaml",
-            new_replicas=int(config_params_obj.worker_replicas),
-            curr_replicas=int(current_woker_replicas),
-            app_name="worker",
-        )
-
-    except Exception as e:
-        raise e
-    if rollout:
-        logger.info(" ========= Rollout and restart ========= ")
-        # rollout_pod_list = ["webapp", "worker"]
-
-        for pod_name in deployment_services_list:
-            esponse = invoke_kubectl_rollout(podprefix=pod_name)
-            logger.info(esponse)
-        # wait 30 second
-        wait_time = 25
-        while wait_time >= 0:
-            logger.info(f"wait pod restart :{wait_time}")
-            wait_time -= 1
-            time.sleep(1)
-
-        for pod_name in deployment_services_list:
-            if pod_name == "worker":
-                is_pod_ready = wait_pod_ready(
-                    num_container=int(config_params_obj.worker_replicas),
-                    container_prefix=pod_name,
-                    counter=60,
-                    delay=1,
-                )
-                if is_pod_ready is False:
-                    logger.error(f"Waiting {pod_name} pod ready over time")
-                    raise Exception("Waiting over time")
-            else:
-                is_pod_ready = wait_pod_ready(
-                    num_container=1, container_prefix=pod_name, counter=60, delay=1
-                )
-                if is_pod_ready is False:
-                    logger.error(f"Waiting {pod_name} pod ready over time")
-                    raise Exception("Waiting over time")
-
-'''
 
 
 def scale_eks_nodes_and_wait(

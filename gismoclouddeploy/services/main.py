@@ -163,7 +163,6 @@ def nodes_scale(min_nodes, configfile):
     # check aws credential
     config_json = modiy_config_parameters(
         configfile=configfile,
-        nodesscale=None,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
