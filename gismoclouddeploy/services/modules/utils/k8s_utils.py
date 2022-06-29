@@ -1,9 +1,12 @@
 import time
 from kubernetes import client, config
+import re
 
 from typing import Tuple
 import logging
 import yaml
+from typing import List
+from datetime import datetime
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -121,7 +124,7 @@ def get_k8s_deployment(prefix: str = None) -> str:
     resp = v1.list_namespaced_deployment(namespace="default")
     dep = []
     for i in resp.items:
-        if i.metadata.name == "worker":
+        if i.metadata.name == prefix:
             dep.append(i)
 
     print(dep[0])
@@ -189,16 +192,36 @@ def check_k8s_services_exists(name: str = None) -> bool:
     return False
 
 
-def get_k8s_pod_name(pod_name: str = None) -> str:
+def get_k8s_pod_name(pod_name: str = None) -> List[dict]:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     ret = v1.list_pod_for_all_namespaces(watch=False)
+    pods = []
+    # while counter > 0 :
     for i in ret.items:
         status = i.status.conditions[-1].status
         podname = i.metadata.name.split("-")[0]
-        if podname == pod_name and status == "True":
-            status = i.status.conditions
-            # print(status)
-            return i.metadata.name
+        if podname == pod_name:
+            # status = i.status.conditions
+            name = i.metadata.name
+
+            # state = i.status.container_statuses[-1].state
+            ready = i.status.container_statuses[-1].ready
+            if ready is True:
+                # if it's ready
+                started_at = i.status.container_statuses[-1].state.running.started_at
+                status = i.status
+                pod_info = {"name": name, "started_at": started_at}
+                pods.append(pod_info)
+
+    # only get the latest server
+    if len(pods) > 0:
+        max_date = pods[0]["started_at"]
+        latest_server_pod_name = pods[0]["name"]
+        for pod in pods:
+            if max_date < pod["started_at"]:
+                max_date = pod["started_at"]
+                latest_server_pod_name = pod["name"]
+        return latest_server_pod_name
 
     return None

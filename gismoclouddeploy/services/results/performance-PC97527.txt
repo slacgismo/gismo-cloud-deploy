@@ -1,0 +1,17 @@
++-------------------------------------+------------------------+---------------------------------+
+| Performance                         | Results                | Info                            |
++-------------------------------------+------------------------+---------------------------------+
+| Total tasks                         | 1                      |                                 |
+| Average task duration               | 1.0754876136779785 sec |                                 |
+| Min task duration                   | 1.0754876136779785 sec | PVO/PVOutput/10010.csv/Power(W) |
+| Max task duration                   | 1.0754876136779785 sec | PVO/PVOutput/10010.csv/Power(W) |
+| Number of error tasks               | 0                      |                                 |
+| Number of unfinished tasks          | 0                      |                                 |
+| Process tasks duration(in parallel) | 1.0754876136779785 sec | Real data                       |
+| Process tasks duration(in serial)   | 1.0754876136779785 sec | Estimation                      |
+| Effeciency improvement              | 0 %                    |                                 |
+| Initialize services duration        | 35.21653914451599 sec  |                                 |
+| Total process durations             | 58.2233669757843 sec   |                                 |
+| Number of nodes                     | 5                      |                                 |
+| Number of workers                   | 1                      |                                 |
++-------------------------------------+------------------------+---------------------------------+

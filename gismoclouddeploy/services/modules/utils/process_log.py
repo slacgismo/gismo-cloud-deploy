@@ -7,6 +7,7 @@ import pandas as pd
 from typing import List
 from modules.utils.eks_utils import match_pod_ip_to_node_name
 from server.utils.aws_utils import read_all_csv_from_s3_and_parse_dates_from
+from .WORKER_CONFIG import WORKER_CONFIG
 
 # from server.models.LogsInfo import LogsInfo
 import datetime
@@ -14,8 +15,63 @@ from terminaltables import AsciiTable
 import plotly.figure_factory as ff
 import plotly.express as px
 import plotly.io as pio
-
+from .modiy_config_parameters import modiy_config_parameters
 import botocore
+from .check_aws import connect_aws_client
+
+# from .command_utils import process_logs_and_plot
+
+
+# def process_logs(
+
+#     aws_access_key:str = None,
+#     aws_secret_access_key:str = None,
+#     aws_region:str = None,
+#     sqs_url:str =  None,
+#     sns_topic:str = None,
+#     dlq_url:str = None,
+#     ecr_repo:str = None,
+#     config_json:dict = None,
+# ) -> None:
+
+
+#     worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
+
+#     logs_file_path_name = (
+#         worker_config_obj.saved_path
+#         + "/"
+#         + worker_config_obj.saved_logs_target_filename
+#     )
+#     saved_file_name = (
+#         worker_config_obj.saved_path
+#         + "/"
+#         + worker_config_obj.saved_data_target_filename
+#     )
+#     s3_client = connect_aws_client(
+#         client_name="s3",
+#         key_id=aws_access_key,
+#         secret=aws_secret_access_key,
+#         region=aws_region,
+#     )
+#     process_logs_and_plot(
+#         worker_config=worker_config_obj,
+#         aws_access_key=aws_access_key,
+#         aws_secret_access_key=aws_secret_access_key,
+#         aws_region=aws_region,
+#     )
+
+#     logs_file_path_name = (
+#         worker_config_obj.saved_path
+#         + "/"
+#         + worker_config_obj.saved_logs_target_filename
+#     )
+#     analyze_logs_files(
+#         bucket=worker_config_obj.saved_bucket,
+#         logs_file_path_name=logs_file_path_name,
+#         s3_client=s3_client,
+#         save_file_path_name=worker_config_obj.saved_performance_file,
+#     )
+#     return
 
 
 def process_df_for_gantt(df: pd):

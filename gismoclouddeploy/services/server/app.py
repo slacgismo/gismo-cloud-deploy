@@ -13,8 +13,6 @@ from celery.result import AsyncResult
 from flask.cli import FlaskGroup
 import click
 import time
-import os
-import re
 from project.tasks import process_data_task, pong_worker
 
 app = create_app()

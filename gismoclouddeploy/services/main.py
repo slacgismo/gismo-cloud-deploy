@@ -10,6 +10,7 @@ from modules.utils.WORKER_CONFIG import WORKER_CONFIG
 from modules.utils.run_process_files import run_process_files
 from modules.utils.save_cached_and_plot import save_cached_and_plot
 from modules.utils.modiy_config_parameters import modiy_config_parameters
+from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -174,24 +175,13 @@ def nodes_scale(min_nodes, configfile):
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
 
     # worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
-    modules.eks_utils.scale_eks_nodes_and_wait(
+    scale_eks_nodes_and_wait(
         scale_node_num=int(min_nodes),
         total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
         delay=1,
         cluster_name=aws_config_obj.cluster_name,
         nodegroup_name=aws_config_obj.nodegroup_name,
     )
-
-
-# ***************************
-#  Check eks node status
-# ***************************
-
-
-@main.command()
-def check_nodes():
-    """Check nodes status"""
-    modules.command_utils.check_nodes_status()
 
 
 # ***************************
@@ -249,71 +239,6 @@ def build_images(tag: str = None, push: bool = False):
         except Exception as e:
             logger.error("Push image error")
             return
-
-
-# ***************************
-#  Read process logs file
-#  in S3 buckeet, and save gantt
-#  plot locally
-# ***************************
-
-
-@main.command()
-@click.option(
-    "--configfile",
-    "-f",
-    help="Assign custom config files, Default files name is ./config/config.yaml",
-    default="config.yaml",
-)
-def processlogs(configfile):
-    """Porcess logs.csv file on AWS"""
-    config_json = modiy_config_parametes_based_on_command(
-        configfile=configfile,
-        nodesscale=None,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        sqs_url=SQS_URL,
-        sns_topic=SNS_TOPIC,
-        dlq_url=DLQ_URL,
-        ecr_repo=ECR_REPO,
-    )
-    worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
-
-    logs_file_path_name = (
-        worker_config_obj.saved_path
-        + "/"
-        + worker_config_obj.saved_logs_target_filename
-    )
-    saved_file_name = (
-        worker_config_obj.saved_path
-        + "/"
-        + worker_config_obj.saved_data_target_filename
-    )
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=AWS_ACCESS_KEY_ID,
-        secret=AWS_SECRET_ACCESS_KEY,
-        region=AWS_DEFAULT_REGION,
-    )
-    modules.command_utils.process_logs_and_plot(
-        worker_config=worker_config_obj,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-    )
-
-    logs_file_path_name = (
-        worker_config_obj.saved_path
-        + "/"
-        + worker_config_obj.saved_logs_target_filename
-    )
-    modules.process_log.analyze_logs_files(
-        bucket=worker_config_obj.saved_bucket,
-        logs_file_path_name=logs_file_path_name,
-        s3_client=s3_client,
-        save_file_path_name=worker_config_obj.saved_performance_file,
-    )
 
 
 @main.command()

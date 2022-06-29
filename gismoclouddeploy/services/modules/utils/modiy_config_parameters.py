@@ -1,7 +1,7 @@
 from .check_aws import check_aws_validity, check_environment_is_aws
 from os.path import exists
 import logging
-from .command_utils import convert_yaml_to_json
+import yaml
 
 import socket
 
@@ -72,3 +72,12 @@ def modiy_config_parameters(
     config_json["aws_config"]["ecr_repo"] = ecr_repo
 
     return config_json
+
+
+def convert_yaml_to_json(yaml_file: str = None):
+    try:
+        with open(yaml_file, "r") as stream:
+            config_json = yaml.safe_load(stream)
+        return config_json
+    except IOError as e:
+        raise f"I/O error:{e}"

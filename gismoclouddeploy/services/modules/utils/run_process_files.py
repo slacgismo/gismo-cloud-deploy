@@ -298,6 +298,9 @@ def run_process_files(
         deployment_services_list=services_config_list,
         is_docker=is_docker,
     )
+    if ready_server_name is None:
+        logger.error("Cannot get server name")
+        return
 
     # send command to server and get task IDs
     worker_replicas = 0

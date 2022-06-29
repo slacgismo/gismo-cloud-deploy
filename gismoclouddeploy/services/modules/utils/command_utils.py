@@ -19,6 +19,7 @@ from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
+    get_k8s_deployment,
 )
 from multiprocessing import Process
 
@@ -38,7 +39,6 @@ from .process_log import process_logs_from_s3
 from server.utils import aws_utils
 import time
 from kubernetes import client, config
-from modules.models.Node import Node
 from .sqs import (
     receive_queue_message,
     delete_queue_message,
@@ -55,41 +55,6 @@ logging.basicConfig(
 )
 
 
-# def get_total_task_number(
-#     number: Union[int, None],
-#     worker_config_json: str = None,
-#     aws_access_key:str = None,
-#     aws_secret_access_key:str = None,
-#     aws_region:str = None
-# ) -> int:
-#     total_task_num = 0
-
-#     if number is None:
-#         total_task_num = len(worker_config_json["default_process_files"]) + 1
-#         logger.info(" ========= Process default files in config.yam ========= ")
-#     else:
-#         if int(number) == 0:
-#             s3_client = aws_utils.connect_aws_client(
-#                 client_name="s3",
-#                 key_id=aws_access_key,
-#                 secret=aws_secret_access_key,
-#                 region=aws_region,
-#             )
-
-#             all_files = aws_utils.list_files_in_bucket(
-#                 bucket_name=worker_config_json["data_bucket"], s3_client=s3_client
-#             )
-#             number_files = len(all_files)
-#             total_task_num = len(all_files)
-#             logger.info(
-#                 f" ========= Process all {number_files} files in bucket ========= "
-#             )
-#         else:
-#             logger.info(f" ========= Process first {number} files in bucket ========= ")
-#             total_task_num = int(number)
-#     return total_task_num
-
-
 def checck_server_ready_and_get_name(
     deployment_services_list: List[str] = None,
     is_docker: bool = False,
@@ -98,21 +63,24 @@ def checck_server_ready_and_get_name(
     if is_docker:
         server_name = deployment_services_list["server"]["image_name"]
     else:
-        wait_time = 25
-        delay = 1
+        wait_time = 15
+        delay = 5
         while wait_time > 0:
-            wait_time -= delay
-            logger.info(f"Wait {wait_time} sec")
+
+            logger.info(f"K8s reboot Wait {wait_time} sec")
             time.sleep(delay)
+            wait_time -= delay
+        # server_name = get_k8s_deployment(prefix="server")
         server_name = get_k8s_pod_name(pod_name="server")
+
         logger.info(f"server name ====> {server_name}")
-        if server_name == None:
+
+        if server_name is None:
             logger.error("Cannot find server pod")
             raise Exception("Find k8s pod server error")
-
     if (
         check_and_wait_server_ready(
-            is_docer=is_docker, server_name=server_name, wait_time=60, delay=1
+            is_docer=is_docker, server_name=server_name, counter=2, delay=1
         )
         is not True
     ):
@@ -883,9 +851,9 @@ def delete_solver_lic_from_bucket(
 
 
 def check_and_wait_server_ready(
-    is_docer: bool = False, server_name: str = None, wait_time: int = 30, delay: int = 1
+    is_docer: bool = False, server_name: str = None, counter: int = 2, delay: int = 1
 ) -> bool:
-    while wait_time > 0:
+    while counter > 0:
         task_id = ""
         # ping server
         try:
@@ -899,13 +867,13 @@ def check_and_wait_server_ready(
         except:
             logger.info(f"Ping {server_name} failed, retry!!!")
 
-        wait_time -= delay
+        counter -= delay
         time.sleep(delay)
-        if wait_time <= 0:
+        if counter <= 0:
             logger.error(f"Ping {server_name} over time")
             return
 
-    while wait_time > 0:
+    while counter > 0:
 
         result = ""
         if is_docer:
