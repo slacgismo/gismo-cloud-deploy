@@ -4,8 +4,8 @@ aws_config:
   nodegroup_name: "gcd-nodegroup"         # The nodegroup name has to be matched to `eks/cluster.yaml`
   eks_nodes_number: 5                     # Total ec2 instances
   scale_eks_nodes_wait_time : 90          # in second
-  interval_of_check_sqs_in_second: 1      # in second
-  interval_of_total_wait_time_of_sqs: 300 # in second.
+  interval_of_check_dynamodb_in_second: 20      # in second
+  interval_of_total_wait_time_of_dynamodb: 300 # in second.
   interval_of_wait_pod_ready: 90          # in second
 
 
@@ -54,9 +54,10 @@ worker_config:
   default_process_files: ["PVO/PVOutput/40588.csv"]   # Default process files. If users do not use option -n command.
   process_column_keywords: ["Power(W)"]         # partial match. Process all matched column name "WS_5"WS_5_DateUTC
   saved_bucket: "pv.insight.test"                     # Bucket of saved files.
-  saved_path: "results"                               # Path of saved files in bucket
+  saved_path_aws: "results"                               # Path of saved files in bucket
+  saved_path_local: "results"
   dynamodb_tablename: "gcd_logs_dynamodb" # pre-define in AWS us-east-2
-  acccepted_idle_time: "240"
+  acccepted_idle_time: 360
   saved_rumtime_image_name: None          # "runtime-{user_id}.png"
   saved_performance_file: None            # "performance-{user_id}.txt"
   saved_data_target_filename: None        # "results-{user_id}.csv"

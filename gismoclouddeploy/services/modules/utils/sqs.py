@@ -250,20 +250,6 @@ def clean_user_previous_sqs_message(
                         f"Delet this {subject} !!, This subject is not json format {e}"
                     )
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
-                # message_text = msg_body["Message"]
-                # logger.info(f"================= : {subject_info['user_id']}")
-                # subject_info = json.loads(subject)
-                # logger.info(f"=========>. >>> user_id : {subject_info['user_id']}")
-                # logger.info(subject)
-                # logger.info(subject['user_id'])
-                # logger.info(f"The message : {message_text}")
-                # subjcet_json_data = json.dumps(subject)
-                # if subjcet_json_data['user_id'] == worker_config.user_id:
-                # logger.info(f"The message body: {msg_body}")
-                # delete_queue_message(sqs_url, receipt_handle, sqs_client)
-
-                # logger.info(f"Received and deleted message(s) from {sqs_url}.")
-                # print(receipt_handle)
         else:
             logger.info("Clean previous message completed")
             return

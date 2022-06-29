@@ -1,7 +1,5 @@
 import time
 
-from .long_pulling_sqs import long_pulling_sqs
-
 from .command_utils import (
     check_solver_and_upload,
     update_config_json_image_name_and_tag_base_on_env,
@@ -12,8 +10,8 @@ from .command_utils import (
 from .initial_end_services import initial_end_services
 from .dynamodb_utils import (
     remove_all_user_items_from_dynamodb,
-    download_logs_saveddata_from_dynamodb,
 )
+from .long_pulling_dynamodb import long_pulling_dynamodb, check_tasks_status
 
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
@@ -36,7 +34,7 @@ from .k8s_utils import check_k8s_services_exists, create_k8s_svc_from_yaml
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
 from .sqs import clean_user_previous_sqs_message
-from .process_log import analyze_logs_files
+from .process_log import analyze_logs_files, analyze_local_logs_files
 
 # logger config
 logger = logging.getLogger()
@@ -327,14 +325,14 @@ def run_process_files(
     # long looping SQS
 
     looping_wait_time = int(
-        (aws_config_obj.interval_of_total_wait_time_of_sqs)
+        (aws_config_obj.interval_of_total_wait_time_of_dynamodb)
         * (len(total_tasks_ids))
         / worker_replicas
     )
-    unfinished_tasks_ids = long_pulling_sqs(
+    unfinished_tasks_ids = long_pulling_dynamodb(
         task_ids=total_tasks_ids,
         wait_time=looping_wait_time,
-        delay=aws_config_obj.interval_of_check_sqs_in_second,
+        delay=aws_config_obj.interval_of_check_dynamodb_in_second,
         sqs_url=sqs_url,
         worker_config=worker_config_obj,
         is_docker=is_docker,
@@ -344,28 +342,20 @@ def run_process_files(
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region,
     )
-    # unfinished_tasks_ids = long_pulling_sqs_and_check_tasks(
-    #     task_ids=total_tasks_ids,
-    #     wait_time=looping_wait_time,
-    #     delay=aws_config_obj.interval_of_check_sqs_in_second,
-    #     sqs_url=sqs_url,
-    #     worker_config=worker_config_obj,
-    #     is_docker=is_docker,
-    #     acccepted_idle_time=int(worker_config_obj.acccepted_idle_time),
-    #     server_name=ready_server_name,
-    #     aws_access_key=aws_access_key,
-    #     aws_secret_access_key=aws_secret_access_key,
-    #     aws_region=aws_region,
-    # )
-    logger.info(" ----- init end services process --------- ")
+    # check status again :
+    # if len(unfinished_tasks_ids) > 0:
+    #     try:
+    #         remain_tasks_set = check_tasks_status(
+    #             is_docker=is_docker,
+    #             server_name=ready_server_name,
+    #             task_ids_set=unfinished_tasks_ids,
+    #         )
+    #     except Exception as e:
+    #         logger.error(f"Check task status failed. End application")
+    #     logger.info(f" num unfinished tasks {len(remain_tasks_set)}")
 
-    time.sleep(10)
-    download_logs_saveddata_from_dynamodb(
-        worker_config=worker_config_obj,
-        aws_access_key=aws_access_key,
-        aws_secret_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
+    logger.info(" ----- init end services process --------- ")
+    total_process_time = time.time() - start_time
 
     initial_end_services(
         worker_config=worker_config_obj,
@@ -382,33 +372,11 @@ def run_process_files(
         ],
         cluster_name=config_json["aws_config"]["cluster_name"],
         nodegroup_name=config_json["aws_config"]["nodegroup_name"],
-    )
-
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=aws_config_obj.aws_access_key,
-        secret=aws_config_obj.aws_secret_access_key,
-        region=aws_config_obj.aws_region,
-    )
-    logs_file_path_name = (
-        worker_config_obj.saved_path
-        + "/"
-        + worker_config_obj.saved_logs_target_filename
-    )
-    performance_path_name = (
-        worker_config_obj.saved_path + "/" + worker_config_obj.saved_performance_file
-    )
-
-    total_process_time = time.time() - start_time
-    analyze_logs_files(
-        bucket=worker_config_obj.saved_bucket,
-        logs_file_path_name=logs_file_path_name,
-        initial_process_time=initial_process_time,
-        total_process_time=total_process_time,
+        initial_process_time=float(initial_process_time),
+        total_process_time=float(total_process_time),
         eks_nodes_number=aws_config_obj.eks_nodes_number,
         num_workers=services_config_list["worker"]["desired_replicas"],
-        s3_client=s3_client,
-        save_file_path_name=performance_path_name,
+        num_unfinished_tasks=len(unfinished_tasks_ids),
     )
 
     print(" ======== Completed ========== ")

@@ -1,0 +1,11 @@
+,bucket,file,column,solver,length,capacity_estimate,power_units,data_sampling,data_quality_score,data_clearness_score,time_shifts,num_clip_points,tz_correction,inverter_clipping,normal_quality_scores,capacity_changes,user_id,task_id,start_time,end_time
+0,pv.insight.nrel,PVO/PVOutput/10059.csv,Power(W),MOSEK,4.41,5.28,W,5,98.4,31.8,True,0,-2,False,True,False,PC97527,7a015d1a-83c2-4c0d-bb91-97b0a75f799f,1656540788.3483338,1656540838.451173
+0,pv.insight.nrel,PVO/PVOutput/10795.csv,Power(W),MOSEK,4.96,16.7,W,5,94.6,23.1,True,0,0,False,True,False,PC97527,4540c0d0-0599-4621-8bea-507fc00707d3,1656540801.7263627,1656540867.5310788
+1,pv.insight.nrel,PVO/PVOutput/10284.csv,Power(W),MOSEK,4.99,3.38,W,5,97.8,14.4,False,0,-1,False,True,False,PC97527,2024e127-24da-4e1c-9091-97a2f302a18e,1656540795.5595171,1656540868.6105204
+2,pv.insight.nrel,PVO/PVOutput/10010.csv,Power(W),MOSEK,5.03,4.71,W,5,96.6,17.5,False,0,-1,False,True,False,PC97527,0957b7e0-7134-4869-8c64-43f598f9fbf6,1656540787.9228864,1656540877.0786474
+3,pv.insight.nrel,PVO/PVOutput/10664.csv,Power(W),MOSEK,4.97,6.85,W,5,91.8,18.1,False,0,0,False,True,True,PC97527,aaf158e5-8394-4d16-9615-87d6c6f3a117,1656540796.4367406,1656540878.0343094
+0,pv.insight.nrel,PVO/PVOutput/10807.csv,Power(W),MOSEK,4.92,4.76,W,5,59.3,9.4,False,0,-1,False,False,True,PC97527,2b50daa0-b9d8-4b3d-878d-d4385a6183df,1656540802.4385033,1656540883.5262387
+0,pv.insight.nrel,PVO/PVOutput/10877.csv,Power(W),MOSEK,4.95,4.8,W,5,88.7,14.8,False,0,0,False,True,True,PC97527,64a03567-4023-4243-b8dd-be8e39df5612,1656540869.223597,1656540937.8797238
+0,pv.insight.nrel,PVO/PVOutput/10858.csv,Power(W),MOSEK,4.95,4.02,W,5,97.5,49.3,True,0,0,False,True,True,PC97527,d47a1686-b856-45cd-9f15-90f3784469a7,1656540868.4200203,1656540949.8244302
+1,pv.insight.nrel,PVO/PVOutput/10940.csv,Power(W),MOSEK,4.95,4.49,W,5,90.5,21.4,False,0,0,False,True,True,PC97527,5376bb50-1444-4330-9b32-5807ceb67d5b,1656540877.5873206,1656540950.2133906
+2,pv.insight.nrel,PVO/PVOutput/10838.csv,Power(W),MOSEK,4.96,4.62,W,5,95.6,17.2,False,0,0,False,False,False,PC97527,124ad8c7-f000-457c-8a89-7825ddfeb01b,1656540839.3102758,1656540954.1811972

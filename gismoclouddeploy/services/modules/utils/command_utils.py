@@ -268,18 +268,21 @@ def process_logs_and_plot(
         region=aws_region,
     )
 
-    logs_full_path_name = (
-        worker_config.saved_path + "/" + worker_config.saved_logs_target_filename
+    logs_full_path_name_aws = (
+        worker_config.saved_path_aws + "/" + worker_config.saved_logs_target_filename
     )
-    plot_full_path_name = (
-        worker_config.saved_path + "/" + worker_config.saved_rumtime_image_name
+    plot_full_path_name_local = (
+        worker_config.saved_path_local + "/" + worker_config.saved_rumtime_image_name
+    )
+    plot_full_path_name_aws = (
+        worker_config.saved_path_local + "/" + worker_config.saved_rumtime_image_name
     )
 
     process_logs_from_s3(
         bucket=worker_config.saved_bucket,
-        logs_file_path_name=logs_full_path_name,
-        saved_image_name_aws=plot_full_path_name,
-        saved_image_name_local=plot_full_path_name,
+        logs_file_path_name=logs_full_path_name_aws,
+        saved_image_name_aws=plot_full_path_name_aws,
+        saved_image_name_local=plot_full_path_name_local,
         s3_client=s3_client,
     )
     logger.info(f"Success process logs from {worker_config.saved_logs_target_filename}")
@@ -446,59 +449,6 @@ def update_config_json_image_name_and_tag_base_on_env(
     return services_config_list
 
     # if is_local is False:
-
-
-def combine_files_to_file(
-    bucket_name: str,
-    source_folder: str,
-    target_folder: str,
-    target_filename: str,
-    aws_access_key: str,
-    aws_secret_access_key: str,
-    aws_region: str,
-) -> None:
-    """
-    Combine all files in sorce folder and save into target folder and target file.
-    After the process is completed, all files in source folder will be deleted.
-    """
-    print("combine files ---->")
-    s3_client = aws_utils.connect_aws_client(
-        client_name="s3",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-    filter_files = list_files_in_folder_of_bucket(bucket_name, source_folder, s3_client)
-
-    if not filter_files:
-        logger.warning("No tmp file in folder")
-        return
-        # raise Exception("Error: No saved tmp file found ")
-    contents = []
-    for file in filter_files:
-        df = aws_utils.read_csv_from_s3(bucket_name, file, s3_client)
-        contents.append(df)
-    frame = pd.concat(contents, axis=0, ignore_index=True)
-    csv_buffer = StringIO()
-    frame.to_csv(csv_buffer)
-    content = csv_buffer.getvalue()
-    try:
-        aws_utils.to_s3(
-            bucket=bucket_name,
-            file_path=target_folder,
-            filename=target_filename,
-            content=content,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
-        print(f"Save to {target_filename} success!!")
-        # delete files
-        for file in filter_files:
-            delete_files_from_bucket(bucket_name, file, s3_client)
-    except Exception as e:
-        print(f"save to s3 error or delete files error ---> {e}")
-        raise e
 
 
 def download_file_from_s3(
@@ -679,7 +629,7 @@ def check_and_wait_server_ready(
             result = invoke_exec_k8s_check_task_status(
                 server_name=server_name, task_id=str(task_id).strip("\n")
             )
-        logger.info(result)
+        # logger.info(result)
         # conver json to
         res_json = {}
         dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")

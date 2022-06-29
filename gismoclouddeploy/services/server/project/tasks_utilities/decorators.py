@@ -46,24 +46,24 @@ def tracklog_decorator(func):
             raise Exception(f"Decorator Input key errir:{e}")
         start_time = str(time.time())
         # fire task start sns
-        init_message = make_sns_response(
-            alert_type=SNSSubjectsAlert.TASK_START.name,
-            messages={
-                "start_time": start_time,
-                "task_id": str(task_id),
-                "file": curr_process_file,
-                "column": curr_process_column,
-            },
-            user_id=user_id,
-        )
-        publish_message_sns(
-            message=json.dumps(init_message["Messages"]),
-            subject=json.dumps(init_message["Subject"]),
-            topic_arn=sns_topic,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
+        # init_message = make_sns_response(
+        #     alert_type=SNSSubjectsAlert.TASK_START.name,
+        #     messages={
+        #         "start_time": start_time,
+        #         "task_id": str(task_id),
+        #         "file": curr_process_file,
+        #         "column": curr_process_column,
+        #     },
+        #     user_id=user_id,
+        # )
+        # publish_message_sns(
+        #     message=json.dumps(init_message["Messages"]),
+        #     subject=json.dumps(init_message["Subject"]),
+        #     topic_arn=sns_topic,
+        #     aws_access_key=aws_access_key,
+        #     aws_secret_access_key=aws_secret_access_key,
+        #     aws_region=aws_region,
+        # )
         try:
             check_and_download_solver(
                 solver_name=solver["solver_name"],
@@ -107,15 +107,15 @@ def tracklog_decorator(func):
         # logger.info(update_messages)
         subject = response["Subject"]
         alert_type = subject["alert_type"]
-        publish_message_sns(
-            # message=json.dumps(update_messages),
-            message=json.dumps(update_messages),
-            subject=json.dumps(subject),
-            topic_arn=sns_topic,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
+        # publish_message_sns(
+        #     # message=json.dumps(update_messages),
+        #     message=json.dumps(update_messages),
+        #     subject=json.dumps(subject),
+        #     topic_arn=sns_topic,
+        #     aws_access_key=aws_access_key,
+        #     aws_secret_access_key=aws_secret_access_key,
+        #     aws_region=aws_region,
+        # )
         # logger.info(f" Send to SNS, message: {message_id}")
         hostname = socket.gethostname()
         host_ip = socket.gethostbyname(hostname)

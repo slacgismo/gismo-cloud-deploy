@@ -63,6 +63,7 @@ def modiy_config_parameters(
     ] = f"performance-{user_id}.txt"
     config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
     config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
+    config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}.csv"
     config_json["aws_config"]["aws_access_key"] = aws_access_key
     config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
     config_json["aws_config"]["aws_region"] = aws_region

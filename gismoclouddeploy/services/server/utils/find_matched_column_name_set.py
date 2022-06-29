@@ -37,31 +37,3 @@ def find_matched_column_name_set(
             if key in column:
                 matched_column_set.add(column)
     return matched_column_set
-
-
-def get_process_filename_base_on_command(
-    first_n_files: str,
-    bucket: str,
-    default_files: List[str],
-    s3_client: "botocore.client.S3",
-) -> List[str]:
-
-    n_files = []
-    files_dict = list_files_in_bucket(bucket_name=bucket, s3_client=s3_client)
-
-    if first_n_files == "None":
-        n_files = default_files
-    else:
-        try:
-            if int(first_n_files) == 0:
-                logger.info(f"Process all files in {bucket}")
-                for file in files_dict:
-                    n_files.append(file["Key"])
-            else:
-                logger.info(f"Process first {first_n_files} files")
-                for file in files_dict[0 : int(first_n_files)]:
-                    n_files.append(file["Key"])
-        except Exception as e:
-            logger.error(f"Input {first_n_files} is not an integer")
-            raise e
-    return n_files

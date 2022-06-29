@@ -59,7 +59,7 @@ def save_cached_and_plot(
         )
 
         logs_file_path_name = (
-            worker_config_obj.saved_path
+            worker_config_obj.saved_path_local
             + "/"
             + worker_config_obj.saved_logs_target_filename
         )

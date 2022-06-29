@@ -5,10 +5,7 @@ from telnetlib import STATUS
 
 from project import create_app, ext_celery
 from utils.aws_utils import connect_aws_client
-from utils.app_utils import (
-    get_process_filename_base_on_command,
-    find_matched_column_name_set,
-)
+from utils.find_matched_column_name_set import find_matched_column_name_set
 from celery.result import AsyncResult
 from flask.cli import FlaskGroup
 import click

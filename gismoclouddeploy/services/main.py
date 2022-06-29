@@ -6,7 +6,6 @@ import os
 
 import modules
 from modules.utils.AWS_CONFIG import AWS_CONFIG
-from modules.utils.WORKER_CONFIG import WORKER_CONFIG
 from modules.utils.run_process_files import run_process_files
 from modules.utils.save_cached_and_plot import save_cached_and_plot
 from modules.utils.modiy_config_parameters import modiy_config_parameters
