@@ -239,31 +239,6 @@ def build_images(tag: str = None, push: bool = False):
             return
 
 
-@main.command()
-@click.option(
-    "--configfile",
-    "-f",
-    help="Assign custom config files, Default files name is ./config/config.yaml",
-    default="config.yaml",
-)
-def save_cached(configfile):
-    """
-    Save cached data from previous process.
-    """
-    click.echo("save cached data from previous process")
-
-    save_cached_and_plot(
-        configfile=configfile,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        sqs_url=SQS_URL,
-        sns_topic=SNS_TOPIC,
-        ecr_repo=ECR_REPO,
-        dlq_url=DLQ_URL,
-    )
-
-
 # ***************************
 #  Read DLQ
 # ***************************
