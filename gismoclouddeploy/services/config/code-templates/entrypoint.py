@@ -48,116 +48,116 @@ def entrypoint(
         return Exception(f"solver_file:{solver_file} dose not exist")
 
     # read csv file from s3
-    try:
-        df = read_csv_from_s3(
-            bucket_name=data_bucket,
-            file_path_name=curr_process_file,
-            column_name=curr_process_column,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
-    except Exception as e:
-        logger.error(f"Read column and time error: {e}")
-        raise e
+    # try:
+    #     df = read_csv_from_s3(
+    #         bucket_name=data_bucket,
+    #         file_path_name=curr_process_file,
+    #         column_name=curr_process_column,
+    #         aws_access_key=aws_access_key,
+    #         aws_secret_access_key=aws_secret_access_key,
+    #         aws_region=aws_region,
+    #     )
+    # except Exception as e:
+    #     logger.error(f"Read column and time error: {e}")
+    #     raise e
 
-    try:
-        dh = DataHandler(df)
-        logger.info(f"run solardatatools pipeline solver: {solver_name}")
-        dh.run_pipeline(
-            power_col=curr_process_column,
-            min_val=-5,
-            max_val=None,
-            zero_night=True,
-            interp_day=True,
-            fix_shifts=True,
-            density_lower_threshold=0.6,
-            density_upper_threshold=1.05,
-            linearity_threshold=0.1,
-            clear_day_smoothness_param=0.9,
-            clear_day_energy_param=0.8,
-            verbose=False,
-            start_day_ix=None,
-            end_day_ix=None,
-            c1=None,
-            c2=500.0,
-            solar_noon_estimator="com",
-            correct_tz=True,
-            extra_cols=None,
-            daytime_threshold=0.1,
-            units="W",
-            solver=solver_name,
-        )
-    except Exception as e:
-        raise Exception(f"Run run_pipeline fail:{e}")
+    # try:
+    #     dh = DataHandler(df)
+    #     logger.info(f"run solardatatools pipeline solver: {solver_name}")
+    #     dh.run_pipeline(
+    #         power_col=curr_process_column,
+    #         min_val=-5,
+    #         max_val=None,
+    #         zero_night=True,
+    #         interp_day=True,
+    #         fix_shifts=True,
+    #         density_lower_threshold=0.6,
+    #         density_upper_threshold=1.05,
+    #         linearity_threshold=0.1,
+    #         clear_day_smoothness_param=0.9,
+    #         clear_day_energy_param=0.8,
+    #         verbose=False,
+    #         start_day_ix=None,
+    #         end_day_ix=None,
+    #         c1=None,
+    #         c2=500.0,
+    #         solar_noon_estimator="com",
+    #         correct_tz=True,
+    #         extra_cols=None,
+    #         daytime_threshold=0.1,
+    #         units="W",
+    #         solver=solver_name,
+    #     )
+    # except Exception as e:
+    #     raise Exception(f"Run run_pipeline fail:{e}")
 
-    try:
-        length = float("{:.2f}".format(dh.num_days))
-        if dh.num_days >= 365:
-            length = float("{:.2f}".format(dh.num_days / 365))
+    # try:
+    #     length = float("{:.2f}".format(dh.num_days))
+    #     if dh.num_days >= 365:
+    #         length = float("{:.2f}".format(dh.num_days / 365))
 
-        capacity_estimate = float("{:.2f}".format(dh.capacity_estimate))
+    #     capacity_estimate = float("{:.2f}".format(dh.capacity_estimate))
 
-        power_units = str(dh.power_units)
-        if power_units == "W":
-            capacity_estimate = float("{:.2f}".format(dh.capacity_estimate / 1000))
-        data_sampling = int(dh.data_sampling)
+    #     power_units = str(dh.power_units)
+    #     if power_units == "W":
+    #         capacity_estimate = float("{:.2f}".format(dh.capacity_estimate / 1000))
+    #     data_sampling = int(dh.data_sampling)
 
-        if dh.raw_data_matrix.shape[0] > 1440:
-            data_sampling = int(dh.data_sampling * 60)
+    #     if dh.raw_data_matrix.shape[0] > 1440:
+    #         data_sampling = int(dh.data_sampling * 60)
 
-        data_quality_score = float("{:.1f}".format(dh.data_quality_score * 100))
-        data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 100))
-        time_shifts = bool(dh.time_shifts)
-        num_clip_points = int(dh.num_clip_points)
-        tz_correction = int(dh.tz_correction)
-        inverter_clipping = bool(dh.inverter_clipping)
-        normal_quality_scores = bool(dh.normal_quality_scores)
-        capacity_changes = bool(dh.capacity_changes)
+    #     data_quality_score = float("{:.1f}".format(dh.data_quality_score * 100))
+    #     data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 100))
+    #     time_shifts = bool(dh.time_shifts)
+    #     num_clip_points = int(dh.num_clip_points)
+    #     tz_correction = int(dh.tz_correction)
+    #     inverter_clipping = bool(dh.inverter_clipping)
+    #     normal_quality_scores = bool(dh.normal_quality_scores)
+    #     capacity_changes = bool(dh.capacity_changes)
 
-        # ==================== PS:Save data in json format is required  ==================== ##
+    #     # ==================== PS:Save data in json format is required  ==================== ##
 
-        save_data = {
-            "bucket": data_bucket,
-            "file": curr_process_file,
-            "column": curr_process_column,
-            "solver": solver_name,
-            "length": length,
-            "capacity_estimate": capacity_estimate,
-            "power_units": power_units,
-            "data_sampling": data_sampling,
-            "data_quality_score": data_quality_score,
-            "data_clearness_score": data_clearness_score,
-            "time_shifts": time_shifts,
-            "num_clip_points": num_clip_points,
-            "tz_correction": tz_correction,
-            "inverter_clipping": inverter_clipping,
-            "normal_quality_scores": normal_quality_scores,
-            "capacity_changes": capacity_changes,
-        }
-    except Exception as e:
-        raise Exception(f"Save data error: {e}")
+    #     save_data = {
+    #         "bucket": data_bucket,
+    #         "file": curr_process_file,
+    #         "column": curr_process_column,
+    #         "solver": solver_name,
+    #         "length": length,
+    #         "capacity_estimate": capacity_estimate,
+    #         "power_units": power_units,
+    #         "data_sampling": data_sampling,
+    #         "data_quality_score": data_quality_score,
+    #         "data_clearness_score": data_clearness_score,
+    #         "time_shifts": time_shifts,
+    #         "num_clip_points": num_clip_points,
+    #         "tz_correction": tz_correction,
+    #         "inverter_clipping": inverter_clipping,
+    #         "normal_quality_scores": normal_quality_scores,
+    #         "capacity_changes": capacity_changes,
+    #     }
+    # except Exception as e:
+    #     raise Exception(f"Save data error: {e}")
 
-    # ==================== Modify your code above ==================== ##
+    # # ==================== Modify your code above ==================== ##
 
-    # save_data = {
-    #     "bucket": data_bucket,
-    #     "file": curr_process_file,
-    #     "column": curr_process_column,
-    #     "solver": solver_name,
-    #     "length": 1,
-    #     "capacity_estimate": 1,
-    #     "power_units": "W",
-    #     "data_sampling": 1,
-    #     "data_quality_score": 1,
-    #     "data_clearness_score": 1,
-    #     "time_shifts": 1,
-    #     "num_clip_points": 1,
-    #     "tz_correction": 1,
-    #     "inverter_clipping": 1,
-    #     "normal_quality_scores": 1,
-    #     "capacity_changes": 1,
-    # }
+    save_data = {
+        "bucket": data_bucket,
+        "file": curr_process_file,
+        "column": curr_process_column,
+        "solver": solver_name,
+        "length": 1,
+        "capacity_estimate": 1,
+        "power_units": "W",
+        "data_sampling": 1,
+        "data_quality_score": 1,
+        "data_clearness_score": 1,
+        "time_shifts": 1,
+        "num_clip_points": 1,
+        "tz_correction": 1,
+        "inverter_clipping": 1,
+        "normal_quality_scores": 1,
+        "capacity_changes": 1,
+    }
     return make_response(
         alert_type=Alert.SAVED_DATA.name,
         messages=save_data,

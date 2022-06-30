@@ -168,7 +168,7 @@ def query_items_from_dynamodb_with_userid(
             save_error_file, mode="a", header=not os.path.exists(save_error_file)
         )
 
-    print(f"Save {len(dynamo_items)} completed")
+    print(f"Save git ad{len(dynamo_items)} completed")
     # remove data
 
     print(f"Deleting {len(dynamo_items)} items from dynamodb")
@@ -180,8 +180,9 @@ def query_items_from_dynamodb_with_userid(
                     Key={"user_id": each["user_id"], "timestamp": each["timestamp"]}
                 )
                 index += 1
-                if index % 300 == 0:
+                if index % 100 == 0:
                     print(f"First {index} itmes deleted")
+                time.sleep(0.1)
         print(f"Remove {index} items of {user_id} from dynamodb completed")
     except Exception as e:
         raise Exception(f"Delete items from dynamodb failed{e}")
