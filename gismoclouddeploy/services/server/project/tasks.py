@@ -5,10 +5,6 @@ from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
 from utils.aws_utils import connect_aws_client
 
-from models.SNSSubjectsAlert import SNSSubjectsAlert
-import time
-
-from project import tasks_utilities
 from project.tasks_utilities.decorators import tracklog_decorator
 
 from models.WorkerState import WorkerState
