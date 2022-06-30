@@ -223,6 +223,7 @@ def clean_user_previous_sqs_message(
     delay: int,
     user_id: str,
 ):
+    index = 0
     while counter:
         messages = receive_queue_message(
             queue_url=sqs_url,
@@ -239,17 +240,21 @@ def clean_user_previous_sqs_message(
                 subject = (
                     msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
                 )
-                try:
-                    subject_info = json.loads(subject)
-                    sns_user_id = subject_info["user_id"]
-                    if sns_user_id == user_id:
-                        delete_queue_message(sqs_url, receipt_handle, sqs_client)
-
-                except Exception as e:
-                    logger.warning(
-                        f"Delet this {subject} !!, This subject is not json format {e}"
-                    )
+                if subject == user_id:
+                    logger(f"Delete {index} message")
+                    index += 1
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
+                # try:
+                #     subject_info = json.loads(subject)
+                #     sns_user_id = subject_info["user_id"]
+                #     if sns_user_id == user_id:
+                #         delete_queue_message(sqs_url, receipt_handle, sqs_client)
+
+                # except Exception as e:
+                #     logger.warning(
+                #         f"Delet this {subject} !!, This subject is not json format {e}"
+                #     )
+
         else:
             logger.info("Clean previous message completed")
             return

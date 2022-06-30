@@ -51,6 +51,7 @@ def checck_server_ready_and_get_name(
 ) -> str:
     server_name = ""
     if is_docker:
+
         server_name = deployment_services_list["server"]["image_name"]
     else:
         wait_time = 15

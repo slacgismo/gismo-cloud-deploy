@@ -22,7 +22,6 @@ logging.basicConfig(
 
 def initial_end_services(
     worker_config: WORKER_CONFIG = None,
-    is_local: bool = False,
     is_docker: bool = False,
     delete_nodes_after_processing: bool = False,
     is_build_image: bool = False,
@@ -30,7 +29,6 @@ def initial_end_services(
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
     aws_region: str = None,
-    sqs_url: str = None,
     scale_eks_nodes_wait_time: int = None,
     cluster_name: str = None,
     nodegroup_name: str = None,
@@ -57,25 +55,22 @@ def initial_end_services(
         region=aws_region,
     )
 
-    plot_full_path_name_local = (
-        worker_config.saved_path_local + "/" + worker_config.saved_rumtime_image_name
-    )
-    save_data_file_local = (
-        worker_config.saved_path_local + "/" + worker_config.saved_data_target_filename
-    )
-    save_logs_file_local = (
-        worker_config.saved_path_local + "/" + worker_config.saved_logs_target_filename
-    )
-    save_error_file_local = (
-        worker_config.saved_path_local + "/" + worker_config.saved_error_target_filename
-    )
-    performance_path_name_local = (
-        worker_config.saved_path_local + "/" + worker_config.saved_performance_file
-    )
+    save_data_file_local = worker_config.save_data_file_local
+    save_error_file_local = worker_config.save_error_file_local
+    save_error_file_local = worker_config.save_error_file_local
+    save_logs_file_local = worker_config.save_logs_file_local
+    save_plot_file_local = worker_config.save_plot_file_local
+    save_performance_local = worker_config.save_performance_local
+    save_data_file_aws = worker_config.save_data_file_aws
+    save_error_file_aws = worker_config.save_error_file_aws
+    save_error_file_aws = worker_config.save_error_file_aws
+    save_logs_file_aws = worker_config.save_logs_file_aws
+    save_plot_file_aws = worker_config.save_plot_file_aws
+    save_performance_aws = worker_config.save_performance_aws
 
     process_logs_from_local(
         logs_file_path_name_local=save_logs_file_local,
-        saved_image_name_local=plot_full_path_name_local,
+        saved_image_name_local=save_plot_file_local,
         s3_client=s3_client,
     )
 
@@ -85,24 +80,8 @@ def initial_end_services(
         total_process_time=total_process_time,
         eks_nodes_number=eks_nodes_number,
         num_workers=num_workers,
-        save_file_path_name=performance_path_name_local,
+        save_file_path_name=save_performance_local,
         num_unfinished_tasks=num_unfinished_tasks,
-    )
-
-    plot_full_path_name_aws = (
-        worker_config.saved_path_aws + "/" + worker_config.saved_rumtime_image_name
-    )
-    save_data_file_aws = (
-        worker_config.saved_path_aws + "/" + worker_config.saved_data_target_filename
-    )
-    save_logs_file_aws = (
-        worker_config.saved_path_aws + "/" + worker_config.saved_logs_target_filename
-    )
-    save_error_file_aws = (
-        worker_config.saved_path_aws + "/" + worker_config.saved_error_target_filename
-    )
-    performance_path_name_aws = (
-        worker_config.saved_path_aws + "/" + worker_config.saved_performance_file
     )
 
     logger.info("Update results to S3")
@@ -111,13 +90,13 @@ def initial_end_services(
         save_data_file_local=save_data_file_local,
         save_error_file_local=save_error_file_local,
         save_logs_file_local=save_logs_file_local,
-        save_plot_file_local=plot_full_path_name_local,
-        save_performance_file_local=performance_path_name_local,
+        save_plot_file_local=save_plot_file_local,
+        save_performance_file_local=save_performance_local,
         save_data_file_aws=save_data_file_aws,
         save_error_file_aws=save_error_file_aws,
         save_logs_file_aws=save_logs_file_aws,
-        save_plot_file_aws=plot_full_path_name_aws,
-        save_performance_file_aws=performance_path_name_aws,
+        save_plot_file_aws=save_plot_file_aws,
+        save_performance_file_aws=save_performance_aws,
         aws_access_key=aws_access_key,
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region,
@@ -284,17 +263,6 @@ def check_ecr_tag_exists(
         return False
     except Exception as e:
         return False
-        # worker_config=worker_config,
-        # save_data_file_local=save_data_file_local,
-        # save_error_file_local=save_error_file_local,
-        # save_logs_file_local=save_logs_file_local,
-        # save_plot_file_local = plot_full_path_name_local,
-        # save_performance_file_local = performance_path_name_local,
-        # save_data_file_aws=save_data_file_aws,
-        # save_error_file_aws=save_error_file_aws,
-        # save_logs_file_aws=save_logs_file_aws,
-        # save_plot_file_aws= plot_full_path_name_aws,
-        # save_performance_file_aws = performance_path_name_aws,
 
 
 def upload_results_to_s3(

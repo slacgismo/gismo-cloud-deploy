@@ -72,6 +72,68 @@ def modiy_config_parameters(
     config_json["aws_config"]["dlq_url"] = dlq_url
     config_json["aws_config"]["ecr_repo"] = ecr_repo
 
+    # local
+    config_json["worker_config"]["save_data_file_local"] = (
+        config_json["worker_config"]["saved_path_local"]
+        + "/"
+        + config_json["worker_config"]["saved_data_target_filename"]
+    )
+
+    config_json["worker_config"]["save_logs_file_local"] = (
+        config_json["worker_config"]["saved_path_local"]
+        + "/"
+        + config_json["worker_config"]["saved_logs_target_filename"]
+    )
+
+    config_json["worker_config"]["save_error_file_local"] = (
+        config_json["worker_config"]["saved_path_local"]
+        + "/"
+        + config_json["worker_config"]["saved_error_target_filename"]
+    )
+
+    config_json["worker_config"]["save_plot_file_local"] = (
+        config_json["worker_config"]["saved_path_local"]
+        + "/"
+        + config_json["worker_config"]["saved_rumtime_image_name"]
+    )
+
+    config_json["worker_config"]["save_performance_local"] = (
+        config_json["worker_config"]["saved_path_local"]
+        + "/"
+        + config_json["worker_config"]["saved_performance_file"]
+    )
+
+    # aws
+    config_json["worker_config"]["save_data_file_aws"] = (
+        config_json["worker_config"]["saved_path_aws"]
+        + "/"
+        + config_json["worker_config"]["saved_data_target_filename"]
+    )
+
+    config_json["worker_config"]["save_logs_file_aws"] = (
+        config_json["worker_config"]["saved_path_aws"]
+        + "/"
+        + config_json["worker_config"]["saved_logs_target_filename"]
+    )
+
+    config_json["worker_config"]["save_error_file_aws"] = (
+        config_json["worker_config"]["saved_path_aws"]
+        + "/"
+        + config_json["worker_config"]["saved_error_target_filename"]
+    )
+
+    config_json["worker_config"]["save_plot_file_aws"] = (
+        config_json["worker_config"]["saved_path_aws"]
+        + "/"
+        + config_json["worker_config"]["saved_rumtime_image_name"]
+    )
+
+    config_json["worker_config"]["save_performance_aws"] = (
+        config_json["worker_config"]["saved_path_aws"]
+        + "/"
+        + config_json["worker_config"]["saved_performance_file"]
+    )
+
     return config_json
 
 

@@ -19,7 +19,7 @@ logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
-from .tasks_utilities.decorators import make_sns_response
+# from .tasks_utilities.decorators import make_sns_response
 
 import json
 

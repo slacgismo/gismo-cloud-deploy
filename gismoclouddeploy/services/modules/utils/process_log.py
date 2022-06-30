@@ -280,9 +280,10 @@ def analyze_local_logs_files(
     if exists(logs_file_path_name) is False:
         logger.error(f"{logs_file_path_name} does not exist")
         return
-
+    # logger.info("-==============")
+    # logger.info(logs_file_path_name)
     df = pd.read_csv(logs_file_path_name)
-
+    # print(df.head())
     # get error task
 
     error_task = df[(df["alert_type"] == "SYSTEM_ERROR")]

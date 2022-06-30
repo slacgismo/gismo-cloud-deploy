@@ -4,7 +4,7 @@ aws_config:
   nodegroup_name: "gcd-nodegroup"         # The nodegroup name has to be matched to `eks/cluster.yaml`
   eks_nodes_number: 5                     # Total ec2 instances
   scale_eks_nodes_wait_time : 90          # in second
-  interval_of_check_dynamodb_in_second: 20      # in second
+  interval_of_check_dynamodb_in_second: 10      # in second
   interval_of_total_wait_time_of_dynamodb: 300 # in second.
   interval_of_wait_pod_ready: 90          # in second
 
@@ -12,7 +12,7 @@ aws_config:
 # Parameters used for cli in k8s config.
 services_config_list:
   worker:
-      desired_replicas: 20 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
+      desired_replicas: 1 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/worker.deployment.yaml"
       service_file: ""
@@ -70,3 +70,13 @@ worker_config:
   aws_region : None             # It's a hint column that is generated in the CLI run-time.
   sns_topic : None              # It's a hint column that is generated in the CLI run-time.
   user_id : None           # It's a hint column that is generated in the CLI run-ime.
+  save_data_file_local: None
+  save_error_file_local: None
+  save_logs_file_local: None
+  save_plot_file_local: None
+  save_performance_local: None
+  save_data_file_aws: None
+  save_error_file_aws: None
+  save_logs_file_aws: None
+  save_plot_file_aws: None
+  save_performance_aws: None

@@ -115,7 +115,7 @@ def long_pulling_dynamodb(
             logger.info("All task completed!!")
             return remain_tasks_set
 
-        # Idle over time , Check remain task
+        # Idle over time
         if idle_time > acccepted_idle_time:
             logger.info(f"===== No messages receive over time {idle_time} sec ====")
             logger.info(f"===== Number of unfinished tasks {len_remain_tasks} ====")
@@ -135,7 +135,6 @@ def long_pulling_dynamodb(
 
         time.sleep(delay)
         wait_time -= int(delay)
-    # save local data to s3
 
     return remain_tasks_set
 

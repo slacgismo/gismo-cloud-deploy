@@ -12,7 +12,7 @@ from .dynamodb_utils import (
     remove_all_user_items_from_dynamodb,
 )
 from .long_pulling_dynamodb import long_pulling_dynamodb, check_tasks_status
-
+from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
 from .check_aws import connect_aws_client, check_environment_is_aws
@@ -292,6 +292,7 @@ def run_process_files(
         user_id=worker_config_obj.user_id,
     )
     # check server ready and return running server name.
+
     ready_server_name = checck_server_ready_and_get_name(
         deployment_services_list=services_config_list,
         is_docker=is_docker,
@@ -299,7 +300,7 @@ def run_process_files(
     if ready_server_name is None:
         logger.error("Cannot get server name")
         return
-
+    logger.info(f"------ {ready_server_name}")
     # send command to server and get task IDs
     worker_replicas = 0
     for key, value in services_config_list.items():
@@ -329,30 +330,18 @@ def run_process_files(
         * (len(total_tasks_ids))
         / worker_replicas
     )
-    unfinished_tasks_ids = long_pulling_dynamodb(
+
+    unfinished_tasks_ids = long_pulling_sqs(
         task_ids=total_tasks_ids,
         wait_time=looping_wait_time,
         delay=aws_config_obj.interval_of_check_dynamodb_in_second,
         sqs_url=sqs_url,
         worker_config=worker_config_obj,
-        is_docker=is_docker,
         acccepted_idle_time=int(worker_config_obj.acccepted_idle_time),
-        server_name=ready_server_name,
         aws_access_key=aws_access_key,
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region,
     )
-    # check status again :
-    # if len(unfinished_tasks_ids) > 0:
-    #     try:
-    #         remain_tasks_set = check_tasks_status(
-    #             is_docker=is_docker,
-    #             server_name=ready_server_name,
-    #             task_ids_set=unfinished_tasks_ids,
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Check task status failed. End application")
-    #     logger.info(f" num unfinished tasks {len(remain_tasks_set)}")
 
     logger.info(" ----- init end services process --------- ")
     total_process_time = time.time() - start_time
@@ -360,7 +349,6 @@ def run_process_files(
     initial_end_services(
         worker_config=worker_config_obj,
         is_docker=is_docker,
-        is_local=is_local,
         delete_nodes_after_processing=delete_nodes,
         is_build_image=is_build_image,
         services_config_list=services_config_list,
