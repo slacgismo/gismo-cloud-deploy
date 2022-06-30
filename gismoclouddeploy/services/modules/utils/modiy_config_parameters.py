@@ -2,7 +2,7 @@ from .check_aws import check_aws_validity, check_environment_is_aws
 from os.path import exists
 import logging
 import yaml
-
+import os
 import socket
 
 logger = logging.getLogger()
@@ -72,33 +72,39 @@ def modiy_config_parameters(
     config_json["aws_config"]["dlq_url"] = dlq_url
     config_json["aws_config"]["ecr_repo"] = ecr_repo
 
+    # check if local path exist
+    result_local_folder = config_json["worker_config"]["saved_path_local"]
+    if os.path.isdir(result_local_folder) is False:
+        logger.info(f"Create local {result_local_folder} path")
+        os.mkdir(result_local_folder)
+
     # local
     config_json["worker_config"]["save_data_file_local"] = (
-        config_json["worker_config"]["saved_path_local"]
+        result_local_folder
         + "/"
         + config_json["worker_config"]["saved_data_target_filename"]
     )
 
     config_json["worker_config"]["save_logs_file_local"] = (
-        config_json["worker_config"]["saved_path_local"]
+        result_local_folder
         + "/"
         + config_json["worker_config"]["saved_logs_target_filename"]
     )
 
     config_json["worker_config"]["save_error_file_local"] = (
-        config_json["worker_config"]["saved_path_local"]
+        result_local_folder
         + "/"
         + config_json["worker_config"]["saved_error_target_filename"]
     )
 
     config_json["worker_config"]["save_plot_file_local"] = (
-        config_json["worker_config"]["saved_path_local"]
+        result_local_folder
         + "/"
         + config_json["worker_config"]["saved_rumtime_image_name"]
     )
 
     config_json["worker_config"]["save_performance_local"] = (
-        config_json["worker_config"]["saved_path_local"]
+        result_local_folder
         + "/"
         + config_json["worker_config"]["saved_performance_file"]
     )

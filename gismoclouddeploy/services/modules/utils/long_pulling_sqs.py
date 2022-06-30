@@ -84,8 +84,8 @@ def long_pulling_sqs(
                 message_text = (
                     msg_body["Message"].strip("'<>() ").replace("'", '"').strip("\n")
                 )
-                logger.info(f"subject: {subject}")
-                logger.info(f"message_text: {message_text}")
+                # logger.info(f"subject: {subject}")
+                # logger.info(f"message_text: {message_text}")
 
                 if subject != worker_config.user_id:
                     # not this user's sqs message. do touch

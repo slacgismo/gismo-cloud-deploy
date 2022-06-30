@@ -12,7 +12,6 @@ logging.basicConfig(
 
 
 def entrypoint(
-    user_id: str = None,
     data_bucket: str = None,
     curr_process_file: str = None,
     curr_process_column: str = None,

@@ -147,9 +147,7 @@ def process_logs_from_local(
             continue
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
-    fig = px.timeline(
-        gantt_df, x_start="Start", x_end="Finish", y="Task", color="Node", text="Label"
-    )
+    fig = px.timeline(gantt_df, x_start="Start", x_end="Finish", y="Task", color="Node")
     fig.update_yaxes(
         autorange="reversed"
     )  # otherwise tasks are listed from the bottom up

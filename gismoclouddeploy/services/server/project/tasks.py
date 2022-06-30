@@ -47,7 +47,6 @@ def process_data_task(
         raise Exception(f"Input key error:{e}")
 
     response = entrypoint(
-        user_id=user_id,
         data_bucket=data_bucket,
         curr_process_file=curr_process_file,
         curr_process_column=curr_process_column,
