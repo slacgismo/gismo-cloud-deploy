@@ -1,9 +1,6 @@
-from copy import copy
-from distutils.log import error
 import json
-import sys
 import boto3
-import copy
+
 import functools
 import time
 import os
@@ -14,7 +11,6 @@ from .tasks_utils import (
 )
 
 import logging
-from models.WorkerState import WorkerState
 from models.SNSSubjectsAlert import SNSSubjectsAlert
 
 
@@ -45,25 +41,7 @@ def tracklog_decorator(func):
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
         start_time = str(time.time())
-        # fire task start sns
-        # init_message = make_sns_response(
-        #     alert_type=SNSSubjectsAlert.TASK_START.name,
-        #     messages={
-        #         "start_time": start_time,
-        #         "task_id": str(task_id),
-        #         "file": curr_process_file,
-        #         "column": curr_process_column,
-        #     },
-        #     user_id=user_id,
-        # )
-        # publish_message_sns(
-        #     message=json.dumps(init_message["Messages"]),
-        #     subject=json.dumps(init_message["Subject"]),
-        #     topic_arn=sns_topic,
-        #     aws_access_key=aws_access_key,
-        #     aws_secret_access_key=aws_secret_access_key,
-        #     aws_region=aws_region,
-        # )
+
         try:
             check_and_download_solver(
                 solver_name=solver["solver_name"],
@@ -107,43 +85,17 @@ def tracklog_decorator(func):
             "pid": pid,
             "error": error_output,
         }
-        # response = make_sns_response(
-        #     alert_type=SNSSubjectsAlert.SYSTEM_ERROR.name,
-        #     messages={
-        #         "error": error_output,
-        #         "file": curr_process_file,
-        #         "column": curr_process_column,
-        #         "alert_type": alert_type
-        #     },
-        #     user_id=user_id,
-        # )
-        # logger.error(f"Publish SNS Error{e}")
-        # args[0].update_state(state=WorkerState.FAILED.name)
 
         try:
-            # update_messages = response["Messages"]
             sns_message.update(response)
-            # response["task_id"] = str(task_id)
-            # response["alert_type"] = alert_type
-            # response["start_time"] = start_time
-            # response["end_time"] = end_time
-            # response["hostname"] = hostname
-            # response["host_ip"] = host_ip
-            # response["pid"] = pid
-            # response["file_name"] = curr_process_file
-            # response["column_name"] = curr_process_column
         except Exception as e:
             error_output = str(e).replace('"', " ").replace("'", " ")
             logger.error(f"Error :{error_output}")
             alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
             sns_message["error"] = error_output
             sns_message["alert_type"] = alert_type
-
-        # logger.info(update_messages)
-        # subject = response["Subject"]
-        # alert_type = subject["alert_type"]
+        # logger.info(f" Send to SNS, message: {message_id}")
         publish_message_sns(
-            # message=json.dumps(update_messages),
             message=json.dumps(sns_message),
             subject=user_id,
             topic_arn=sns_topic,
@@ -151,25 +103,6 @@ def tracklog_decorator(func):
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
-        # logger.info(f" Send to SNS, message: {message_id}")
-
-        # put_item_to_dynamodb(
-        #     table_name=table_name,
-        #     user_id=user_id,
-        #     task_id=task_id,
-        #     host_ip=host_ip,
-        #     alert_type=alert_type,
-        #     pid=pid,
-        #     host_name=hostname,
-        #     start_time=start_time,
-        #     end_time=end_time,
-        #     messages=json.dumps(update_messages),
-        #     file_name=curr_process_file,
-        #     column_name=curr_process_column,
-        #     aws_access_key=aws_access_key,
-        #     aws_secret_access_key=aws_secret_access_key,
-        #     aws_region=aws_region,
-        # )
 
     return wrapper
 
@@ -215,23 +148,3 @@ def put_item_to_dynamodb(
         }
     )
     return response
-
-
-# def make_sns_response(
-#     alert_type: str = None, messages: dict = None, user_id: str = None
-# ) -> dict:
-#     subject = user_id
-#     # messages["user_id"] = user_id
-
-#     if alert_type is None or user_id is None:
-#         subject["alert_type"] = SNSSubjectsAlert.SYSTEM_ERROR.name
-#         messages["messages"] = "No alert_type or  user_id in sns message"
-#         # subject = Alert.SYSTEM_ERROR.name
-#         # messages = "No subject or user id in sns message"
-#         raise Exception("Message Input Error")
-
-#     if not isinstance(messages, dict):
-#         raise Exception("messages is not a json object")
-
-#     response = {"Subject": subject, "Messages": messages}
-#     return response
