@@ -11,7 +11,7 @@ from .initial_end_services import initial_end_services
 from .dynamodb_utils import (
     remove_all_user_items_from_dynamodb,
 )
-from .long_pulling_dynamodb import long_pulling_dynamodb, check_tasks_status
+
 from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
@@ -34,7 +34,6 @@ from .k8s_utils import check_k8s_services_exists, create_k8s_svc_from_yaml
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
 from .sqs import clean_user_previous_sqs_message
-from .process_log import analyze_logs_files, analyze_local_logs_files
 
 # logger config
 logger = logging.getLogger()

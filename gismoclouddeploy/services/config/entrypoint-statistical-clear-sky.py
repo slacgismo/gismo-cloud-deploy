@@ -56,10 +56,6 @@ def entrypoint(
     dh = DataHandler(data_frame)
     dh.run_pipeline(power_col="ac_power")
     dh.fit_statistical_clear_sky_model()
-    save_data = {"data": "this is test data"}
+    save_data = {"data": "This is stastic-clear-sky"}
 
-    return make_response(
-        alert_type=Alert.SAVED_DATA.name,
-        messages=save_data,
-        user_id=user_id,
-    )
+    return save_data

@@ -1,9 +1,9 @@
 from .check_aws import connect_aws_resource, connect_aws_client
-from boto3.dynamodb.conditions import Key, Attr
+from boto3.dynamodb.conditions import Key
 from .WORKER_CONFIG import WORKER_CONFIG
 import pandas as pd
 from io import StringIO
-from typing import List, Set, Union
+from typing import Set, Union
 import os
 import logging
 import json

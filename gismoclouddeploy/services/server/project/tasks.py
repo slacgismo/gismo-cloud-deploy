@@ -1,23 +1,16 @@
-from cmath import log
-import re
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from celery.result import AsyncResult
-from utils.aws_utils import connect_aws_client
+
 
 from project.tasks_utilities.decorators import tracklog_decorator
 
-from models.WorkerState import WorkerState
-import json
 import logging
 
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
-# from .tasks_utilities.decorators import make_sns_response
-
-import json
 
 from .entrypoint import entrypoint
 

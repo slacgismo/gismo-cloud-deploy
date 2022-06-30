@@ -3,7 +3,7 @@ from solardatatools.data_handler import DataHandler
 
 from os.path import exists
 from datetime import datetime
-from .my_modules import read_csv_from_s3, Alert, make_response
+from .my_modules import read_csv_from_s3
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -33,7 +33,7 @@ def entrypoint(
     :param str aws_region:
     :param str solver_name: The solver name that defined in config.yaml
     :param str solver_file: The solver file location inside worker. This file location is defined in config.yaml.
-    :return dict json_message: Return a json format object contain user_id (This message is used to publish sns message and track logs in dynamodb)
+    :return dict json_message: Return a json format object
     """
 
     ## ==================== Modify your code below ==================== ##
@@ -137,28 +137,4 @@ def entrypoint(
         raise Exception(f"Save data error: {e}")
 
     # # ==================== Modify your code above ==================== ##
-
-    # save_data = {
-    #     "bucket": data_bucket,
-    #     "file": curr_process_file,
-    #     "column": curr_process_column,
-    #     "solver": solver_name,
-    #     "length": 1,
-    #     "capacity_estimate": 1,
-    #     "power_units": "W",
-    #     "data_sampling": 1,
-    #     "data_quality_score": 1,
-    #     "data_clearness_score": float(1.2),
-    #     "time_shifts": 1,
-    #     "num_clip_points": 1,
-    #     "tz_correction": 1,
-    #     "inverter_clipping": 1,
-    #     "normal_quality_scores": 1,
-    #     "capacity_changes": 1,
-    # }
     return save_data
-    # return make_response(
-    #     alert_type=Alert.SAVED_DATA.name,
-    #     messages=save_data,
-    #     user_id=user_id,
-    # )

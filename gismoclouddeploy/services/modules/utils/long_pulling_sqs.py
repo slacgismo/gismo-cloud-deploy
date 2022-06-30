@@ -3,17 +3,13 @@ This file is an old file contains long pulling sqs.
 
 """
 from .WORKER_CONFIG import WORKER_CONFIG
-from typing import List, Set
+from typing import List
 from .check_aws import connect_aws_client
 from .sqs import receive_queue_message, delete_queue_message
 import time
 import json
 import logging
 from server.models.SNSSubjectsAlert import SNSSubjectsAlert
-from .invoke_function import (
-    invoke_exec_docker_check_task_status,
-    invoke_exec_k8s_check_task_status,
-)
 import os
 import pandas as pd
 from os.path import exists
@@ -131,6 +127,7 @@ def long_pulling_sqs(
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
 
         if len(save_data) > 0:
+            print(f"{ worker_config.save_data_file_local} save_data: {save_data}")
             save_data_df = pd.json_normalize(save_data)
             save_data_df.to_csv(
                 worker_config.save_data_file_local,
@@ -152,8 +149,8 @@ def long_pulling_sqs(
                 header=not os.path.exists(worker_config.save_logs_file_local),
             )
         if len(logs_data) > 0 and numb_tasks_completed < total_task_length:
-            time.sleep(1)
-            wait_time -= int(1)
+            time.sleep(0.1)
+            # wait_time -= int(1)
             logger.info("Retrieve SQS messages again...")
             # don't wait ,get messages again
             continue

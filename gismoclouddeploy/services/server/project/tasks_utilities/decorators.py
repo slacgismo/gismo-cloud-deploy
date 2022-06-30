@@ -56,18 +56,13 @@ def tracklog_decorator(func):
 
             # calls original function
             response = func(*args, **kwargs)
-            # logger.info(response)
             # args[0].update_state(state=WorkerState.SUCCESS.name)
-            alert_type = (SNSSubjectsAlert.SAVED_DATA.name,)
+            alert_type = SNSSubjectsAlert.SAVED_DATA.name
             error_output = ""
         except Exception as e:
             error_output = str(e).replace('"', " ").replace("'", " ")
             logger.error(f"Error :{error_output}")
             alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
-            response = {
-                "error": error_output,
-            }
-            logger.info("---------------")
 
         end_time = str(time.time())
         hostname = socket.gethostname()
@@ -92,9 +87,9 @@ def tracklog_decorator(func):
             error_output = str(e).replace('"', " ").replace("'", " ")
             logger.error(f"Error :{error_output}")
             alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
-            sns_message["error"] = error_output
             sns_message["alert_type"] = alert_type
-        # logger.info(f" Send to SNS, message: {message_id}")
+            sns_message["error"] = error_output
+
         publish_message_sns(
             message=json.dumps(sns_message),
             subject=user_id,

@@ -4,7 +4,6 @@ import re
 from typing import List
 
 import yaml
-import pandas as pd
 import json
 from botocore.exceptions import ClientError
 
@@ -14,7 +13,6 @@ from .k8s_utils import (
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
 )
-from multiprocessing import Process
 
 from .invoke_function import (
     invoke_kubectl_delete_deployment,
@@ -33,7 +31,7 @@ from .sqs import (
     receive_queue_message,
     delete_queue_message,
 )
-from io import StringIO
+
 import os
 
 from typing import Union
@@ -218,41 +216,6 @@ def invoke_process_files_to_server(
         index += 1
 
     return task_ids
-
-
-# def loop_tasks_status(
-#     task_ids: List[str] = None,
-#     is_docker: bool = False,
-#     server_name: str = None,
-# ) -> None:
-#     if len(task_ids) == 0 or server_name is None:
-#         raise Exception("Input value error")
-#     update_tasks_id = []
-
-#     for task_id in task_ids:
-#         try:
-#             result = ""
-#             if is_docker:
-#                 result = invoke_exec_docker_check_task_status(
-#                     server_name=server_name, task_id=str(task_id).strip("\n")
-#                 )
-#             else:
-#                 logger.info(f"Check task: {task_id} status")
-#                 result = invoke_exec_k8s_check_task_status(
-#                     server_name=server_name, task_id=str(task_id).strip("\n")
-#                 )
-#                 # logger.info(result)
-#                 # conver json to
-#             res_json = {}
-#             dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
-#             res_json = json.loads(dataform)
-#             status = res_json["task_status"]
-#             logger.info(f" ==== Check {task_id} Status: {dataform} ====")
-#             if status != "SUCCESS":
-#                 update_tasks_id.append(task_id)
-#         except Exception as e:
-#             raise Exception(f"Invoke check tasks status failed {e}")
-#     return update_tasks_id
 
 
 def process_logs_and_plot(
