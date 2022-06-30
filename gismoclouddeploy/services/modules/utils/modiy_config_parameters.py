@@ -44,12 +44,14 @@ def modiy_config_parameters(
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
     user_id = str(socket.gethostname())
-    if nodesscale is not None and check_environment_is_aws():
-        logger.info(f"Update nodes eks and worker replicas to{nodesscale}")
-        config_json["aws_config"]["eks_nodes_number"] = int(nodesscale)
-        config_json["services_config_list"]["worker"]["desired_replicas"] = int(
-            nodesscale
-        )
+
+    config_json["aws_config"]["aws_access_key"] = aws_access_key
+    config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
+    config_json["aws_config"]["aws_region"] = aws_region
+    config_json["aws_config"]["sns_topic"] = sns_topic
+    config_json["aws_config"]["sqs_url"] = sqs_url
+    config_json["aws_config"]["dlq_url"] = dlq_url
+    config_json["aws_config"]["ecr_repo"] = ecr_repo
 
     config_json["worker_config"]["user_id"] = user_id
     config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
@@ -64,13 +66,6 @@ def modiy_config_parameters(
     config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
     config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
     config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}.csv"
-    config_json["aws_config"]["aws_access_key"] = aws_access_key
-    config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
-    config_json["aws_config"]["aws_region"] = aws_region
-    config_json["aws_config"]["sns_topic"] = sns_topic
-    config_json["aws_config"]["sqs_url"] = sqs_url
-    config_json["aws_config"]["dlq_url"] = dlq_url
-    config_json["aws_config"]["ecr_repo"] = ecr_repo
 
     # check if local path exist
     result_local_folder = config_json["worker_config"]["saved_path_local"]
@@ -78,7 +73,8 @@ def modiy_config_parameters(
         logger.info(f"Create local {result_local_folder} path")
         os.mkdir(result_local_folder)
 
-    # local
+    # Generate local results files name
+
     config_json["worker_config"]["save_data_file_local"] = (
         result_local_folder
         + "/"
@@ -109,7 +105,8 @@ def modiy_config_parameters(
         + config_json["worker_config"]["saved_performance_file"]
     )
 
-    # aws
+    # Generate AWS results files name
+
     config_json["worker_config"]["save_data_file_aws"] = (
         config_json["worker_config"]["saved_path_aws"]
         + "/"
@@ -139,6 +136,21 @@ def modiy_config_parameters(
         + "/"
         + config_json["worker_config"]["saved_performance_file"]
     )
+
+    # Update  eks cluster name and groupname
+    if nodesscale is not None and check_environment_is_aws():
+        logger.info(f"Update nodes eks and worker replicas to{nodesscale}")
+        config_json["aws_config"]["eks_nodes_number"] = int(nodesscale)
+        config_json["services_config_list"]["worker"]["desired_replicas"] = int(
+            nodesscale
+        )
+    cluster_file = config_json["aws_config"]["cluster_file"]
+    cluster_file_json = convert_yaml_to_json(yaml_file=cluster_file)
+    cluster_name = cluster_file_json["metadata"]["name"]
+    nodegroup_name = cluster_file_json["nodeGroups"][0]["name"]
+    instanceType = cluster_file_json["nodeGroups"][0]["instanceType"]
+    max_nodes_num = cluster_file_json["nodeGroups"][0]["maxSize"]
+    tags = cluster_file_json["nodeGroups"][0]["tags"]
 
     return config_json
 

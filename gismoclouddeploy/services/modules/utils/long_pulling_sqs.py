@@ -127,7 +127,7 @@ def long_pulling_sqs(
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
 
         if len(save_data) > 0:
-            print(f"{ worker_config.save_data_file_local} save_data: {save_data}")
+
             save_data_df = pd.json_normalize(save_data)
             save_data_df.to_csv(
                 worker_config.save_data_file_local,
