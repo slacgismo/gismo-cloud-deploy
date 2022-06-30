@@ -22,6 +22,7 @@ def publish_message_sns(
     aws_secret_access_key: str,
     aws_region: str,
 ) -> str:
+    logger.info("---------------")
     try:
         sns_client = connect_aws_client(
             client_name="sns",

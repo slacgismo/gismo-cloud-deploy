@@ -77,7 +77,7 @@ def tracklog_decorator(func):
             )
 
             # calls original function
-
+            response = func(*args, **kwargs)
             # logger.info(response)
             # args[0].update_state(state=WorkerState.SUCCESS.name)
             alert_type = (SNSSubjectsAlert.SAVED_DATA.name,)
@@ -89,14 +89,13 @@ def tracklog_decorator(func):
             response = {
                 "error": error_output,
             }
+            logger.info("---------------")
 
-        response = func(*args, **kwargs)
         end_time = str(time.time())
         hostname = socket.gethostname()
         host_ip = socket.gethostbyname(hostname)
         pid = os.getpid()
         sns_message = {
-            "error": error_output,
             "file_name": curr_process_file,
             "column_name": curr_process_column,
             "task_id": task_id,
@@ -106,6 +105,7 @@ def tracklog_decorator(func):
             "hostname": hostname,
             "host_ip": host_ip,
             "pid": pid,
+            "error": error_output,
         }
         # response = make_sns_response(
         #     alert_type=SNSSubjectsAlert.SYSTEM_ERROR.name,
@@ -142,7 +142,6 @@ def tracklog_decorator(func):
         # logger.info(update_messages)
         # subject = response["Subject"]
         # alert_type = subject["alert_type"]
-
         publish_message_sns(
             # message=json.dumps(update_messages),
             message=json.dumps(sns_message),
