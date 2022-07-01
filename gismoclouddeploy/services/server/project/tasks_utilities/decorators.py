@@ -78,11 +78,12 @@ def tracklog_decorator(func):
             "hostname": hostname,
             "host_ip": host_ip,
             "pid": pid,
+            "data": "None",
             "error": error_output,
         }
 
         try:
-            sns_message.update(response)
+            sns_message["data"] = json.dumps(response)
         except Exception as e:
             error_output = str(e).replace('"', " ").replace("'", " ")
             logger.error(f"Error :{error_output}")

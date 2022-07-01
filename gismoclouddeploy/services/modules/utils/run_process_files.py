@@ -35,6 +35,7 @@ from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
 from .sqs import clean_user_previous_sqs_message
 from multiprocessing.dummy import Process
+from .process_log import analyze_local_logs_files
 
 # logger config
 logger = logging.getLogger()
@@ -116,6 +117,17 @@ def run_process_files(
         ecr_repo=ecr_repo,
         services_config_list=services_config_list,
     )
+
+    # analyze_local_logs_files(
+    #     instanceType="instanceType",
+    #     logs_file_path_name="./results/logs-644-15.csv",
+    #     initial_process_time=0,
+    #     total_process_time=100,
+    #     eks_nodes_number=5,
+    #     num_workers=1,
+    #     save_file_path_name="./results/logs-test.csv",
+    #     num_unfinished_tasks=0,
+    # )
 
     # check solver
     try:
@@ -268,14 +280,7 @@ def run_process_files(
         for index, thread in enumerate(threads):
             thread.join()
             logging.info("Wait %s thread done", thread.name)
-    logger.info(" ========= Remove dynamodb ========= ")
-    remove_all_user_items_from_dynamodb(
-        table_name=worker_config_obj.dynamodb_tablename,
-        aws_access_key=aws_config_obj.aws_access_key,
-        aws_secret_access_key=aws_config_obj.aws_secret_access_key,
-        aws_region=aws_config_obj.aws_region,
-        user_id=user_id,
-    )
+
     logger.info(" ========= Clean previous SQS ========= ")
     sqs_client = connect_aws_client(
         client_name="sqs",
