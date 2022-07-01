@@ -195,8 +195,8 @@ def invoke_exec_docker_run_process_files(
     except KeyboardInterrupt:
         logger.error(f"Invoke process file error:{err}")
         res.terminate()
-    print("output")
-    print(out)
+    # print("output")
+    # print(out)
     return out
     # res = exec_docker_command(command)
     # return res

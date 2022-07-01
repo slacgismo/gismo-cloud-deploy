@@ -414,56 +414,9 @@ def long_pulling_sqs(
 
         logger.info(
             f" Waiting .: {wait_time - delay} \
-            Idle time: {idle_time} "
+            Idle Time: {idle_time} "
         )
         time.sleep(delay)
         wait_time -= int(delay)
 
     return uncompleted_task_id_set
-    # if len(save_data) > 0:
-
-    #     save_data_df = pd.json_normalize(save_data)
-    #     save_data_df.to_csv(
-    #         worker_config.save_data_file_local,
-    #         mode="a",
-    #         header=not os.path.exists(worker_config.save_data_file_local),
-    #     )
-    # if len(error_data) > 0:
-    #     save_error_df = pd.json_normalize(error_data)
-    #     save_error_df.to_csv(
-    #         worker_config.save_error_file_local,
-    #         mode="a",
-    #         header=not os.path.exists(worker_config.save_error_file_local),
-    #     )
-    # if len(logs_data) > 0:
-    #     save_logs_df = pd.json_normalize(logs_data)
-    #     save_logs_df.to_csv(
-    #         worker_config.save_logs_file_local,
-    #         mode="a",
-    #         header=not os.path.exists(worker_config.save_logs_file_local),
-    #     )
-    # if len(logs_data) > 0 and numb_tasks_completed < total_task_length:
-    #     time.sleep(0.1)
-    #     # wait_time -= int(1)
-    #     logger.info("Retrieve SQS messages again...")
-    #     # don't wait ,get messages again
-    #     continue
-
-    # logger.info(
-    #     f" Waiting .: {wait_time - delay} \
-    #     Time: {time.ctime(time.time())} "
-    # )
-    # if numb_tasks_completed == total_task_length:
-    #     logger.info("===== All task completed ====")
-    #     if len(task_ids_set) > 0:
-    #         for id in task_ids_set:
-    #             logger.info(f"Cannot parse message from {id}!!. Somehing wrong!! ")
-    #     return task_ids_set
-    # idle_time = time.time() - previous_messages_time
-    # if idle_time >= acccepted_idle_time:
-    #     logger.info(f"===== No messages receive over time {idle_time} sec ====")
-    #     logger.info(f"===== Number of unfinished tasks {len(task_ids_set)} ====")
-    #     return task_ids_set
-    #     time.sleep(delay)
-    #     wait_time -= int(delay)
-    # return task_ids_set

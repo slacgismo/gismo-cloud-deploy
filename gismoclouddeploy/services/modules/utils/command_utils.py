@@ -127,19 +127,60 @@ def send_command_to_server(
         worker_config_str=worker_config_str,
         number=None,
     )
-    # percentage = int(end_index * 100 / len(n_files))
-    # print(
-    #     f"process from {start_index}, to {end_index} files, send tasks command percentage:  {percentage}%"
-    # )
-    # total_tasks_ids += task_ids
-    # start_index = end_index
-    # end_index = start_index + num_file_to_process_per_round
-    # if end_index > len(n_files):
-    #     end_index = len(n_files)
 
-    # for id in total_tasks_ids:
-    #     print(id)
-    return len(worker_config_json)
+    return None
+
+
+# def send_command_to_server(
+#     server_name: str = None,
+#     number: int = Union[int, None],
+#     worker_config_json: str = None,
+#     is_docker: bool = False,
+#     num_file_to_process_per_round: int = 10,
+#     aws_access_key: str = None,
+#     aws_secret_access_key: str = None,
+#     aws_region: str = None,
+#     sns_topic: str = None,
+# ) -> List[str]:
+#     worker_config_json["aws_access_key"] = aws_access_key
+#     worker_config_json["aws_secret_access_key"] = aws_secret_access_key
+#     worker_config_json["aws_region"] = aws_region
+#     worker_config_json["sns_topic"] = sns_topic
+
+#     s3_client = aws_utils.connect_aws_client(
+#         client_name="s3",
+#         key_id=worker_config_json["aws_access_key"],
+#         secret=worker_config_json["aws_secret_access_key"],
+#         region=worker_config_json["aws_region"],
+#     )
+#     n_files = return_process_filename_base_on_command(
+#         first_n_files=number,
+#         bucket=worker_config_json["data_bucket"],
+#         default_files=worker_config_json["default_process_files"],
+#         s3_client=s3_client,
+#     )
+#     # start_index = 0
+#     # end_index = num_file_to_process_per_round
+#     # if end_index > len(n_files):
+#     #     end_index = len(n_files)
+#     total_tasks_ids = []
+#     # while start_index < len(n_files):
+#     process_files_list = []
+#     for file in n_files:
+#         process_files_list.append(file)
+#         # print(f"--------------{file}")
+#     #
+#     worker_config_json["default_process_files"] = json.dumps(process_files_list)
+#     worker_config_str = json.dumps(worker_config_json)
+#     # invoke process files
+#     resp = invoke_process_files_to_server(
+#         is_docker=is_docker,
+#         server_name=server_name,
+#         worker_config_str=worker_config_str,
+#         number=None,
+#     )
+
+#     return len(worker_config_json)
 
 
 # def send_command_to_server(
