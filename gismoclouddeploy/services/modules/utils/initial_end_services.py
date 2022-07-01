@@ -37,6 +37,7 @@ def initial_end_services(
     eks_nodes_number: int = None,
     num_workers: int = None,
     num_unfinished_tasks: int = 0,
+    instanceType: str = None,
 ):
 
     logger.info("=========== delete solver lic in bucket ============ ")
@@ -75,6 +76,7 @@ def initial_end_services(
     )
 
     analyze_local_logs_files(
+        instanceType=instanceType,
         logs_file_path_name=save_logs_file_local,
         initial_process_time=initial_process_time,
         total_process_time=total_process_time,

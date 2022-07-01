@@ -1,8 +1,9 @@
 # AWS parameters used for cli.
 aws_config:
   cluster_file: "./config/eks/cluster.yaml"
-  cluster_name: "gcd-eks"                 # The cluster name has to be matched to `eks/cluster.yaml`
-  nodegroup_name: "gcd-nodegroup"         # The nodegroup name has to be matched to `eks/cluster.yaml`
+  cluster_name: "None"                    # Generated from cluster_file
+  nodegroup_name: "None"                  # Generated from cluster_file
+  instanceType: "None"                    # Generated from cluster_file
   eks_nodes_number: 5                     # Total ec2 instances
   scale_eks_nodes_wait_time : 90          # in second
   interval_of_check_dynamodb_in_second: 10      # in second

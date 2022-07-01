@@ -237,9 +237,16 @@ def invoke_exec_docker_check_task_status(
     return res
 
 
-def invoke_eks_updagte_kubeconfig(cluster_name: str = None) -> None:
+def invoke_eks_updagte_kubeconfig(cluster_name: str = None) -> str:
     print("exec aws eks update-kubeconfig")
     command = f"aws eks update-kubeconfig --name {cluster_name}"
+    output = exec_subprocess_command(command=command)
+    print(output)
+
+
+def invoke_eks_get_cluster() -> str:
+    print("exec eksctl get cluster")
+    command = f"eksctl get cluster"
     output = exec_subprocess_command(command=command)
     print(output)
 

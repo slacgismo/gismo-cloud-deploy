@@ -4,6 +4,7 @@ import logging
 import yaml
 import os
 import socket
+from .invoke_function import invoke_eks_get_cluster
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -44,14 +45,6 @@ def modiy_config_parameters(
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
     user_id = str(socket.gethostname())
-
-    config_json["aws_config"]["aws_access_key"] = aws_access_key
-    config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
-    config_json["aws_config"]["aws_region"] = aws_region
-    config_json["aws_config"]["sns_topic"] = sns_topic
-    config_json["aws_config"]["sqs_url"] = sqs_url
-    config_json["aws_config"]["dlq_url"] = dlq_url
-    config_json["aws_config"]["ecr_repo"] = ecr_repo
 
     config_json["worker_config"]["user_id"] = user_id
     config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
@@ -144,14 +137,27 @@ def modiy_config_parameters(
         config_json["services_config_list"]["worker"]["desired_replicas"] = int(
             nodesscale
         )
-    cluster_file = config_json["aws_config"]["cluster_file"]
-    cluster_file_json = convert_yaml_to_json(yaml_file=cluster_file)
-    cluster_name = cluster_file_json["metadata"]["name"]
-    nodegroup_name = cluster_file_json["nodeGroups"][0]["name"]
-    instanceType = cluster_file_json["nodeGroups"][0]["instanceType"]
-    max_nodes_num = cluster_file_json["nodeGroups"][0]["maxSize"]
-    tags = cluster_file_json["nodeGroups"][0]["tags"]
+    if check_environment_is_aws():
+        cluster_file = config_json["aws_config"]["cluster_file"]
+        cluster_file_json = convert_yaml_to_json(yaml_file=cluster_file)
+        cluster_name = cluster_file_json["metadata"]["name"]
+        nodegroup_name = cluster_file_json["nodeGroups"][0]["name"]
+        instanceType = cluster_file_json["nodeGroups"][0]["instanceType"]
+        max_nodes_num = cluster_file_json["nodeGroups"][0]["maxSize"]
+        tags = cluster_file_json["nodeGroups"][0]["tags"]
+        config_json["aws_config"]["cluster_name"] = cluster_name
+        config_json["aws_config"]["nodegroup_name"] = nodegroup_name
+        config_json["aws_config"]["aws_access_key"] = aws_access_key
 
+        current_clust_name = invoke_eks_get_cluster()
+        print(current_clust_name)
+    config_json["aws_config"]["aws_access_key"] = aws_access_key
+    config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
+    config_json["aws_config"]["aws_region"] = aws_region
+    config_json["aws_config"]["sns_topic"] = sns_topic
+    config_json["aws_config"]["sqs_url"] = sqs_url
+    config_json["aws_config"]["dlq_url"] = dlq_url
+    config_json["aws_config"]["ecr_repo"] = ecr_repo
     return config_json
 
 

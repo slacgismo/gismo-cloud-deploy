@@ -315,7 +315,7 @@ def run_process_files(
         number=number,
         worker_config_json=config_json["worker_config"],
         is_docker=is_docker,
-        num_file_to_process_per_round=worker_replicas * 2,
+        num_file_to_process_per_round=worker_replicas * 3,
         aws_access_key=aws_access_key,
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region,
@@ -364,6 +364,7 @@ def run_process_files(
         eks_nodes_number=aws_config_obj.eks_nodes_number,
         num_workers=services_config_list["worker"]["desired_replicas"],
         num_unfinished_tasks=len(unfinished_tasks_ids),
+        instanceType=config_json["aws_config"]["instanceType"],
     )
 
     print(" ======== Completed ========== ")

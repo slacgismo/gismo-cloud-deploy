@@ -265,6 +265,7 @@ def read_all_csv_from_s3_and_parse_dates_from(
 
 def analyze_local_logs_files(
     logs_file_path_name: str = None,
+    instanceType: str = None,
     initial_process_time: float = 0,
     total_process_time: float = 0,
     eks_nodes_number: int = 0,
@@ -297,7 +298,7 @@ def analyze_local_logs_files(
     max_end = 0
     duration = 0
     task_duration_in_parallelism = 0
-    effeciency = 0
+    efficiency = 0
     for key, value in worker_dict.items():
         if ("start" in value) is False:
             logger.warning(f"missing 'start' key in task {key}")
@@ -331,7 +332,7 @@ def analyze_local_logs_files(
         average_task_duration = tasks_durtaion_sum
 
     if task_duration_in_parallelism > 0:
-        effeciency = int(
+        efficiency = int(
             (
                 (tasks_durtaion_sum - task_duration_in_parallelism)
                 / task_duration_in_parallelism
@@ -356,11 +357,12 @@ def analyze_local_logs_files(
             f"{tasks_durtaion_sum} sec",
             "Estimation",
         ],
-        ["Effeciency improvement", f"{effeciency} %"],
+        ["Efficiency improvement", f"{efficiency} %"],
         ["Initialize services duration", f"{initial_process_time} sec"],
         ["Total process durations", f"{total_process_time} sec"],
         ["Number of nodes", f"{eks_nodes_number}"],
         ["Number of workers", f"{num_workers}"],
+        ["Instance type", f"{instanceType}"],
     ]
     table1 = AsciiTable(performance)
     print(table1.table)
@@ -369,112 +371,114 @@ def analyze_local_logs_files(
         file.close()
 
 
-def analyze_logs_files(
-    bucket: str = None,
-    logs_file_path_name: str = None,
-    s3_client: "botocore.client.S3" = None,
-    initial_process_time: float = 0,
-    total_process_time: float = 0,
-    eks_nodes_number: int = 0,
-    num_workers: int = 0,
-    save_file_path_name: str = "results/performance.txt",
-) -> List[str]:
-    try:
-        df = read_all_csv_from_s3_and_parse_dates_from(
-            bucket_name=bucket,
-            file_path_name=logs_file_path_name,
-            dates_column_name="timestamp",
-            s3_client=s3_client,
-        )
-    except Exception as e:
-        logger.error(f"Read {logs_file_path_name} failed")
-        raise e
+# def analyze_logs_files(
+#     bucket: str = None,
+#     instanceType:str = None,
+#     logs_file_path_name: str = None,
+#     s3_client: "botocore.client.S3" = None,
+#     initial_process_time: float = 0,
+#     total_process_time: float = 0,
+#     eks_nodes_number: int = 0,
+#     num_workers: int = 0,
+#     save_file_path_name: str = "results/performance.txt",
+# ) -> List[str]:
+#     try:
+#         df = read_all_csv_from_s3_and_parse_dates_from(
+#             bucket_name=bucket,
+#             file_path_name=logs_file_path_name,
+#             dates_column_name="timestamp",
+#             s3_client=s3_client,
+#         )
+#     except Exception as e:
+#         logger.error(f"Read {logs_file_path_name} failed")
+#         raise e
 
-    # get error task
+#     # get error task
 
-    error_task = df[(df["alert_type"] == "SYSTEM_ERROR")]
-    num_error_task = len(error_task)
+#     error_task = df[(df["alert_type"] == "SYSTEM_ERROR")]
+#     num_error_task = len(error_task)
 
-    worker_dict = process_df_for_gantt(df)
-    shortest_task = ""
-    longest_task = ""
-    min_duration = float("inf")
-    max_duration = 0
-    tasks_durtaion_sum = 0
-    average_task_duration = 0
-    total_tasks = 0
-    min_start = float("inf")
-    max_end = 0
-    duration = 0
-    task_duration_in_parallelism = 0
-    effeciency = 0
-    num_unfinished_task = 0
-    for key, value in worker_dict.items():
-        if ("start" in value) is False:
-            logger.warning(f"missing 'start' key in task {key}")
-            continue
-        if ("end" in value) is False:
-            num_unfinished_task += 1
-            continue
-        start = float(value["start"])
-        end = float(value["end"])
-        duration = value["duration"]
-        task = value["task"]
-        if task == "loop_tasks_status_task":
-            continue
-        tasks_durtaion_sum += duration
-        if start < min_start:
-            min_start = start
-        if end > max_end:
-            max_end = end
+#     worker_dict = process_df_for_gantt(df)
+#     shortest_task = ""
+#     longest_task = ""
+#     min_duration = float("inf")
+#     max_duration = 0
+#     tasks_durtaion_sum = 0
+#     average_task_duration = 0
+#     total_tasks = 0
+#     min_start = float("inf")
+#     max_end = 0
+#     duration = 0
+#     task_duration_in_parallelism = 0
+#     effeciency = 0
+#     num_unfinished_task = 0
+#     for key, value in worker_dict.items():
+#         if ("start" in value) is False:
+#             logger.warning(f"missing 'start' key in task {key}")
+#             continue
+#         if ("end" in value) is False:
+#             num_unfinished_task += 1
+#             continue
+#         start = float(value["start"])
+#         end = float(value["end"])
+#         duration = value["duration"]
+#         task = value["task"]
+#         if task == "loop_tasks_status_task":
+#             continue
+#         tasks_durtaion_sum += duration
+#         if start < min_start:
+#             min_start = start
+#         if end > max_end:
+#             max_end = end
 
-        if duration < min_duration:
-            min_duration = duration
-            shortest_task = task
-        if duration > max_duration:
-            max_duration = duration
-            longest_task = task
-        total_tasks += 1
-    task_duration_in_parallelism = max_end - min_start
-    if total_tasks > 0:
-        average_task_duration = tasks_durtaion_sum / total_tasks
-    else:
-        average_task_duration = tasks_durtaion_sum
+#         if duration < min_duration:
+#             min_duration = duration
+#             shortest_task = task
+#         if duration > max_duration:
+#             max_duration = duration
+#             longest_task = task
+#         total_tasks += 1
+#     task_duration_in_parallelism = max_end - min_start
+#     if total_tasks > 0:
+#         average_task_duration = tasks_durtaion_sum / total_tasks
+#     else:
+#         average_task_duration = tasks_durtaion_sum
 
-    if task_duration_in_parallelism > 0:
-        effeciency = int(
-            (
-                (tasks_durtaion_sum - task_duration_in_parallelism)
-                / task_duration_in_parallelism
-            )
-            * 100
-        )
-    performance = [
-        ["Performance", "Results", "Info"],
-        ["Total tasks", total_tasks, ""],
-        ["Average task duration", f"{average_task_duration} sec"],
-        ["Min task duration", f"{min_duration} sec", shortest_task],
-        ["Max task duration", f"{max_duration} sec", longest_task],
-        ["Number of error tasks", f"{num_error_task}"],
-        ["Number of unfinished tasks", f"{num_unfinished_task}"],
-        [
-            "Process tasks duration(in parallel)",
-            f"{task_duration_in_parallelism} sec",
-            "Real data",
-        ],
-        [
-            "Process tasks duration(in serial)",
-            f"{tasks_durtaion_sum} sec",
-            "Estimation",
-        ],
-        ["Effeciency improvement", f"{effeciency} %"],
-        ["Initialize services duration", f"{initial_process_time} sec"],
-        ["Total process durations", f"{total_process_time} sec"],
-        ["Number of nodes", f"{eks_nodes_number}"],
-        ["Number of workers", f"{num_workers}"],
-    ]
-    table1 = AsciiTable(performance)
-    print(table1.table)
-    with open(save_file_path_name, "w") as file:
-        print(table1.table, file=file)
-        file.close()
+#     if task_duration_in_parallelism > 0:
+#         effeciency = int(
+#             (
+#                 (tasks_durtaion_sum - task_duration_in_parallelism)
+#                 / task_duration_in_parallelism
+#             )
+#             * 100
+#         )
+#     performance = [
+#         ["Performance", "Results", "Info"],
+#         ["Total tasks", total_tasks, ""],
+#         ["Average task duration", f"{average_task_duration} sec"],
+#         ["Min task duration", f"{min_duration} sec", shortest_task],
+#         ["Max task duration", f"{max_duration} sec", longest_task],
+#         ["Number of error tasks", f"{num_error_task}"],
+#         ["Number of unfinished tasks", f"{num_unfinished_task}"],
+#         [
+#             "Process tasks duration(in parallel)",
+#             f"{task_duration_in_parallelism} sec",
+#             "Real data",
+#         ],
+#         [
+#             "Process tasks duration(in serial)",
+#             f"{tasks_durtaion_sum} sec",
+#             "Estimation",
+#         ],
+#         ["Effeciency improvement", f"{effeciency} %"],
+#         ["Initialize services duration", f"{initial_process_time} sec"],
+#         ["Total process durations", f"{total_process_time} sec"],
+#         ["Number of nodes", f"{eks_nodes_number}"],
+#         ["Number of workers", f"{num_workers}"],
+#         ["Instance type", f"{instanceType}"]
+#     ]
+#     table1 = AsciiTable(performance)
+#     print(table1.table)
+#     with open(save_file_path_name, "w") as file:
+#         print(table1.table, file=file)
+#         file.close()
