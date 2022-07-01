@@ -24,6 +24,8 @@ def remove_prevous_results_files(
     save_data_file_local: str = None,
     save_logs_file_local: str = None,
     save_error_file_local: str = None,
+    save_performance_file_local: str = None,
+    save_plot_file_local: str = None,
 ) -> None:
 
     if exists(save_data_file_local):
@@ -34,6 +36,12 @@ def remove_prevous_results_files(
 
     if exists(save_error_file_local):
         os.remove(save_error_file_local)
+
+    if exists(save_performance_file_local):
+        os.remove(save_performance_file_local)
+
+    if exists(save_plot_file_local):
+        os.remove(save_plot_file_local)
 
 
 # def long_pulling_sqs(
@@ -202,6 +210,8 @@ def long_pulling_sqs(
         save_data_file_local=worker_config.save_data_file_local,
         save_logs_file_local=worker_config.save_logs_file_local,
         save_error_file_local=worker_config.save_error_file_local,
+        save_performance_file_local=worker_config.save_performance_local,
+        save_plot_file_local=worker_config.save_plot_file_local,
     )
     is_receive_task_info = False
 
@@ -360,7 +370,6 @@ def long_pulling_sqs(
                 f"Init task: {previous_init_task_ids_set_len}. Completed task: {previous_received_completed_task_ids_set_len}"
             )
             time.sleep(0.1)
-            # logger.info("Retrieve SQS messages again...")
             # don't wait ,get messages again
             continue
 
