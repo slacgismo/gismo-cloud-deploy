@@ -335,36 +335,47 @@ def run_process_files(
     except Exception as e:
         logger.error(f"Invoke process files in server error:{e}")
         return
-    try:
-        logger.info(" ========= Long pulling SQS in multiprocess========= ")
-        acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
-        delay = aws_config_obj.interval_of_check_dynamodb_in_second
-        proces_y = Process(
-            target=long_pulling_sqs(
-                wait_time=7200,
-                delay=delay,
-                sqs_url=sqs_url,
-                worker_config=worker_config_obj,
-                acccepted_idle_time=acccepted_idle_time,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
-        )
+    # try:
+    #     logger.info(" ========= Long pulling SQS in multiprocess========= ")
+    #     acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
+    #     delay = aws_config_obj.interval_of_check_dynamodb_in_second
+    #     proces_y = Process(
+    #         target=long_pulling_sqs(
+    #             wait_time=7200,
+    #             delay=delay,
+    #             sqs_url=sqs_url,
+    #             worker_config=worker_config_obj,
+    #             acccepted_idle_time=acccepted_idle_time,
+    #             aws_access_key=aws_access_key,
+    #             aws_secret_access_key=aws_secret_access_key,
+    #             aws_region=aws_region,
+    #         )
+    #     )
 
-        proces_y.name = "Long pulling"
-        proces.append(proces_y)
-        proces_y.start()
-    except Exception as e:
-        logger.error(f"Long pulling sqs thread error:{e}")
-        return
-    for index, proc in enumerate(proces):
-        proc.join()
-        logging.info("%s proc done", proc.name)
-
+    #     proces_y.name = "Long pulling"
+    #     proces.append(proces_y)
+    #     proces_y.start()
+    # except Exception as e:
+    #     logger.error(f"Long pulling sqs thread error:{e}")
+    #     return
+    # for index, proc in enumerate(proces):
+    #     proc.join()
+    #     logging.info("%s proc done", proc.name)
+    delay = aws_config_obj.interval_of_check_dynamodb_in_second
+    acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
+    unfinished_tasks_id_set = long_pulling_sqs(
+        wait_time=7200,
+        delay=delay,
+        sqs_url=sqs_url,
+        worker_config=worker_config_obj,
+        acccepted_idle_time=acccepted_idle_time,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region,
+    )
     logger.info(" ----- init end services process --------- ")
     total_process_time = time.time() - start_time
-
+    num_unfinished_tasks = len(unfinished_tasks_id_set)
     initial_end_services(
         worker_config=worker_config_obj,
         is_docker=is_docker,
@@ -383,7 +394,7 @@ def run_process_files(
         total_process_time=float(total_process_time),
         eks_nodes_number=aws_config_obj.eks_nodes_number,
         num_workers=services_config_list["worker"]["desired_replicas"],
-        num_unfinished_tasks=0,
+        num_unfinished_tasks=num_unfinished_tasks,
         instanceType=config_json["aws_config"]["instanceType"],
     )
 

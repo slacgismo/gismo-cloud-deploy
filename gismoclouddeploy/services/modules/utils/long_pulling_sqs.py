@@ -360,7 +360,7 @@ def long_pulling_sqs(
                 f"Init task: {previous_init_task_ids_set_len}. Completed task: {previous_received_completed_task_ids_set_len}"
             )
             time.sleep(0.1)
-            logger.info("Retrieve SQS messages again...")
+            # logger.info("Retrieve SQS messages again...")
             # don't wait ,get messages again
             continue
 
