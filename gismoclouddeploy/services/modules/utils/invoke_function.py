@@ -191,13 +191,13 @@ def invoke_exec_docker_run_process_files(
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        out, err = res.communicate()
-    except KeyboardInterrupt:
-        logger.error(f"Invoke process file error:{err}")
-        res.terminate()
+        # out, err = res.communicate()
+    except KeyboardInterrupt as e:
+        logger.error(f"Invoke process file error:{e}")
+        # res.terminate()
     # print("output")
     # print(out)
-    return out
+    return res
     # res = exec_docker_command(command)
     # return res
 
@@ -278,14 +278,16 @@ def invoke_exec_k8s_run_process_files(
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        out, err = res.communicate()
-    except KeyboardInterrupt:
-        logger.error(f"Invoke process file error:{err}")
+        # out, err = res.communicate()
+        # return out
+    except KeyboardInterrupt as e:
+        logger.error(f"Invoke k8s process file error:{e}")
         res.terminate()
-    return out
+    return res
+    # return out
     # res = exec_subprocess_command(command=command)
     # res = exec_docker_command(command)
-    return
+    # return
     # return res
 
 

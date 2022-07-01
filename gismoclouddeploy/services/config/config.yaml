@@ -14,7 +14,7 @@ aws_config:
 # Parameters used for cli in k8s config.
 services_config_list:
   worker:
-      desired_replicas: 1 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
+      desired_replicas: 2 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/worker.deployment.yaml"
       service_file: ""

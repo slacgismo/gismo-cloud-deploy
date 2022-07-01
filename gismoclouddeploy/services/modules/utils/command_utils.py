@@ -310,16 +310,16 @@ def invoke_process_files_to_server(
             pod_name=server_name,
             first_n_files=number,
         )
+    return _resp
+    # _resp_str = _resp.decode("utf-8")
+    # _temp_array = re.split(r"[~\r\n]+", _resp_str)
+    # task_ids = _temp_array[:-1]
+    # index = 0
+    # for id in task_ids:
+    #     print(f"Task {index} :{id}")
+    #     index += 1
 
-    _resp_str = _resp.decode("utf-8")
-    _temp_array = re.split(r"[~\r\n]+", _resp_str)
-    task_ids = _temp_array[:-1]
-    index = 0
-    for id in task_ids:
-        print(f"Task {index} :{id}")
-        index += 1
-
-    return task_ids
+    # return task_ids
 
 
 def process_logs_and_plot(

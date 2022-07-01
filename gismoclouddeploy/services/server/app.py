@@ -112,7 +112,7 @@ def process_files(worker_config_str: str, first_n_files: str):
                 aws_region=worker_config_json["aws_region"],
                 topic_arn=worker_config_json["sns_topic"],
             )
-            time.sleep(0.1)
+            time.sleep(0.02)
             # publish sns message
             # task_ids.append(str(task_id))
             # time.sleep(0.2)
