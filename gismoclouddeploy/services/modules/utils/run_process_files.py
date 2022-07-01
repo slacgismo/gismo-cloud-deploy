@@ -336,7 +336,7 @@ def run_process_files(
         logger.error(f"Invoke process files in server error:{e}")
         return
     try:
-        logger.info(" ========= Long pulling SQS ========= ")
+        logger.info(" ========= Long pulling SQS in multiprocess========= ")
         acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
         delay = aws_config_obj.interval_of_check_dynamodb_in_second
         proces_y = Process(
@@ -361,35 +361,6 @@ def run_process_files(
     for index, proc in enumerate(proces):
         proc.join()
         logging.info("%s proc done", proc.name)
-
-    # total_files = send_command_to_server(
-    #     server_name=ready_server_name,
-    #     number=number,
-    #     worker_config_json=config_json["worker_config"],
-    #     is_docker=is_docker,
-    #     num_file_to_process_per_round=worker_replicas * 3,
-    #     aws_access_key=aws_access_key,
-    #     aws_secret_access_key=aws_secret_access_key,
-    #     aws_region=aws_region,
-    #     sns_topic=sns_topic,
-    # )
-
-    # looping_wait_time = int(
-    #     (aws_config_obj.interval_of_total_wait_time_of_dynamodb)
-    #     * (total_files)
-    #     / worker_replicas
-    # )
-
-    # unfinished_tasks_ids = long_pulling_sqs(
-    #     wait_time=7200,
-    #     delay=aws_config_obj.interval_of_check_dynamodb_in_second,
-    #     sqs_url=sqs_url,
-    #     worker_config=worker_config_obj,
-    #     acccepted_idle_time=int(worker_config_obj.acccepted_idle_time),
-    #     aws_access_key=aws_access_key,
-    #     aws_secret_access_key=aws_secret_access_key,
-    #     aws_region=aws_region,
-    # )
 
     logger.info(" ----- init end services process --------- ")
     total_process_time = time.time() - start_time
