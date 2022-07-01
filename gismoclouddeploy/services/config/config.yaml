@@ -6,7 +6,7 @@ aws_config:
   instanceType: "None"                    # Generated from cluster_file
   eks_nodes_number: 5                     # Total ec2 instances
   scale_eks_nodes_wait_time : 90          # in second
-  interval_of_check_dynamodb_in_second: 10      # in second
+  interval_of_check_dynamodb_in_second: 3      # in second
   interval_of_total_wait_time_of_dynamodb: 300 # in second.
   interval_of_wait_pod_ready: 90          # in second
 

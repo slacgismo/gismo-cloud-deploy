@@ -236,12 +236,13 @@ def clean_user_previous_sqs_message(
             for msg in messages["Messages"]:
                 # msg_body = msg["Body"]
                 msg_body = json.loads(msg["Body"])
+                # logger.info(f"msg_body {msg_body}")
                 receipt_handle = msg["ReceiptHandle"]
                 subject = (
                     msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
                 )
                 if subject == user_id:
-                    logger(f"Delete {index} message")
+                    logger.info(f"Delete {index} message")
                     index += 1
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
                 # try:

@@ -11,6 +11,8 @@ from flask.cli import FlaskGroup
 import click
 import time
 from project.tasks import process_data_task, pong_worker
+from project.tasks_utilities.tasks_utils import publish_message_sns
+from models.SNSSubjectsAlert import SNSSubjectsAlert
 
 app = create_app()
 celery = ext_celery.celery
@@ -75,6 +77,7 @@ def process_files(worker_config_str: str, first_n_files: str):
             secret=worker_config_json["aws_secret_access_key"],
             region=worker_config_json["aws_region"],
         )
+
     except Exception as e:
         logger.error(f"AWS validation failed {e}")
         return "AWS validation fail"
@@ -94,11 +97,60 @@ def process_files(worker_config_str: str, first_n_files: str):
             task_input_json["curr_process_file"] = file
             task_input_json["curr_process_column"] = column
             task_id = process_data_task.delay(**task_input_json)
-            task_ids.append(str(task_id))
-            time.sleep(0.2)
+            task_ids.append(task_id)
+            message = {
+                "file_name": file,
+                "column_name": column,
+                "task_id": str(task_id),
+                "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
+            }
+            publish_message_sns(
+                subject=worker_config_json["user_id"],
+                message=json.dumps(message),
+                aws_access_key=worker_config_json["aws_access_key"],
+                aws_secret_access_key=worker_config_json["aws_secret_access_key"],
+                aws_region=worker_config_json["aws_region"],
+                topic_arn=worker_config_json["sns_topic"],
+            )
+            time.sleep(0.1)
+            # publish sns message
+            # task_ids.append(str(task_id))
+            # time.sleep(0.2)
 
-    for id in task_ids:
-        print(id)
+    # send tasks completed
+    # for id in task_ids:
+    #     message = {
+    #         "task_id":str(id),
+    #         "alert_type": SNSSubjectsAlert.SEND_TASKID.name
+    #     }
+    #     publish_message_sns(
+    #         subject=worker_config_json["user_id"],
+    #         message= json.dumps(message),
+    #         aws_access_key=worker_config_json["aws_access_key"],
+    #         aws_secret_access_key=worker_config_json["aws_secret_access_key"],
+    #         aws_region=worker_config_json["aws_region"],
+    #         topic_arn=worker_config_json["sns_topic"]
+    #     )
+    #     time.sleep(0.1)
+    # end of task_ids
+    time.sleep(1)
+    message = {
+        "total_tasks": len(task_ids),
+        "task_id": SNSSubjectsAlert.SEND_TASKID_INFO.name,
+        "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
+    }
+    publish_message_sns(
+        subject=worker_config_json["user_id"],
+        message=json.dumps(message),
+        topic_arn=worker_config_json["sns_topic"],
+        aws_access_key=worker_config_json["aws_access_key"],
+        aws_secret_access_key=worker_config_json["aws_secret_access_key"],
+        aws_region=worker_config_json["aws_region"],
+    )
+    return
+
+    # for id in task_ids:
+    #     print(id)
 
 
 @cli.command("revoke_task")
