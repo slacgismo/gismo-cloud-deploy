@@ -1,9 +1,16 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# PVInsight Code Imports
+from solardatatools import DataHandler
+from solardatatools.dataio import get_pvdaq_data
+
 import logging
 
 from os.path import exists
 from datetime import datetime
-from .my_modules import read_csv_from_s3
-import subprocess
+from .my_modules import read_csv_from_s3, Alert, make_response
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -12,6 +19,7 @@ logging.basicConfig(
 
 
 def entrypoint(
+    user_id: str = None,
     data_bucket: str = None,
     curr_process_file: str = None,
     curr_process_column: str = None,
@@ -32,28 +40,22 @@ def entrypoint(
     :param str aws_region:
     :param str solver_name: The solver name that defined in config.yaml
     :param str solver_file: The solver file location inside worker. This file location is defined in config.yaml.
-    :return dict json_message: Return a json format object
+    :return dict json_message: Return a json format object contain user_id (This message is used to publish sns message and track logs in dynamodb)
     """
 
     ## ==================== Modify your code below ==================== ##
     logger.info(
         f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
     )
-    command = [
-        "gridlabd",
-        "--help",
-    ]
-    try:
-        res = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-        out, err = res.communicate()
-        logger.info(out)
-    except KeyboardInterrupt as e:
-        logger.error(f"Invoke k8s process file error:{e}")
-        res.terminate()
 
     # check solver file exist: The download function is inside `check_and_download_solver` function ""
-    save_data = {"data": "this is test"}
-    # # ==================== Modify your code above ==================== ##
+    if solver_name is not None and (exists(solver_file) is False):
+        return Exception(f"solver_file:{solver_file} dose not exist")
+
+    data_frame = get_pvdaq_data(sysid=34, year=range(2011, 2015), api_key="DEMO_KEY")[0]
+    dh = DataHandler(data_frame)
+    dh.run_pipeline(power_col="ac_power")
+    dh.fit_statistical_clear_sky_model()
+    save_data = {"data": "This is stastic-clear-sky"}
+
     return save_data
