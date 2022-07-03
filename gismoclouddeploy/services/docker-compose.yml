@@ -30,7 +30,7 @@ services:
     # platform: linux/amd64
     build:
       context: .
-      dockerfile: ./server/compose/local/flask/Dockerfile
+      dockerfile: ./server/compose/local/flask/Dockerfile.worker
     image: worker
     command: /start-celeryworker
     # volumes:
