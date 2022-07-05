@@ -1,7 +1,10 @@
-FROM python:3.8
 
+
+FROM python:3.8
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ARG CODES_FOLDER
+ENV code_path  "../config/$CODES_FOLDER/requirements.txt"
 
 RUN apt-get update \
   # dependencies for building Python packages
@@ -18,7 +21,8 @@ RUN apt install libhdf5-dev -y
 
 # Requirements are installed here to ensure they will be cached.
 # COPY ./server/requirements.txt /requirements.txt
-COPY ../config/code-templates/requirements.txt /requirements.txt
+# COPY ../config/$CODES_FOLDER/requirements.txt /requirements.txt
+COPY $code_path /requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt
 

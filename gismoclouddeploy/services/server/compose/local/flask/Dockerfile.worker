@@ -2,6 +2,8 @@ FROM python:3.8
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
+ARG CODES_FOLDER
+ENV code_path  "../config/$CODES_FOLDER/requirements.txt"
 
 RUN apt-get update \
   # dependencies for building Python packages
