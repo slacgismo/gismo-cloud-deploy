@@ -6,6 +6,8 @@ import subprocess
 import sys
 import threading
 
+from numpy import str_
+
 
 class Command(object):
     """
@@ -128,8 +130,8 @@ def invoke_docker_compose_build() -> str:
     return output
 
 
-def invoke_ecr_validation() -> str:
-    command = "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 041414866712.dkr.ecr.us-east-2.amazonaws.com"
+def invoke_ecr_validation(ecr_repo: str_) -> str:
+    command = f"aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin {ecr_repo}"
     output = subprocess.check_output(["bash", "-c", command])
     return output
 

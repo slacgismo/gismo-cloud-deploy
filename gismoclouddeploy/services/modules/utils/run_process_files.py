@@ -1,5 +1,6 @@
 import time
 
+
 from .command_utils import (
     check_solver_and_upload,
     update_config_json_image_name_and_tag_base_on_env,
@@ -171,7 +172,9 @@ def run_process_files(
 
         if not is_local:
             try:
-                validation_resp = invoke_ecr_validation()
+                validation_resp = invoke_ecr_validation(
+                    ecr_repo=worker_config_obj.ecr_repo
+                )
                 logger.info(validation_resp)
             except Exception as e:
                 logger.error(f"Error :{e}")
