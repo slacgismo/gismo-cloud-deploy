@@ -34,7 +34,6 @@ from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
 from .sqs import clean_user_previous_sqs_message
 from multiprocessing.dummy import Process
-from .process_log import analyze_local_logs_files
 
 # logger config
 logger = logging.getLogger()
@@ -147,7 +146,7 @@ def run_process_files(
             )
             invoke_docker_compose_up()
         else:
-
+            logger.info("========= Build images and run in k8s ========")
             invoke_docker_compose_build(
                 code_template_folder=worker_config_obj.code_template_folder
             )
