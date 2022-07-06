@@ -32,7 +32,12 @@ WORKDIR /usr/local/src
 
 RUN git clone -b develop-fix-debian-11-setup-arm https://github.com/slacgismo/gridlabd.git
 WORKDIR /usr/local/src/gridlabd
+
+
+
 RUN ./install.sh -t -v
+RUN autoreconf -isf && ./configure
+RUN make -j6 system
 # FROM python:3.8
 
 # ENV PYTHONUNBUFFERED 1
