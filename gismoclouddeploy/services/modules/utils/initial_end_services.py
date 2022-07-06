@@ -3,7 +3,6 @@ from typing import List
 from .check_aws import connect_aws_client, check_environment_is_aws
 import logging
 from .process_log import (
-    process_logs_from_s3,
     process_logs_from_local,
     analyze_local_logs_files,
 )

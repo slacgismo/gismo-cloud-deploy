@@ -8,9 +8,7 @@ from .command_utils import (
     send_command_to_server,
 )
 from .initial_end_services import initial_end_services
-from .dynamodb_utils import (
-    remove_all_user_items_from_dynamodb,
-)
+
 
 from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG

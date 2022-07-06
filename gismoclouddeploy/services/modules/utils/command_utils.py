@@ -7,7 +7,6 @@ import yaml
 import json
 from botocore.exceptions import ClientError
 
-from .WORKER_CONFIG import WORKER_CONFIG
 from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
@@ -23,7 +22,6 @@ from .invoke_function import (
     invoke_exec_docker_ping_worker,
     invoke_exec_k8s_check_task_status,
 )
-from .process_log import process_logs_from_s3
 
 from server.utils import aws_utils
 import time
@@ -131,121 +129,6 @@ def send_command_to_server(
     return None
 
 
-# def send_command_to_server(
-#     server_name: str = None,
-#     number: int = Union[int, None],
-#     worker_config_json: str = None,
-#     is_docker: bool = False,
-#     num_file_to_process_per_round: int = 10,
-#     aws_access_key: str = None,
-#     aws_secret_access_key: str = None,
-#     aws_region: str = None,
-#     sns_topic: str = None,
-# ) -> List[str]:
-#     worker_config_json["aws_access_key"] = aws_access_key
-#     worker_config_json["aws_secret_access_key"] = aws_secret_access_key
-#     worker_config_json["aws_region"] = aws_region
-#     worker_config_json["sns_topic"] = sns_topic
-
-#     s3_client = aws_utils.connect_aws_client(
-#         client_name="s3",
-#         key_id=worker_config_json["aws_access_key"],
-#         secret=worker_config_json["aws_secret_access_key"],
-#         region=worker_config_json["aws_region"],
-#     )
-#     n_files = return_process_filename_base_on_command(
-#         first_n_files=number,
-#         bucket=worker_config_json["data_bucket"],
-#         default_files=worker_config_json["default_process_files"],
-#         s3_client=s3_client,
-#     )
-#     # start_index = 0
-#     # end_index = num_file_to_process_per_round
-#     # if end_index > len(n_files):
-#     #     end_index = len(n_files)
-#     total_tasks_ids = []
-#     # while start_index < len(n_files):
-#     process_files_list = []
-#     for file in n_files:
-#         process_files_list.append(file)
-#         # print(f"--------------{file}")
-#     #
-#     worker_config_json["default_process_files"] = json.dumps(process_files_list)
-#     worker_config_str = json.dumps(worker_config_json)
-#     # invoke process files
-#     resp = invoke_process_files_to_server(
-#         is_docker=is_docker,
-#         server_name=server_name,
-#         worker_config_str=worker_config_str,
-#         number=None,
-#     )
-
-#     return len(worker_config_json)
-
-
-# def send_command_to_server(
-#     server_name: str = None,
-#     number: int = Union[int, None],
-#     worker_config_json: str = None,
-#     is_docker: bool = False,
-#     num_file_to_process_per_round: int = 10,
-#     aws_access_key: str = None,
-#     aws_secret_access_key: str = None,
-#     aws_region: str = None,
-#     sns_topic: str = None,
-# ) -> List[str]:
-#     worker_config_json["aws_access_key"] = aws_access_key
-#     worker_config_json["aws_secret_access_key"] = aws_secret_access_key
-#     worker_config_json["aws_region"] = aws_region
-#     worker_config_json["sns_topic"] = sns_topic
-
-#     s3_client = aws_utils.connect_aws_client(
-#         client_name="s3",
-#         key_id=worker_config_json["aws_access_key"],
-#         secret=worker_config_json["aws_secret_access_key"],
-#         region=worker_config_json["aws_region"],
-#     )
-#     n_files = return_process_filename_base_on_command(
-#         first_n_files=number,
-#         bucket=worker_config_json["data_bucket"],
-#         default_files=worker_config_json["default_process_files"],
-#         s3_client=s3_client,
-#     )
-#     start_index = 0
-#     end_index = num_file_to_process_per_round
-#     if end_index > len(n_files):
-#         end_index = len(n_files)
-#     total_tasks_ids = []
-#     while start_index < len(n_files):
-#         process_files_list = []
-#         for file in n_files[start_index:end_index]:
-#             process_files_list.append(file)
-#             # print(f"--------------{file}")
-#         #
-#         worker_config_json["default_process_files"] = json.dumps(process_files_list)
-#         worker_config_str = json.dumps(worker_config_json)
-#         # invoke process files
-#         task_ids = invoke_process_files_to_server(
-#             is_docker=is_docker,
-#             server_name=server_name,
-#             worker_config_str=worker_config_str,
-#             number=None,
-#         )
-#         percentage = int(end_index * 100 / len(n_files))
-#         print(
-#             f"process from {start_index}, to {end_index} files, send tasks command percentage:  {percentage}%"
-#         )
-#         total_tasks_ids += task_ids
-#         start_index = end_index
-#         end_index = start_index + num_file_to_process_per_round
-#         if end_index > len(n_files):
-#             end_index = len(n_files)
-
-#     # for id in total_tasks_ids:
-#     #     print(id)
-#     return total_tasks_ids
-
-
 def return_process_filename_base_on_command(
     first_n_files: str,
     bucket: str,
@@ -311,49 +194,6 @@ def invoke_process_files_to_server(
             first_n_files=number,
         )
     return _resp
-    # _resp_str = _resp.decode("utf-8")
-    # _temp_array = re.split(r"[~\r\n]+", _resp_str)
-    # task_ids = _temp_array[:-1]
-    # index = 0
-    # for id in task_ids:
-    #     print(f"Task {index} :{id}")
-    #     index += 1
-
-    # return task_ids
-
-
-def process_logs_and_plot(
-    worker_config: WORKER_CONFIG,
-    aws_access_key: str,
-    aws_secret_access_key: str,
-    aws_region: str,
-) -> None:
-
-    s3_client = aws_utils.connect_aws_client(
-        client_name="s3",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-
-    logs_full_path_name_aws = (
-        worker_config.saved_path_aws + "/" + worker_config.saved_logs_target_filename
-    )
-    plot_full_path_name_local = (
-        worker_config.saved_path_local + "/" + worker_config.saved_rumtime_image_name
-    )
-    plot_full_path_name_aws = (
-        worker_config.saved_path_local + "/" + worker_config.saved_rumtime_image_name
-    )
-
-    process_logs_from_s3(
-        bucket=worker_config.saved_bucket,
-        logs_file_path_name=logs_full_path_name_aws,
-        saved_image_name_aws=plot_full_path_name_aws,
-        saved_image_name_local=plot_full_path_name_local,
-        s3_client=s3_client,
-    )
-    logger.info(f"Success process logs from {worker_config.saved_logs_target_filename}")
 
 
 def print_dlq(

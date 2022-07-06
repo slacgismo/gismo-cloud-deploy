@@ -28,7 +28,6 @@ def tracklog_decorator(func):
         """updates special attributes e.g. __name__,__doc__"""
         try:
             task_id = args[0].request.id
-            table_name = kwargs["dynamodb_tablename"]
             curr_process_file = kwargs["curr_process_file"]
             curr_process_column = kwargs["curr_process_column"]
             solver = kwargs["solver"]
@@ -101,46 +100,3 @@ def tracklog_decorator(func):
         )
 
     return wrapper
-
-
-def put_item_to_dynamodb(
-    table_name: str,
-    user_id: str,
-    task_id: str,
-    host_ip: str,
-    alert_type: str,
-    pid: str,
-    host_name: str,
-    start_time: str,
-    end_time: str,
-    messages: str,
-    file_name: str,
-    column_name: str,
-    aws_access_key: str,
-    aws_secret_access_key: str,
-    aws_region: str,
-):
-    dynamodb_resource = boto3.resource(
-        "dynamodb",
-        region_name=aws_region,
-        aws_access_key_id=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-    table = dynamodb_resource.Table(table_name)
-    response = table.put_item(
-        Item={
-            "user_id": user_id,
-            "timestamp": str(time.time()),
-            "host_name": host_name,
-            "host_ip": host_ip,
-            "task_id": task_id,
-            "alert_type": alert_type,
-            "pid": pid,
-            "start_time": start_time,
-            "end_time": end_time,
-            "messages": messages,
-            "file_name": file_name,
-            "column_name": column_name,
-        }
-    )
-    return response

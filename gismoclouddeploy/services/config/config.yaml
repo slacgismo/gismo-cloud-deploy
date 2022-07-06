@@ -58,7 +58,6 @@ worker_config:
   saved_bucket: "pv.insight.test"                     # Bucket of saved files.
   saved_path_aws: "results"                               # Path of saved files in bucket
   saved_path_local: "results"
-  dynamodb_tablename: "gcd_logs_dynamodb" # pre-define in AWS us-east-2
   acccepted_idle_time: 360
   saved_rumtime_image_name: None          # "runtime-{user_id}.png"
   saved_performance_file: None            # "performance-{user_id}.txt"
@@ -71,14 +70,14 @@ worker_config:
   aws_secret_access_key : None  # It's a hint column that is generated in the CLI run-time.
   aws_region : None             # It's a hint column that is generated in the CLI run-time.
   sns_topic : None              # It's a hint column that is generated in the CLI run-time.
-  user_id : None           # It's a hint column that is generated in the CLI run-ime.
-  save_data_file_local: None
-  save_error_file_local: None
-  save_logs_file_local: None
-  save_plot_file_local: None
-  save_performance_local: None
-  save_data_file_aws: None
-  save_error_file_aws: None
-  save_logs_file_aws: None
-  save_plot_file_aws: None
-  save_performance_aws: None
+  user_id : None                # It's a hint column that is generated in the CLI run-ime.
+  save_data_file_local: None    # It's a hint column that is generated in the CLI run-ime.
+  save_error_file_local: None   # It's a hint column that is generated in the CLI run-ime.
+  save_logs_file_local: None    # It's a hint column that is generated in the CLI run-ime.
+  save_plot_file_local: None    # It's a hint column that is generated in the CLI run-ime.
+  save_performance_local: None  # It's a hint column that is generated in the CLI run-ime.
+  save_data_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
+  save_error_file_aws: None     # It's a hint column that is generated in the CLI run-ime.
+  save_logs_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
+  save_plot_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
+  save_performance_aws: None    # It's a hint column that is generated in the CLI run-ime.

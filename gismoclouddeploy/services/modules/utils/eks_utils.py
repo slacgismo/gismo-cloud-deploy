@@ -63,48 +63,6 @@ def wait_pod_ready(
     raise Exception("Wait over time")
 
 
-# def scale_nodes_and_wait(
-#     scale_node_num: int,
-#     counter: int,
-#     delay: int,
-#     cluster_name:str,
-#     nodegroup_name:str
-# ) -> bool:
-#     try:
-#         target_node_number = int(scale_node_num)
-
-#         num_nodes = num_of_nodes_ready()
-#         logger.info(
-#             f"scale node {target_node_number}, current node number: {num_nodes}"
-#         )
-#         if num_nodes == target_node_number:
-#             logger.info(
-#                 f"current node number is {num_nodes}, and target node number is {target_node_number}. Scale node success!!!"
-#             )
-#             return True
-#         # num_node is not equal ,
-#         logger.info(f"scale node num: {target_node_number}")
-#         scale_node_number(
-#             min_nodes=target_node_number,
-#             cluster_name=cluster_name,
-#             nodegroup_name=nodegroup_name,
-#         )
-
-#         while counter:
-#             num_nodes = num_of_nodes_ready()
-#             print(
-#                 f"waiting {target_node_number} ready , current num_nodes:{num_nodes}  ....counter: {counter} Time: {time.ctime(time.time())}"
-#             )
-#             if num_nodes == target_node_number:
-#                 return True
-#             counter -= delay
-#             time.sleep(delay)
-#         return False
-#     except Exception as e:
-#         logger.error(f"scale node number error: {e}")
-#         return False
-
-
 def num_of_nodes_ready() -> int:
     # print("check node status")
     config.load_kube_config()
