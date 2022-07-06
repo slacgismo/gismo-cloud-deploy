@@ -153,13 +153,13 @@ def analyze_local_logs_files(
     num_workers: int = 0,
     save_file_path_name: str = "results/performance.txt",
     num_unfinished_tasks: int = 0,
+    code_templates_folder: str = None,
 ) -> List[str]:
 
     if exists(logs_file_path_name) is False:
         logger.error(f"{logs_file_path_name} does not exist")
         return
-    # logger.info("-==============")
-    # logger.info(logs_file_path_name)
+
     df = pd.read_csv(logs_file_path_name)
     # print(df.head())
     # get error task
@@ -222,6 +222,7 @@ def analyze_local_logs_files(
         )
     performance = [
         ["Performance", "Results", "Info"],
+        ["Code templates folder", code_templates_folder, ""],
         ["Total tasks", total_tasks, ""],
         ["Average task duration", f"{average_task_duration} sec"],
         ["Min task duration", f"{min_duration} sec", shortest_task],

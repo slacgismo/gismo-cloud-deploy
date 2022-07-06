@@ -83,6 +83,7 @@ def initial_end_services(
         num_workers=num_workers,
         save_file_path_name=save_performance_local,
         num_unfinished_tasks=num_unfinished_tasks,
+        code_templates_folder=worker_config.code_template_folder,
     )
 
     logger.info("Update results to S3")
