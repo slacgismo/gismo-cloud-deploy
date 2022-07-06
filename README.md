@@ -94,9 +94,9 @@ Default output format [None]:
 aws s3 ls
 ```
 
-4. In `gismo-cloud-deploy` directory, pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git), and run `git pull` command.
+1. In `gismo-cloud-deploy` directory, use command `git checkout main` to checkout to main branchm, and use `git pull` to  pull down latest repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git) in `main` branch.
 
-5. Set up .env files for `cli` program usage.
+2. Set up .env files for `cli` program usage.
 
 ```bash
 touch ./gismoclouddeploy/services/cli/.env
@@ -162,20 +162,20 @@ gcd-eks	  us-east-2	  True
 
 If a cluster does not exist, please follow [EKS configuration yaml files](#EKS-configuration) section to create a cluster first.
 
-1. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) sectrion to get more detail.
+1. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
 
 2. To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
 
 3. For example, you can modify the calculation of `data_clearness_score`.
 
 ~~~
- data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 2 * 100))
+ data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 0.5 * 100))
 ~~~
 
 4. Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
-gcd run-files -n 1 -d -b -sc 5
+gcd run-files -n 1 -d -b -sc 1
 ```
 
 After it is completed, the terminal prints out the results as below:
@@ -195,12 +195,12 @@ After it is completed, the terminal prints out the results as below:
 | Effeciency improvement              | 17 %                  |                                 |
 | Initialize services duration        | 60.2083740234375 sec  |                                 |
 | Total process durations             | 76.75437307357788 sec |                                 |
-| Number of nodes                     | 5                     |                                 |
-| Number of workers                   | 5                     |                                 |
+| Number of nodes                     | 1                     |                                 |
+| Number of workers                   | 1                     |                                 |
 +-------------------------------------+-----------------------+---------------------------------+
 ~~~
 
-1.  Check the saved data file, Gantt plot, and tasks performance in `./gismoclouddeploy/services/results` folder.
+5. Check the saved data file, Gantt plot, and tasks performance in `./gismoclouddeploy/services/results` folder.
 
 ---
 
