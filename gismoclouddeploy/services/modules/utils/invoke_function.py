@@ -10,13 +10,6 @@ from numpy import str_
 
 
 class Command(object):
-    """
-    Enables to run subprocess commands in a different thread
-    with TIMEOUT option!
-    Based on jcollado's solution:
-    http://stackoverflow.com/questions/1191374/subprocess-with-timeout/4825933#4825933
-    """
-
     def __init__(self, cmd):
         self.cmd = cmd
         self.process = None
@@ -258,11 +251,7 @@ def invoke_exec_k8s_run_process_files(
     pod_name: str = None,
     first_n_files: str = None,
 ) -> None:
-    # command = f"kubectl exec {pod_name} --stdin --tty -- python app.py process_files \"{config_params_str}\" {first_n_files}"
 
-    # command = Command(command)
-    # command.run(timeout=1, shell=True)
-    # return
     command = [
         "kubectl",
         "exec",
