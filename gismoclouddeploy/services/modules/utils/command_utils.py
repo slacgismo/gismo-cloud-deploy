@@ -451,6 +451,7 @@ def delete_files_from_bucket(
 
 
 def check_solver_and_upload(
+    ecr_repo: str = None,
     solver_name: str = None,
     saved_solver_bucket: str = None,
     solver_lic_file_name: str = None,

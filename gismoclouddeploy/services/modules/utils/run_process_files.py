@@ -131,6 +131,7 @@ def run_process_files(
     # check solver
     try:
         check_solver_and_upload(
+            ecr_repo=ecr_repo,
             solver_name=worker_config_obj.solver.solver_name,
             saved_solver_bucket=worker_config_obj.solver.saved_solver_bucket,
             solver_lic_file_name=worker_config_obj.solver.solver_lic_file_name,
@@ -172,9 +173,7 @@ def run_process_files(
 
         if not is_local:
             try:
-                validation_resp = invoke_ecr_validation(
-                    ecr_repo=worker_config_obj.ecr_repo
-                )
+                validation_resp = invoke_ecr_validation(ecr_repo=ecr_repo)
                 logger.info(validation_resp)
             except Exception as e:
                 logger.error(f"Error :{e}")
