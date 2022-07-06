@@ -119,7 +119,8 @@ def invoke_docker_compose_up() -> str:
 def invoke_docker_compose_build(code_template_folder: str = None) -> str:
 
     command = f"docker-compose build --build-arg CODES_FOLDER={code_template_folder}"
-    output = subprocess.check_output(["bash", "-c", command])
+    # output = subprocess.check_output(["bash", "-c", command])
+    output = exec_subprocess_command(command=command)
     return output
 
 
