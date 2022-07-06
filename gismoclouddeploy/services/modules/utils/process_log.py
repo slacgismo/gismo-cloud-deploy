@@ -1,5 +1,4 @@
 from asyncio.log import logger
-from cmath import log
 from genericpath import exists
 
 import pandas as pd
@@ -8,15 +7,12 @@ from typing import List
 from modules.utils.eks_utils import match_pod_ip_to_node_name
 
 
-# from server.models.LogsInfo import LogsInfo
 import datetime
 from terminaltables import AsciiTable
 
 import plotly.express as px
 import plotly.io as pio
-from .modiy_config_parameters import modiy_config_parameters
 import botocore
-from .check_aws import connect_aws_client
 
 
 def process_df_for_gantt(df: pd):

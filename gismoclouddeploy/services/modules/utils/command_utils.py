@@ -1,6 +1,6 @@
 from os.path import exists
 import botocore
-import re
+
 from typing import List
 
 import yaml

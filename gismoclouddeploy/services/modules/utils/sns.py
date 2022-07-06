@@ -1,6 +1,4 @@
-from botocore.exceptions import ClientError
 import logging
-import botocore
 
 logger = logging.getLogger()
 logging.basicConfig(

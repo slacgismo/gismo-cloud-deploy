@@ -9,9 +9,8 @@ from .process_log import (
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import invoke_docker_compose_down_and_remove
 from .command_utils import delete_files_from_bucket
-from .sqs import purge_queue
+
 from os.path import exists
-import time
 
 logger = logging.getLogger()
 logging.basicConfig(

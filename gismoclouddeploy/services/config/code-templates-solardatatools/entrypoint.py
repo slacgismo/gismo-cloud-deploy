@@ -25,7 +25,7 @@ def entrypoint(
     Entrypoint function to wrap your code
     :param str user_id: This user_id is generated in cli command and pass to here(worker). This user id is required to used in sns, dynamodb and sqs services
     :param str data_bucket: This data_bucket is the s3 bucket that contains data files.
-    :param str curr_process_file: Current process file. This file name is one of the column name in logs file.()
+    :param str curr_process_file: Current process file. This file name is one of the file name in logs file.()
     :param str curr_process_column: Current proccess column name. This column name is one of the column name in logs file.
     :param str aws_access_key:
     :param str aws_secret_access_key:
