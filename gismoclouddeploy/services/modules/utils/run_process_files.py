@@ -117,17 +117,6 @@ def run_process_files(
         services_config_list=services_config_list,
     )
 
-    # analyze_local_logs_files(
-    #     instanceType="instanceType",
-    #     logs_file_path_name="./results/logs-644-15.csv",
-    #     initial_process_time=0,
-    #     total_process_time=100,
-    #     eks_nodes_number=5,
-    #     num_workers=1,
-    #     save_file_path_name="./results/logs-test.csv",
-    #     num_unfinished_tasks=0,
-    # )
-
     # check solver
     try:
         check_solver_and_upload(
@@ -340,32 +329,7 @@ def run_process_files(
     except Exception as e:
         logger.error(f"Invoke process files in server error:{e}")
         return
-    # try:
-    #     logger.info(" ========= Long pulling SQS in multiprocess========= ")
-    #     acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
-    #     delay = aws_config_obj.interval_of_check_dynamodb_in_second
-    #     proces_y = Process(
-    #         target=long_pulling_sqs(
-    #             wait_time=7200,
-    #             delay=delay,
-    #             sqs_url=sqs_url,
-    #             worker_config=worker_config_obj,
-    #             acccepted_idle_time=acccepted_idle_time,
-    #             aws_access_key=aws_access_key,
-    #             aws_secret_access_key=aws_secret_access_key,
-    #             aws_region=aws_region,
-    #         )
-    #     )
 
-    #     proces_y.name = "Long pulling"
-    #     proces.append(proces_y)
-    #     proces_y.start()
-    # except Exception as e:
-    #     logger.error(f"Long pulling sqs thread error:{e}")
-    #     return
-    # for index, proc in enumerate(proces):
-    #     proc.join()
-    #     logging.info("%s proc done", proc.name)
     delay = aws_config_obj.interval_of_check_dynamodb_in_second
     acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
     unfinished_tasks_id_set = long_pulling_sqs(
