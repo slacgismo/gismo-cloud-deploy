@@ -116,7 +116,7 @@ def invoke_docker_compose_down_and_remove() -> str:
 
 
 def invoke_docker_compose_build_and_run() -> str:
-    command = "docker-compose up --build -d"
+    command = "docker-compose up --build -d --"
     output = subprocess.check_output(["bash", "-c", command])
     return output
 
