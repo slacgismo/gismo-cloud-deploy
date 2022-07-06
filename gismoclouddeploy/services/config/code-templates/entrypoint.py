@@ -63,12 +63,9 @@ def entrypoint(
     #     proc.terminate()
 
     # validation
-    # command = [
-    #     "gridlabd",
-    #     "./autotest/autotest/test_R2-12.47-1.glm"
-    # ]
+    command = ["gridlabd", "./autotest/autotest/test_R5-12.47-3_NR.glm"]
     # validation
-    command = ["gridlabd", "-T", "4", "--validate"]
+    # command = ["gridlabd", "-T", "4", "--validate"]
     try:
         # res = subprocess.Popen(
         #     command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
