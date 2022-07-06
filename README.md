@@ -12,10 +12,7 @@
     </a>
   </td>
 </tr>
-<tr>
-  <td>License</td>
-</td>
-</tr>
+
 <tr>
   <td>Build Status</td>
   <td>
@@ -51,7 +48,7 @@ This image had been installed necessary dependenciues included:
 
 #### Launch instance
 
-- This program runs in multiple threads. Therefore, please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
+- This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
 - Under `Configure Storage`, select the volume of the instance should be `12 GB` at least.
 
@@ -118,11 +115,10 @@ SNS_TOPIC=<your-sns-topic>
 6. The AMIs image should have installed all the python pacakages of `cli` tools in the environment.
 In case developers need to re-install the dependencies of `cli`, please follow the below command:
 
-- The python virtual environemnt was created Create virutal environment.
-
 - Activate the virtual environment.
 
 ```bash
+
 source ./venv/bin/activate
 ```
 
@@ -141,7 +137,7 @@ pip install -r requirements.txt
 - **_NOTE:_** If virtual environment was not created, please create the virtual environemnt first.
 
 ```bash
-cd ./gismoclouddeploy/services/cli
+cd ./gismoclouddeploy/services
 ```
 
 ```bash
@@ -166,39 +162,18 @@ gcd-eks	us-east-2	True
 
 If cluster does not exist, please follow [EKS configuration yaml files]() section to create a cluster first.
 
-8. Include solver license file under `./gismoclouddeploy/services/cli/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) sectrion to get more detail.
+1. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) sectrion to get more detail.
 
-9. In order to Purple, """"""""   Modify `entrypoint` function in `./gismoclouddeploy/services/cli/config/code-templates/entrypoint.py`.
+2. In order to implement your own code in a custom code blocks, please modify `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
 
-Un-comment `save_data` to
-  ~~~
-  save_data = {
-            "bucket": f"{data_bucket}",
-            "file": f"{curr_process_file}",
-            "column": f"{curr_process_column}",
-            "solver": f"{solver_name}",
-            "length": f"{length}",
-            "capacity_estimate": f"{capacity_estimate}",
-            "power_units": f"{power_units}",
-            "data_sampling": f"{data_sampling}",
-            "data_quality_score": f"{data_quality_score}",
-            "data_clearness_score": f"{data_clearness_score}",
-            "time_shifts": f"{time_shifts}",
-            "num_clip_points": f"{num_clip_points}",
-            "tz_correction": f"{tz_correction}",
-            "inverter_clipping": f"{inverter_clipping}",
-            "normal_quality_scores": f"{normal_quality_scores}",
-            "capacity_changes": f"{capacity_changes}",
-            "capacity_changes": f"{capacity_changes}",
-        }
-  ~~~
-
-10. Under the virutal environemnt `(venv)`, run `run-files` command to test it.
+3. Under the virutal environemnt `(venv)`, run `run-files` command to test it.
 
 ```bash
-gcd run-files -n 1 -d -b
+gcd run-files -n 1 -d -b -sc 5
 ```
+
 After it completed, the termainal prints out the results as below:
+
 ~~~
 +-------------------------------------+-----------------------+---------------------------------+
 | Performance                         | Results               | Info                            |
@@ -219,7 +194,7 @@ After it completed, the termainal prints out the results as below:
 +-------------------------------------+-----------------------+---------------------------------+
 ~~~
 
-11. Check the saved data file, gantt plot and tasks performance in `./gismoclouddeploy/services/cli/results` folder.
+1.  Check the saved data file, gantt plot and tasks performance in `./gismoclouddeploy/services/results` folder.
 
 ---
 
@@ -265,6 +240,10 @@ Options:
                           used.    If you would like to preserve images, please
                           use build-image command instead
 
+  -sc, --nodesscale TEXT  Scale up eks nodes and worker replcas as the same
+                          number. This input number replaces the
+                          worker_repliacs and eks_nodes_number in config files
+
   --help                  Show this message and exit.
 ~~~
 
@@ -273,10 +252,10 @@ Options:
 * The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first 10 files in defined bucket )
 If `number=0`, it processes all files in the buckets.
 
-* The option command `[ --configfile | -f ] [filename]`  imports custom configuration yaml files under `gismoclouddeploy/services/cli/config` folder.
-If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/cli/config/config.yaml`.
+* The option command `[ --configfile | -f ] [filename]`  imports custom configuration yaml files under `gismoclouddeploy/services/config` folder.
+If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/config/config.yaml`.
 
-* The option command `[ --build | -b ] ` build custom images based on `./gismoclouddeply/services/cli/server` and `./gismoclouddeply/services/cli/config/code-templates` folder.
+* The option command `[ --build | -b ] ` build custom images based on `./gismoclouddeply/services/server` and `./gismoclouddeply/services/config/code-templates` folder.
   If your environment is on AWS, this option command builds and pushs `worker` and `server` service images to AWS ECR with temporary image tag.
   This temporary tag will be deleted after this applicaiton completes processing. Please read section [Build and push images](#build-and-push-images) to get more information.
 
@@ -285,16 +264,15 @@ If this [-f] option command is not assigned, the default configure file is `gism
 Examples:
 
 ```bash
-(venv)$ gcd run-files -b -n 1 -d -f test_config.yaml
+(venv)$ gcd run-files -b -n 1 -d -f test_config.yaml -sc 5
 ```
 
 Command details:
-
 On the AWS environment ,the above command starts the following processes:
 
-1. Since [-f] option commnad is specified, this application imports `./gismoclouddeply/services/cli/config/test_config.yaml` to replace default `./gismoclouddeply/services/cli/config/config.yaml` file.
-2. The AWS EKS fires up mutiple ec2-instandes(nodes) according to the custom config file.
-3. This application builds `server` and `worker` images from `./gismoclouddeply/services/cli/server` and `./gismoclouddeply/services/cli/config/code-templates` folder with a temporary image tag according to its hostname.
+1. Since [-f] option commnad is specified, this application imports `./gismoclouddeply/services/config/test_config.yaml` to replace default `./gismoclouddeply/services/config/config.yaml` file.
+2. The AWS EKS fires up 5 ec2-instandes(nodes), and 5 worker replicas according to the option command [-sc] <5>.
+3. This application builds `server` and `worker` images from `./gismoclouddeply/services/server` and `./gismoclouddeply/services/config/code-templates` folder with a temporary image tag according to its hostname.
 4. After buidling images is completed, this application pushes those two images to AWS ECR with temporary images tage, such as `worker:my-hostname` and `server:my-hostname`.
 5. This AWS EKS pull down those temporary images and mounted into generated nodes.
 6. The `woker` service is the major service to process time consuming tasks, such as analyizing data with defined algorithm. In order to processing the time consuming tasks in parallel on AWS, developer can increase the `replicas` of the `worker`. This application spreads multiple `worker` services evenly among generated `nodes`(ec2-instances) of AWS EKS.
@@ -308,30 +286,21 @@ On the AWS environment ,the above command starts the following processes:
 - gcd --help
 - gcd nodes-scale [integer_number] [--help]
 - gcd build-images [-t|--tag] <image_tag> [-p|--push] [--help]
-- gcd check-nodes [--help]
-- gcd save-cached [--help]
 - gcd read-dlq  [-e] [--help]
-- gcd processlogs [--help]
+
 
 The `nodes-scale` command scales up or down the eks nodes.
 
 The `build-images` command builds image from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
 
-The `check-nodes` command checks current nodes number.
-
 The `read-dlq` command checks current DLQ(dead letter queue) on AWS. The `-e` option commmand enables or disables deleting messages after invoking this command.
 The default value is `False`.
-
-The `processlogs` command processes `logs.csv` files on AWS and draws the gantt plot in local folder.
-
-The `save-cached` command generates saved cached data from the data of prvious run-time. During initializtion, this application erases any cached data on S3 of previous processing.
-If the previous process stoped for any reasons before it outputs cached data, this command helps to output those cached data to the save file defined in config.
 
 ---
 
 ## Configuration files
 
-Under `gismoclouddeploy/services/cli/config/config.yaml` folder, developers can modify parametes of the cli command tool.
+Under `gismoclouddeploy/services/config/config.yaml` folder, developers can modify parametes of the cli command tool.
 
 1. The `aws_config` section contains all the aws environement variables settings.
 2. The `worker_config` section contains all the parametes to `worker` services.
@@ -341,11 +310,11 @@ Under `gismoclouddeploy/services/cli/config/config.yaml` folder, developers can 
 
 ### Kubernetes yaml files
 
-All kubernetes deployment and service files are listed under `gismoclouddeploy/services/cli/config/k8s` folder. Developers can modify it if necessary.
+All kubernetes deployment and service files are listed under `gismoclouddeploy/services/config/k8s` folder. Developers can modify it if necessary.
 
 ### EKS configuration yaml files
 
-The create cluster command will create an EKS cluster based on the configuration file in `gismoclouddeploy/services/cli/config/eks/cluster.yaml`.
+The create cluster command will create an EKS cluster based on the configuration file in `gismoclouddeploy/services/config/eks/cluster.yaml`.
 
 ***NOTE*** The `max_size` variable under `nodeGroups` limits the maximum nodes number that can be scale in this application. The default is `20`.
 In order to update the cluster setting, developers have to remove olde cluster and create a new cluster.
@@ -374,7 +343,7 @@ If users create a cluster based on the `cluster.yaml` file, and if they need to 
 * [Free 30-day trial](https://www.mosek.com/products/trial/)
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
-**NOTE** If developers defined `MOSEK` in `config.yaml` file. Please include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/cli/config/licence`.
+**NOTE** If developers defined `MOSEK` in `config.yaml` file. Please include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/config/licence`.
 This lic file will be uploaded to a temporary S3 folder and downlad into AWS EKS worker during run-time. The license file will be deleted after the process is done.
 
 ---
@@ -383,7 +352,7 @@ This lic file will be uploaded to a temporary S3 folder and downlad into AWS EKS
 Custom code:
 
 Developers can build and run its own code in this application.
-In order to pass developer's custom code block to this application, the code block has to be inside the `./gismoclouddeploy/services/cli/config/code-templates` folder.
+In order to pass developer's custom code block to this application, the code block has to be inside the `./gismoclouddeploy/services/config/code-templates` folder.
 The `entrypoint` function in `entrypoint.py` file is the start function of this application. When this application build images, it copies all the files inside `code-templates`folder and paste them to docker images.
 Developers can includes any files or self defined python modules in `code-templates` folder. Those files, sub-folder and modules will be copied to the docker images as well.
 
@@ -391,7 +360,7 @@ Please check the `entrypoint.py` files to get more informations of input paramet
 
 Python packages:
 
-Please defined necessary python packages in `requirements.txt` under `./gismoclouddeploy/services/cli/config/code-templates`. This file will be copied to docker images, and the application will install python packages based on it.
+Please defined necessary python packages in `requirements.txt` under `./gismoclouddeploy/services/config/code-templates`. This file will be copied to docker images, and the application will install python packages based on it.
 Somce packages are necessary to run flask server and celery worker. Please do not remove it. Please check `requirements.txt` to get more details.
 
 ---
