@@ -117,15 +117,24 @@ def invoke_docker_compose_down_and_remove() -> str:
     return output
 
 
-def invoke_docker_compose_build_and_run() -> str:
-    command = "docker-compose up --build -d --"
+# def invoke_docker_compose_build_and_run() -> str:
+#     command = "docker-compose up --build -d --"
+#     output = subprocess.check_output(["bash", "-c", command])
+#     return output
+
+
+def invoke_docker_compose_up() -> str:
+    command = "docker-compose up -d"
     output = subprocess.check_output(["bash", "-c", command])
     return output
 
 
-def invoke_docker_compose_build() -> str:
+def invoke_docker_compose_build(code_template_folder: str = None) -> str:
 
-    command = "docker-compose build"
+    command = f"docker-compose build --build-arg CODES_FOLDER={code_template_folder}"
+    logger.info("------------------")
+    logger.info(f"command {command}")
+    logger.info("------------------")
     output = subprocess.check_output(["bash", "-c", command])
     return output
 

@@ -6,7 +6,7 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates
+        - CODES_FOLDER=
       dockerfile: ./server/compose/local/flask/Dockerfile
 
     image: server
@@ -33,7 +33,7 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates
+        - CODES_FOLDER=
       dockerfile: ./server/compose/local/flask/Dockerfile.worker
     image: worker
     command: /start-celeryworker

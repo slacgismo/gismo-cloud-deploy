@@ -21,7 +21,7 @@ import logging
 import socket
 import threading
 from .invoke_function import (
-    invoke_docker_compose_build_and_run,
+    invoke_docker_compose_up,
     invoke_docker_compose_build,
     invoke_tag_image,
     invoke_ecr_validation,
@@ -141,10 +141,16 @@ def run_process_files(
 
         if is_docker:
             logger.info("========= Build images and run in docker ========")
-            invoke_docker_compose_build_and_run()
+            # invoke_docker_compose_build_and_run()
+            invoke_docker_compose_build(
+                code_template_folder=worker_config_obj.code_template_folder
+            )
+            invoke_docker_compose_up()
         else:
 
-            invoke_docker_compose_build()
+            invoke_docker_compose_build(
+                code_template_folder=worker_config_obj.code_template_folder
+            )
             for service in services_config_list:
                 # only inspect worker and server
                 if service == "worker" or service == "server":
