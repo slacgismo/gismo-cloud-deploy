@@ -156,11 +156,11 @@ eksctl get cluster
 If cluster exists, it returns the output as below.
 
 ~~~
-NAME		REGION		EKSCTL CREATED
-gcd-eks	us-east-2	True
+NAME		  REGION		  EKSCTL CREATED
+gcd-eks	  us-east-2	  True
 ~~~
 
-If cluster does not exist, please follow [EKS configuration yaml files]() section to create a cluster first.
+If cluster does not exist, please follow [EKS configuration yaml files](#EKS-configuration) section to create a cluster first.
 
 1. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) sectrion to get more detail.
 
@@ -255,7 +255,7 @@ If `number=0`, it processes all files in the buckets.
 * The option command `[ --configfile | -f ] [filename]`  imports custom configuration yaml files under `gismoclouddeploy/services/config` folder.
 If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/config/config.yaml`.
 
-* The option command `[ --build | -b ] ` build custom images based on `./gismoclouddeply/services/server` and `./gismoclouddeply/services/config/code-templates` folder.
+* The option command `[ --build | -b ]` build custom images based on `./gismoclouddeply/services/server` and `./gismoclouddeply/services/config/code-templates` folder.
   If your environment is on AWS, this option command builds and pushs `worker` and `server` service images to AWS ECR with temporary image tag.
   This temporary tag will be deleted after this applicaiton completes processing. Please read section [Build and push images](#build-and-push-images) to get more information.
 
@@ -312,11 +312,12 @@ Under `gismoclouddeploy/services/config/config.yaml` folder, developers can modi
 
 All kubernetes deployment and service files are listed under `gismoclouddeploy/services/config/k8s` folder. Developers can modify it if necessary.
 
-### EKS configuration yaml files
+### EKS configuration
 
 The create cluster command will create an EKS cluster based on the configuration file in `gismoclouddeploy/services/config/eks/cluster.yaml`.
 
-***NOTE*** The `max_size` variable under `nodeGroups` limits the maximum nodes number that can be scale in this application. The default is `20`.
+***NOTE***The `max_size` variable under `nodeGroups` limits the maximum nodes number that can be scale in this application. The default is `20`.
+
 In order to update the cluster setting, developers have to remove olde cluster and create a new cluster.
 Delete a cluster
 
@@ -519,7 +520,7 @@ mapUsers: |
 ---
 
 ### System diagram
-![System diagram](./Solar-data-tools-AWS.png)
+![System diagram](./systemdiagram.png)
 
 ## Usage
 
