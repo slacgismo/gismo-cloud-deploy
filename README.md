@@ -116,7 +116,7 @@ The output should return the IAM user details for designated_user.
 aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
 ~~~
 
-:warning: **If no eks cluster exists on AWS, please follow [EKS configuration](#eks-configuration) to create a new cluster.**
+:warning: If no eks cluster exists on AWS, please follow [EKS configuration](#eks-configuration) to create a new cluster.
 
 #### Pull down the latest git repository
 
@@ -212,12 +212,10 @@ For example, you can modify the calculation of `data_clearness_score`.
 ```bash
 gcd run-files -n 1 -d -b -sc 1
 ```
+Please follwo [Command](#command) section to explore the command detail.
+:warning: If you see some error messages related to **unauthorized** actions, it means this cluster didn't authorize the permission to this role. Please reach out the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster
 
-:warning: **If you see some error messages related to unauthorized actions, it means this cluster didn't authorize the permission to this role. Please reach out the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster**
-
-Please follwo [Command](#command) section to get the command detail.
-
-After it is completed, the terminal prints out the results as below:
+After it completed, the terminal prints out the performance analysis as below:
 
 ~~~
 +-------------------------------------+-----------------------+---------------------------------+
