@@ -441,8 +441,7 @@ gcd build-image  -t test -p
 The above example command executes `build-image` command, and tags built images with tag `test`.
 In this example, two images with build and tag as `worker:test` and `server:test`.Since `-p` optin command is enabled, the built images with tag are pushed to AWS ECR.
 
-> **_NOTE:_** The image with `latest` and `develop` tags are pushed from `Github Action` CI/CD pipeline to AWS ECR.
-> Developers cannot push images with `latest` and `develop` tags from local to AWS ECR.
+**_NOTE:_** The image with `latest` and `develop` tags are pushed from `Github Action` CI/CD pipeline to AWS ECR. Developers cannot push images with `latest` and `develop` tags from local to AWS ECR.
 
 ---
 
@@ -450,7 +449,7 @@ In this example, two images with build and tag as `worker:test` and `server:test
 
 ### Read error/logs files
 
-This program save all the output in a logs files. It also separate error output into a error file. Developers can check the error of previous run-time in this error file.
+This program saves all the output in a logs files. It separates error output into a error file. Developers can check the error of previous run-time in this error file.
 
 ### Read DLQ
 
@@ -460,7 +459,7 @@ The `gcd read-dlq` command prints out the error ouput of dlq.
 
 Getting the logs information of workers in real time needs a serial step as follows:
 
-1. Open a new terminal, list all running worker services' name as command below:
+- Open a new terminal, list all running worker services' name as command below:
 
 
 ```bash
@@ -484,7 +483,7 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 
 ***NOTE*** The worker's (`worker-<random id>`) name changes when this application restarts the services.
 
-2. In this case, this program has two server and three worker. We don't need to care about the server output. We just need to logs out all three worker's logs. And we start to logs out the `worker-6d47d89f94-r7drj` information in the terminal.
+- In this case, this program has two server and three worker. We don't need to care about the server output. We just need to logs out all three worker's logs. And we start to logs out the `worker-6d47d89f94-r7drj` information in the terminal.
 
   ```bash
   kubectl logs -f worker-6d47d89f94-r7drj
@@ -492,7 +491,7 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 
   It prints out the logs detail of `worker-6d47d89f94-r7drj`.Repeat this step to print out the rest two workers in a different terminal.
 
-3. Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
+- Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
 
 ### Monitoring the CUP and memory
 
@@ -545,7 +544,8 @@ docker-compose exec web pytest
 ### EKS auth setting
 
 Once the EKS cluster is created, only the ec2 instance that create this EKS cluster has permission to access it. To add other users' permission into this cluster, two methods are listed below to setup permissions.
-Users can get their `User ARN` on their `IAM` user page.
+
+First of all, users get their `User ARN` on AWS `IAM` user page.
 
 - method 1:
 
