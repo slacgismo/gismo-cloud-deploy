@@ -108,7 +108,7 @@ The output should return the IAM user details for designated_user.
 }
 ~~~
 
-Confirmed with this cluster's creator that this IAM role has permission to access it.
+:warning: Confirmed with the cluster's creator that this IAM role has permission to access it.
 
 - Find out the existing EKS cluster name on AWS EKS tab. Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster.
   
