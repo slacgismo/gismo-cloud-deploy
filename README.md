@@ -76,7 +76,7 @@ Connect to the EC2
 ssh -i <path/pem-file> ec2-user@<Public IPv4 address>
 ```
 
-#### Setup AWS Credentials
+#### Setup AWS credentials
 
 - Inside the instance, set up AWS credentials to access EKS and ECR. **_NOTE:_** `(Reach out to this project's owner to get the AWS credentials).`
 
@@ -186,9 +186,9 @@ If a cluster does not exist, please follow [EKS configuration yaml files](#eks-c
 
 #### Include solver license
 
-- Include solver license file under `./gismoclouddeploy/services/config/license` folder.(eg. `./gismoclouddeploy/services/config/license/mosek.lic`) Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
+- Include the solver license file under `./gismoclouddeploy/services/config/license` folder.(eg. `./gismoclouddeploy/services/config/license/mosek.lic`) Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
 
-#### Modify code block
+#### Modify code blocks
 
 - To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
 For example, you can modify the calculation of `data_clearness_score`.
@@ -204,6 +204,8 @@ For example, you can modify the calculation of `data_clearness_score`.
 ```bash
 gcd run-files -n 1 -d -b -sc 1
 ```
+
+Please follwo [Command](#command) section to get the command detail.
 
 After it is completed, the terminal prints out the results as below:
 
