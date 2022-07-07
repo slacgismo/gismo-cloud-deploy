@@ -26,7 +26,7 @@
 </tr>
 </table>
 
-Tools for executing time consuming tasks with developer defined custom code blocks in parallel on the AWS EKS platform.
+Tools for executing time-consuming tasks with developer-defined custom code blocks in parallel on the AWS EKS platform.
 
 ---
 
@@ -35,8 +35,8 @@ Tools for executing time consuming tasks with developer defined custom code bloc
 ### Quick start on AWS
 
 1. Login to `slac-gismo` AWS account.
-2. Go to `EC2` page in `us-east-2` region and select `AMIs` in `Images` tab in left option menu.
-3. Select the template called `pvinsight-eks-bastion-template` from AMIs private image and click `Luanch instance from AMIs`.
+2. Go to the `EC2` page in the `us-east-2` region and select `AMIs` in the `Images` tab in the left options menu.
+3. Select the template `pvinsight-eks-bastion-template` from AMIs private image and click `Launch instance from AMIs.`
 This image had been installed necessary dependenciues included:
 - [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
 - [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
@@ -50,17 +50,17 @@ This image had been installed necessary dependenciues included:
 
 - This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
-- Under `Configure Storage`, select the volume of the instance should be `12 GB` at least.
+- Under `Configure Storage`, select the instance volume should be `12 GB` at least.
 
-- Under `Key pair(login)` option, create a new key pair or use your existing key pair.
+- Under the `Key pair(login)` option, create a new key pair or use your existing key pairs.
 
-- Click `Lanuch instance` button to lanch a EC2 instance.
+- Click the `Launch instance` button to launch an EC2 instance.
 
-- After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purpose.
+- After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purposes.
 
 #### Launch application
 
-1. When EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the ip address from the `Public IPv4 address` in `Detail` tabs.
+1. When the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the IP address from the `Public IPv4 address` in the `Detail` tabs.
 
 Change `pem-file` permission.
 
@@ -75,7 +75,7 @@ Connect to the EC2
 ssh -i <path/pem-file> ec2-user@<Public IPv4 address>
 ```
 
-2. Inside the instance, set up AWS credential to access EKS and ECR. **_NOTE:_** `(Reach out this project's owner to get the AWS credentials).`
+2. Inside the instance, set up AWS credentials to access EKS and ECR. **_NOTE:_** `(Reach out to this project's owner to get the AWS credentials).`
 
 ```bash
 aws configure
@@ -88,15 +88,15 @@ Default region name:
 Default output format [None]:
 ~~~
 
-3. Listing aws s3 bucket, to varrify the AWS credentials.
+3. Listing AWS s3 bucket to verify the AWS credentials.
 
 ``` bash
 aws s3 ls
 ```
 
-4. In `gismo-cloud-deploy` directory, pull down latest `main` repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git), and run `git pull` command.
+1. In `gismo-cloud-deploy` directory, use command `git checkout main` to checkout to main branchm, and use `git pull` to  pull down latest repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git) in `main` branch.
 
-5. Set up .env files for `cli` program usage.
+2. Set up .env files for `cli` program usage.
 
 ```bash
 touch ./gismoclouddeploy/services/cli/.env
@@ -112,8 +112,8 @@ DLQ_URL=<your-dlq-url>
 SNS_TOPIC=<your-sns-topic>
 ~~~
 
-6. The AMIs image should have installed all the python pacakages of `cli` tools in the environment.
-In case developers need to re-install the dependencies of `cli`, please follow the below command:
+6. The AMIs image should have installed all the python packages of `CLI` tools in the environment.
+In case developers need to re-install the dependencies of `CLI`, please follow the below command:
 
 - Activate the virtual environment.
 
@@ -125,7 +125,7 @@ source ./venv/bin/activate
 - Upgrade pip
 
 ```bash
-pip install --upgrage pip
+pip install --upgrade pip
 ```
 
 - Update dependencies.
@@ -134,7 +134,7 @@ pip install --upgrage pip
 pip install -r requirements.txt
 ```
 
-- **_NOTE:_** If virtual environment was not created, please create the virtual environemnt first.
+- **_NOTE:_** If the virtual environment was not created, please create the virtual environment first.
 
 ```bash
 cd ./gismoclouddeploy/services
@@ -153,26 +153,32 @@ Upgrade pip and install all dependencies.
 eksctl get cluster
 ```
 
-If cluster exists, it returns the output as below.
+If a cluster exists, it returns the output as below.
 
 ~~~
 NAME		  REGION		  EKSCTL CREATED
 gcd-eks	  us-east-2	  True
 ~~~
 
-If cluster does not exist, please follow [EKS configuration yaml files](#EKS-configuration) section to create a cluster first.
+If a cluster does not exist, please follow [EKS configuration yaml files](#EKS-configuration) section to create a cluster first.
 
-1. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) sectrion to get more detail.
+1. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
 
-2. In order to implement your own code in a custom code blocks, please modify `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
+2. To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
 
-3. Under the virutal environemnt `(venv)`, run `run-files` command to test it.
+3. For example, you can modify the calculation of `data_clearness_score`.
+
+~~~
+ data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 0.5 * 100))
+~~~
+
+4. Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
-gcd run-files -n 1 -d -b -sc 5
+gcd run-files -n 1 -d -b -sc 1
 ```
 
-After it completed, the termainal prints out the results as below:
+After it is completed, the terminal prints out the results as below:
 
 ~~~
 +-------------------------------------+-----------------------+---------------------------------+
@@ -189,12 +195,12 @@ After it completed, the termainal prints out the results as below:
 | Effeciency improvement              | 17 %                  |                                 |
 | Initialize services duration        | 60.2083740234375 sec  |                                 |
 | Total process durations             | 76.75437307357788 sec |                                 |
-| Number of nodes                     | 5                     |                                 |
-| Number of workers                   | 5                     |                                 |
+| Number of nodes                     | 1                     |                                 |
+| Number of workers                   | 1                     |                                 |
 +-------------------------------------+-----------------------+---------------------------------+
 ~~~
 
-1.  Check the saved data file, gantt plot and tasks performance in `./gismoclouddeploy/services/results` folder.
+5. Check the saved data file, Gantt plot, and tasks performance in `./gismoclouddeploy/services/results` folder.
 
 ---
 
@@ -211,23 +217,23 @@ Run Process Files
 
 Options:
   -n, --number TEXT       Process the first n files in the defined bucket of
-                          config.yaml.  If number is None, this application
+                          config.yaml. If the number is None, this application
                           process defined files in config.yaml. If number is
-                          0,this application processs all files in the defined
-                          bucket in config.yaml. If number is an integer, this
-                          applicaion process the first `number` files in the
+                          0, this application processes all files in the defined
+                          bucket in config.yaml. If the number is an integer, this
+                          application processes the first `number` files in the
                           defined bucket in config.yaml.
 
-  -d, --deletenodes BOOL  Enable deleting eks node after complete this
-                          application. Default value is False.
+  -d, --deletenodes BOOL  Enable deleting eks node after completing this
+                          application. The default value is False.
 
-  -f, --configfile TEXT   Assign custom config files, Default files name is
+  -f, --configfile TEXT   Assign custom config files, The default files name is
                           ./config/config.yaml
 
   -r, --rollout  BOOL     Enable deleting current k8s deployment services and
-                          re-deployment services. Default value is False
+                          re-deployment services. The default value is False
 
-  -i, --imagetag TEXT     Specifiy the image tag. Default value is 'latest'
+  -i, --imagetag TEXT     Specify the image tag. The default value is 'latest'
                           This option command did not work with [ -b | --build ] option command.
 
   -do, --docker  BOOL     Default value is False. If it is True, the services
@@ -236,30 +242,28 @@ Options:
 
   -b, --build             Build a temp image and use it. If on AWS k8s
                           environment,     build and push image to ECR with
-                          temp image tag. These images will be deleted after
-                          used.    If you would like to preserve images, please
+                          the temp image tag. These images will be deleted after
+                          used. If you would like to preserve images, please
                           use build-image command instead
 
-  -sc, --nodesscale TEXT  Scale up eks nodes and worker replcas as the same
+  -sc, --nodesscale TEXT  Scale up eks nodes and worker replicas as the same
                           number. This input number replaces the
                           worker_repliacs and eks_nodes_number in config files
 
   --help                  Show this message and exit.
 ~~~
 
-* If you use default `run-files` command with no option, the program processes the files defined in the `config.yaml` file with `solar-data-tools` algorithm, and generated the results that saved in a file defined in `config.yaml` file.
+* If you use the default `run-files` command with no option, the program processes the files defined in the `config.yaml` file with the `solar-data-tools` algorithm and generates the saved results in a file specified in `config.yaml` file.
 
-* The process file command with option command`-n` followed with an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first 10 files in defined bucket )
+* The process file command with option command`-n` followed by an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first ten files in the specified bucket )
 If `number=0`, it processes all files in the buckets.
 
 * The option command `[ --configfile | -f ] [filename]`  imports custom configuration yaml files under `gismoclouddeploy/services/config` folder.
 If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/config/config.yaml`.
 
 * The option command `[ --build | -b ]` build custom images based on `./gismoclouddeply/services/server` and `./gismoclouddeply/services/config/code-templates` folder.
-  If your environment is on AWS, this option command builds and pushs `worker` and `server` service images to AWS ECR with temporary image tag.
-  This temporary tag will be deleted after this applicaiton completes processing. Please read section [Build and push images](#build-and-push-images) to get more information.
-
-
+  If your environment is on AWS, this option command builds and pushes `worker` and `server` service images to AWS ECR with a temporary image tag.
+  This temporary tag will be deleted after this application completes processing. Please read section [Build and push images](#build-and-push-images) to get more information.
 
 Examples:
 
@@ -273,15 +277,15 @@ On the AWS environment ,the above command starts the following processes:
 1. Since [-f] option commnad is specified, this application imports `./gismoclouddeply/services/config/test_config.yaml` to replace default `./gismoclouddeply/services/config/config.yaml` file.
 2. The AWS EKS fires up 5 ec2-instandes(nodes), and 5 worker replicas according to the option command [-sc] <5>.
 3. This application builds `server` and `worker` images from `./gismoclouddeply/services/server` and `./gismoclouddeply/services/config/code-templates` folder with a temporary image tag according to its hostname.
-4. After buidling images is completed, this application pushes those two images to AWS ECR with temporary images tage, such as `worker:my-hostname` and `server:my-hostname`.
-5. This AWS EKS pull down those temporary images and mounted into generated nodes.
-6. The `woker` service is the major service to process time consuming tasks, such as analyizing data with defined algorithm. In order to processing the time consuming tasks in parallel on AWS, developer can increase the `replicas` of the `worker`. This application spreads multiple `worker` services evenly among generated `nodes`(ec2-instances) of AWS EKS.
-7. Since [-n] <1> option command is specified, this application starts to proccess the `first 1` file of the defined buket in `test_config.yaml`.
+4. After building images are completed, this application pushes those two images to AWS ECR with temporary image tags, such as `worker:my-hostname` and `server:my-hostname`.
+5. This AWS EKS pulls those temporary images and mounts them into generated nodes.
+6. The `woker` service is the major service to process time-consuming tasks, such as analyzing data with a defined algorithm. To process the time-consuming tasks in parallel on AWS, a developer can increase the `replicas` of the `worker`. This application spreads multiple `worker` services evenly among generated `nodes`(ec2-instances) of AWS EKS.
+7. Since [-n] <1> option command is specified, this application starts to process the `first 1` file of the defined bucket in `test_config.yaml`.
 8. After the process is done, this application deletes temporary images on ECR.
-**NOTE** If developers would like to preserve builds images, please use `gcd build-images` command instead.
+**NOTE** If developers want to preserve images, please use the `gcd build-images` command instead.
 9. Since [-d] option command is specified, this application deletes all nodes(ec2-instances) of AWS EKS.
 
-### Other support command
+### Another support command
 
 - gcd --help
 - gcd nodes-scale [integer_number] [--help]
@@ -291,35 +295,34 @@ On the AWS environment ,the above command starts the following processes:
 
 The `nodes-scale` command scales up or down the eks nodes.
 
-The `build-images` command builds image from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
+The `build-images` command builds images from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
 
-The `read-dlq` command checks current DLQ(dead letter queue) on AWS. The `-e` option commmand enables or disables deleting messages after invoking this command.
+The `read-dlq` command checks current DLQ(dead letter queue) on AWS. The `-e` option command enables or disables deleting messages after invoking this command.
 The default value is `False`.
 
 ---
 
 ## Configuration files
 
-Under `gismoclouddeploy/services/config/config.yaml` folder, developers can modify parametes of the cli command tool.
+Under `gismoclouddeploy/services/config/config.yaml` folder, developers can modify the parameters of the cli command tool.
 
-1. The `aws_config` section contains all the aws environement variables settings.
-2. The `worker_config` section contains all the parametes to `worker` services.
+1. The `aws_config` section contains all the AWS environment variables settings.
+2. The `worker_config` section contains all the parameters for `worker` services.
 3. The `services_config_list` section contains all `kubernetes` settings.
 
-**NOTE** The details information of each variables are defined in the `config.yaml` file.
+**NOTE** The details information of each variable is defined in the `config.yaml` file.
 
 ### Kubernetes yaml files
 
-All kubernetes deployment and service files are listed under `gismoclouddeploy/services/config/k8s` folder. Developers can modify it if necessary.
+All Kubernetes deployment and service files are listed under `gismoclouddeploy/services/config/k8s` folder. Developers can modify it if necessary.
 
 ### EKS configuration
 
 The create cluster command will create an EKS cluster based on the configuration file in `gismoclouddeploy/services/config/eks/cluster.yaml`.
 
-***NOTE***The `max_size` variable under `nodeGroups` limits the maximum nodes number that can be scale in this application. The default is `20`.
+***NOTE***The `max_size` variable under `nodeGroups` limits the maximum nodes number that scales in this application. The default is `20`.
 
-In order to update the cluster setting, developers have to remove olde cluster and create a new cluster.
-Delete a cluster
+To update the cluster setting, developers have to remove the old cluster and create a new cluster.
 
 ```bash
 make delete-cluster
@@ -331,8 +334,7 @@ Create a cluster
 make create-cluster
 ```
 
-If users create a cluster based on the `cluster.yaml` file, and if they need to delete the cluster later, it's recommended to delete the cluster through `delete-cluster`command based on the `cluster.yaml` file to avoid issue on AWS.
-
+If users create a cluster based on the `cluster.yaml` file, and if they need to delete the cluster later, it's recommended to delete the cluster through `delete-cluster` command based on the `cluster.yaml` file to avoid issue on AWS.
 
 ---
 
@@ -345,24 +347,23 @@ If users create a cluster based on the `cluster.yaml` file, and if they need to 
 * [Personal academic license](https://www.mosek.com/products/academic-licenses/)
 
 **NOTE** If developers defined `MOSEK` in `config.yaml` file. Please include `MOSEK` licence file `mosek.lic` under folder `./gismoclouddeploy/services/config/licence`.
-This lic file will be uploaded to a temporary S3 folder and downlad into AWS EKS worker during run-time. The license file will be deleted after the process is done.
-
+This license file will be uploaded to a temporary S3 folder and downloaded into the AWS EKS worker during run-time. The program deletes the license file after the process is done.
 ---
 ## Code blocks
 
-Custom code:
+* Custom code:
+Developers can build and run their code blocks in this application.
+To pass the developer's code block to this application, the code block has to be inside the `./gismoclouddeploy/services/config/code-templates` folder.
+The `entrypoint` function in `entrypoint.py` file is the start function of this application. When this application builds images, it copies all the files inside `code-templates`folder and pastes them to docker images.
+Developers can include any files or self defined python modules in `code-templates` folder. Those files, sub-folder and modules will be copied to the Docker images.
+Please check the `entrypoint.py` files to get more information on input parameters.
 
-Developers can build and run its own code in this application.
-In order to pass developer's custom code block to this application, the code block has to be inside the `./gismoclouddeploy/services/config/code-templates` folder.
-The `entrypoint` function in `entrypoint.py` file is the start function of this application. When this application build images, it copies all the files inside `code-templates`folder and paste them to docker images.
-Developers can includes any files or self defined python modules in `code-templates` folder. Those files, sub-folder and modules will be copied to the docker images as well.
+* Python packages:
+Please defined necessary python packages in `requirements.txt` under `./gismoclouddeploy/services/config/code-templates`. The Docker copy those files into their images, and the application will install python packages based on it.
+Some packages are necessary to run flask server and celery worker. Please do not remove it. Please check `requirements.txt` to get more details.
 
-Please check the `entrypoint.py` files to get more informations of input parametes.
-
-Python packages:
-
-Please defined necessary python packages in `requirements.txt` under `./gismoclouddeploy/services/config/code-templates`. This file will be copied to docker images, and the application will install python packages based on it.
-Somce packages are necessary to run flask server and celery worker. Please do not remove it. Please check `requirements.txt` to get more details.
+* Specify the code block folder
+In `./gismoclouddeploy/services/config/config.yaml` file, a user can specify running code block folder by modifying the variable `code_template_folder`.The default code block folder is `code-templates`.
 
 ---
 
@@ -370,19 +371,19 @@ Somce packages are necessary to run flask server and celery worker. Please do no
 
 The AWS EKS hosts services based on the ECR images. If developers modify any code inside the `code-templates` folder, developers have to build and push new images to ECR to see the changes.
 
-Developers can use`run-files` command wih [-b|--build] optino to build temporary images for quick start. However, this temporary images will be deleted after processing.
-If developers would like to preserver images, the `build-images` command can build and push images to ECR for next usage.
-The `build-images` command is a python wrapper function to invoke `docker-compose build` command in shell.
+Developers can use 'run-files` command with [-b|--build] option to build temporary images for a quick start. However, these temporary images will be deleted after processing.
+If developers want to preserver images, the `build-images` command can build and push images to ECR for next usage.
+The `build-images` command is a python wrapper function to invoke `docker-compose build` command in the shell.
 
 ~~~
 Usage: gcd build-images [OPTIONS]
 
-  Build image from docker-compose and push to ECR
+  Build an image from docker-compose and push to ECR
 
 Options:
-  -t, --tag TEXT    Rollout and restart of webapp and worker pod of kubernetes
+  -t, --tag TEXT    Rollout and restart of webapp and worker pod of Kubernetes
 
-  -p, --push BOOL   Is pushing image to AWS ECR : Default is False
+  -p, --push BOOL   Is pushing the images to AWS ECR : Default is False
 
   --help            Show this message and exit.
 ~~~
@@ -393,7 +394,7 @@ Example:
 gcd build-image  -t test -p
 ```
 
-The above example command execute `build-image` command, and tag built images with tag `test`.
+The above example command executes `build-image` command, and tags built images with tag `test`.
 In this example, two images with build and tag as `worker:test` and `server:test`.Since `-p` optin command is enabled, the built images with tag are pushed to AWS ECR.
 
 > **_NOTE:_** The image with `latest` and `develop` tags are pushed from `Github Action` CI/CD pipeline to AWS ECR.
@@ -409,14 +410,14 @@ The `gcd read-dlq` command prints out the error ouput from previous run-time.
 
 ### Use kubectl debug in real time
 
-Get the logs information of workers in real time needs a serial steps as follow:
+Getting the logs information of workers in real time needs a serial step as follows:
 
 1. Open new terminal, list all running worker services' name as command below:
 
 ```bash
 kubectl get pod
 ```
-It print out:
+It prints out:
 ~~~
 NAME                       READY   STATUS    RESTARTS   AGE
 rabbitmq-84669dd8f-rc2fx   1/1     Running   0          10h
@@ -433,27 +434,27 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 
 ***NOTE*** The worker's (`worker-<random id>`) name changed when this application restarts the services.
 
-2. Logs out the `worker-6d47d89f94-r7drj` information in terminal.
+2. Logs out the `worker-6d47d89f94-r7drj` information in the terminal.
 
   ```bash
   kubectl logs -f worker-6d47d89f94-r7drj
   ```
 
-  It prints out the logs detail of `worker-6d47d89f94-r7drj`.Repeat this step to print out the rest two workers in different terminal.
+  It prints out the logs detail of `worker-6d47d89f94-r7drj`.Repeat this step to print out the rest two workers in a different terminal.
 
 
 3. Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
 
 4. Monitoring the CUP and memory.
 
-Install and apply metrics server if the system didn't installed before.
+Install and apply the metrics server if the system didn't install before.
 
 ```bash
 git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git
 kubectl apply -f kubernetes-metrics-server
 ```
 
-Check specific pod's memory and CPU usgage. For example, if you would like to check pod, `worker-6d47d89f94-zv8pt`, memory and CPU. Use the following command:
+Check specific pod's memory and CPU usage. For example, if you would like to check pod, `worker-6d47d89f94-zv8pt`, memory and CPU. Use the following command:
 
 ```bash
 kubectl top pod worker-6d47d89f94-zv8pt
@@ -474,7 +475,7 @@ pytest
 
 #### Test docker image
 
-Run pytest in docker image
+Run pytest in the docker image
 
 ```bash
 $ docker-compose exec web pytest
@@ -488,15 +489,14 @@ $ docker-compose exec web pytest
 
 ## Debug
 
-### Kubernetes.
-
+### Kubernetes
 
 ---
 
 ### EKS auth setting
 
-Once the EKS cluster is created, only the user who makes this EKS cluster has permission to access it. In order to add other users permission into this cluster, two methods are listed below to setup permissions.
-Users can get their `User ARN` in their `IAM` user page.
+Once the EKS cluster is created, only the user who makes this EKS cluster has permission to access it. To add other users' permission into this cluster, two methods are listed below to setup permissions.
+Users can get their `User ARN` on their `IAM` user page.
 
 method 1:
 

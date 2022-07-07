@@ -59,7 +59,7 @@ worker_config:
   saved_path_aws: "results"                               # Path of saved files in bucket
   saved_path_local: "results"
   acccepted_idle_time: 360
-  code_template_folder: "code-templates-statisticclearsky" # Code blocks folder example: "code-templates-solardatatools"
+  code_template_folder: "code-templates" # Code blocks folder example: "code-templates-solardatatools"
   saved_rumtime_image_name: None            # "runtime-{user_id}.png"
   saved_performance_file: None              # "performance-{user_id}.txt"
   saved_data_target_filename: None          # "results-{user_id}.csv"
