@@ -50,7 +50,7 @@ This image had been installed necessary dependenciues included:
 
 - This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
-- Under `Configure Storage`, select the instance volume should be `12 GB` at least.
+- Under `Configure Storage`, select the instance volume should be `16 GB` at least.
 
 - Under the `Key pair(login)` option, create a new key pair or use your existing key pairs.
 
@@ -96,10 +96,10 @@ aws s3 ls
 
 1. In `gismo-cloud-deploy` directory, use command `git checkout main` to checkout to main branchm, and use `git pull` to  pull down latest repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git) in `main` branch.
 
-2. Set up .env files for `cli` program usage.
+2. Set up .env files for `CLI` program usage.
 
 ```bash
-touch ./gismoclouddeploy/services/cli/.env
+touch ./gismoclouddeploy/services/.env
 ```
 
 Below are the sample variables in the .env file, and replace `<your-aws-key>` with the correct keys.
@@ -134,7 +134,7 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-- **_NOTE:_** If the virtual environment was not created, please create the virtual environment first.
+- **_NOTE:_** In case the virtual environment was not created, please create the virtual environment first.
 
 ```bash
 cd ./gismoclouddeploy/services
@@ -147,7 +147,7 @@ python3.8 -m venv venv
 Upgrade pip and install all dependencies.
 
 
-1. Check if the EKS cluster exists.
+7. Check if the EKS cluster exists.
 
 ```bash
 eksctl get cluster
@@ -162,17 +162,17 @@ gcd-eks	  us-east-2	  True
 
 If a cluster does not exist, please follow [EKS configuration yaml files](#EKS-configuration) section to create a cluster first.
 
-1. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
+8. Include solver license file under `./gismoclouddeploy/services/config/license` folder. Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
 
-2. To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
+9. To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
 
-3. For example, you can modify the calculation of `data_clearness_score`.
+10. For example, you can modify the calculation of `data_clearness_score`.
 
 ~~~
  data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 0.5 * 100))
 ~~~
 
-4. Under the virtual environment `(venv)`, run the `run-files` command to test it.
+11. Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
 gcd run-files -n 1 -d -b -sc 1
