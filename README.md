@@ -115,6 +115,8 @@ Confirmed with this cluster's creator that this IAM role has permission to acces
 aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
 ~~~
 
+:warning: **If you see some error messages related to unauthorized actions, this means this cluster didn't authorize the permission to this role. Please reach out the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster**
+
 - In `gismo-cloud-deploy` directory, use command `git checkout main` to checkout to main branchm, and use `git pull` to  pull down latest repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git) in `main` branch.
 
 - Set up a `.env` file for `CLI` program usage.
