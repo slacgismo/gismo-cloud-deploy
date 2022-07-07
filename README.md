@@ -47,7 +47,7 @@ This image had been installed necessary dependenciues included:
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy)
 
-#### Launch instance
+#### Launch a instance
 
 - This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
@@ -59,7 +59,7 @@ This image had been installed necessary dependenciues included:
 
 - After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purposes.
 
-#### Launch application
+#### Launch the application
 
 - When the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the IP address from the `Public IPv4 address` in the `Detail` tabs.
 
@@ -84,6 +84,7 @@ ssh -i <path/pem-file> ec2-user@<Public IPv4 address>
 aws configure
 ```
 - Setup AWS credentials
+
 ~~~
 AWS Access Key ID :
 AWS Secret Access Key:
@@ -109,15 +110,19 @@ The output should return the IAM user details for designated_user.
 
 Confirmed with this cluster's creator that this IAM role has permission to access it.
 
-- Update EKS information to this new EC2 instance.
+- Find out the existing EKS cluster name on AWS EKS tab. Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster.
   
 ~~~
 aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
 ~~~
 
-:warning: **If you see some error messages related to unauthorized actions, this means this cluster didn't authorize the permission to this role. Please reach out the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster**
+:warning: **If no eks cluster exists on AWS, please follow [EKS configuration](#eks-configuration) to create a new cluster.**
+
+#### Pull down the latest git repository
 
 - In `gismo-cloud-deploy` directory, use command `git checkout main` to checkout to main branchm, and use `git pull` to  pull down latest repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git) in `main` branch.
+
+#### Update the .env file
 
 - Set up a `.env` file for `CLI` program usage.
 
@@ -135,6 +140,7 @@ SQS_URL=<your-sqs-url>
 DLQ_URL=<your-dlq-url>
 SNS_TOPIC=<your-sns-topic>
 ~~~
+
 #### Install dependencies
 
 - The AMIs image should have installed all the python packages of `CLI` tools in the environment.
@@ -186,11 +192,11 @@ gcd   us-east-2   True
 
 If a cluster does not exist, please follow [EKS configuration yaml files](#eks-configuration) section to create a cluster first.
 
-#### Include solver license
+#### Include the solver license
 
 - Include the solver license file under `./gismoclouddeploy/services/config/license` folder.(eg. `./gismoclouddeploy/services/config/license/mosek.lic`) Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
 
-#### Modify code blocks
+#### Modify the code blocks
 
 - To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
 For example, you can modify the calculation of `data_clearness_score`.
@@ -199,13 +205,15 @@ For example, you can modify the calculation of `data_clearness_score`.
  data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 0.5 * 100))
 ~~~
 
-#### Run command
+#### Run the command
 
 - Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
 gcd run-files -n 1 -d -b -sc 1
 ```
+
+:warning: **If you see some error messages related to unauthorized actions, it means this cluster didn't authorize the permission to this role. Please reach out the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster**
 
 Please follwo [Command](#command) section to get the command detail.
 
