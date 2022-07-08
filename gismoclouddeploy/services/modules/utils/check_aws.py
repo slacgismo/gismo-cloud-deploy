@@ -1,3 +1,4 @@
+from genericpath import exists
 import boto3
 import os
 
@@ -14,11 +15,24 @@ def check_aws_validity(key_id: str, secret: str) -> bool:
         return False
 
 
+# def check_environment_is_aws() -> bool:
+#     my_user = os.environ.get("USER")
+#     is_aws = True if "ec2" in my_user else False
+#     return is_aws
 def check_environment_is_aws() -> bool:
-    my_user = os.environ.get("USER")
-    is_aws = True if "ec2" in my_user else False
-    return is_aws
-
+    datasource_file = "/var/lib/cloud/instance/datasource"
+    if exists(datasource_file):
+        return True
+    else:
+        return False
+#     try:
+#     with open(datasource_file) as f:
+#         line = f.readlines()
+#         print("I'm running on EC2!")
+#         if "DataSourceEc2Local" in line[0]:
+#             print("I'm running on EC2!")
+# except FileNotFoundError:
+#         print(f"{datasource_file} not found")
 
 def connect_aws_client(client_name: str, key_id: str, secret: str, region: str):
     try:

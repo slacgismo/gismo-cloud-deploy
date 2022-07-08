@@ -49,6 +49,8 @@ This image had been installed necessary dependenciues included:
 
 #### Launch a instance
 
+- Give this new instance a name you like (eg. `gcd-eks-test`)
+
 - This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
 - Under `Configure Storage`, select the instance volume should be `16 GB` at least.
@@ -110,13 +112,19 @@ The output should return the IAM user details for designated_user.
 
 :warning: Confirmed with the cluster's creator that this IAM role has permission to access it.
 
-- Find out the existing EKS cluster name on AWS EKS tab. Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster.
+- Find out the existing EKS clusters name on AWS EKS page of your AWS account with specify region (eg. `us-east-2`). Under EKS pages, you will see the clusters name, such as `gcd`.
+Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster by following command. For example, replace < your-cluster-name > with `gcd` and replace < your-region-code > with `us-east-2`
   
 ~~~
 aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
 ~~~
 
 :warning: If no eks cluster exists on AWS, please follow [EKS configuration](#eks-configuration) to create a new cluster.
+
+
+### Root user
+
+If you log in as a root user, you can find out the `gismo-cloud-deploy` folder in `/home/ec2-user/gismo-cloud-deploy` folder.
 
 #### Pull down the latest git repository
 
@@ -139,6 +147,7 @@ AWS_DEFAULT_REGION=<your-aws-default-region>
 SQS_URL=<your-sqs-url>
 DLQ_URL=<your-dlq-url>
 SNS_TOPIC=<your-sns-topic>
+ECR_REPO=<your-ecr-repo>
 ~~~
 
 #### Install dependencies
@@ -149,7 +158,7 @@ In case developers need to re-install the dependencies of `CLI`, please follow t
 - Activate the virtual environment.
 
 ```bash
-
+cd gismoclouddeploy/services/
 source ./venv/bin/activate
 ```
 
@@ -168,7 +177,7 @@ pip install -r requirements.txt
 - **_NOTE:_** In case the virtual environment was not created, please create the virtual environment first.
 
 ```bash
-cd ./gismoclouddeploy/services
+cd gismoclouddeploy/services
 ```
 
 ```bash
@@ -196,6 +205,13 @@ If a cluster does not exist, please follow [EKS configuration yaml files](#eks-c
 
 - Include the solver license file under `./gismoclouddeploy/services/config/license` folder.(eg. `./gismoclouddeploy/services/config/license/mosek.lic`) Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
 
+- If you have your mosek license on S3, you can use the following command to upload file to ec2 instance:
+
+~~~
+aws s3 cp s3://<bucket_name>/<path>/<lic_file_name> /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/
+services/config/license/mosek.lic
+~~~
+
 #### Modify the code blocks
 
 - To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
@@ -210,6 +226,7 @@ For example, you can modify the calculation of `data_clearness_score`.
 - Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
+cd ./gismoclouddeploy/services
 gcd run-files -n 1 -d -b -sc 1
 ```
 Please follwo [Command](#command) section to explore the command detail.
@@ -395,7 +412,7 @@ This license file will be uploaded to a temporary S3 folder and downloaded into 
 
 - Custom code:
 Developers can build and run their code blocks in this application.
-To pass the developer's code block to this application, the code block has to be inside a self defined folder (eg. `code-tempates`) with the path, `./gismoclouddeploy/services/config/`. The full path is `./gismoclouddeploy/services/config/code-tempates`. Then you have to specify the folder variable `code_template_folder` in `config.yaml` file. This `code_template_folder` variable has to match to your code block folder.
+To pass the developer's code block to this application, the code block has to be inside a self defined folder (eg. `code-templates`) with the path, `./gismoclouddeploy/services/config/`. The full path is `./gismoclouddeploy/services/config/code-templates`. Then you have to specify the folder variable `code_template_folder` in `config.yaml` file. This `code_template_folder` variable has to match to your code block folder.
 
 - Code block folder:
 When you define your code block folder, this folder has to include a  `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside code block folder (eg.`code-templates`) and pastes them to docker images.
@@ -459,7 +476,7 @@ The `gcd read-dlq` command prints out the error ouput of dlq.
 
 Getting the logs information of workers in real time needs a serial step as follows:
 
-- Open a new terminal, list all running worker services' name as command below:
+- Make sure the nodes are generated, and wokers are running. Open a new terminal, list all running worker services' name as command below:
 
 
 ```bash
@@ -493,7 +510,7 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 
 - Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
 
-### Monitoring the CUP and memory
+### Monitoring the CPU and memory
 
 ---
 
