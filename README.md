@@ -49,6 +49,8 @@ This image had been installed necessary dependenciues included:
 
 #### Launch a instance
 
+- Give this new instance a name you like (eg. `gcd-eks-test`)
+
 - This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
 - Under `Configure Storage`, select the instance volume should be `16 GB` at least.
@@ -110,7 +112,8 @@ The output should return the IAM user details for designated_user.
 
 :warning: Confirmed with the cluster's creator that this IAM role has permission to access it.
 
-- Find out the existing EKS cluster name on AWS EKS tab. Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster.
+- Find out the existing EKS cluster name on AWS EKS page of your AWS account with specify region (eg. `us-east-2`). Under EKS pages, you will see the cluster name, such as `gcd`.
+Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster.
   
 ~~~
 aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
