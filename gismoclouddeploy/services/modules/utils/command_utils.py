@@ -58,23 +58,87 @@ def checck_server_ready_and_get_name(
             time.sleep(delay)
             wait_time -= delay
         # server_name = get_k8s_deployment(prefix="server")
-        server_name = get_k8s_pod_name(pod_name="server")
+        desired_replicas = deployment_services_list["server"]["desired_replicas"]
+        server_list = get_k8s_pod_name(pod_name="server", desired_replicas=desired_replicas)
 
-        logger.info(f"server name ====> {server_name}")
-
-        if server_name is None:
+        if len(server_list) == 0 :
             logger.error("Cannot find server pod")
             raise Exception("Find k8s pod server error")
-    if (
-        check_and_wait_server_ready(
-            is_docer=is_docker, server_name=server_name, counter=2, delay=1
-        )
-        is not True
-    ):
-        logger.error("Wait server ready failed")
-        raise Exception(f"Wait {server_name} failed")
+        # to do sort by start date
+        for server in server_list:
+            # logger.info(f"server name ====> {server}")
+            is_server_ready = check_and_wait_server_ready(
+                is_docer=is_docker, server_name=server, counter=2, delay=1
+            )
+            if is_server_ready is False:
+                logger.error(f"{server} is not ready")
+            else:
+                logger.info(f"{server} is ready")
 
-    return server_name
+        return server_list
+    # if (
+    #     check_and_wait_server_ready(
+    #         is_docer=is_docker, server_name=server_name, counter=2, delay=1
+    #     )
+    #     is not True
+    # ):
+    #     logger.error("Wait server ready failed")
+    #     raise Exception(f"Wait {server_name} failed")
+
+    # return server_name
+def send_command_to_server_list(
+    servers_list: List[str] = None,
+    number: int = Union[int, None],
+    worker_config_json: str = None,
+    is_docker: bool = False,
+    process_files_list:List[str] = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+    sns_topic: str = None,
+) -> List[str]:
+
+
+
+    worker_config_json["aws_access_key"] = aws_access_key
+    worker_config_json["aws_secret_access_key"] = aws_secret_access_key
+    worker_config_json["aws_region"] = aws_region
+    worker_config_json["sns_topic"] = sns_topic
+
+    s3_client = aws_utils.connect_aws_client(
+        client_name="s3",
+        key_id=worker_config_json["aws_access_key"],
+        secret=worker_config_json["aws_secret_access_key"],
+        region=worker_config_json["aws_region"],
+    )
+    n_files = return_process_filename_base_on_command(
+        first_n_files=number,
+        bucket=worker_config_json["data_bucket"],
+        default_files=worker_config_json["default_process_files"],
+        s3_client=s3_client,
+    )
+    # start_index = 0
+    # end_index = num_file_to_process_per_round
+    # if end_index > len(n_files):
+    #     end_index = len(n_files)
+    total_tasks_ids = []
+    # while start_index < len(n_files):
+    process_files_list = []
+    for file in n_files:
+        process_files_list.append(file)
+        # print(f"--------------{file}")
+    #
+    worker_config_json["default_process_files"] = json.dumps(process_files_list)
+    worker_config_str = json.dumps(worker_config_json)
+    # invoke process files
+    resp = invoke_process_files_to_server(
+        is_docker=is_docker,
+        server_name=server_name,
+        worker_config_str=worker_config_str,
+        number=None,
+    )
+
+    return None
 
 
 def send_command_to_server(

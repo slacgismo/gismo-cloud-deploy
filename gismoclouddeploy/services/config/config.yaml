@@ -21,14 +21,14 @@ services_config_list:
       image_name: "worker"
       image_tag: "latest"
   server:
-      desired_replicas: 1
+      desired_replicas: 2
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/server.deployment.yaml"
       service_file: "./config/k8s/server.services.yaml"
       image_name: "server"
       image_tag: "latest"
   redis:
-      desired_replicas: 1
+      desired_replicas: 2
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/redis.deployment.yaml"
       service_file: "./config/k8s/redis.services.yaml"
@@ -36,7 +36,7 @@ services_config_list:
       image_tag: "latest"
 
   rabbitmq:
-      desired_replicas: 1
+      desired_replicas: 2
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
       service_file: "./config/k8s/rabbitmq.services.yaml"

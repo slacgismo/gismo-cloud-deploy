@@ -292,10 +292,20 @@ def run_process_files(
     )
     # check server ready and return running server name.
 
-    ready_server_name = checck_server_ready_and_get_name(
+    ready_server_list = checck_server_ready_and_get_name(
         deployment_services_list=services_config_list,
         is_docker=is_docker,
     )
+
+    if len(ready_server_list) == 0 :
+        logger.error("Cannot get server name")
+        return
+
+    initial_process_time = time.time() - start_time
+
+    return 
+
+
     if ready_server_name is None:
         logger.error("Cannot get server name")
         return

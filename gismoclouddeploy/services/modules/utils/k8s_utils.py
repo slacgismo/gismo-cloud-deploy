@@ -192,7 +192,7 @@ def check_k8s_services_exists(name: str = None) -> bool:
     return False
 
 
-def get_k8s_pod_name(pod_name: str = None) -> List[dict]:
+def get_k8s_pod_name(pod_name: str = None, desired_replicas:int = 1) -> List[dict]:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     ret = v1.list_pod_for_all_namespaces(watch=False)
@@ -214,14 +214,28 @@ def get_k8s_pod_name(pod_name: str = None) -> List[dict]:
                 pod_info = {"name": name, "started_at": started_at}
                 pods.append(pod_info)
 
-    # only get the latest server
-    if len(pods) > 0:
-        max_date = pods[0]["started_at"]
-        latest_server_pod_name = pods[0]["name"]
-        for pod in pods:
-            if max_date < pod["started_at"]:
-                max_date = pod["started_at"]
-                latest_server_pod_name = pod["name"]
-        return latest_server_pod_name
+    # to do 
+
+    if len(pods) >= desired_replicas:
+        # sort 
+        pods_list = sorted(pods, key=lambda k: k['started_at'], reverse= True)
+        for po in pods_list:
+            print("------------------")
+            print(po)
+        return pods_list[0:desired_replicas]
 
     return None
+
+
+
+    # only get the latest server
+    # if len(pods) > 0:
+    #     max_date = pods[0]["started_at"]
+    #     latest_server_pod_name = pods[0]["name"]
+    #     for pod in pods:
+    #         if max_date < pod["started_at"]:
+    #             max_date = pod["started_at"]
+    #             latest_server_pod_name = pod["name"]
+    #     return latest_server_pod_name
+
+    # return None
