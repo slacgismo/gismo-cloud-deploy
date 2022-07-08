@@ -147,6 +147,7 @@ AWS_DEFAULT_REGION=<your-aws-default-region>
 SQS_URL=<your-sqs-url>
 DLQ_URL=<your-dlq-url>
 SNS_TOPIC=<your-sns-topic>
+ECR_REPO=<your-ecr-repo>
 ~~~
 
 #### Install dependencies
