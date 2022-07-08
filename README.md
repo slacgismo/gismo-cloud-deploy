@@ -121,6 +121,11 @@ aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
 
 :warning: If no eks cluster exists on AWS, please follow [EKS configuration](#eks-configuration) to create a new cluster.
 
+
+### Root user
+
+If you log in as a root user, you can find out the `gismo-cloud-deploy` folder in `/home/ec2-user/gismo-cloud-deploy` folder.
+
 #### Pull down the latest git repository
 
 - In `gismo-cloud-deploy` directory, use command `git checkout main` to checkout to main branchm, and use `git pull` to  pull down latest repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git) in `main` branch.
