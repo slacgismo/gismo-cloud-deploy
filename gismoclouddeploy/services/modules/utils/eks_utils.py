@@ -174,7 +174,7 @@ def scale_eks_nodes_and_wait(
 ) -> bool:
     try:
         target_node_number = int(scale_node_num)
-
+        logger.info(f" cluster_name: {cluster_name} nodegroup_name:{nodegroup_name} ")
         num_nodes = num_of_nodes_ready()
         logger.info(
             f"scale node {target_node_number}, current node number: {num_nodes}"
