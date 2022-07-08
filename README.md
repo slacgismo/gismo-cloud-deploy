@@ -510,7 +510,7 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 
 - Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
 
-### Monitoring the CUP and memory
+### Monitoring the CPU and memory
 
 ---
 
