@@ -208,7 +208,8 @@ If a cluster does not exist, please follow [EKS configuration yaml files](#eks-c
 - If you have your mosek license on S3, you can use the following command to upload file to ec2 instance:
 
 ~~~
-aws s3 cp s3://<bucket_name>/<path>/<lic_file_name> $HOME/<paht>/<lic_file_name>
+aws s3 cp s3://<bucket_name>/<path>/<lic_file_name> /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/
+services/config/license/mosek.lic
 ~~~
 
 #### Modify the code blocks
