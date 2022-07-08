@@ -11,7 +11,7 @@ from modules.utils.run_process_files import run_process_files
 from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from dotenv import load_dotenv
-
+from modules.utils.command_utils import print_dlq
 load_dotenv()
 
 AWS_ACCESS_KEY_ID = os.getenv("aws_access_key")
@@ -249,7 +249,7 @@ def build_images(tag: str = None, push: bool = False):
 def read_dlq(empty):
     """Read messages from dlq"""
     click.echo(f"Read DLQ from :{DLQ_URL}. Delete message: {empty}")
-    modules.command_utils.print_dlq(
+    print_dlq(
         delete_messages=empty,
         aws_key=AWS_ACCESS_KEY_ID,
         aws_secret_key=AWS_SECRET_ACCESS_KEY,
