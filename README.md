@@ -177,7 +177,7 @@ pip install -r requirements.txt
 - **_NOTE:_** In case the virtual environment was not created, please create the virtual environment first.
 
 ```bash
-cd ./gismoclouddeploy/services
+cd gismoclouddeploy/services
 ```
 
 ```bash
@@ -226,6 +226,7 @@ For example, you can modify the calculation of `data_clearness_score`.
 - Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
+cd ./gismoclouddeploy/services
 gcd run-files -n 1 -d -b -sc 1
 ```
 Please follwo [Command](#command) section to explore the command detail.
