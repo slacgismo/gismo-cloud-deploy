@@ -412,7 +412,7 @@ This license file will be uploaded to a temporary S3 folder and downloaded into 
 
 - Custom code:
 Developers can build and run their code blocks in this application.
-To pass the developer's code block to this application, the code block has to be inside a self defined folder (eg. `code-tempates`) with the path, `./gismoclouddeploy/services/config/`. The full path is `./gismoclouddeploy/services/config/code-tempates`. Then you have to specify the folder variable `code_template_folder` in `config.yaml` file. This `code_template_folder` variable has to match to your code block folder.
+To pass the developer's code block to this application, the code block has to be inside a self defined folder (eg. `code-templates`) with the path, `./gismoclouddeploy/services/config/`. The full path is `./gismoclouddeploy/services/config/code-templates`. Then you have to specify the folder variable `code_template_folder` in `config.yaml` file. This `code_template_folder` variable has to match to your code block folder.
 
 - Code block folder:
 When you define your code block folder, this folder has to include a  `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside code block folder (eg.`code-templates`) and pastes them to docker images.
