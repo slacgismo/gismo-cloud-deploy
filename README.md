@@ -476,7 +476,7 @@ The `gcd read-dlq` command prints out the error ouput of dlq.
 
 Getting the logs information of workers in real time needs a serial step as follows:
 
-- Open a new terminal, list all running worker services' name as command below:
+- Make sure the nodes are generated, and wokers are running. Open a new terminal, list all running worker services' name as command below:
 
 
 ```bash
