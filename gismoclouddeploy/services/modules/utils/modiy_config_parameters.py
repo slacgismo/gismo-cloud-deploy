@@ -138,6 +138,7 @@ def modiy_config_parameters(
             nodesscale
         )
     if check_environment_is_aws():
+        logger.info("====== Runing on AWS ========= ")
         cluster_file = config_json["aws_config"]["cluster_file"]
         cluster_file_json = convert_yaml_to_json(yaml_file=cluster_file)
         cluster_name = cluster_file_json["metadata"]["name"]
@@ -151,6 +152,9 @@ def modiy_config_parameters(
 
         current_clust_name = invoke_eks_get_cluster()
         print(current_clust_name)
+    else:
+        logger.info("====== Runing on Local ========= ")
+        
     config_json["aws_config"]["aws_access_key"] = aws_access_key
     config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
     config_json["aws_config"]["aws_region"] = aws_region
