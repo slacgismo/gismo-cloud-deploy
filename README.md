@@ -158,7 +158,7 @@ In case developers need to re-install the dependencies of `CLI`, please follow t
 - Activate the virtual environment.
 
 ```bash
-
+cd gismoclouddeploy/services/
 source ./venv/bin/activate
 ```
 
