@@ -12,6 +12,7 @@ from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from dotenv import load_dotenv
 from modules.utils.command_utils import print_dlq
+from modules.utils.invoke_function import invoke_docker_compose_build,invoke_ecr_validation,invoke_tag_image
 load_dotenv()
 
 AWS_ACCESS_KEY_ID = os.getenv("aws_access_key")
@@ -200,16 +201,32 @@ def nodes_scale(min_nodes, configfile):
     is_flag=True,
     help="Is push image to ecr : Default is False",
 )
-def build_images(tag: str = None, push: bool = False):
+@click.option(
+    "--configfile",
+    "-f",
+    help="Assign config files, Default files is config.yaml under /config",
+    default="config.yaml",
+)
+def build_images(tag: str = None, push: bool = False, configfile:str = "config.yaml"):
     """Build image from docker-compose and push to ECR"""
     click.echo(f"Build image :{tag}")
-    build_resp = modules.utils.invoke_docker_compose_build()
+    config_json = modiy_config_parameters(
+        configfile=configfile,
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_region=AWS_DEFAULT_REGION,
+        sqs_url=SQS_URL,
+        sns_topic=SNS_TOPIC,
+        dlq_url=DLQ_URL,
+        ecr_repo=ECR_REPO,
+    )
+    build_resp = invoke_docker_compose_build( code_template_folder=config_json['worker_config']['code_template_folder'])
     # click.echo(build_resp)
     services_list = ["worker", "server"]
     try:
         for service in services_list:
             click.echo(f"tag {ECR_REPO}/{service}:{tag}")
-            tag_worker = modules.utils.invoke_tag_image(
+            tag_worker = invoke_tag_image(
                 image_name=service,
                 image_tag=tag,
                 ecr_repo=ECR_REPO,
@@ -226,7 +243,7 @@ def build_images(tag: str = None, push: bool = False):
             click.echo("======================================================\n")
             return
 
-        validation_resp = modules.utils.invoke_ecr_validation()
+        validation_resp = invoke_ecr_validation()
         click.echo(validation_resp)
         try:
             for service in services_list:
