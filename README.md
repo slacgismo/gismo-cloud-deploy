@@ -205,6 +205,12 @@ If a cluster does not exist, please follow [EKS configuration yaml files](#eks-c
 
 - Include the solver license file under `./gismoclouddeploy/services/config/license` folder.(eg. `./gismoclouddeploy/services/config/license/mosek.lic`) Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
 
+- If you have your mosek license on S3, you can use the following command to upload file to ec2 instance:
+
+~~~
+aws s3 cp s3://<bucket_name>/<path>/<lic_file_name> $HOME/<paht>/<lic_file_name>
+~~~
+
 #### Modify the code blocks
 
 - To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
