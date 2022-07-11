@@ -250,9 +250,12 @@ def invoke_eks_get_cluster() -> str:
 def invoke_exec_k8s_run_process_files(
     config_params_str: str = None,
     pod_name: str = None,
-    first_n_files: str = None,
+    first_n_files: str = "None",
 ) -> None:
-
+    logger.info(f"---> {type(config_params_str)} ")
+    if type(config_params_str) != str:
+        logger.error(f"Input {config_params_str} is not string type")
+        return
     command = [
         "kubectl",
         "exec",
@@ -266,12 +269,13 @@ def invoke_exec_k8s_run_process_files(
         f"{config_params_str}",
         f"{first_n_files}",
     ]
+    logger.info(f"=============> command {command}")
     try:
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        # out, err = res.communicate()
-        # return out
+        out, err = res.communicate()
+        return out
     except KeyboardInterrupt as e:
         logger.error(f"Invoke k8s process file error:{e}")
         res.terminate()
@@ -286,6 +290,7 @@ def invoke_exec_k8s_run_process_files(
 def invoke_exec_k8s_ping_worker(
     service_name: str = None,
 ) -> str:
+    
     command = [
         "kubectl",
         "exec",
@@ -297,7 +302,18 @@ def invoke_exec_k8s_ping_worker(
         "app.py",
         "ping_worker",
     ]
-
+    logger.info(f"=============> command {command}")
+    # try:
+    #     res = subprocess.Popen(
+    #             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    #     )
+    #     out, err = res.communicate()
+    #     print(out)
+    #     return out
+    # except KeyboardInterrupt as e:
+    #     logger.error(f"Invoke k8s process file error:{e}")
+    #     res.terminate()
+    #     return e
     res = exec_docker_command(command)
     return res
 
@@ -318,7 +334,19 @@ def invoke_exec_k8s_check_task_status(
         "check_task_status",
         f"{task_id}",
     ]
+    logger.info(f"=============> command {command}")
+    # try:
+    #     res = subprocess.Popen(
+    #             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    #     )
+    #     out, err = res.communicate()
+    #     return out
+    # except KeyboardInterrupt as e:
+    #     logger.error(f"Invoke k8s process file error:{e}")
+    #     res.terminate()
+    #     return e
     res = exec_docker_command(command)
+    logger.info(f"=============> res {res}")
     return res
 
 

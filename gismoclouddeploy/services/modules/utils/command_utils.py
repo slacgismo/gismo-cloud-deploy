@@ -44,6 +44,7 @@ logging.basicConfig(
 def checck_server_ready_and_get_name(
     deployment_services_list: List[str] = None,
     is_docker: bool = False,
+    is_build: bool = False
 ) -> str:
     server_name = ""
     if is_docker:
@@ -68,7 +69,7 @@ def checck_server_ready_and_get_name(
         for server in server_list:
             # logger.info(f"server name ====> {server}")
             is_server_ready = check_and_wait_server_ready(
-                is_docer=is_docker, server_name=server, counter=2, delay=1
+                is_docer=is_docker, server_name=server['name'], counter=2, delay=1
             )
             if is_server_ready is False:
                 logger.error(f"{server} is not ready")
@@ -87,64 +88,41 @@ def checck_server_ready_and_get_name(
 
     # return server_name
 def send_command_to_server_list(
-    servers_list: List[str] = None,
-    number: int = Union[int, None],
-    worker_config_json: str = None,
+    server_name: str = None,
+    worker_config_json: dict = None,
     is_docker: bool = False,
-    process_files_list:List[str] = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-    sns_topic: str = None,
-) -> List[str]:
+    files_list: List[str] = None,
+) -> None :
 
 
+    worker_config_json["default_process_files"] = json.dumps(files_list)
 
-    worker_config_json["aws_access_key"] = aws_access_key
-    worker_config_json["aws_secret_access_key"] = aws_secret_access_key
-    worker_config_json["aws_region"] = aws_region
-    worker_config_json["sns_topic"] = sns_topic
-
-    s3_client = aws_utils.connect_aws_client(
-        client_name="s3",
-        key_id=worker_config_json["aws_access_key"],
-        secret=worker_config_json["aws_secret_access_key"],
-        region=worker_config_json["aws_region"],
-    )
-    n_files = return_process_filename_base_on_command(
-        first_n_files=number,
-        bucket=worker_config_json["data_bucket"],
-        default_files=worker_config_json["default_process_files"],
-        s3_client=s3_client,
-    )
-    # start_index = 0
-    # end_index = num_file_to_process_per_round
-    # if end_index > len(n_files):
-    #     end_index = len(n_files)
-    total_tasks_ids = []
-    # while start_index < len(n_files):
-    process_files_list = []
-    for file in n_files:
-        process_files_list.append(file)
-        # print(f"--------------{file}")
-    #
-    worker_config_json["default_process_files"] = json.dumps(process_files_list)
+    # print(  worker_config_json["default_process_files"])
     worker_config_str = json.dumps(worker_config_json)
     # invoke process files
-    resp = invoke_process_files_to_server(
-        is_docker=is_docker,
-        server_name=server_name,
-        worker_config_str=worker_config_str,
-        number=None,
-    )
+    # print("--------------")
+    # print(worker_config_str)
+    # print("--------------")
+    # print(type(worker_config_str))
+    # print("--------------")
+    try:
+        resp = invoke_process_files_to_server(
+            is_docker=is_docker,
+            server_name=server_name,
+            worker_config_str=worker_config_str,
+            number=None,
+        )
+    except Exception as e:
+        logger.error(f"invoke run-files command error: {e}")
+        raise e
 
-    return None
+    return 
 
 
 def send_command_to_server(
     server_name: str = None,
     number: int = Union[int, None],
-    worker_config_json: str = None,
+    worker_config_json: dict = None,
     is_docker: bool = False,
     num_file_to_process_per_round: int = 10,
     aws_access_key: str = None,
@@ -589,38 +567,39 @@ def check_and_wait_server_ready(
         if counter <= 0:
             logger.error(f"Ping {server_name} over time")
             return
+    print(f"task_id:{task_id}")
+    return True
+    # while counter > 0:
 
-    while counter > 0:
+    #     result = ""
+    #     if is_docer:
+    #         result = invoke_exec_docker_check_task_status(
+    #             server_name=server_name, task_id=str(task_id).strip("\n")
+    #         )
+    #     else:
+    #         logger.info("Chcek k8s worker status")
+    #         result = invoke_exec_k8s_check_task_status(
+    #             server_name=server_name, task_id=str(task_id).strip("\n")
+    #         )
+    #     # logger.info(result)
+    #     # conver json to
+    #     res_json = {}
+    #     dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
 
-        result = ""
-        if is_docer:
-            result = invoke_exec_docker_check_task_status(
-                server_name=server_name, task_id=str(task_id).strip("\n")
-            )
-        else:
-            logger.info("Chcek k8s worker status")
-            result = invoke_exec_k8s_check_task_status(
-                server_name=server_name, task_id=str(task_id).strip("\n")
-            )
-        # logger.info(result)
-        # conver json to
-        res_json = {}
-        dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")
+    #     try:
+    #         res_json = json.loads(dataform)
+    #         status = res_json["task_status"]
+    #         # logger.info(f" ==== Check {server_name} Status: {res_json}====")
+    #         if status == "SUCCESS":
+    #             return True
+    #     except Exception as e:
+    #         logger.info(f"load json failed res:{result} {e}")
+    #         return False
 
-        try:
-            res_json = json.loads(dataform)
-            status = res_json["task_status"]
-            # logger.info(f" ==== Check {server_name} Status: {res_json}====")
-            if status == "SUCCESS":
-                return True
-        except Exception as e:
-            logger.info(f"load json failed res:{result} {e}")
-            return False
-
-        wait_time -= delay
-        time.sleep(delay)
-    logger.error("check server reday orvertime")
-    return False
+    #     counter -= delay
+    #     time.sleep(delay)
+    # logger.error("check server reday orvertime")
+    # return False
 
 
 def convert_yaml_to_json(yaml_file: str = None):

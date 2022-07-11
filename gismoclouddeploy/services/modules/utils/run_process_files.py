@@ -1,5 +1,5 @@
 import time
-
+import math
 
 from .command_utils import (
     check_solver_and_upload,
@@ -7,6 +7,8 @@ from .command_utils import (
     create_or_update_k8s_deployment,
     checck_server_ready_and_get_name,
     send_command_to_server,
+    return_process_filename_base_on_command,
+    send_command_to_server_list
 )
 from .initial_end_services import initial_end_services
 
@@ -15,7 +17,6 @@ from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
 from .check_aws import connect_aws_client, check_environment_is_aws
-
 from .modiy_config_parameters import modiy_config_parameters
 import logging
 import socket
@@ -296,12 +297,61 @@ def run_process_files(
         deployment_services_list=services_config_list,
         is_docker=is_docker,
     )
-
+    
     if len(ready_server_list) == 0 :
         logger.error("Cannot get server name")
         return
 
     initial_process_time = time.time() - start_time
+    # worker_config_json["aws_access_key"] = aws_access_key
+    # worker_config_json["aws_secret_access_key"] = aws_secret_access_key
+    # worker_config_json["aws_region"] = aws_region
+    # worker_config_json["sns_topic"] = sns_topic
+
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_config_obj.aws_access_key,
+        secret=aws_config_obj.aws_secret_access_key,
+        region=aws_config_obj.aws_region,
+    )
+    n_files = return_process_filename_base_on_command(
+        first_n_files=number,
+        bucket=worker_config_obj.data_bucket,
+        default_files=worker_config_obj.default_process_files,
+        s3_client=s3_client,
+    )
+    number_server = len(ready_server_list)
+    file_segment = int(math.ceil(len(n_files)/number_server))
+    files_segment_list = []
+    star_index = 0 
+    for i in range(number_server):
+        # print(i)
+        files_segment_list.append(n_files[star_index:star_index+file_segment])
+        star_index = i+file_segment
+    for index, server in enumerate(ready_server_list):
+        if index > len(files_segment_list):
+            break
+        if len(files_segment_list[index]) == 0:
+            break
+        # logger.info(f"{index} {server}, files_segment_list :{files_segment_list[index]}")
+        send_command_to_server_list(
+            server_name=server['name'],
+            worker_config_json=config_json["worker_config"],
+            files_list=files_segment_list[index],
+            is_docker=is_docker
+
+        )
+       
+    # if number_server >= len(files_segment_list):
+    #     for index, server in enumerate(ready_server_list):
+    #         logger.info(f"{index} {server}, files_segment_list :{files_segment_list[index]}")
+    # else:
+    #     logger.error("Number of files segment is larger than number server")
+    #     return
+    # for file in files_segment_list:
+    #     send_command_to_server_list(
+
+    #     )
 
     return 
 

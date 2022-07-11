@@ -14,21 +14,21 @@ aws_config:
 # Parameters used for cli in k8s config.
 services_config_list:
   worker:
-      desired_replicas: 2 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
+      desired_replicas: 1 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/worker.deployment.yaml"
       service_file: ""
       image_name: "worker"
       image_tag: "latest"
   server:
-      desired_replicas: 2
+      desired_replicas: 1
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/server.deployment.yaml"
       service_file: "./config/k8s/server.services.yaml"
       image_name: "server"
       image_tag: "latest"
   redis:
-      desired_replicas: 2
+      desired_replicas: 1
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/redis.deployment.yaml"
       service_file: "./config/k8s/redis.services.yaml"
@@ -36,7 +36,7 @@ services_config_list:
       image_tag: "latest"
 
   rabbitmq:
-      desired_replicas: 2
+      desired_replicas: 1
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
       service_file: "./config/k8s/rabbitmq.services.yaml"
