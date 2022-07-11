@@ -338,7 +338,11 @@ def run_process_files(
             server_name=server['name'],
             worker_config_json=config_json["worker_config"],
             files_list=files_segment_list[index],
-            is_docker=is_docker
+            is_docker=is_docker,
+            aws_access_key=aws_config_obj.aws_access_key,
+            aws_secret_access_key=aws_config_obj.aws_secret_access_key,
+            aws_region=aws_config_obj.aws_region,
+            sns_topic=sns_topic,
 
         )
        
@@ -353,47 +357,46 @@ def run_process_files(
 
     #     )
 
-    return 
 
 
-    if ready_server_name is None:
-        logger.error("Cannot get server name")
-        return
-    logger.info(f"------ {ready_server_name}")
-    # send command to server and get task IDs
-    worker_replicas = 0
-    for key, value in services_config_list.items():
-        if key == "worker":
-            worker_replicas = value["desired_replicas"]
-    logger.info(f"Current worker replica:{worker_replicas}")
-    if worker_replicas == 0:
-        logger.error(f"Number of worker error:{worker_replicas} ")
+    # if ready_server_name is None:
+    #     logger.error("Cannot get server name")
+    #     return
+    # logger.info(f"------ {ready_server_name}")
+    # # send command to server and get task IDs
+    # worker_replicas = 0
+    # for key, value in services_config_list.items():
+    #     if key == "worker":
+    #         worker_replicas = value["desired_replicas"]
+    # logger.info(f"Current worker replica:{worker_replicas}")
+    # if worker_replicas == 0:
+    #     logger.error(f"Number of worker error:{worker_replicas} ")
 
-    initial_process_time = time.time() - start_time
+    # initial_process_time = time.time() - start_time
 
-    proces = list()
-    try:
-        logger.info(
-            "============ Running invoke process files commmand in multiprocess ==========="
-        )
-        proc_x = Process(
-            target=send_command_to_server(
-                server_name=ready_server_name,
-                number=number,
-                worker_config_json=config_json["worker_config"],
-                is_docker=is_docker,
-                num_file_to_process_per_round=worker_replicas * 3,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-                sns_topic=sns_topic,
-            )
-        )
-        proc_x.name = "Invoker process files"
-        proc_x.start()
-    except Exception as e:
-        logger.error(f"Invoke process files in server error:{e}")
-        return
+    # proces = list()
+    # try:
+    #     logger.info(
+    #         "============ Running invoke process files commmand in multiprocess ==========="
+    #     )
+    #     proc_x = Process(
+    #         target=send_command_to_server(
+    #             server_name=ready_server_name,
+    #             number=number,
+    #             worker_config_json=config_json["worker_config"],
+    #             is_docker=is_docker,
+    #             num_file_to_process_per_round=worker_replicas * 3,
+    #             aws_access_key=aws_access_key,
+    #             aws_secret_access_key=aws_secret_access_key,
+    #             aws_region=aws_region,
+    #             sns_topic=sns_topic,
+    #         )
+    #     )
+    #     proc_x.name = "Invoker process files"
+    #     proc_x.start()
+    # except Exception as e:
+    #     logger.error(f"Invoke process files in server error:{e}")
+    #     return
 
     delay = aws_config_obj.interval_of_check_dynamodb_in_second
     acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)

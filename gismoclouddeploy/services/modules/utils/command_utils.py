@@ -92,10 +92,20 @@ def send_command_to_server_list(
     worker_config_json: dict = None,
     is_docker: bool = False,
     files_list: List[str] = None,
+    aws_access_key:str = None,
+    aws_secret_access_key:str = None,
+    aws_region:str = None,
+    sns_topic:str = None
+
+
 ) -> None :
 
 
     worker_config_json["default_process_files"] = json.dumps(files_list)
+    worker_config_json["aws_access_key"] = aws_access_key
+    worker_config_json["aws_secret_access_key"] = aws_secret_access_key
+    worker_config_json["aws_region"] = aws_region
+    worker_config_json["sns_topic"] = sns_topic
 
     # print(  worker_config_json["default_process_files"])
     worker_config_str = json.dumps(worker_config_json)
@@ -147,6 +157,7 @@ def send_command_to_server(
         default_files=worker_config_json["default_process_files"],
         s3_client=s3_client,
     )
+    print(f"n_files {n_files}")
     # start_index = 0
     # end_index = num_file_to_process_per_round
     # if end_index > len(n_files):

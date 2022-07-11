@@ -97,6 +97,7 @@ def process_files(worker_config_str: str, first_n_files: str):
             task_input_json["curr_process_file"] = file
             task_input_json["curr_process_column"] = column
             task_id = process_data_task.delay(**task_input_json)
+            print(f"---> task_id :{task_id}")
             task_ids.append(task_id)
             message = {
                 "file_name": file,
