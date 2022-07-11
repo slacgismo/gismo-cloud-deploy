@@ -114,7 +114,7 @@ The output should return the IAM user details for designated_user.
 :warning: Confirmed with the cluster's creator that this IAM role has permission to access it.
 
 - Find out the existing EKS clusters name on AWS EKS page of your AWS account with specify region (eg. `us-east-2`). Under EKS pages, you will see the clusters name, such as `gcd`.
-Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster by following command. For example, replace < your-cluster-name > with `gcd` and replace < your-region-code > with `us-east-2`
+- Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster by following command. For example, replace < your-cluster-name > with `gcd` and replace < your-region-code > with `us-east-2`
   
 ~~~
 aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
