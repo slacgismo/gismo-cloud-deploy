@@ -49,7 +49,9 @@ This image had been installed necessary dependenciues included:
 
 #### Launch a instance
 
-- Give this new instance a name you like (eg. `gcd-eks-test`)
+- Give this new instance a name you like (eg. `gcd-eks-test`), and select `Add additional tags` button next to Name column.
+
+- Create a tag called: `project:pvinsight` for budget management purposes.
 
 - This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
 
@@ -59,7 +61,6 @@ This image had been installed necessary dependenciues included:
 
 - Click the `Launch instance` button to launch an EC2 instance.
 
-- After the EC2 instance is launched, under the `Tags`, create a tag called: `project:pvinsight` for budget management purposes.
 
 #### Launch the application
 
