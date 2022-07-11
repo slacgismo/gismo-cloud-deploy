@@ -338,7 +338,6 @@ def run_process_files(
     delay = aws_config_obj.interval_of_check_dynamodb_in_second
     acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
     unfinished_tasks_id_set = long_pulling_sqs(
-        wait_time=7200,
         delay=delay,
         sqs_url=sqs_url,
         worker_config=worker_config_obj,

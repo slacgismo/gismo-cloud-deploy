@@ -25,6 +25,8 @@ def remove_prevous_results_files(
     save_plot_file_local: str = None,
 ) -> None:
 
+
+    # remove previous save data
     if exists(save_data_file_local):
         os.remove(save_data_file_local)
 
@@ -43,7 +45,6 @@ def remove_prevous_results_files(
 
 def long_pulling_sqs(
     worker_config: WORKER_CONFIG = None,
-    wait_time: int = 1,
     delay: int = None,
     sqs_url: str = None,
     acccepted_idle_time: int = 1,
@@ -61,7 +62,6 @@ def long_pulling_sqs(
         region=aws_region,
     )
 
-    numb_tasks_completed = 0
     task_completion = 0
 
     remove_prevous_results_files(
@@ -142,6 +142,7 @@ def long_pulling_sqs(
                             "------------------------------------------------------"
                         )
 
+                    # Get task_id
                     received_init_task_ids_set.add(received_init_id)
 
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
@@ -165,7 +166,7 @@ def long_pulling_sqs(
                         logger.warning(
                             "------------------------------------------------------"
                         )
-
+                
                     received_completed_task_ids_set.add(received_completed_id)
                     # Save loags
                     logs_data.append(message_json)
@@ -195,27 +196,21 @@ def long_pulling_sqs(
             # end of loop
 
         # Appand to files
-        if len(save_data) > 0:
-            save_data_df = pd.json_normalize(save_data)
-            save_data_df.to_csv(
-                worker_config.save_data_file_local,
-                mode="a",
-                header=not os.path.exists(worker_config.save_data_file_local),
-            )
-        if len(error_data) > 0:
-            save_error_df = pd.json_normalize(error_data)
-            save_error_df.to_csv(
-                worker_config.save_error_file_local,
-                mode="a",
-                header=not os.path.exists(worker_config.save_error_file_local),
-            )
-        if len(logs_data) > 0:
-            save_logs_df = pd.json_normalize(logs_data)
-            save_logs_df.to_csv(
-                worker_config.save_logs_file_local,
-                mode="a",
-                header=not os.path.exists(worker_config.save_logs_file_local),
-            )
+        # save data
+        append_receive_data(
+            data_dict=save_data,
+            file_name=worker_config.save_data_file_local
+        )
+        # save logs 
+        append_receive_data(
+            data_dict=logs_data,
+            file_name=worker_config.save_logs_file_local
+        )
+        # save
+        append_receive_data(
+            data_dict=error_data,
+            file_name=worker_config.save_error_file_local
+        )
 
         # Invoke received new message again
         if previous_received_completed_task_ids_set_len != len(
@@ -289,3 +284,23 @@ def long_pulling_sqs(
         # wait_time -= int(delay)
 
     return uncompleted_task_id_set
+
+
+def append_receive_data(
+    data_dict:dict = None,
+    file_name:str = None,
+
+) -> None:
+    if len(data_dict) == 0 :
+        return
+
+    try:
+        if len(data_dict) > 0:
+            save_data_df = pd.json_normalize(data_dict)
+            save_data_df.to_csv(
+                file_name,
+                mode="a",
+                header=not os.path.exists(file_name),
+            )     
+    except Exception as e:
+        raise e
