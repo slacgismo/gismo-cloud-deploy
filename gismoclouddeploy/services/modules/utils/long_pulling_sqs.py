@@ -1,7 +1,4 @@
-"""
-This file is an old file contains long pulling sqs.
 
-"""
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client
@@ -87,8 +84,9 @@ def long_pulling_sqs(
     previous_messages_time = time.time()  # flag of idle time
     num_total_tasks = -1
     uncompleted_task_id_set = set()
-
-    while wait_time > 0:
+    
+    start_time = time.time()
+    while True > 0:
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
         )
@@ -282,11 +280,12 @@ def long_pulling_sqs(
             )
             return uncompleted_task_id_set
 
+        total_time = time.time() - start_time
         logger.info(
-            f" Waiting .: {wait_time - delay} \
+            f" total_time .: {total_time} \
             Idle Time: {idle_time} "
         )
         time.sleep(delay)
-        wait_time -= int(delay)
+        # wait_time -= int(delay)
 
     return uncompleted_task_id_set
