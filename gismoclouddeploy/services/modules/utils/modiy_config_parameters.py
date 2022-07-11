@@ -5,7 +5,7 @@ import yaml
 import os
 import socket
 from .invoke_function import invoke_eks_get_cluster
-
+import re
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -44,8 +44,9 @@ def modiy_config_parameters(
     """
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
-    user_id = str(socket.gethostname())
-
+    host_name = (socket.gethostname())
+    user_id = re.sub('[^a-zA-Z0-9 \n\.]', '', host_name)
+    print(f"----- user_id :{user_id}")
     config_json["worker_config"]["user_id"] = user_id
     config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
         config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"]

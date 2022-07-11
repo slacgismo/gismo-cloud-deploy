@@ -2,7 +2,6 @@ from os.path import exists
 import botocore
 
 from typing import List
-
 import yaml
 import json
 from botocore.exceptions import ClientError
