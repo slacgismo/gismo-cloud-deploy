@@ -36,6 +36,7 @@ def tracklog_decorator(func):
             aws_region = kwargs["aws_region"]
             sns_topic = kwargs["sns_topic"]
             user_id = kwargs["user_id"]
+            server_name = kwargs["server_name"]
 
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
@@ -79,6 +80,7 @@ def tracklog_decorator(func):
             "pid": pid,
             "data": "None",
             "error": error_output,
+            "server_name": server_name
         }
 
         try:
@@ -89,7 +91,6 @@ def tracklog_decorator(func):
             alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
             sns_message["alert_type"] = alert_type
             sns_message["error"] = error_output
-
         publish_message_sns(
             message=json.dumps(sns_message),
             subject=user_id,

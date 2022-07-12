@@ -345,7 +345,27 @@ def run_process_files(
             sns_topic=sns_topic,
 
         )
-       
+    # init_tasak_set = dict()
+    # for sever in ready_server_list:
+    #     server_name = sever['name']
+    #     print()
+    #     init_tasak_set[server_name] = set()
+    # print("------")
+    
+    acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
+    long_pulling_sqs(
+        servers_list = ready_server_list,
+        wait_time=7200,
+        delay=1,
+        sqs_url=sqs_url,
+        worker_config=worker_config_obj,
+        acccepted_idle_time=acccepted_idle_time,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region,
+    )
+    return
+    # return
     # if number_server >= len(files_segment_list):
     #     for index, server in enumerate(ready_server_list):
     #         logger.info(f"{index} {server}, files_segment_list :{files_segment_list[index]}")
@@ -398,21 +418,22 @@ def run_process_files(
     #     logger.error(f"Invoke process files in server error:{e}")
     #     return
 
-    delay = aws_config_obj.interval_of_check_dynamodb_in_second
-    acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
-    unfinished_tasks_id_set = long_pulling_sqs(
-        wait_time=7200,
-        delay=delay,
-        sqs_url=sqs_url,
-        worker_config=worker_config_obj,
-        acccepted_idle_time=acccepted_idle_time,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
-    logger.info(" ----- init end services process --------- ")
-    total_process_time = time.time() - start_time
-    num_unfinished_tasks = len(unfinished_tasks_id_set)
+    # delay = aws_config_obj.interval_of_check_dynamodb_in_second
+    # acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
+    # unfinished_tasks_id_set = long_pulling_sqs(
+    #     wait_time=7200,
+    #     delay=delay,
+    #     sqs_url=sqs_url,
+    #     worker_config=worker_config_obj,
+    #     acccepted_idle_time=acccepted_idle_time,
+    #     aws_access_key=aws_access_key,
+    #     aws_secret_access_key=aws_secret_access_key,
+    #     aws_region=aws_region,
+    # )
+    # return
+    # logger.info(" ----- init end services process --------- ")
+    # total_process_time = time.time() - start_time
+    # num_unfinished_tasks = len(unfinished_tasks_id_set)
     initial_end_services(
         worker_config=worker_config_obj,
         is_docker=is_docker,

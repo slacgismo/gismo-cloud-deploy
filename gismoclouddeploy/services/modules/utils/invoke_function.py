@@ -303,7 +303,7 @@ def invoke_exec_k8s_ping_worker(
         "app.py",
         "ping_worker",
     ]
-    logger.info(f"=============> command {command}")
+    # logger.info(f"=============> command {command}")
     # try:
     #     res = subprocess.Popen(
     #             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -335,7 +335,7 @@ def invoke_exec_k8s_check_task_status(
         "check_task_status",
         f"{task_id}",
     ]
-    logger.info(f"=============> command {command}")
+    # logger.info(f"=============> command {command}")
     # try:
     #     res = subprocess.Popen(
     #             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT

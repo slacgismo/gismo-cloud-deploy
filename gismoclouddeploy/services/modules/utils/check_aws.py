@@ -15,10 +15,7 @@ def check_aws_validity(key_id: str, secret: str) -> bool:
         return False
 
 
-# def check_environment_is_aws() -> bool:
-#     my_user = os.environ.get("USER")
-#     is_aws = True if "ec2" in my_user else False
-#     return is_aws
+
 def check_environment_is_aws() -> bool:
     datasource_file = "/var/lib/cloud/instance/datasource"
     if exists(datasource_file):

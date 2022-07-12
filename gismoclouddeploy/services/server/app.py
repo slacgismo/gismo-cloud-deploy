@@ -104,6 +104,7 @@ def process_files(worker_config_str: str, first_n_files: str):
                 "column_name": column,
                 "task_id": str(task_id),
                 "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
+                "server_name":worker_config_json['server_name']
             }
             publish_message_sns(
                 subject=worker_config_json["user_id"],
@@ -139,6 +140,7 @@ def process_files(worker_config_str: str, first_n_files: str):
         "total_tasks": len(task_ids),
         "task_id": SNSSubjectsAlert.SEND_TASKID_INFO.name,
         "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
+        "server_name":worker_config_json['server_name']
     }
     publish_message_sns(
         subject=worker_config_json["user_id"],

@@ -106,15 +106,12 @@ def send_command_to_server_list(
     worker_config_json["aws_secret_access_key"] = aws_secret_access_key
     worker_config_json["aws_region"] = aws_region
     worker_config_json["sns_topic"] = sns_topic
-
+    worker_config_json['server_name'] = server_name
+    logger.info(f"------------User id ; server {server_name}")
+    logger.info(worker_config_json['user_id'])
     # print(  worker_config_json["default_process_files"])
     worker_config_str = json.dumps(worker_config_json)
-    # invoke process files
-    # print("--------------")
-    # print(worker_config_str)
-    # print("--------------")
-    # print(type(worker_config_str))
-    # print("--------------")
+
     try:
         resp = invoke_process_files_to_server(
             is_docker=is_docker,
