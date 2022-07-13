@@ -309,8 +309,6 @@ def run_process_files(
     if worker_replicas == 0:
         logger.error(f"Number of worker error:{worker_replicas} ")
 
-    initial_process_time = time.time() - start_time
-
     proces = list()
     try:
         logger.info(
@@ -330,6 +328,7 @@ def run_process_files(
             )
         )
         proc_x.name = "Invoker process files"
+        initial_process_time = time.time() - start_time
         proc_x.start()
     except Exception as e:
         logger.error(f"Invoke process files in server error:{e}")
