@@ -1,4 +1,4 @@
-from matplotlib import use
+
 from utils.aws_utils import (
     connect_aws_client,
     download_solver_licence_from_s3_and_save,

@@ -1,0 +1,19 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: gcd-gridlabd
+  region: us-east-2
+  tags:
+    project: pvinsight
+    manage: eksctl
+
+nodeGroups:
+  - name: gcd-gridlabd
+    instanceType: t2.large
+    desiredCapacity: 0
+    minSize: 0
+    maxSize: 30
+    tags:
+      project: gridlabd
+      manage: eksctl

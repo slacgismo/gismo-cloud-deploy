@@ -220,7 +220,7 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
         dlq_url=DLQ_URL,
         ecr_repo=ECR_REPO,
     )
-    build_resp = invoke_docker_compose_build( code_template_folder=config_json['worker_config']['code_template_folder'])
+    build_resp = invoke_docker_compose_build( worker_folder=config_json['worker_config']['worker_dockerfile_folder'],code_template_folder=config_json['worker_config']['code_template_folder'])
     # click.echo(build_resp)
     services_list = ["worker", "server"]
     try:

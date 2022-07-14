@@ -47,7 +47,6 @@ WORKDIR /app
 
 
 # copy project code
-COPY $code_path ./project/
 
 COPY ./server .
 

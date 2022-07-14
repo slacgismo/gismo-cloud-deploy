@@ -1,0 +1,14 @@
+# These are necessary packages to build `server` and `worker`.
+# Please do not change them.
+# =================
+Flask==2.1.2
+celery==5.2.6
+redis==3.5.3
+Flask-CeleryExt==0.3.4
+pytest-flask==1.2.0
+factory-boy==3.2.0
+Pillow==9.1.1
+pydantic==1.9.0
+click==8.1.3
+
+# ===================

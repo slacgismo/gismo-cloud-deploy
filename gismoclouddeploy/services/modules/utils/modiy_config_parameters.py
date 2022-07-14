@@ -163,6 +163,12 @@ def modiy_config_parameters(
     config_json["aws_config"]["sqs_url"] = sqs_url
     config_json["aws_config"]["dlq_url"] = dlq_url
     config_json["aws_config"]["ecr_repo"] = ecr_repo
+
+
+
+    worker_dockerfile_folder = config_json["worker_config"]["worker_dockerfile_folder"]
+    logger.info(f"------------- {worker_dockerfile_folder}")
+    
     return config_json
 
 
