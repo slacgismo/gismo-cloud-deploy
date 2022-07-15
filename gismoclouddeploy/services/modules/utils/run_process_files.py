@@ -10,6 +10,7 @@ from .command_utils import (
 )
 from .initial_end_services import initial_end_services
 
+from .process_log import analyze_local_logs_files
 
 from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
@@ -104,6 +105,20 @@ def run_process_files(
     # check environments , check image name and tag exist. Update images name and tag to object
     is_local = True
 
+    # analyze_local_logs_files(
+    #     instanceType="test",
+    #     logs_file_path_name="results/logs-12.csv",
+    #     initial_process_time=0,
+    #     total_process_time=1010,
+    #     eks_nodes_number=1,
+    #     num_workers=1,
+    #     save_file_path_name=worker_config_obj.save_performance_local,
+    #     num_unfinished_tasks=0,
+    #     code_templates_folder=worker_config_obj.code_template_folder,
+    # )
+
+
+    # return 
     if check_environment_is_aws():
         logger.info("======== Running on AWS ========")
         is_local = False

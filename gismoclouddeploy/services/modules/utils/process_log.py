@@ -157,12 +157,13 @@ def analyze_local_logs_files(
         return
 
     df = pd.read_csv(logs_file_path_name)
+    # print(df[(df["host_ip"] == "192.168.7.249")])
     # print(df.head())
     # get error task
 
     error_task = df[(df["alert_type"] == "SYSTEM_ERROR")]
     num_error_task = len(error_task)
-
+    
     worker_dict = process_df_for_gantt(df)
     shortest_task = ""
     longest_task = ""
@@ -177,6 +178,8 @@ def analyze_local_logs_files(
     task_duration_in_parallelism = 0
     efficiency = 0
     for key, value in worker_dict.items():
+        # logger.info(f"ip {value['host_ip']} ")
+        # logger.info(f"ip {value} ")
         if ("start" in value) is False:
             logger.warning(f"missing 'start' key in task {key}")
             continue
@@ -216,6 +219,36 @@ def analyze_local_logs_files(
             )
             * 100
         )
+
+    ip_accumulation_druations = dict()
+    # --------------------------
+    # calcuate effeciency factor
+    # --------------------------
+    # step 1 , accumulate the process time of each host_ip/pid
+    for key, value in worker_dict.items():
+        print(value)
+        _duration = float(value["duration"])
+        _host_ip = value['host_ip']
+        _pid = value['pid']
+        key = str(_host_ip) + "/" +str(_pid)
+        if  key in ip_accumulation_druations:
+            ip_accumulation_druations[key] += _duration
+        else:
+            ip_accumulation_druations[key] =  _duration
+
+
+    # step 2 ,divide the total_process_time of each  host_ip/pid with task_duration_in_parallelism
+    # ( total_process_time ) / (task_duration_in_parallelism * number_host_ip_pid)
+    total_process_time = 0
+    for key , value in ip_accumulation_druations.items():
+        total_process_time += value
+    
+    effeciencyFactory = total_process_time/(task_duration_in_parallelism * len(ip_accumulation_druations))
+
+        # logger.info(f"ip {value['host_ip']}, start: {start}, end: {end} ")
+    # --------------------------
+    # calcuate effeciency factor
+    # -------------------------- 
     performance = [
         ["Performance", "Results", "Info"],
         ["Code templates folder", code_templates_folder, ""],
@@ -241,6 +274,7 @@ def analyze_local_logs_files(
         ["Number of nodes", f"{eks_nodes_number}"],
         ["Number of workers", f"{num_workers}"],
         ["Instance type", f"{instanceType}"],
+        ["Efficiency factor", f"{effeciencyFactory} %"],
     ]
     table1 = AsciiTable(performance)
     print(table1.table)

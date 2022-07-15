@@ -45,7 +45,7 @@ services_config_list:
 
 # Parameters pass to woker container.
 worker_config:
-  worker_dockerfile_folder: "gridlabd"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
+  worker_dockerfile_folder: "solardatatools"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
   solver:
     solver_name: "MOSEK"
     saved_solver_bucket: "pv.insight.test"
@@ -60,7 +60,7 @@ worker_config:
   saved_path_aws: "results"                               # Path of saved files in bucket
   saved_path_local: "results"
   acccepted_idle_time: 360
-  code_template_folder: "code-templates-gridlabd" # Code blocks folder example: "code-templates-solardatatools" (If you change here, you have to change `worker_dockerfile_folder` accordingly)
+  code_template_folder: "code-templates-solardatatools" # Code blocks folder example: "code-templates-solardatatools" (If you change here, you have to change `worker_dockerfile_folder` accordingly)
   saved_rumtime_image_name: None            # "runtime-{user_id}.png"
   saved_performance_file: None              # "performance-{user_id}.txt"
   saved_data_target_filename: None          # "results-{user_id}.csv"
