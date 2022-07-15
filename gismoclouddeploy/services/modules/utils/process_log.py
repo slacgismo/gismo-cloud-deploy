@@ -239,16 +239,25 @@ def analyze_local_logs_files(
 
     # step 2 ,divide the total_process_time of each  host_ip/pid with task_duration_in_parallelism
     # ( total_process_time ) / (task_duration_in_parallelism * number_host_ip_pid)
-    total_process_time = 0
+    accumulated_process_duration = 0
     for key , value in ip_accumulation_druations.items():
-        total_process_time += value
-    
-    effeciencyFactory = total_process_time/(task_duration_in_parallelism * len(ip_accumulation_druations))
+        accumulated_process_duration += value
+    effeciency_of_each_ip_pid = dict()
+    effeciencyFactory = 0 
+    if task_duration_in_parallelism > 0 :
+
+        for key , value in ip_accumulation_druations.items():
+            effeciency_of_each_ip_pid[key] = value/task_duration_in_parallelism
+
+    if len(ip_accumulation_druations)> 0 :
+        effeciencyFactory = accumulated_process_duration/(task_duration_in_parallelism * len(ip_accumulation_druations))
 
         # logger.info(f"ip {value['host_ip']}, start: {start}, end: {end} ")
     # --------------------------
     # calcuate effeciency factor
     # -------------------------- 
+
+
     performance = [
         ["Performance", "Results", "Info"],
         ["Code templates folder", code_templates_folder, ""],
@@ -274,10 +283,19 @@ def analyze_local_logs_files(
         ["Number of nodes", f"{eks_nodes_number}"],
         ["Number of workers", f"{num_workers}"],
         ["Instance type", f"{instanceType}"],
-        ["Efficiency factor", f"{effeciencyFactory} %"],
+        ["Total efficiency factor", f"{effeciencyFactory} %"],
     ]
+    
+    
+
     table1 = AsciiTable(performance)
     print(table1.table)
+    effeciency_factory_list = []
+    print("Individual effeciency factor:")
+    for key, value in effeciency_of_each_ip_pid.items():
+        _temp_array = [str(key), f"{value} %"]
+        print(_temp_array)
+        effeciency_factory_list.append(_temp_array)
     with open(save_file_path_name, "w") as file:
         print(table1.table, file=file)
         file.close()
