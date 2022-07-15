@@ -120,7 +120,7 @@ def invoke_docker_compose_build(
     code_template_folder: str = None, worker_folder: str = None
 ) -> str:
 
-    command = f"DOCKER_BUILDKIT=0 WORKER_DIRECTORY={worker_folder} docker-compose build --build-arg CODES_FOLDER={code_template_folder}"
+    command = f"WORKER_DIRECTORY={worker_folder} docker-compose build --build-arg CODES_FOLDER={code_template_folder}"
     # output = subprocess.check_output(["bash", "-c", command])
     logger.info(f"docker build command: {command}")
     output = exec_subprocess_command(command=command)

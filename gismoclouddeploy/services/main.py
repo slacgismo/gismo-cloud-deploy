@@ -10,6 +10,7 @@ from modules.utils.run_process_files import run_process_files
 
 from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
+from modules.utils.check_aws import check_environment_is_aws
 from dotenv import load_dotenv
 from modules.utils.command_utils import print_dlq
 from modules.utils.invoke_function import invoke_docker_compose_build,invoke_ecr_validation,invoke_tag_image
@@ -97,6 +98,7 @@ def main():
     help="Scale up eks nodes and worker replcas as the same number. This input number replaces the worker_repliacs and eks_nodes_number in config files",
     default=None,
 )
+
 def run_files(
     number: int = 1,
     deletenodes: bool = False,
@@ -141,6 +143,7 @@ def run_files(
         sns_topic=SNS_TOPIC,
         ecr_repo=ECR_REPO,
         dlq_url=DLQ_URL,
+
     )
 
 
@@ -223,16 +226,24 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
     build_resp = invoke_docker_compose_build( worker_folder=config_json['worker_config']['worker_dockerfile_folder'],code_template_folder=config_json['worker_config']['code_template_folder'])
     # click.echo(build_resp)
     services_list = ["worker", "server"]
+   
+        
+
     try:
         for service in services_list:
-            click.echo(f"tag {ECR_REPO}/{service}:{tag}")
+        
+            update_image = service
+            if check_environment_is_aws():    
+                update_image = f"{ECR_REPO}/{service}"
+
+            click.echo(f"Tag {update_image}:{tag}")
             tag_worker = invoke_tag_image(
-                image_name=service,
+                origin_image=service,
+                update_image=update_image,
                 image_tag=tag,
-                ecr_repo=ECR_REPO,
             )
     except Exception as e:
-        logger.error("Tag image error")
+        logger.error(f"Tag image error {e}")
         return
 
     if push:
