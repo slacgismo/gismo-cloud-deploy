@@ -4,6 +4,7 @@ from os.path import exists
 from datetime import datetime
 from .my_modules import read_csv_from_s3
 import subprocess
+import os
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -36,58 +37,35 @@ def entrypoint(
     """
 
     ## ==================== Modify your code below ==================== ##
-    # logger.info(
-    #     f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
-    # )
-    # command = [
-    #     "cd",
-    #     "/usr/local/src/gridlabd"
-    # ]
-    # try:
-    #     # res = subprocess.Popen(
-    #     #     command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-    #     # )
-    #     #      out, err = res.communicate()
-    #     # logger.info(out)
-    #     proc = subprocess.Popen(command,stdout=subprocess.PIPE)
-    #     while True:
-    #         line = proc.stdout.readline()
-    #         if not line:
-    #             break
-    #         #the real code does filtering here
-    #         print ("change dir:", line.rstrip())
+    # define model folder
+    models_path = "/app/project/gridlabd-models/gridlabd-4/taxonomy"
 
-    # except KeyboardInterrupt as e:
-    #     logger.error(f"Invoke k8s process file error:{e}")
-    #     # res.terminate()
-    #     proc.terminate()
+    # list all files in folder:
+    glmfiles = []
+    for _file in os.listdir(models_path):
+        if _file.endswith(".glm"):
+            # Prints only text file present in My Folder
+            file = models_path + "/" + _file
+            glmfiles.append(file)
 
-    # validation
-    command = ["gridlabd", "./autotest/autotest/test_R5-12.47-3_NR.glm"]
-    # validation
-    # command = ["gridlabd", "-T", "4", "--validate"]
-    try:
-        # res = subprocess.Popen(
-        #     command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        # )
-        #      out, err = res.communicate()
-        # logger.info(out)
-        proc = subprocess.Popen(
-            command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
-        )
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-            # the real code does filtering here
-            print("run validate:", line.rstrip())
+    for _file in glmfiles:
+        try:
+            command = ["gridlabd", _file]
+            print(command)
+            proc = subprocess.Popen(
+                command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
+            )
+            while True:
+                line = proc.stdout.readline()
+                if not line:
+                    break
+                # the real code does filtering here
+                print("run validate:", line.rstrip())
+        except KeyboardInterrupt as e:
+            logger.error(f"Invoke k8s process file error:{e}")
+            # res.terminate()
+            proc.terminate()
 
-    except KeyboardInterrupt as e:
-        logger.error(f"Invoke k8s process file error:{e}")
-        # res.terminate()
-        proc.terminate()
-
-    # check solver file exist: The download function is inside `check_and_download_solver` function ""
     save_data = {"data": "this gridlabd test_R2-12.47-1.glm"}
     # # ==================== Modify your code above ==================== ##
     return save_data

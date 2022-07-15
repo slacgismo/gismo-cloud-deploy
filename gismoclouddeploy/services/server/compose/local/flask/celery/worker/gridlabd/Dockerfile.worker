@@ -36,6 +36,7 @@ RUN apt-get install xz-utils -y
 RUN apt-get install libgdal-dev -y
 
 WORKDIR /usr/local/src
+# download model
 
 RUN git clone -b develop-fix-debian-11-setup-arm https://github.com/slacgismo/gridlabd.git
 WORKDIR /usr/local/src/gridlabd
@@ -79,5 +80,7 @@ COPY ./server .
 
 COPY $code_path ./project/
 RUN chmod -R 755 ./project/
+
+
 
 ENTRYPOINT ["/entrypoint"]
