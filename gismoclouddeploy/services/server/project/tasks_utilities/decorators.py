@@ -12,7 +12,7 @@ from .tasks_utils import (
 
 import logging
 from models.SNSSubjectsAlert import SNSSubjectsAlert
-
+from models.WorkerState import WorkerState
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -40,7 +40,7 @@ def tracklog_decorator(func):
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
         start_time = str(time.time())
-
+        worker_state = WorkerState.RECEIVED.name
         try:
             check_and_download_solver(
                 solver_name=solver["solver_name"],
@@ -55,6 +55,7 @@ def tracklog_decorator(func):
 
             # calls original function
             response = func(*args, **kwargs)
+            worker_state = WorkerState.SUCCESS.name
             # args[0].update_state(state=WorkerState.SUCCESS.name)
             alert_type = SNSSubjectsAlert.SAVED_DATA.name
             error_output = ""
@@ -62,6 +63,7 @@ def tracklog_decorator(func):
             error_output = str(e).replace('"', " ").replace("'", " ")
             logger.error(f"Error :{error_output}")
             alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
+            worker_state = WorkerState.FAILURE.name
 
         end_time = str(time.time())
         hostname = socket.gethostname()
@@ -89,6 +91,7 @@ def tracklog_decorator(func):
             alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
             sns_message["alert_type"] = alert_type
             sns_message["error"] = error_output
+            worker_state = WorkerState.FAILURE.name
 
         publish_message_sns(
             message=json.dumps(sns_message),
@@ -98,5 +101,10 @@ def tracklog_decorator(func):
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
+        
+        # update worker state
+        args[0].update_state(state=worker_state)
 
     return wrapper
+
+
