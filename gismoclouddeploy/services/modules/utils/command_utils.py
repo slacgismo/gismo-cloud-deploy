@@ -552,7 +552,7 @@ def check_and_wait_server_ready(
             logger.info(f"load json failed res:{result} {e}")
             return False
 
-        wait_time -= delay
+        counter -= delay
         time.sleep(delay)
     logger.error("check server reday orvertime")
     return False
