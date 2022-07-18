@@ -337,6 +337,7 @@ def invoke_docekr_exec_revoke_task(image_name: str = None, task_id: str = None) 
         "revoke_task",
         f"{task_id}",
     ]
+    print(f"command : {command}")
     res = exec_docker_command(command)
     return res
 

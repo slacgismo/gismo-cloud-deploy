@@ -1,4 +1,5 @@
 
+import imp
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client
@@ -10,6 +11,7 @@ from server.models.SNSSubjectsAlert import SNSSubjectsAlert
 import os
 import pandas as pd
 from os.path import exists
+from .invoke_function import invoke_ks8_exec_revoke_task,invoke_docekr_exec_revoke_task
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -44,6 +46,8 @@ def remove_prevous_results_files(
 
 
 def long_pulling_sqs(
+    is_docker:bool = False,
+    server_name: str = None,
     worker_config: WORKER_CONFIG = None,
     delay: int = None,
     sqs_url: str = None,
@@ -108,7 +112,10 @@ def long_pulling_sqs(
                 # logger.info(f"message_text: {message_text}")
 
                 if subject != worker_config.user_id:
-                    # not this user's sqs message. do touch
+                    # not this user's sqs message. do nothing
+                    logger.info("---------- Not my meesage pass -------")
+                    logger.info(f"{msg_body}")
+                    logger.info("----------------------------------------")
                     continue
                 # parse Message
                 previous_messages_time = time.time()
@@ -173,6 +180,21 @@ def long_pulling_sqs(
                     # Save errors
                     if alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name:
                         error_data.append(message_json)
+                        # it's error. revoke task
+                        logger.info("---------- Get system error from taskid-------")
+                        logger.info(f" :{received_completed_id}")
+                        logger.info("---------- Init revoke taskif-------")
+                        if is_docker:
+                            invoke_docekr_exec_revoke_task(
+                            image_name=server_name,
+                            task_id=received_completed_id
+                            )
+                        else:
+                            invoke_ks8_exec_revoke_task(
+                                pod_name=server_name,
+                                task_id=received_completed_id,
+
+                            )
                     # Save data
                     if alert_type == SNSSubjectsAlert.SAVED_DATA.name:
                         save_data.append(message_json)
