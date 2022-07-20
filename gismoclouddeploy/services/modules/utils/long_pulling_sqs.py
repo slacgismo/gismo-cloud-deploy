@@ -97,8 +97,8 @@ def long_pulling_sqs(
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 msg_dict =  json.loads(msg_body)
-                print("------------->")
-                print(msg_dict)
+                # print("------------->")
+                # print(msg_dict)
                 receipt_handle = msg["ReceiptHandle"]
                 # subject = (
                 #     msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
