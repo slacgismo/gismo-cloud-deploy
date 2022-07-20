@@ -92,7 +92,7 @@ def process_files(worker_config_str: str, first_n_files: str):
     # print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
-    print(sqs_url)
+    # print(sqs_url)
     for file in default_files:
         matched_column_set = find_matched_column_name_set(
             bucket_name=worker_config_json["data_bucket"],
@@ -185,7 +185,7 @@ def process_files(worker_config_str: str, first_n_files: str):
 
     )
     # print(send_response)
-    print("--------")
+    # print("--------")
     # print(send_response)
     # send tasks completed
     # for id in task_ids:
