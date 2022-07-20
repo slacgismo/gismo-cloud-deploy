@@ -55,7 +55,6 @@ def process_logs_from_local(
     # print(pods_info_dict)
     worker_dict = process_df_for_gantt(df)
     # # # # Show dataframe
-
     gantt_list = []
     for key, value in worker_dict.items():
         try:
@@ -157,6 +156,7 @@ def analyze_local_logs_files(
         return
 
     df = pd.read_csv(logs_file_path_name)
+    
     # print(df[(df["host_ip"] == "192.168.7.249")])
     # print(df.head())
     # get error task

@@ -10,6 +10,19 @@ logging.basicConfig(
 )
 # SQS
 
+def send_queue_message(queue_url, msg_attributes, msg_body,sqs_client):
+    """
+    Sends a message to the specified queue.
+    """
+    try:
+        response = sqs_client.send_message(QueueUrl=queue_url,
+                                           MessageAttributes=msg_attributes,
+                                           MessageBody=msg_body)
+    except ClientError:
+        logger.exception(f'Could not send meessage to the - {queue_url}.')
+        raise
+    else:
+        return response
 
 def get_queue(queue_name: str, sqs_client: "botocore.client.SQS"):
     """
@@ -111,14 +124,29 @@ def clean_user_previous_sqs_message(
         # print(messages)
         if "Messages" in messages:
             for msg in messages["Messages"]:
-                # msg_body = msg["Body"]
-                msg_body = json.loads(msg["Body"])
+                msg_body = msg["Body"]
+                
+                # print(msg_body)
+                MessageAttributes = msg['MessageAttributes']
+                # body = msg["Body"].strip("\'<>() ").replace("'", '"').strip("\n")
+                # msg_body = json.loads( msg["Body"])
                 # logger.info(f"msg_body {msg_body}")
+                # print("------------")
+                # # # print(json_obj)
+                # json_obj  = json.loads(msg_body)
+                # print(json_obj)
+                # # data =json_obj['data']
+                # # error = json_obj['error']
+                # # print(data)
+                # print(error)
+                receive_message_user_id = MessageAttributes['user_id']['StringValue']
+                # print(user_id)
+                # print("------------")
                 receipt_handle = msg["ReceiptHandle"]
-                subject = (
-                    msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
-                )
-                if subject == user_id:
+                # subject = (
+                #     msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
+                # )
+                if receive_message_user_id == user_id:
                     logger.info(f"Delete {index} message")
                     index += 1
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)

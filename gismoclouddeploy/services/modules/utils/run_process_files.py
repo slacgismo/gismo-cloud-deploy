@@ -33,7 +33,7 @@ from .k8s_utils import check_k8s_services_exists, create_k8s_svc_from_yaml
 
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
-from .sqs import clean_user_previous_sqs_message
+from .sqs import clean_user_previous_sqs_message,send_queue_message,receive_queue_message
 from multiprocessing.dummy import Process
 
 # logger config
@@ -107,7 +107,7 @@ def run_process_files(
 
     # analyze_local_logs_files(
     #     instanceType="test",
-    #     logs_file_path_name="results/logs-12.csv",
+    #     logs_file_path_name="results/logs-JimmysMacBookPro2.local.csv",
     #     initial_process_time=0,
     #     total_process_time=1010,
     #     eks_nodes_number=1,
@@ -116,8 +116,42 @@ def run_process_files(
     #     num_unfinished_tasks=0,
     #     code_templates_folder=worker_config_obj.code_template_folder,
     # )
+    # return
 
+    # sqs_client = connect_aws_client(
+    #     client_name="sqs",
+    #     key_id=aws_access_key,
+    #     secret=aws_secret_access_key,
+    #     region=aws_region,
+    # )
 
+    # MSG_ATTRIBUTES = {
+    #     'Title': {
+    #         'DataType': 'String',
+    #         'StringValue': 'Working with SQS in Python using Boto3'
+    #     },
+    #     'Author': {
+    #         'DataType': 'String',
+    #         'StringValue': 'Abhinav D'
+    #     }
+    # }
+
+    # MSG_BODY = 'Learn how to create, receive, delete and modify SQS queues and see the other functions available within the AWS.'
+    # send_response = send_queue_message(
+    #     queue_url=sqs_url,
+    #     msg_attributes=MSG_ATTRIBUTES,
+    #     msg_body=MSG_BODY,
+    #     sqs_client=sqs_client
+
+    # )
+
+    # rec_resp = receive_queue_message(
+    #     queue_url=sqs_url,
+    #     sqs_client=sqs_client,
+    #     MaxNumberOfMessages=10,
+    #     wait_time=1,
+    # )
+    # print(rec_resp)
     # return 
     if check_environment_is_aws():
         logger.info("======== Running on AWS ========")
@@ -305,6 +339,7 @@ def run_process_files(
         delay=1,
         user_id=worker_config_obj.user_id,
     )
+
     # check server ready and return running server name.
 
     ready_server_name = checck_server_ready_and_get_name(
@@ -340,6 +375,7 @@ def run_process_files(
                 aws_secret_access_key=aws_secret_access_key,
                 aws_region=aws_region,
                 sns_topic=sns_topic,
+                sqs_url=sqs_url,
             )
         )
         proc_x.name = "Invoker process files"
@@ -349,6 +385,7 @@ def run_process_files(
         logger.error(f"Invoke process files in server error:{e}")
         return
 
+    
     delay = aws_config_obj.interval_of_check_dynamodb_in_second
     acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
     unfinished_tasks_id_set = long_pulling_sqs(
@@ -363,6 +400,7 @@ def run_process_files(
     logger.info(" ----- init end services process --------- ")
     total_process_time = time.time() - start_time
     num_unfinished_tasks = len(unfinished_tasks_id_set)
+    
     initial_end_services(
         worker_config=worker_config_obj,
         is_docker=is_docker,

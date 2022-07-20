@@ -86,12 +86,13 @@ def send_command_to_server(
     aws_secret_access_key: str = None,
     aws_region: str = None,
     sns_topic: str = None,
+    sqs_url:str = None,
 ) -> List[str]:
     worker_config_json["aws_access_key"] = aws_access_key
     worker_config_json["aws_secret_access_key"] = aws_secret_access_key
     worker_config_json["aws_region"] = aws_region
     worker_config_json["sns_topic"] = sns_topic
-
+    worker_config_json["sqs_url"] = sqs_url
     s3_client = aws_utils.connect_aws_client(
         client_name="s3",
         key_id=worker_config_json["aws_access_key"],

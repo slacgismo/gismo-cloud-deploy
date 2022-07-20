@@ -95,30 +95,33 @@ def long_pulling_sqs(
         error_data = []
         if "Messages" in messages:
             for msg in messages["Messages"]:
-                msg_body = json.loads(msg["Body"])
-
+                msg_body = msg["Body"]
+                msg_dict =  json.loads(msg_body)
+                print("------------->")
+                print(msg_dict)
                 receipt_handle = msg["ReceiptHandle"]
-                subject = (
-                    msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
-                )
-                message_text = (
-                    msg_body["Message"].strip("'<>() ").replace("'", '"').strip("\n")
-                )
+                # subject = (
+                #     msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
+                # )
+                # message_text = (
+                #     msg_body["Message"].strip("'<>() ").replace("'", '"').strip("\n")
+                # )
                 # logger.info(f"subject: {subject}")
                 # logger.info(f"message_text: {message_text}")
-
-                if subject != worker_config.user_id:
+                MessageAttributes = msg['MessageAttributes']
+                user_id = MessageAttributes['user_id']['StringValue']
+                if user_id != worker_config.user_id:
                     # not this user's sqs message. do touch
                     continue
                 # parse Message
                 previous_messages_time = time.time()
 
                 try:
-                    message_json = json.loads(message_text)
-                    alert_type = message_json["alert_type"]
+                    # message_json = json.loads(message_text)
+                    alert_type = msg_dict["alert_type"]
                 except Exception as e:
                     logger.error("----------------------------------------")
-                    logger.error(f"Cannot parse {message_json} from SQS {e}")
+                    logger.error(f"Cannot parse {msg_dict} from SQS {e}")
                     logger.error(f"Cannot parse alert_type. Delete this message")
                     logger.error("----------------------------------------")
                     # numb_tasks_completed += 1
@@ -130,13 +133,13 @@ def long_pulling_sqs(
                 if alert_type == SNSSubjectsAlert.SEND_TASKID.name:
 
                     try:
-                        received_init_id = message_json["task_id"]
+                        received_init_id = msg_dict["task_id"]
                     except:
                         logger.warning(
                             "------------------------------------------------------"
                         )
                         logger.warning(
-                            f"This message does not contain task_id {message_json}"
+                            f"This message does not contain task_id {msg_dict}"
                         )
                         logger.warning(
                             "------------------------------------------------------"
@@ -155,13 +158,13 @@ def long_pulling_sqs(
                     or alert_type == SNSSubjectsAlert.SAVED_DATA.name
                 ):
                     try:
-                        received_completed_id = message_json["task_id"]
+                        received_completed_id = msg_dict["task_id"]
                     except:
                         logger.warning(
                             "------------------------------------------------------"
                         )
                         logger.warning(
-                            f"This message does not contain task_id {message_json}"
+                            f"This message does not contain task_id {msg_dict}"
                         )
                         logger.warning(
                             "------------------------------------------------------"
@@ -169,26 +172,38 @@ def long_pulling_sqs(
                 
                     received_completed_task_ids_set.add(received_completed_id)
                     # Save loags
-                    logs_data.append(message_json)
+                    # file_name,column_name,task_id,alert_type,start_time,end_time,hostname,host_ip,pid,error
+                    _logs = {    
+                        "file_name":msg_dict['file_name'],
+                        "column_name":msg_dict['column_name'],
+                        "task_id":msg_dict['task_id'],
+                        "start_time":msg_dict["start_time"],
+                        "end_time":msg_dict["end_time"],
+                        "hostname":msg_dict["hostname"],
+                        "host_ip":msg_dict["host_ip"],
+                        "pid":msg_dict["pid"],
+                        "alert_type":msg_dict["alert_type"],
+                    }
+                    logs_data.append(_logs)
                     # Save errors
                     if alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name:
-                        error_data.append(message_json)
+                        error_data.append(msg_dict['error'])
                     # Save data
                     if alert_type == SNSSubjectsAlert.SAVED_DATA.name:
-                        save_data.append(message_json)
+                        save_data.append(msg_dict['data'])
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
                     continue
 
                 if alert_type == SNSSubjectsAlert.SEND_TASKID_INFO.name:
                     is_receive_task_info = True
                     try:
-                        num_total_tasks = message_json["total_tasks"]
+                        num_total_tasks = int(msg_dict["total_tasks"])
                     except Exception as e:
                         logger.error(
                             "Cannot parse total task number from alert type SEND_TASKID_INFO. Chcek app.py"
                         )
                         raise Exception(
-                            f"Cannot parse total tasks number from message {message_json} error: {e} "
+                            f"Cannot parse total tasks number from message {msg_dict} error: {e} "
                         )
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
                     continue
