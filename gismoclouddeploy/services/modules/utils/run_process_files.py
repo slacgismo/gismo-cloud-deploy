@@ -1,3 +1,4 @@
+from os import system
 import time
 
 
@@ -15,7 +16,7 @@ from .process_log import analyze_local_logs_files
 from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
-from .check_aws import connect_aws_client, check_environment_is_aws
+from .check_aws import connect_aws_client, check_environment_is_aws,connect_aws_resource
 
 from .modiy_config_parameters import modiy_config_parameters
 import logging
@@ -33,7 +34,7 @@ from .k8s_utils import check_k8s_services_exists, create_k8s_svc_from_yaml
 
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
-from .sqs import clean_user_previous_sqs_message,send_queue_message,receive_queue_message
+from .sqs import clean_user_previous_sqs_message,send_queue_message,receive_queue_message, create_queue,delete_queue
 from multiprocessing.dummy import Process
 
 # logger config
@@ -105,6 +106,34 @@ def run_process_files(
     # check environments , check image name and tag exist. Update images name and tag to object
     is_local = True
 
+    # sqs_resource = connect_aws_resource(
+    #         resource_name='sqs',
+    #         key_id=aws_access_key,
+    #         secret=aws_secret_access_key,
+    #         region=aws_region,
+    # )
+    # time.sleep(60)
+    # res = create_queue(
+    #     queue_name="gcd-test",
+    #     delay_seconds="0",
+    #     visiblity_timeout="60",
+    #     sqs_resource=sqs_resource
+    # )
+    # print(res)
+    # time.sleep(60)
+    # sqs_client = connect_aws_client(
+    #         client_name='sqs',
+    #         key_id=aws_access_key,
+    #         secret=aws_secret_access_key,
+    #         region=aws_region,
+    # )
+    # res = delete_queue(
+    #     queue_name="gcd-test",
+    #     sqs_client=sqs_client
+        
+    # )
+    # print(res)
+
     # analyze_local_logs_files(
     #     instanceType="test",
     #     logs_file_path_name="results/logs-JimmysMacBookPro2.local.csv",
@@ -152,7 +181,7 @@ def run_process_files(
     #     wait_time=1,
     # )
     # print(rec_resp)
-    # return 
+
     if check_environment_is_aws():
         logger.info("======== Running on AWS ========")
         is_local = False

@@ -10,6 +10,22 @@ logging.basicConfig(
 )
 # SQS
 
+def create_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource):
+    """
+    Create a standard SQS queue
+    """
+    try:
+        response = sqs_resource.create_queue(QueueName=queue_name,
+                                             Attributes={
+                                                 'DelaySeconds': delay_seconds,
+                                                 'VisibilityTimeout': visiblity_timeout
+                                             })
+    except ClientError:
+        logger.exception(f'Could not create SQS queue - {queue_name}.')
+        raise
+    else:
+        return response
+
 def send_queue_message(queue_url, msg_attributes, msg_body,sqs_client):
     """
     Sends a message to the specified queue.
