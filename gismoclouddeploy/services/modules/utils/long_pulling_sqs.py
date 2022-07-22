@@ -187,7 +187,8 @@ def long_pulling_sqs(
                     logs_data.append(_logs)
                     # Save errors
                     if alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name:
-                        error_data.append(msg_dict['error'])
+                        _error = {"error":msg_dict['error']}
+                        error_data.append(_error)
                     # Save data
                     if alert_type == SNSSubjectsAlert.SAVED_DATA.name:
                         save_data.append(msg_dict['data'])

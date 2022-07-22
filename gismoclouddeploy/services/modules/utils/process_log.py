@@ -226,7 +226,6 @@ def analyze_local_logs_files(
     # --------------------------
     # step 1 , accumulate the process time of each host_ip/pid
     for key, value in worker_dict.items():
-        print(value)
         _duration = float(value["duration"])
         _host_ip = value['host_ip']
         _pid = value['pid']
