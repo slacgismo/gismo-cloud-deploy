@@ -22,6 +22,7 @@ def modiy_config_parameters(
     sns_topic: str = None,
     dlq_url: str = None,
     ecr_repo: str = None,
+    current_repeat_number:int= 0
 ) -> str:
 
     try:
@@ -53,13 +54,13 @@ def modiy_config_parameters(
         + "/"
         + user_id
     )
-    config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}.png"
+    config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}-{current_repeat_number}.png"
     config_json["worker_config"][
         "saved_performance_file"
     ] = f"performance-{user_id}.txt"
-    config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}.csv"
-    config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}.csv"
-    config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}.csv"
+    config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}-{current_repeat_number}.csv"
+    config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}-{current_repeat_number}.csv"
+    config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}-{current_repeat_number}.csv"
 
     # check if local path exist
     result_local_folder = config_json["worker_config"]["saved_path_local"]

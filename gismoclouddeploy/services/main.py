@@ -98,6 +98,12 @@ def main():
     help="Scale up eks nodes and worker replcas as the same number. This input number replaces the worker_repliacs and eks_nodes_number in config files",
     default=None,
 )
+@click.option(
+    "--repeatnumber",
+    "-rn",
+    help="Scale up eks nodes and worker replcas as the same number. This input number replaces the worker_repliacs and eks_nodes_number in config files",
+    default=1,
+)
 
 def run_files(
     number: int = 1,
@@ -108,6 +114,7 @@ def run_files(
     docker: bool = False,
     build: bool = False,
     nodesscale: int = None,
+    repeatnumber :int = 1,
 ):
     """
     Proccess files in defined bucket
@@ -143,6 +150,7 @@ def run_files(
         sns_topic=SNS_TOPIC,
         ecr_repo=ECR_REPO,
         dlq_url=DLQ_URL,
+        repeatnumber=repeatnumber,
 
     )
 
