@@ -147,10 +147,13 @@ def modiy_config_parameters(
         nodegroup_name = cluster_file_json["nodeGroups"][0]["name"]
         instanceType = cluster_file_json["nodeGroups"][0]["instanceType"]
         max_nodes_num = cluster_file_json["nodeGroups"][0]["maxSize"]
+        
         tags = cluster_file_json["nodeGroups"][0]["tags"]
         config_json["aws_config"]["cluster_name"] = cluster_name
         config_json["aws_config"]["nodegroup_name"] = nodegroup_name
         config_json["aws_config"]["aws_access_key"] = aws_access_key
+        config_json["aws_config"]["instanceType"] = instanceType
+        
 
         current_clust_name = invoke_eks_get_cluster()
         print(current_clust_name)
