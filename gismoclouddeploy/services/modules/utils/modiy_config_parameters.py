@@ -57,7 +57,7 @@ def modiy_config_parameters(
     config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}-{current_repeat_number}.png"
     config_json["worker_config"][
         "saved_performance_file"
-    ] = f"performance-{user_id}.txt"
+    ] = f"performance-{user_id}-{current_repeat_number}.txt"
     config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}-{current_repeat_number}.csv"
     config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}-{current_repeat_number}.csv"
     config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}-{current_repeat_number}.csv"

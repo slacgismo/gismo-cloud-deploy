@@ -83,3 +83,5 @@ worker_config:
   save_logs_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
   save_plot_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
   save_performance_aws: None    # It's a hint column that is generated in the CLI run-ime.
+  initial_process_time: []      # It's a hint column that is generated in the CLI run-ime.
+  total_process_time: []        # It's a hint column that is generated in the CLI run-ime.

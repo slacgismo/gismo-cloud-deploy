@@ -1,7 +1,7 @@
 from os import system
 import time
-
-
+import os
+from os.path import exists
 from .command_utils import (
     check_solver_and_upload,
     update_config_json_image_name_and_tag_base_on_env,
@@ -11,14 +11,15 @@ from .command_utils import (
 )
 from .initial_end_services import initial_end_services
 
-from .process_log import analyze_local_logs_files
+from .process_log import analyze_all_local_logs_files
+
 
 from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
 from .check_aws import connect_aws_client, check_environment_is_aws,connect_aws_resource
 
-from .modiy_config_parameters import modiy_config_parameters
+from .modiy_config_parameters import modiy_config_parameters, convert_yaml_to_json
 import logging
 import socket
 import threading
@@ -81,10 +82,56 @@ def run_process_files(
     :param repeatnumber:  number of repeat time of run-files function
     """
     # check aws credential
-    start_time = time.time()
-    current_repeat_number = 0 
-    while current_repeat_number < repeatnumber:
+   
+    # remove all files in results 
+    # list all files in results folder
+    # check config exist
 
+
+
+    config_yaml = f"./config/{configfile}"
+
+    if exists(config_yaml) is False:
+        logger.warning(
+            f"./config/{configfile} not exist, use default config.yaml instead"
+        )
+        config_yaml = f"./config/config.yaml"
+
+    _config_json = convert_yaml_to_json(yaml_file=config_yaml)
+    # print(_config_json["worker_config"]["save_performance_local"])
+    # analyze_all_local_logs_files(
+    #     instanceType="test",
+    #     logs_file_path=_config_json["worker_config"]["saved_path_local"],
+    #     initial_process_time=0,
+    #     total_process_time=1010,
+    #     eks_nodes_number=1,
+    #     num_workers=1,
+    #     save_file_path_name=_config_json["worker_config"]["save_performance_local"],
+    #     num_unfinished_tasks=0,
+    #     code_templates_folder=_config_json["worker_config"]["code_template_folder"],
+    #     repeat_number =repeatnumber,
+    # )
+    # return
+    result_local_folder = _config_json["worker_config"]["saved_path_local"]
+    if os.path.isdir(result_local_folder) is False:
+        logger.info(f"Create local {result_local_folder} path")
+        os.mkdir(result_local_folder)
+    # # list all files in folder:
+    # glmfiles = []
+    for _file in os.listdir(result_local_folder):
+        _full_file = f"{result_local_folder}/{_file}"
+        os.remove(_full_file)
+        logger.info(f"remove {_full_file}")
+        
+    current_repeat_number = 0 
+
+
+
+    init_process_time_list = []
+    total_proscee_time_list = []
+
+    while current_repeat_number < repeatnumber:
+        start_time = time.time()
         config_json = modiy_config_parameters(
             configfile=configfile,
             nodesscale=nodesscale,
@@ -438,6 +485,15 @@ def run_process_files(
         total_process_time = time.time() - start_time
         num_unfinished_tasks = len(unfinished_tasks_id_set)
 
+        # append initial_process_time and total process time
+        # initial_process_time_list = config_json['worker_config']['initial_process_time'] 
+        # initial_process_time_list.append(initial_process_time)
+        # config_json['worker_config']['initial_process_time']  =  initial_process_time_list
+        # total_process_time_list = config_json['worker_config']['total_process_time'] 
+        # total_process_time_list.append(total_process_time)
+        # config_json['worker_config']['total_process_time']  = total_process_time_list
+        init_process_time_list.append(initial_process_time)
+        total_proscee_time_list.append(total_process_time) 
         initial_end_services(
             worker_config=worker_config_obj,
             is_docker=is_docker,
@@ -461,8 +517,20 @@ def run_process_files(
         )
         current_repeat_number += 1
         print(f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== ")
-       
-    # End of repeat 
-    # ========================
+
+
+    analyze_all_local_logs_files(
+        instanceType=config_json["aws_config"]["instanceType"],
+        logs_file_path=_config_json["worker_config"]["saved_path_local"],
+        init_process_time_list=init_process_time_list,
+        total_proscee_time_list=total_proscee_time_list,
+        eks_nodes_number=aws_config_obj.eks_nodes_number,
+        num_workers=services_config_list["worker"]["desired_replicas"],
+        save_file_path_name=config_json["worker_config"]["save_performance_local"],
+        num_unfinished_tasks=0,
+        code_templates_folder=config_json["worker_config"]["code_template_folder"],
+        repeat_number =repeatnumber,
+    )
+    print("End of analyzing logs")
 
     return

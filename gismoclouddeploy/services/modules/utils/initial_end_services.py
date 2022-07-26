@@ -4,7 +4,7 @@ from .check_aws import connect_aws_client, check_environment_is_aws
 import logging
 from .process_log import (
     process_logs_from_local,
-    analyze_local_logs_files,
+    # analyze_local_logs_files,
 )
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import invoke_docker_compose_down_and_remove
@@ -108,7 +108,7 @@ def initial_end_services(
     num_unfinished_tasks: int = 0,
     instanceType: str = None,
 ):
-
+   
     logger.info("=========== delete solver lic in bucket ============ ")
     delete_solver_lic_from_bucket(
         saved_solver_bucket=worker_config.solver.saved_solver_bucket,
@@ -144,17 +144,17 @@ def initial_end_services(
         s3_client=s3_client,
     )
 
-    analyze_local_logs_files(
-        instanceType=instanceType,
-        logs_file_path_name=save_logs_file_local,
-        initial_process_time=initial_process_time,
-        total_process_time=total_process_time,
-        eks_nodes_number=eks_nodes_number,
-        num_workers=num_workers,
-        save_file_path_name=save_performance_local,
-        num_unfinished_tasks=num_unfinished_tasks,
-        code_templates_folder=worker_config.code_template_folder,
-    )
+    # analyze_local_logs_files(
+    #     instanceType=instanceType,
+    #     logs_file_path_name=save_logs_file_local,
+    #     initial_process_time=initial_process_time,
+    #     total_process_time=total_process_time,
+    #     eks_nodes_number=eks_nodes_number,
+    #     num_workers=num_workers,
+    #     save_file_path_name=save_performance_local,
+    #     num_unfinished_tasks=num_unfinished_tasks,
+    #     code_templates_folder=worker_config.code_template_folder,
+    # )
 
     logger.info("Update results to S3")
     upload_results_to_s3(

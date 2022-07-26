@@ -1,0 +1,21 @@
++------------------------------+------------------------------------+------------------------------------+--------------------+---------------------+
+| Performance                  | Repeat 0                           | Repeat 1                           | Mean               | Std                 |
++------------------------------+------------------------------------+------------------------------------+--------------------+---------------------+
+| Code templates folder        | code-templates-solardatatools      |                                    |                    |                     |
+| Number of nodes              | 1                                  |                                    |                    |                     |
+| Number of workers            | 1                                  |                                    |                    |                     |
+| Instance type                | test                               |                                    |                    |                     |
+| File name                    | logs-JimmysMacBookPro2.local-1.csv | logs-JimmysMacBookPro2.local-0.csv |                    |                     |
+| average_task_duration        | 20.8076810836792                   | 20.553569793701172                 | 20.680625438690186 | 0.17968381631952432 |
+| min_duration                 | 20.8076810836792                   | 20.553569793701172                 |                    |                     |
+| shortest_task                | PVO/PVOutput/10010.csv/Power(W)    | PVO/PVOutput/10010.csv/Power(W)    |                    |                     |
+| max_duration                 | 20.8076810836792                   | 20.553569793701172                 |                    |                     |
+| longest_task                 | PVO/PVOutput/10010.csv/Power(W)    | PVO/PVOutput/10010.csv/Power(W)    |                    |                     |
+| num_error_task               | 0                                  | 0                                  |                    |                     |
+| num_unfinished_tasks         | 0                                  | 0                                  |                    |                     |
+| task_duration_in_parallelism | 20.8076810836792                   | 20.553569793701172                 | 20.680625438690186 | 20.680625438690186  |
+| tasks_durtaion_sum           | 20.8076810836792                   | 20.553569793701172                 |                    |                     |
+| initial_process_time         | 0                                  | 0                                  | 0                  | 0                   |
+| total_process_time           | 1100                               | 1100                               | 1100               | 1100                |
+| effeciencyFactor             | 1.0                                | 1.0                                | 1.0                | 1.0                 |
++------------------------------+------------------------------------+------------------------------------+--------------------+---------------------+
