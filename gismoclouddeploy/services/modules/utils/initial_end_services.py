@@ -1,4 +1,4 @@
-import imp
+import time
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client, check_environment_is_aws
@@ -276,6 +276,11 @@ def initial_end_services(
     except Exception as e:
         logger.error(f"Cannot purge queue.{e}")
     try:
+        # check if totoal process time is longer than 60 sec
+        if total_process_time < 60:
+            sleep_time = round(60 - total_process_time)
+            logger.info(f"total_process_time is shorter than 60 sec, wait {sleep_time}...")
+            time.sleep(sleep_time)
         res = delete_queue(
             queue_url=sqs_url,
             sqs_client=sqs_client

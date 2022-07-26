@@ -141,30 +141,6 @@ def run_process_files(
     user_id = re.sub('[^a-zA-Z0-9]', '', host_name)
     sqs_name = f"gcd-{user_id}"
 
-    # create_sqs_if_not_exist(sqs_resource=sqs_resource, queue_name=sqs_name)
-    
-    # sqs_client = connect_aws_client(
-    #         client_name='sqs',
-    #         key_id=aws_access_key,
-    #         secret=aws_secret_access_key,
-    #         region=aws_region,
-    # )
-
-    # queue_list = list_queues(sqs_resource = sqs_resource)
-    # print(queue_list)
-    # try:
-    #     queue = sqs_client.get_queue_url(QueueName=sqs_name)
-    #     sqs_url=queue['QueueUrl']
-    #     print(queue)
-    # except Exception as e:
-    
-    #     print("---------")
-    #     print(e)
-    # print("---------")
-    # print(queue)
-    # print(sqs_url)
-
-    # return
     
     try:
         create_res = create_queue(
@@ -180,21 +156,6 @@ def run_process_files(
         logger.error(f"Fail to create sqs: {e}")
         return
 
-    # return
-    # time.sleep(60)
-    # sqs_client = connect_aws_client(
-    #         client_name='sqs',
-    #         key_id=aws_access_key,
-    #         secret=aws_secret_access_key,
-    #         region=aws_region,
-    # )
-    # res = delete_queue(
-    #     queue_name=sqs_url,
-    #     sqs_client=sqs_client
-    # )
-    # print("-----------")
-    # print(res)
-    # time.sleep(60)
 
 
     while current_repeat_number < repeatnumber:
