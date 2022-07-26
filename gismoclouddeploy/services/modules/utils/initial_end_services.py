@@ -89,6 +89,57 @@ logging.basicConfig(
 #     )
 
 
+def process_local_logs_and_upload_s3(
+    worker_config: WORKER_CONFIG = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+):
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+
+    save_data_file_local = worker_config.save_data_file_local
+    save_error_file_local = worker_config.save_error_file_local
+    save_error_file_local = worker_config.save_error_file_local
+    save_logs_file_local = worker_config.save_logs_file_local
+    save_plot_file_local = worker_config.save_plot_file_local
+    save_performance_local = worker_config.save_performance_local
+    save_data_file_aws = worker_config.save_data_file_aws
+    save_error_file_aws = worker_config.save_error_file_aws
+    save_error_file_aws = worker_config.save_error_file_aws
+    save_logs_file_aws = worker_config.save_logs_file_aws
+    save_plot_file_aws = worker_config.save_plot_file_aws
+    save_performance_aws = worker_config.save_performance_aws
+
+    process_logs_from_local(
+        logs_file_path_name_local=save_logs_file_local,
+        saved_image_name_local=save_plot_file_local,
+        s3_client=s3_client,
+    )
+
+    logger.info("Update results to S3")
+    upload_results_to_s3(
+        worker_config=worker_config,
+        save_data_file_local=save_data_file_local,
+        save_error_file_local=save_error_file_local,
+        save_logs_file_local=save_logs_file_local,
+        save_plot_file_local=save_plot_file_local,
+        save_performance_file_local=save_performance_local,
+        save_data_file_aws=save_data_file_aws,
+        save_error_file_aws=save_error_file_aws,
+        save_logs_file_aws=save_logs_file_aws,
+        save_plot_file_aws=save_plot_file_aws,
+        save_performance_file_aws=save_performance_aws,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region,
+    )
+
+
 def initial_end_services(
     worker_config: WORKER_CONFIG = None,
     is_docker: bool = False,
@@ -125,54 +176,54 @@ def initial_end_services(
         region=aws_region,
     )
 
-    save_data_file_local = worker_config.save_data_file_local
-    save_error_file_local = worker_config.save_error_file_local
-    save_error_file_local = worker_config.save_error_file_local
-    save_logs_file_local = worker_config.save_logs_file_local
-    save_plot_file_local = worker_config.save_plot_file_local
-    save_performance_local = worker_config.save_performance_local
-    save_data_file_aws = worker_config.save_data_file_aws
-    save_error_file_aws = worker_config.save_error_file_aws
-    save_error_file_aws = worker_config.save_error_file_aws
-    save_logs_file_aws = worker_config.save_logs_file_aws
-    save_plot_file_aws = worker_config.save_plot_file_aws
-    save_performance_aws = worker_config.save_performance_aws
+    # save_data_file_local = worker_config.save_data_file_local
+    # save_error_file_local = worker_config.save_error_file_local
+    # save_error_file_local = worker_config.save_error_file_local
+    # save_logs_file_local = worker_config.save_logs_file_local
+    # save_plot_file_local = worker_config.save_plot_file_local
+    # save_performance_local = worker_config.save_performance_local
+    # save_data_file_aws = worker_config.save_data_file_aws
+    # save_error_file_aws = worker_config.save_error_file_aws
+    # save_error_file_aws = worker_config.save_error_file_aws
+    # save_logs_file_aws = worker_config.save_logs_file_aws
+    # save_plot_file_aws = worker_config.save_plot_file_aws
+    # save_performance_aws = worker_config.save_performance_aws
 
-    process_logs_from_local(
-        logs_file_path_name_local=save_logs_file_local,
-        saved_image_name_local=save_plot_file_local,
-        s3_client=s3_client,
-    )
-
-    # analyze_local_logs_files(
-    #     instanceType=instanceType,
-    #     logs_file_path_name=save_logs_file_local,
-    #     initial_process_time=initial_process_time,
-    #     total_process_time=total_process_time,
-    #     eks_nodes_number=eks_nodes_number,
-    #     num_workers=num_workers,
-    #     save_file_path_name=save_performance_local,
-    #     num_unfinished_tasks=num_unfinished_tasks,
-    #     code_templates_folder=worker_config.code_template_folder,
+    # process_logs_from_local(
+    #     logs_file_path_name_local=save_logs_file_local,
+    #     saved_image_name_local=save_plot_file_local,
+    #     s3_client=s3_client,
     # )
 
-    logger.info("Update results to S3")
-    upload_results_to_s3(
-        worker_config=worker_config,
-        save_data_file_local=save_data_file_local,
-        save_error_file_local=save_error_file_local,
-        save_logs_file_local=save_logs_file_local,
-        save_plot_file_local=save_plot_file_local,
-        save_performance_file_local=save_performance_local,
-        save_data_file_aws=save_data_file_aws,
-        save_error_file_aws=save_error_file_aws,
-        save_logs_file_aws=save_logs_file_aws,
-        save_plot_file_aws=save_plot_file_aws,
-        save_performance_file_aws=save_performance_aws,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
+    # # analyze_local_logs_files(
+    # #     instanceType=instanceType,
+    # #     logs_file_path_name=save_logs_file_local,
+    # #     initial_process_time=initial_process_time,
+    # #     total_process_time=total_process_time,
+    # #     eks_nodes_number=eks_nodes_number,
+    # #     num_workers=num_workers,
+    # #     save_file_path_name=save_performance_local,
+    # #     num_unfinished_tasks=num_unfinished_tasks,
+    # #     code_templates_folder=worker_config.code_template_folder,
+    # # )
+
+    # logger.info("Update results to S3")
+    # upload_results_to_s3(
+    #     worker_config=worker_config,
+    #     save_data_file_local=save_data_file_local,
+    #     save_error_file_local=save_error_file_local,
+    #     save_logs_file_local=save_logs_file_local,
+    #     save_plot_file_local=save_plot_file_local,
+    #     save_performance_file_local=save_performance_local,
+    #     save_data_file_aws=save_data_file_aws,
+    #     save_error_file_aws=save_error_file_aws,
+    #     save_logs_file_aws=save_logs_file_aws,
+    #     save_plot_file_aws=save_plot_file_aws,
+    #     save_performance_file_aws=save_performance_aws,
+    #     aws_access_key=aws_access_key,
+    #     aws_secret_access_key=aws_secret_access_key,
+    #     aws_region=aws_region,
+    # )
     # logger.info("Process logs from S3")
 
     if check_environment_is_aws() and delete_nodes_after_processing is True:

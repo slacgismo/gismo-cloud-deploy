@@ -9,7 +9,7 @@ from .command_utils import (
     checck_server_ready_and_get_name,
     send_command_to_server,
 )
-from .initial_end_services import initial_end_services
+from .initial_end_services import initial_end_services,process_local_logs_and_upload_s3
 
 from .process_log import analyze_all_local_logs_files
 
@@ -494,7 +494,17 @@ def run_process_files(
         # config_json['worker_config']['total_process_time']  = total_process_time_list
         init_process_time_list.append(initial_process_time)
         total_proscee_time_list.append(total_process_time) 
-        initial_end_services(
+        process_local_logs_and_upload_s3(
+            worker_config=worker_config_obj,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
+  
+        current_repeat_number += 1
+        print(f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== ")
+
+    initial_end_services(
             worker_config=worker_config_obj,
             is_docker=is_docker,
             delete_nodes_after_processing=delete_nodes,
@@ -515,10 +525,6 @@ def run_process_files(
             num_unfinished_tasks=num_unfinished_tasks,
             instanceType=config_json["aws_config"]["instanceType"],
         )
-        current_repeat_number += 1
-        print(f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== ")
-
-
     analyze_all_local_logs_files(
         instanceType=config_json["aws_config"]["instanceType"],
         logs_file_path=_config_json["worker_config"]["saved_path_local"],
@@ -532,5 +538,5 @@ def run_process_files(
         repeat_number =repeatnumber,
     )
     print("End of analyzing logs")
-
+    
     return
