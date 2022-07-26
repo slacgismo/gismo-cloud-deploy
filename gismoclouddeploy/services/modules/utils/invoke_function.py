@@ -322,7 +322,19 @@ def invoke_exec_k8s_check_task_status(
         "check_task_status",
         f"{task_id}",
     ]
+    # try:
+    #     res = subprocess.Popen(
+    #         command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    #     )
+    #     out, err = res.communicate()
+    #     print(out)
+    #     return out
+    # except KeyboardInterrupt as e:
+    #     logger.error(f"Invoke k8s process file error:{e}")
+    #     res.terminate()
+    # return res
     res = exec_docker_command(command)
+    print(res)
     return res
 
 

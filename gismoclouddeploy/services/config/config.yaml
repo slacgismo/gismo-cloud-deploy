@@ -59,7 +59,7 @@ worker_config:
   saved_bucket: "pv.insight.test"                         # Bucket of saved files.
   saved_path_aws: "results"                               # Path of saved files in bucket
   saved_path_local: "results"
-  acccepted_idle_time: 360
+  acccepted_idle_time: 600
   code_template_folder: "code-templates-solardatatools" # Code blocks folder example: "code-templates-solardatatools" (If you change here, you have to change `worker_dockerfile_folder` accordingly)
   saved_rumtime_image_name: None            # "runtime-{user_id}.png"
   saved_performance_file: None              # "performance-{user_id}.txt"
@@ -83,5 +83,3 @@ worker_config:
   save_logs_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
   save_plot_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
   save_performance_aws: None    # It's a hint column that is generated in the CLI run-ime.
-  initial_process_time: []      # It's a hint column that is generated in the CLI run-ime.
-  total_process_time: []        # It's a hint column that is generated in the CLI run-ime.

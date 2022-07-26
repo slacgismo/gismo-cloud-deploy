@@ -431,6 +431,7 @@ def run_process_files(
             logger.error("Cannot get server name")
             return
         logger.info(f"------ {ready_server_name}")
+
         # send command to server and get task IDs
         worker_replicas = 0
         for key, value in services_config_list.items():
@@ -485,13 +486,6 @@ def run_process_files(
         total_process_time = time.time() - start_time
         num_unfinished_tasks = len(unfinished_tasks_id_set)
 
-        # append initial_process_time and total process time
-        # initial_process_time_list = config_json['worker_config']['initial_process_time'] 
-        # initial_process_time_list.append(initial_process_time)
-        # config_json['worker_config']['initial_process_time']  =  initial_process_time_list
-        # total_process_time_list = config_json['worker_config']['total_process_time'] 
-        # total_process_time_list.append(total_process_time)
-        # config_json['worker_config']['total_process_time']  = total_process_time_list
         init_process_time_list.append(initial_process_time)
         total_proscee_time_list.append(total_process_time) 
         process_local_logs_and_upload_s3(

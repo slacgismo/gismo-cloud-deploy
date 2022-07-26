@@ -340,7 +340,7 @@ def analyze_all_local_logs_files(
         index +=1
 
 
-    if len(average_task_duration) > 1 :
+    if repeat_number > 1 :
         # Mean and Std
         header.append("Mean")
         header.append("Std")
