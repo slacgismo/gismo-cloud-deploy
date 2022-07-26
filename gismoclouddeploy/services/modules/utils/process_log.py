@@ -249,18 +249,18 @@ def analyze_signle_local_logs_file(
     performance_dict = {
         "file" : logs_file_path_name,
         "total_tasks": total_tasks,
-        "average_task_duration": average_task_duration,
-        "min_duration": min_duration,
-        "max_duration":max_duration,
+        "average_task_duration": round(average_task_duration,2),
+        "min_duration": round(min_duration,2),
+        "max_duration":round(max_duration,2),
         "num_error_task":num_error_task,
         "longest_task":longest_task,
         "shortest_task":shortest_task,
         "num_unfinished_tasks":num_unfinished_tasks,
-        "task_duration_in_parallelism":task_duration_in_parallelism,
-        "tasks_durtaion_sum":tasks_durtaion_sum,
-        "initial_process_time":initial_process_time,
-        "total_process_time":total_process_time,
-        "effeciencyFactor":effeciencyFactor
+        "task_duration_in_parallelism":round(task_duration_in_parallelism,2),
+        "tasks_durtaion_sum":round(tasks_durtaion_sum,2),
+        "initial_process_time":round(initial_process_time,2),
+        "total_process_time":round(total_process_time,2),
+        "effeciencyFactor":round(effeciencyFactor,2)
         }
     return performance_dict
 
@@ -332,47 +332,49 @@ def analyze_all_local_logs_files(
         header.append(repeat_number_str)
         index +=1
 
-
+    initial_process_time = initial_process_time + init_process_time_list
+    total_process_time = total_process_time + total_proscee_time_list
+    
     if repeat_number > 1 :
         # Mean and Std
         header.append("Mean")
         header.append("Std")
         # average_task_duration
-        mean_of_average_task_duration= statistics.mean(average_task_duration[1:])
-        std_of_average_task_duration =  statistics.stdev(average_task_duration[1:])
+        mean_of_average_task_duration= round(statistics.mean(average_task_duration[1:]),2)
+        std_of_average_task_duration =  round(statistics.stdev(average_task_duration[1:]),2)
         average_task_duration.append(mean_of_average_task_duration)
         average_task_duration.append(std_of_average_task_duration)
 
         # task_duration_in_parallelism
-        mean_of_task_duration_in_parallelism =  statistics.mean(task_duration_in_parallelism[1:])
-        std_of_task_duration_in_parallelism =  statistics.stdev(task_duration_in_parallelism[1:])
+        mean_of_task_duration_in_parallelism =  round(statistics.mean(task_duration_in_parallelism[1:]),2)
+        std_of_task_duration_in_parallelism =  round(statistics.stdev(task_duration_in_parallelism[1:]),2)
         task_duration_in_parallelism.append(mean_of_task_duration_in_parallelism)
         task_duration_in_parallelism.append(std_of_task_duration_in_parallelism)
 
 
         # tasks_durtaion_sum
-        mean_of_tasks_durtaion_sum =  statistics.mean(tasks_durtaion_sum[1:])
-        std_of_tasks_durtaion_sum =  statistics.stdev(tasks_durtaion_sum[1:])
+        mean_of_tasks_durtaion_sum =  round(statistics.mean(tasks_durtaion_sum[1:]),2)
+        std_of_tasks_durtaion_sum =  round(statistics.stdev(tasks_durtaion_sum[1:]),2)
         tasks_durtaion_sum.append(mean_of_tasks_durtaion_sum)
         tasks_durtaion_sum.append(std_of_tasks_durtaion_sum)
 
         # initial_process_time
-        mean_of_init_process_time_list =  statistics.mean(init_process_time_list)
-        std_of_init_process_time_list =  statistics.stdev(init_process_time_list)
-        initial_process_time = initial_process_time + init_process_time_list
+        mean_of_init_process_time_list =  round(statistics.mean(init_process_time_list),2)
+        std_of_init_process_time_list =  round(statistics.stdev(init_process_time_list),2)
+        
         initial_process_time.append(mean_of_init_process_time_list)
         initial_process_time.append(std_of_init_process_time_list)
 
         # total_process_time
-        mean_of_total_process_time =  statistics.mean(total_proscee_time_list)
-        std_of_total_process_time =  statistics.stdev(total_proscee_time_list)
-        total_process_time = total_process_time + total_proscee_time_list
+        mean_of_total_process_time =  round(statistics.mean(total_proscee_time_list),2)
+        std_of_total_process_time =  round(statistics.stdev(total_proscee_time_list),2)
+        
         total_process_time.append(mean_of_total_process_time)
         total_process_time.append(std_of_total_process_time)
 
 
-        mean_of_effeciencyFactor =  statistics.mean(effeciencyFactor[1:])
-        std_of_effeciencyFactor =  statistics.stdev(effeciencyFactor[1:])
+        mean_of_effeciencyFactor =  round(statistics.mean(effeciencyFactor[1:]),2)
+        std_of_effeciencyFactor =  round(statistics.stdev(effeciencyFactor[1:]),2)
         effeciencyFactor.append(mean_of_effeciencyFactor)
         effeciencyFactor.append(std_of_effeciencyFactor)
 
@@ -384,6 +386,7 @@ def analyze_all_local_logs_files(
         ["Number of workers", f"{num_workers}"],
         ["Instance type", f"{instanceType}"],
         file_name,
+        total_tasks,
         average_task_duration,
         min_duration,
         shortest_task,

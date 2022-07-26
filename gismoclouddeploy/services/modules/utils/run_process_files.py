@@ -486,8 +486,8 @@ def run_process_files(
         total_process_time = time.time() - start_time
         num_unfinished_tasks = len(unfinished_tasks_id_set)
 
-        init_process_time_list.append(initial_process_time)
-        total_proscee_time_list.append(total_process_time) 
+        init_process_time_list.append(round(initial_process_time,2))
+        total_proscee_time_list.append(round(total_process_time,2)) 
         process_local_logs_and_upload_s3(
             worker_config=worker_config_obj,
             aws_access_key=aws_access_key,
