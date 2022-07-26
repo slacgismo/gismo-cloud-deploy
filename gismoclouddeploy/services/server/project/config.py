@@ -16,6 +16,8 @@ class BaseConfig:
     task_soft_time_limit = True
     task_track_started = True
     task_annotations = {"*": {"rate_limit": "10/s"}}
+    task_acks_late = True
+    worker_prefetch_multiplier = 20
 
 
 class DevelopmentConfig(BaseConfig):
