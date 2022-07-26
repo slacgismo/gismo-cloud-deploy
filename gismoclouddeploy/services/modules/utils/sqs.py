@@ -3,7 +3,7 @@ import logging
 import time
 import botocore
 import json
-
+import re
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -25,6 +25,23 @@ def create_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource):
         raise
     else:
         return response
+
+# def send_queue_message(queue_name, msg_attributes, msg_body,sqs_client):
+#     """
+#     Sends a message to the specified queue.
+#     """
+#     try:
+#         queue = sqs_client.get_queue_url(QueueName=queue_name)
+#         queue_url=queue['QueueUrl']
+#         response = sqs_client.send_message(QueueUrl=queue_url,
+#                                            MessageAttributes=msg_attributes,
+#                                            MessageBody=msg_body)
+#     except ClientError:
+#         logger.exception(f'Could not send meessage to the - {queue_url}.')
+#         raise
+#     else:
+#         return response
+
 
 def send_queue_message(queue_url, msg_attributes, msg_body,sqs_client):
     """
@@ -54,16 +71,16 @@ def get_queue(queue_name: str, sqs_client: "botocore.client.SQS"):
         return response
 
 
-def delete_queue(queue_name: str, sqs_client: "botocore.client.SQS"):
+def delete_queue(queue_url: str, sqs_client: "botocore.client.SQS"):
     """
     Deletes the queue specified by the QueueUrl.
     """
 
     try:
-        response = sqs_client.delete_queue(QueueUrl=queue_name)
+        response = sqs_client.delete_queue(QueueUrl=queue_url)
 
     except ClientError:
-        logger.exception(f"Could not delete the {queue_name} queue.")
+        logger.exception(f"Could not delete the {queue_url} queue.")
         raise
     else:
         return response
@@ -173,3 +190,19 @@ def clean_user_previous_sqs_message(
 
         counter -= 1
         time.sleep(delay)
+
+
+def list_queues(sqs_resource, queue_prefix ):
+    """
+    Creates an iterable of all Queue resources in the collection.
+    """
+    try:
+        sqs_queues = []
+        for queue in sqs_resource.queues.filter(QueueNamePrefix=queue_prefix):
+        # for queue in sqs_resource.queues.all():
+            sqs_queues.append(queue)
+    except ClientError:
+        logger.exception('Could not list queues.')
+        raise
+    else:
+        return sqs_queues

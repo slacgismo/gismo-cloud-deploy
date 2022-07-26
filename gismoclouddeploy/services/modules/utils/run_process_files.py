@@ -2,6 +2,7 @@ from os import system
 import time
 import os
 from os.path import exists
+
 from .command_utils import (
     check_solver_and_upload,
     update_config_json_image_name_and_tag_base_on_env,
@@ -12,7 +13,7 @@ from .command_utils import (
 from .initial_end_services import initial_end_services,process_local_logs_and_upload_s3
 
 from .process_log import analyze_all_local_logs_files
-
+import re
 
 from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
@@ -35,7 +36,7 @@ from .k8s_utils import check_k8s_services_exists, create_k8s_svc_from_yaml
 
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
-from .sqs import clean_user_previous_sqs_message,send_queue_message,receive_queue_message, create_queue,delete_queue
+from .sqs import clean_user_previous_sqs_message,send_queue_message,receive_queue_message, create_queue,delete_queue,list_queues
 from multiprocessing.dummy import Process
 
 # logger config
@@ -58,7 +59,7 @@ def run_process_files(
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
     aws_region: str = None,
-    sqs_url: str = None,
+    # sqs_url: str = None,
     sns_topic: str = None,
     dlq_url: str = None,
     ecr_repo: str = None,
@@ -129,6 +130,72 @@ def run_process_files(
 
     init_process_time_list = []
     total_proscee_time_list = []
+    sqs_resource = connect_aws_resource(
+            resource_name='sqs',
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+    )
+   
+    host_name = (socket.gethostname())
+    user_id = re.sub('[^a-zA-Z0-9]', '', host_name)
+    sqs_name = f"gcd-{user_id}"
+
+    # create_sqs_if_not_exist(sqs_resource=sqs_resource, queue_name=sqs_name)
+    
+    # sqs_client = connect_aws_client(
+    #         client_name='sqs',
+    #         key_id=aws_access_key,
+    #         secret=aws_secret_access_key,
+    #         region=aws_region,
+    # )
+
+    # queue_list = list_queues(sqs_resource = sqs_resource)
+    # print(queue_list)
+    # try:
+    #     queue = sqs_client.get_queue_url(QueueName=sqs_name)
+    #     sqs_url=queue['QueueUrl']
+    #     print(queue)
+    # except Exception as e:
+    
+    #     print("---------")
+    #     print(e)
+    # print("---------")
+    # print(queue)
+    # print(sqs_url)
+
+    # return
+    
+    try:
+        create_res = create_queue(
+            queue_name=sqs_name,
+            delay_seconds="0",
+            visiblity_timeout="60",
+            sqs_resource=sqs_resource
+        )
+       
+        sqs_url = create_res.url
+        logger.info(f"======== Create {sqs_url} success =======")
+    except Exception as e:
+        logger.error(f"Fail to create sqs: {e}")
+        return
+
+    # return
+    # time.sleep(60)
+    # sqs_client = connect_aws_client(
+    #         client_name='sqs',
+    #         key_id=aws_access_key,
+    #         secret=aws_secret_access_key,
+    #         region=aws_region,
+    # )
+    # res = delete_queue(
+    #     queue_name=sqs_url,
+    #     sqs_client=sqs_client
+    # )
+    # print("-----------")
+    # print(res)
+    # time.sleep(60)
+
 
     while current_repeat_number < repeatnumber:
         start_time = time.time()
@@ -157,82 +224,6 @@ def run_process_files(
         )
         # check environments , check image name and tag exist. Update images name and tag to object
         is_local = True
-
-        # sqs_resource = connect_aws_resource(
-        #         resource_name='sqs',
-        #         key_id=aws_access_key,
-        #         secret=aws_secret_access_key,
-        #         region=aws_region,
-        # )
-        # time.sleep(60)
-        # res = create_queue(
-        #     queue_name="gcd-test",
-        #     delay_seconds="0",
-        #     visiblity_timeout="60",
-        #     sqs_resource=sqs_resource
-        # )
-        # print(res)
-        # time.sleep(60)
-        # sqs_client = connect_aws_client(
-        #         client_name='sqs',
-        #         key_id=aws_access_key,
-        #         secret=aws_secret_access_key,
-        #         region=aws_region,
-        # )
-        # res = delete_queue(
-        #     queue_name="gcd-test",
-        #     sqs_client=sqs_client
-            
-        # )
-        # print(res)
-
-        # analyze_local_logs_files(
-        #     instanceType="test",
-        #     logs_file_path_name="results/logs-JimmysMacBookPro2.local.csv",
-        #     initial_process_time=0,
-        #     total_process_time=1010,
-        #     eks_nodes_number=1,
-        #     num_workers=1,
-        #     save_file_path_name=worker_config_obj.save_performance_local,
-        #     num_unfinished_tasks=0,
-        #     code_templates_folder=worker_config_obj.code_template_folder,
-        # )
-        # return
-
-        # sqs_client = connect_aws_client(
-        #     client_name="sqs",
-        #     key_id=aws_access_key,
-        #     secret=aws_secret_access_key,
-        #     region=aws_region,
-        # )
-
-        # MSG_ATTRIBUTES = {
-        #     'Title': {
-        #         'DataType': 'String',
-        #         'StringValue': 'Working with SQS in Python using Boto3'
-        #     },
-        #     'Author': {
-        #         'DataType': 'String',
-        #         'StringValue': 'Abhinav D'
-        #     }
-        # }
-
-        # MSG_BODY = 'Learn how to create, receive, delete and modify SQS queues and see the other functions available within the AWS.'
-        # send_response = send_queue_message(
-        #     queue_url=sqs_url,
-        #     msg_attributes=MSG_ATTRIBUTES,
-        #     msg_body=MSG_BODY,
-        #     sqs_client=sqs_client
-
-        # )
-
-        # rec_resp = receive_queue_message(
-        #     queue_url=sqs_url,
-        #     sqs_client=sqs_client,
-        #     MaxNumberOfMessages=10,
-        #     wait_time=1,
-        # )
-        # print(rec_resp)
 
         if check_environment_is_aws():
             logger.info("======== Running on AWS ========")
@@ -518,10 +509,11 @@ def run_process_files(
             num_workers=services_config_list["worker"]["desired_replicas"],
             num_unfinished_tasks=num_unfinished_tasks,
             instanceType=config_json["aws_config"]["instanceType"],
+            sqs_url= sqs_url
         )
     analyze_all_local_logs_files(
         instanceType=config_json["aws_config"]["instanceType"],
-        logs_file_path=_config_json["worker_config"]["saved_path_local"],
+        logs_file_path=config_json["worker_config"]["saved_path_local"],
         init_process_time_list=init_process_time_list,
         total_proscee_time_list=total_proscee_time_list,
         eks_nodes_number=aws_config_obj.eks_nodes_number,

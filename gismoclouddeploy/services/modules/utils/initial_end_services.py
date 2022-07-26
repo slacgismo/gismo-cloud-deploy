@@ -1,3 +1,4 @@
+import imp
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client, check_environment_is_aws
@@ -9,6 +10,8 @@ from .process_log import (
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import invoke_docker_compose_down_and_remove
 from .command_utils import delete_files_from_bucket
+
+from .sqs import delete_queue
 
 from os.path import exists
 
@@ -158,6 +161,7 @@ def initial_end_services(
     num_workers: int = None,
     num_unfinished_tasks: int = 0,
     instanceType: str = None,
+    sqs_url: str = None,
 ):
    
     logger.info("=========== delete solver lic in bucket ============ ")
@@ -271,7 +275,16 @@ def initial_end_services(
         # purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
     except Exception as e:
         logger.error(f"Cannot purge queue.{e}")
-        return
+    try:
+        res = delete_queue(
+            queue_url=sqs_url,
+            sqs_client=sqs_client
+        )
+        logger.info(f"Delete {sqs_url} success")
+    except Exception as e:
+        logger.error(f"Delete queue failed {e}")
+
+
     return
 
 

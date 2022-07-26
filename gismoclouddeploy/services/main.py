@@ -146,7 +146,7 @@ def run_files(
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
-        sqs_url=SQS_URL,
+        # sqs_url=SQS_URL,
         sns_topic=SNS_TOPIC,
         ecr_repo=ECR_REPO,
         dlq_url=DLQ_URL,
