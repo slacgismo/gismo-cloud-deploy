@@ -46,7 +46,7 @@ def modiy_config_parameters(
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
     host_name = (socket.gethostname())
-    user_id = re.sub('[^a-zA-Z0-9 \n\.]', '', host_name)
+    user_id = re.sub('[^a-zA-Z0-9]', '', host_name)
     print(f"----- user_id :{user_id}")
     config_json["worker_config"]["user_id"] = user_id
     config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
