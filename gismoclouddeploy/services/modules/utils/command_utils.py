@@ -86,7 +86,7 @@ def send_command_to_server(
     aws_secret_access_key: str = None,
     aws_region: str = None,
     sns_topic: str = None,
-    sqs_url:str = None,
+    sqs_url: str = None,
 ) -> List[str]:
     worker_config_json["aws_access_key"] = aws_access_key
     worker_config_json["aws_secret_access_key"] = aws_secret_access_key
@@ -104,11 +104,15 @@ def send_command_to_server(
         bucket=worker_config_json["data_bucket"],
         default_files=worker_config_json["default_process_files"],
         s3_client=s3_client,
+        file_format=worker_config_json["data_file_type"],
     )
+    # print(len(n_files))
+    # print(n_files)
     # start_index = 0
     # end_index = num_file_to_process_per_round
     # if end_index > len(n_files):
     #     end_index = len(n_files)
+
     total_tasks_ids = []
     # while start_index < len(n_files):
     process_files_list = []
@@ -134,10 +138,13 @@ def return_process_filename_base_on_command(
     bucket: str,
     default_files: List[str],
     s3_client: "botocore.client.S3",
+    file_format: str,
 ) -> List[str]:
 
     n_files = []
-    files_dict = list_files_in_bucket(bucket_name=bucket, s3_client=s3_client)
+    files_dict = list_files_in_bucket(
+        bucket_name=bucket, s3_client=s3_client, file_format=file_format
+    )
 
     if first_n_files is None:
         n_files = default_files
@@ -157,7 +164,7 @@ def return_process_filename_base_on_command(
     return n_files
 
 
-def list_files_in_bucket(bucket_name: str, s3_client):
+def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
     """Get filename and size from S3 , remove non csv file"""
     response = s3_client.list_objects_v2(Bucket=bucket_name)
     files = response["Contents"]
@@ -165,7 +172,7 @@ def list_files_in_bucket(bucket_name: str, s3_client):
     for file in files:
         split_tup = os.path.splitext(file["Key"])
         file_extension = split_tup[1]
-        if file_extension == ".csv":
+        if file_extension == file_format:
             obj = {
                 "Key": file["Key"],
                 "Size": file["Size"],

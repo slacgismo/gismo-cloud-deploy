@@ -10,7 +10,7 @@ from .command_utils import (
     checck_server_ready_and_get_name,
     send_command_to_server,
 )
-from .initial_end_services import initial_end_services,process_local_logs_and_upload_s3
+from .initial_end_services import initial_end_services, process_local_logs_and_upload_s3
 
 from .process_log import analyze_all_local_logs_files
 import re
@@ -18,7 +18,11 @@ import re
 from .long_pulling_sqs import long_pulling_sqs
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
-from .check_aws import connect_aws_client, check_environment_is_aws,connect_aws_resource
+from .check_aws import (
+    connect_aws_client,
+    check_environment_is_aws,
+    connect_aws_resource,
+)
 
 from .modiy_config_parameters import modiy_config_parameters, convert_yaml_to_json
 import logging
@@ -36,7 +40,14 @@ from .k8s_utils import check_k8s_services_exists, create_k8s_svc_from_yaml
 
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
-from .sqs import clean_user_previous_sqs_message,send_queue_message,receive_queue_message, create_queue,delete_queue,list_queues
+from .sqs import (
+    clean_user_previous_sqs_message,
+    send_queue_message,
+    receive_queue_message,
+    create_queue,
+    delete_queue,
+    list_queues,
+)
 from multiprocessing.dummy import Process
 
 # logger config
@@ -63,7 +74,7 @@ def run_process_files(
     # sns_topic: str = None,
     dlq_url: str = None,
     ecr_repo: str = None,
-    repeatnumber:int = 1,
+    repeatnumber: int = 1,
 ) -> None:
     """
     Proccess files in defined bucket
@@ -83,12 +94,10 @@ def run_process_files(
     :param repeatnumber:  number of repeat time of run-files function
     """
     # check aws credential
-   
-    # remove all files in results 
+
+    # remove all files in results
     # list all files in results folder
     # check config exist
-
-
 
     config_yaml = f"./config/{configfile}"
 
@@ -123,41 +132,36 @@ def run_process_files(
         _full_file = f"{result_local_folder}/{_file}"
         os.remove(_full_file)
         logger.info(f"remove {_full_file}")
-        
-    current_repeat_number = 0 
 
-
+    current_repeat_number = 0
 
     init_process_time_list = []
     total_proscee_time_list = []
     sqs_resource = connect_aws_resource(
-            resource_name='sqs',
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
+        resource_name="sqs",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
     )
-   
-    host_name = (socket.gethostname())
-    user_id = re.sub('[^a-zA-Z0-9]', '', host_name)
+
+    host_name = socket.gethostname()
+    user_id = re.sub("[^a-zA-Z0-9]", "", host_name)
     sqs_name = f"gcd-{user_id}"
 
-    
     try:
         create_res = create_queue(
             queue_name=sqs_name,
             delay_seconds="0",
             visiblity_timeout="60",
             sqs_resource=sqs_resource,
-            tags={'project':'pvinsight'}
+            tags={"project": "pvinsight"},
         )
-       
+
         sqs_url = create_res.url
         logger.info(f"======== Create {sqs_url} success =======")
     except Exception as e:
         logger.error(f"Fail to create sqs: {e}")
         return
-
-
 
     while current_repeat_number < repeatnumber:
         start_time = time.time()
@@ -171,7 +175,7 @@ def run_process_files(
             # sns_topic=sns_topic,
             dlq_url=dlq_url,
             ecr_repo=ecr_repo,
-            current_repeat_number = current_repeat_number,
+            current_repeat_number=current_repeat_number,
         )
 
         user_id = config_json["worker_config"]["user_id"]
@@ -200,21 +204,22 @@ def run_process_files(
         )
 
         # check solver
-        try:
-            check_solver_and_upload(
-                ecr_repo=ecr_repo,
-                solver_name=worker_config_obj.solver.solver_name,
-                saved_solver_bucket=worker_config_obj.solver.saved_solver_bucket,
-                solver_lic_file_name=worker_config_obj.solver.solver_lic_file_name,
-                solver_lic_local_path=worker_config_obj.solver.solver_lic_local_path,
-                saved_temp_path_in_bucket=worker_config_obj.solver.saved_temp_path_in_bucket,
-                aws_access_key=aws_config_obj.aws_access_key,
-                aws_secret_access_key=aws_config_obj.aws_secret_access_key,
-                aws_region=aws_config_obj.aws_region,
-            )
-        except Exception as e:
-            logger.error(f"Upload Solver error:{e}")
-            return
+        if worker_config_obj.solver.solver_name != "None":
+            try:
+                check_solver_and_upload(
+                    ecr_repo=ecr_repo,
+                    solver_name=worker_config_obj.solver.solver_name,
+                    saved_solver_bucket=worker_config_obj.solver.saved_solver_bucket,
+                    solver_lic_file_name=worker_config_obj.solver.solver_lic_file_name,
+                    solver_lic_local_path=worker_config_obj.solver.solver_lic_local_path,
+                    saved_temp_path_in_bucket=worker_config_obj.solver.saved_temp_path_in_bucket,
+                    aws_access_key=aws_config_obj.aws_access_key,
+                    aws_secret_access_key=aws_config_obj.aws_secret_access_key,
+                    aws_region=aws_config_obj.aws_region,
+                )
+            except Exception as e:
+                logger.error(f"Upload Solver error:{e}")
+                return
 
         # check if build images.
         if is_build_image:
@@ -222,16 +227,26 @@ def run_process_files(
             temp_image_tag = socket.gethostname()
 
             if is_docker:
-                logger.info(f"========= Build images and run in docker ======== {worker_config_obj.code_template_folder}")
+                logger.info(
+                    f"========= Build images and run in docker ======== {worker_config_obj.code_template_folder}"
+                )
                 # invoke_docker_compose_build_and_run()
                 invoke_docker_compose_build(
-                worker_folder=config_json['worker_config']['worker_dockerfile_folder'], code_template_folder=worker_config_obj.code_template_folder
+                    worker_folder=config_json["worker_config"][
+                        "worker_dockerfile_folder"
+                    ],
+                    code_template_folder=worker_config_obj.code_template_folder,
                 )
                 invoke_docker_compose_up()
             else:
-                logger.info(f" ========= Build images and run in k8s ======== {worker_config_obj.code_template_folder}")
+                logger.info(
+                    f" ========= Build images and run in k8s ======== {worker_config_obj.code_template_folder}"
+                )
                 invoke_docker_compose_build(
-                    worker_folder=config_json['worker_config']['worker_dockerfile_folder'],code_template_folder=worker_config_obj.code_template_folder
+                    worker_folder=config_json["worker_config"][
+                        "worker_dockerfile_folder"
+                    ],
+                    code_template_folder=worker_config_obj.code_template_folder,
                 )
                 for service in services_config_list:
                     # only inspect worker and server
@@ -394,9 +409,6 @@ def run_process_files(
         if worker_replicas == 0:
             logger.error(f"Number of worker error:{worker_replicas} ")
 
-
-
-
         proces = list()
         try:
             logger.info(
@@ -423,7 +435,6 @@ def run_process_files(
             logger.error(f"Invoke process files in server error:{e}")
             return
 
-        
         delay = aws_config_obj.interval_of_check_dynamodb_in_second
         acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
         unfinished_tasks_id_set = long_pulling_sqs(
@@ -439,40 +450,42 @@ def run_process_files(
         total_process_time = time.time() - start_time
         num_unfinished_tasks = len(unfinished_tasks_id_set)
 
-        init_process_time_list.append(round(initial_process_time,2))
-        total_proscee_time_list.append(round(total_process_time,2)) 
+        init_process_time_list.append(round(initial_process_time, 2))
+        total_proscee_time_list.append(round(total_process_time, 2))
         process_local_logs_and_upload_s3(
             worker_config=worker_config_obj,
             aws_access_key=aws_access_key,
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
-  
+
         current_repeat_number += 1
-        print(f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== ")
+        print(
+            f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== "
+        )
 
     initial_end_services(
-            worker_config=worker_config_obj,
-            is_docker=is_docker,
-            delete_nodes_after_processing=delete_nodes,
-            is_build_image=is_build_image,
-            services_config_list=services_config_list,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-            scale_eks_nodes_wait_time=config_json["aws_config"][
-                "scale_eks_nodes_wait_time"
-            ],
-            cluster_name=config_json["aws_config"]["cluster_name"],
-            nodegroup_name=config_json["aws_config"]["nodegroup_name"],
-            initial_process_time=float(initial_process_time),
-            total_process_time=float(total_process_time),
-            eks_nodes_number=aws_config_obj.eks_nodes_number,
-            num_workers=services_config_list["worker"]["desired_replicas"],
-            num_unfinished_tasks=num_unfinished_tasks,
-            instanceType=config_json["aws_config"]["instanceType"],
-            sqs_url= sqs_url
-        )
+        worker_config=worker_config_obj,
+        is_docker=is_docker,
+        delete_nodes_after_processing=delete_nodes,
+        is_build_image=is_build_image,
+        services_config_list=services_config_list,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region=aws_region,
+        scale_eks_nodes_wait_time=config_json["aws_config"][
+            "scale_eks_nodes_wait_time"
+        ],
+        cluster_name=config_json["aws_config"]["cluster_name"],
+        nodegroup_name=config_json["aws_config"]["nodegroup_name"],
+        initial_process_time=float(initial_process_time),
+        total_process_time=float(total_process_time),
+        eks_nodes_number=aws_config_obj.eks_nodes_number,
+        num_workers=services_config_list["worker"]["desired_replicas"],
+        num_unfinished_tasks=num_unfinished_tasks,
+        instanceType=config_json["aws_config"]["instanceType"],
+        sqs_url=sqs_url,
+    )
     analyze_all_local_logs_files(
         instanceType=config_json["aws_config"]["instanceType"],
         logs_file_path=config_json["worker_config"]["saved_path_local"],
@@ -483,8 +496,8 @@ def run_process_files(
         save_file_path_name=config_json["worker_config"]["save_performance_local"],
         num_unfinished_tasks=0,
         code_templates_folder=config_json["worker_config"]["code_template_folder"],
-        repeat_number =repeatnumber,
+        repeat_number=repeatnumber,
     )
     print("End of analyzing logs")
-    
+
     return

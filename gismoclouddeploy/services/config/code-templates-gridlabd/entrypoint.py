@@ -5,6 +5,7 @@ from datetime import datetime
 from .my_modules import read_csv_from_s3
 import subprocess
 import os
+import boto3
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -38,33 +39,74 @@ def entrypoint(
 
     ## ==================== Modify your code below ==================== ##
     # define model folder
-    models_path = "/app/project/gridlabd-models/gridlabd-4/taxonomy"
+    models_path = "/app/project/gridlabd-models"
+    if os.path.isdir(models_path) is False:
+        logger.info(f"Create local {models_path} path")
+        os.mkdir(models_path)
 
+    print("------------>>>> ")
+    print(curr_process_file)
+    break_file_path = curr_process_file.split("/")
+    download_file = break_file_path[-1]
+    print(download_file)
+    # download file
+    try:
+        s3_client = boto3.client(
+            "s3",
+            region_name=aws_region,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        print(data_bucket)
+        print(curr_process_file)
+        local_file = models_path + "/" + download_file
+        print(local_file)
+        res = s3_client.download_file(data_bucket, curr_process_file, local_file)
+        print(res)
+    except Exception as e:
+        logger.error(f"Download file error: {e}")
+
+    try:
+        command = ["gridlabd", local_file]
+        print(command)
+        proc = subprocess.Popen(
+            command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
+        )
+        while True:
+            line = proc.stdout.readline()
+            if not line:
+                break
+            # the real code does filtering here
+            print("run validate:", line.rstrip())
+    except KeyboardInterrupt as e:
+        logger.error(f"Invoke k8s process file error: {e}")
+        # res.terminate()
+        proc.terminate()
     # list all files in folder:
-    glmfiles = []
-    for _file in os.listdir(models_path):
-        if _file.endswith(".glm"):
-            # Prints only text file present in My Folder
-            file = models_path + "/" + _file
-            glmfiles.append(file)
+    # glmfiles = []
+    # for _file in os.listdir(models_path):
+    #     if _file.endswith(".glm"):
+    #         # Prints only text file present in My Folder
+    #         file = models_path + "/" + _file
+    #         glmfiles.append(file)
 
-    for _file in glmfiles:
-        try:
-            command = ["gridlabd", _file]
-            print(command)
-            proc = subprocess.Popen(
-                command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
-            )
-            while True:
-                line = proc.stdout.readline()
-                if not line:
-                    break
-                # the real code does filtering here
-                print("run validate:", line.rstrip())
-        except KeyboardInterrupt as e:
-            logger.error(f"Invoke k8s process file error:{e}")
-            # res.terminate()
-            proc.terminate()
+    # for _file in glmfiles:
+    # try:
+    #     command = ["gridlabd", _file]
+    #     print(command)
+    #     proc = subprocess.Popen(
+    #         command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
+    #     )
+    #     while True:
+    #         line = proc.stdout.readline()
+    #         if not line:
+    #             break
+    #         # the real code does filtering here
+    #         print("run validate:", line.rstrip())
+    # except KeyboardInterrupt as e:
+    #     logger.error(f"Invoke k8s process file error:{e}")
+    #     # res.terminate()
+    #     proc.terminate()
 
     save_data = {"data": "this gridlabd test_R2-12.47-1.glm"}
     # # ==================== Modify your code above ==================== ##

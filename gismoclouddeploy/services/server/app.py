@@ -11,7 +11,7 @@ from flask.cli import FlaskGroup
 import click
 import time
 from project.tasks import process_data_task, pong_worker
-from project.tasks_utilities.tasks_utils import publish_message_sns,send_queue_message
+from project.tasks_utilities.tasks_utils import publish_message_sns, send_queue_message
 from models.SNSSubjectsAlert import SNSSubjectsAlert
 
 app = create_app()
@@ -84,7 +84,7 @@ def process_files(worker_config_str: str, first_n_files: str):
             secret=worker_config_json["aws_secret_access_key"],
             region=worker_config_json["aws_region"],
         )
-        
+
     except Exception as e:
         logger.error(f"AWS validation failed {e}")
         return "AWS validation fail"
@@ -94,12 +94,16 @@ def process_files(worker_config_str: str, first_n_files: str):
     user_id = worker_config_json["user_id"]
     # print(sqs_url)
     for file in default_files:
-        matched_column_set = find_matched_column_name_set(
-            bucket_name=worker_config_json["data_bucket"],
-            columns_key=worker_config_json["process_column_keywords"],
-            file_path_name=file,
-            s3_client=s3_client,
-        )
+        if worker_config_json["data_file_type"] == ".csv":
+            matched_column_set = find_matched_column_name_set(
+                bucket_name=worker_config_json["data_bucket"],
+                columns_key=worker_config_json["process_column_keywords"],
+                file_path_name=file,
+                s3_client=s3_client,
+            )
+        else:
+            matched_column_set = {"None"}
+
         # print(f"matched_column_set {matched_column_set}")
         for column in matched_column_set:
             task_input_json = worker_config_json
@@ -108,115 +112,45 @@ def process_files(worker_config_str: str, first_n_files: str):
             task_id = process_data_task.delay(**task_input_json)
             task_ids.append(task_id)
             MSG_ATTRIBUTES = {
-                'user_id': {
-                    'DataType': 'String',
-                    'StringValue': user_id
-                },
-                # 'file_name': {
-                #     'DataType': 'String',
-                #     'StringValue': file
-                # },
-                # 'column_name': {
-                #     'DataType': 'String',
-                #     'StringValue': column
-                # },
-                # 'task_id': {
-                #     'DataType': 'String',
-                #     'StringValue': str(task_id)
-                # },
-                # 'alert_type': {
-                #     'DataType': 'String',
-                #     'StringValue': SNSSubjectsAlert.SEND_TASKID.name,
-                # }
-
+                "user_id": {"DataType": "String", "StringValue": user_id},
             }
-
-            msg_body = {"data": None ,"error": None,"file_name": file, "column_name":column,"task_id":str(task_id),"alert_type": SNSSubjectsAlert.SEND_TASKID.name,}
+            msg_body = {
+                "data": None,
+                "error": None,
+                "file_name": file,
+                "column_name": column,
+                "task_id": str(task_id),
+                "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
+            }
             MSG_BODY = json.dumps(msg_body)
             send_response = send_queue_message(
-                    queue_url=sqs_url,
-                    msg_attributes=MSG_ATTRIBUTES,
-                    msg_body=MSG_BODY,
-                    sqs_client=sqs_client
-
+                queue_url=sqs_url,
+                msg_attributes=MSG_ATTRIBUTES,
+                msg_body=MSG_BODY,
+                sqs_client=sqs_client,
             )
 
-            # print(send_response)
-            # message = {
-            #     "file_name": file,
-            #     "column_name": column,
-            #     "task_id": str(task_id),
-            #     "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
-            # }
-            # publish_message_sns(
-            #     subject=worker_config_json["user_id"],
-            #     message=json.dumps(message),
-            #     aws_access_key=worker_config_json["aws_access_key"],
-            #     aws_secret_access_key=worker_config_json["aws_secret_access_key"],
-            #     aws_region=worker_config_json["aws_region"],
-            #     topic_arn=worker_config_json["sns_topic"],
-            # )
             time.sleep(0.02)
             # publish sns message
     # print("------------->")
     MSG_ATTRIBUTES2 = {
-            'user_id': {
-                'DataType': 'String',
-                'StringValue': str(user_id)
-            },
-            # 'total_tasks': {
-            #     'DataType': 'String',
-            #     'StringValue': str( len(task_ids)),
-            # },
-            # 'alert_type': {
-            #     'DataType': 'String',
-            #     'StringValue': SNSSubjectsAlert.SEND_TASKID_INFO.name,
-            # }
+        "user_id": {"DataType": "String", "StringValue": str(user_id)},
+    }
 
-        }
-
-    msg_body = {"data": None ,"error": None, "total_tasks":  len(task_ids),"alert_type":SNSSubjectsAlert.SEND_TASKID_INFO.name}
+    msg_body = {
+        "data": None,
+        "error": None,
+        "total_tasks": len(task_ids),
+        "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
+    }
     MSG_BODY = json.dumps(msg_body)
     send_response = send_queue_message(
-            queue_url=sqs_url,
-            msg_attributes=MSG_ATTRIBUTES2,
-            msg_body=MSG_BODY,
-            sqs_client=sqs_client
-
+        queue_url=sqs_url,
+        msg_attributes=MSG_ATTRIBUTES2,
+        msg_body=MSG_BODY,
+        sqs_client=sqs_client,
     )
-    # print(send_response)
-    # print("--------")
-    # print(send_response)
-    # send tasks completed
-    # for id in task_ids:
-    #     message = {
-    #         "task_id":str(id),
-    #         "alert_type": SNSSubjectsAlert.SEND_TASKID.name
-    #     }
-    #     publish_message_sns(
-    #         subject=worker_config_json["user_id"],
-    #         message= json.dumps(message),
-    #         aws_access_key=worker_config_json["aws_access_key"],
-    #         aws_secret_access_key=worker_config_json["aws_secret_access_key"],
-    #         aws_region=worker_config_json["aws_region"],
-    #         topic_arn=worker_config_json["sns_topic"]
-    #     )
-    #     time.sleep(0.1)
-    # end of task_ids
-    # time.sleep(1)
-    # message = {
-    #     "total_tasks": len(task_ids),
-    #     "task_id": SNSSubjectsAlert.SEND_TASKID_INFO.name,
-    #     "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
-    # }
-    # publish_message_sns(
-    #     subject=worker_config_json["user_id"],
-    #     message=json.dumps(message),
-    #     topic_arn=worker_config_json["sns_topic"],
-    #     aws_access_key=worker_config_json["aws_access_key"],
-    #     aws_secret_access_key=worker_config_json["aws_secret_access_key"],
-    #     aws_region=worker_config_json["aws_region"],
-    # )
+
     return
 
     # for id in task_ids:

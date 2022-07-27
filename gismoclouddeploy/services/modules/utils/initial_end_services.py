@@ -21,7 +21,6 @@ logging.basicConfig(
 )
 
 
-
 # def process_and_analyze_logs(
 #     worker_config: WORKER_CONFIG = None,
 #     initial_process_time: float = None,
@@ -41,7 +40,7 @@ logging.basicConfig(
 #         region=aws_region,
 #     )
 
-#     save_data_file_local = worker_config.save_data_file_local 
+#     save_data_file_local = worker_config.save_data_file_local
 #     save_error_file_local = worker_config.save_error_file_local
 #     save_error_file_local = worker_config.save_error_file_local
 #     save_logs_file_local = worker_config.save_logs_file_local
@@ -163,16 +162,17 @@ def initial_end_services(
     instanceType: str = None,
     sqs_url: str = None,
 ):
-   
+
     logger.info("=========== delete solver lic in bucket ============ ")
-    delete_solver_lic_from_bucket(
-        saved_solver_bucket=worker_config.solver.saved_solver_bucket,
-        solver_lic_file_name=worker_config.solver.solver_lic_file_name,
-        saved_temp_path_in_bucket=worker_config.user_id,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
+    if worker_config.solver.solver_name != "None":
+        delete_solver_lic_from_bucket(
+            saved_solver_bucket=worker_config.solver.saved_solver_bucket,
+            solver_lic_file_name=worker_config.solver.solver_lic_file_name,
+            saved_temp_path_in_bucket=worker_config.user_id,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+        )
     s3_client = connect_aws_client(
         client_name="s3",
         key_id=aws_access_key,
@@ -183,12 +183,11 @@ def initial_end_services(
         # check if totoal process time is longer than 60 sec
         if total_process_time < 60:
             sleep_time = round(60 - total_process_time)
-            logger.info(f"total_process_time is shorter than 60 sec, wait {sleep_time}...")
+            logger.info(
+                f"total_process_time is shorter than 60 sec, wait {sleep_time}..."
+            )
             time.sleep(sleep_time)
-        res = delete_queue(
-            queue_url=sqs_url,
-            sqs_client=sqs_client
-        )
+        res = delete_queue(queue_url=sqs_url, sqs_client=sqs_client)
         logger.info(f"Delete {sqs_url} success")
     except Exception as e:
         logger.error(f"Delete queue failed {e}")
@@ -238,7 +237,7 @@ def initial_end_services(
         # purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
     except Exception as e:
         logger.error(f"Cannot purge queue.{e}")
-   
+
     return
 
 

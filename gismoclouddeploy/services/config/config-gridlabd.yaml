@@ -53,9 +53,10 @@ worker_config:
     solver_lic_target_path: None    # This location inside worker container is requires by MOSEK
     saved_temp_path_in_bucket: None     # Temporaty file location on S3 lic_temp/<user_id>.it grenerated in run-time and deleted after program completed.
     solver_lic_file_name: None
-  data_bucket: "gcd.hipas.models"                      # Bucket contains origin data files.
-  default_process_files: []   # Default process files. If users do not use option -n command.
-  process_column_keywords: ["Power(W)"]                   # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
+  data_bucket: "gcd.hipas.models"                      # Bucket contains origin data files. "gcd.hipas.ny"
+  data_file_type: ".glm"
+  default_process_files: ["IEEE/8500.glm"] #"NY/glm/feeder_NY_01/NY_01_12471.glm"   # Default process files. If users do not use option -n command.
+  process_column_keywords: []                   # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
   saved_bucket: "pv.insight.test"                         # Bucket of saved files.
   saved_path_aws: "results"                               # Path of saved files in bucket
   saved_path_local: "results"
