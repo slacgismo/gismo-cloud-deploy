@@ -17,7 +17,7 @@ class BaseConfig:
     task_track_started = True
     task_annotations = {"*": {"rate_limit": "10/s"}}
     task_acks_late = True
-    worker_prefetch_multiplier = 20
+    worker_prefetch_multiplier = 1
 
 
 class DevelopmentConfig(BaseConfig):
