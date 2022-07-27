@@ -158,7 +158,7 @@ def analyze_signle_local_logs_file(
 
     error_task = df[(df["alert_type"] == "SYSTEM_ERROR")]
     num_error_task = len(error_task)
-    
+
     worker_dict = process_df_for_gantt(df)
     shortest_task = ""
     longest_task = ""
@@ -222,47 +222,47 @@ def analyze_signle_local_logs_file(
     # step 1 , accumulate the process time of each host_ip/pid
     for key, value in worker_dict.items():
         _duration = float(value["duration"])
-        _host_ip = value['host_ip']
-        _pid = value['pid']
-        key = str(_host_ip) + "/" +str(_pid)
-        if  key in ip_accumulation_druations:
+        _host_ip = value["host_ip"]
+        _pid = value["pid"]
+        key = str(_host_ip) + "/" + str(_pid)
+        if key in ip_accumulation_druations:
             ip_accumulation_druations[key] += _duration
         else:
-            ip_accumulation_druations[key] =  _duration
-
-
+            ip_accumulation_druations[key] = _duration
 
     accumulated_process_duration = 0
-    for key , value in ip_accumulation_druations.items():
+    for key, value in ip_accumulation_druations.items():
         accumulated_process_duration += value
     effeciency_of_each_ip_pid = dict()
-    effeciencyFactor = 0 
-    if task_duration_in_parallelism > 0 :
+    effeciencyFactor = 0
+    if task_duration_in_parallelism > 0:
 
-        for key , value in ip_accumulation_druations.items():
-            effeciency_of_each_ip_pid[key] = value/task_duration_in_parallelism
+        for key, value in ip_accumulation_druations.items():
+            effeciency_of_each_ip_pid[key] = value / task_duration_in_parallelism
 
-    if len(ip_accumulation_druations)> 0 :
-        effeciencyFactor = accumulated_process_duration/(task_duration_in_parallelism * len(ip_accumulation_druations))
-
+    if len(ip_accumulation_druations) > 0:
+        effeciencyFactor = accumulated_process_duration / (
+            task_duration_in_parallelism * len(ip_accumulation_druations)
+        )
 
     performance_dict = {
-        "file" : logs_file_path_name,
+        "file": logs_file_path_name,
         "total_tasks": total_tasks,
-        "average_task_duration": round(average_task_duration,2),
-        "min_duration": round(min_duration,2),
-        "max_duration":round(max_duration,2),
-        "num_error_task":num_error_task,
-        "longest_task":longest_task,
-        "shortest_task":shortest_task,
-        "num_unfinished_tasks":num_unfinished_tasks,
-        "task_duration_in_parallelism":round(task_duration_in_parallelism,2),
-        "tasks_durtaion_sum":round(tasks_durtaion_sum,2),
-        "initial_process_time":round(initial_process_time,2),
-        "total_process_time":round(total_process_time,2),
-        "effeciencyFactor":round(effeciencyFactor,2)
-        }
+        "average_task_duration": round(average_task_duration, 2),
+        "min_duration": round(min_duration, 2),
+        "max_duration": round(max_duration, 2),
+        "num_error_task": num_error_task,
+        "longest_task": longest_task,
+        "shortest_task": shortest_task,
+        "num_unfinished_tasks": num_unfinished_tasks,
+        "task_duration_in_parallelism": round(task_duration_in_parallelism, 2),
+        "tasks_durtaion_sum": round(tasks_durtaion_sum, 2),
+        "initial_process_time": round(initial_process_time, 2),
+        "total_process_time": round(total_process_time, 2),
+        "effeciencyFactor": round(effeciencyFactor, 2),
+    }
     return performance_dict
+
 
 def analyze_all_local_logs_files(
     logs_file_path: str = None,
@@ -274,11 +274,11 @@ def analyze_all_local_logs_files(
     save_file_path_name: str = None,
     num_unfinished_tasks: int = 0,
     code_templates_folder: str = None,
-    repeat_number:int = 1,
+    repeat_number: int = 1,
 ) -> List[str]:
     if os.path.isdir(logs_file_path) is False:
         raise Exception(f"{logs_file_path} not exist")
-    logs_files_list= []
+    logs_files_list = []
     for _file in os.listdir(logs_file_path):
         prefix = _file.split("-")[0]
         if prefix == "logs":
@@ -287,97 +287,106 @@ def analyze_all_local_logs_files(
     header = ["Performance"]
     file_name = ["File name"]
     average_task_duration = ["average_task_duration"]
-    min_duration = ['min_duration']
-    max_duration = ['max_duration']
-    num_error_task = ['num_error_task']
-    num_unfinished_tasks = ['num_unfinished_tasks']
-    shortest_task =['shortest_task']
-    longest_task = ['longest_task']
-    task_duration_in_parallelism = ['task_duration_in_parallelism']
-    tasks_durtaion_sum = ['tasks_durtaion_sum']
-    initial_process_time = ['initial_process_time']
-    total_process_time = ['total_process_time']
-    effeciencyFactor = ['effeciencyFactor']
-    total_tasks =  ['total_tasks']
+    min_duration = ["min_duration"]
+    max_duration = ["max_duration"]
+    num_error_task = ["num_error_task"]
+    num_unfinished_tasks = ["num_unfinished_tasks"]
+    shortest_task = ["shortest_task"]
+    longest_task = ["longest_task"]
+    task_duration_in_parallelism = ["task_duration_in_parallelism"]
+    tasks_durtaion_sum = ["tasks_durtaion_sum"]
+    initial_process_time = ["initial_process_time"]
+    total_process_time = ["total_process_time"]
+    effeciencyFactor = ["effeciencyFactor"]
+    total_tasks = ["total_tasks"]
+    error_task = ["error_task"]
 
-    index = 0 
+    index = 0
     for logs_file in logs_files_list:
         logger.info(f"Porcess {logs_file}")
-        logs_path_name = logs_file_path +"/" +logs_file
+        logs_path_name = logs_file_path + "/" + logs_file
         per_dict = analyze_signle_local_logs_file(
-            logs_file_path_name = logs_path_name,
+            logs_file_path_name=logs_path_name,
             instanceType=instanceType,
             initial_process_time=0,
             total_process_time=1100,
             eks_nodes_number=eks_nodes_number,
             num_workers=num_workers,
-            num_unfinished_tasks = 0,
-            code_templates_folder=code_templates_folder
+            num_unfinished_tasks=0,
+            code_templates_folder=code_templates_folder,
         )
-
 
         repeat_number_str = f"Repeat {index}"
         file_name.append(logs_file)
-        total_tasks.append(per_dict['total_tasks'])
-        average_task_duration.append(per_dict['average_task_duration'])
-        min_duration.append(per_dict['min_duration'])
-        shortest_task.append(per_dict['shortest_task'])
-        longest_task.append(per_dict['longest_task'])
-        max_duration.append(per_dict['max_duration'])
-        num_error_task.append(per_dict['num_error_task'])
-        num_unfinished_tasks.append(per_dict['num_unfinished_tasks'])
-        task_duration_in_parallelism.append(per_dict['task_duration_in_parallelism'])
-        tasks_durtaion_sum.append(per_dict['tasks_durtaion_sum'])
-        effeciencyFactor.append(per_dict['effeciencyFactor'])
+        total_tasks.append(per_dict["total_tasks"])
+        average_task_duration.append(per_dict["average_task_duration"])
+        min_duration.append(per_dict["min_duration"])
+        shortest_task.append(per_dict["shortest_task"])
+        longest_task.append(per_dict["longest_task"])
+        max_duration.append(per_dict["max_duration"])
+        num_error_task.append(per_dict["num_error_task"])
+        num_unfinished_tasks.append(per_dict["num_unfinished_tasks"])
+        task_duration_in_parallelism.append(per_dict["task_duration_in_parallelism"])
+        tasks_durtaion_sum.append(per_dict["tasks_durtaion_sum"])
+        effeciencyFactor.append(per_dict["effeciencyFactor"])
         header.append(repeat_number_str)
-        index +=1
+        index += 1
 
     initial_process_time = initial_process_time + init_process_time_list
     total_process_time = total_process_time + total_proscee_time_list
-    
-    if repeat_number > 1 :
+
+    if repeat_number > 1:
         # Mean and Std
         header.append("Mean")
         header.append("Std")
         # average_task_duration
-        mean_of_average_task_duration= round(statistics.mean(average_task_duration[1:]),2)
-        std_of_average_task_duration =  round(statistics.stdev(average_task_duration[1:]),2)
+        mean_of_average_task_duration = round(
+            statistics.mean(average_task_duration[1:]), 2
+        )
+        std_of_average_task_duration = round(
+            statistics.stdev(average_task_duration[1:]), 2
+        )
         average_task_duration.append(mean_of_average_task_duration)
         average_task_duration.append(std_of_average_task_duration)
 
         # task_duration_in_parallelism
-        mean_of_task_duration_in_parallelism =  round(statistics.mean(task_duration_in_parallelism[1:]),2)
-        std_of_task_duration_in_parallelism =  round(statistics.stdev(task_duration_in_parallelism[1:]),2)
+        mean_of_task_duration_in_parallelism = round(
+            statistics.mean(task_duration_in_parallelism[1:]), 2
+        )
+        std_of_task_duration_in_parallelism = round(
+            statistics.stdev(task_duration_in_parallelism[1:]), 2
+        )
         task_duration_in_parallelism.append(mean_of_task_duration_in_parallelism)
         task_duration_in_parallelism.append(std_of_task_duration_in_parallelism)
 
-
         # tasks_durtaion_sum
-        mean_of_tasks_durtaion_sum =  round(statistics.mean(tasks_durtaion_sum[1:]),2)
-        std_of_tasks_durtaion_sum =  round(statistics.stdev(tasks_durtaion_sum[1:]),2)
+        mean_of_tasks_durtaion_sum = round(statistics.mean(tasks_durtaion_sum[1:]), 2)
+        std_of_tasks_durtaion_sum = round(statistics.stdev(tasks_durtaion_sum[1:]), 2)
         tasks_durtaion_sum.append(mean_of_tasks_durtaion_sum)
         tasks_durtaion_sum.append(std_of_tasks_durtaion_sum)
 
         # initial_process_time
-        mean_of_init_process_time_list =  round(statistics.mean(init_process_time_list),2)
-        std_of_init_process_time_list =  round(statistics.stdev(init_process_time_list),2)
-        
+        mean_of_init_process_time_list = round(
+            statistics.mean(init_process_time_list), 2
+        )
+        std_of_init_process_time_list = round(
+            statistics.stdev(init_process_time_list), 2
+        )
+
         initial_process_time.append(mean_of_init_process_time_list)
         initial_process_time.append(std_of_init_process_time_list)
 
         # total_process_time
-        mean_of_total_process_time =  round(statistics.mean(total_proscee_time_list),2)
-        std_of_total_process_time =  round(statistics.stdev(total_proscee_time_list),2)
-        
+        mean_of_total_process_time = round(statistics.mean(total_proscee_time_list), 2)
+        std_of_total_process_time = round(statistics.stdev(total_proscee_time_list), 2)
+
         total_process_time.append(mean_of_total_process_time)
         total_process_time.append(std_of_total_process_time)
 
-
-        mean_of_effeciencyFactor =  round(statistics.mean(effeciencyFactor[1:]),2)
-        std_of_effeciencyFactor =  round(statistics.stdev(effeciencyFactor[1:]),2)
+        mean_of_effeciencyFactor = round(statistics.mean(effeciencyFactor[1:]), 2)
+        std_of_effeciencyFactor = round(statistics.stdev(effeciencyFactor[1:]), 2)
         effeciencyFactor.append(mean_of_effeciencyFactor)
         effeciencyFactor.append(std_of_effeciencyFactor)
-
 
     performance = [
         header,
@@ -398,9 +407,8 @@ def analyze_all_local_logs_files(
         tasks_durtaion_sum,
         initial_process_time,
         total_process_time,
-        effeciencyFactor
-
-        ]
+        effeciencyFactor,
+    ]
     table1 = AsciiTable(performance)
     print(table1.table)
     print("---------")
@@ -408,5 +416,4 @@ def analyze_all_local_logs_files(
     with open(save_file_path_name, "w") as file:
         print(table1.table, file=file)
         file.close()
-    return 
-
+    return
