@@ -47,9 +47,11 @@ def tracklog_decorator(func):
         response = dict()
         # print("Start-------->")
         try:
-            if solver["solver_name"] != None:
+            solver_name = solver["solver_name"]
+            if solver_name != "None":
+
                 check_and_download_solver(
-                    solver_name=solver["solver_name"],
+                    solver_name=solver_name,
                     slover_lic_file_name=solver["solver_lic_file_name"],
                     solver_lic_target_path=solver["solver_lic_target_path"],
                     saved_solver_bucket=solver["saved_solver_bucket"],
@@ -77,26 +79,6 @@ def tracklog_decorator(func):
         hostname = socket.gethostname()
         host_ip = socket.gethostbyname(hostname)
         pid = os.getpid()
-        # sns_message = {
-        #     "file_name": curr_process_file,
-        #     "column_name": curr_process_column,
-        #     "task_id": task_id,
-        #     "alert_type": alert_type,
-        #     "start_time": start_time,
-        #     "end_time": end_time,
-        #     "hostname": hostname,
-        #     "host_ip": host_ip,
-        #     "pid": pid,
-        #     "data": "None",
-        #     "error": error_output,
-        # }
-        # try:
-        #     response_str = json.dumps(response)
-        # except Exception:
-        #     error_output = str(e).replace('"', " ").replace("'", " ")
-        #     logger.error(f"Error :{error_output}")
-        #     alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
-        #     worker_state = WorkerState.FAILURE.name
         msg_body = {
             "file_name": curr_process_file,
             "column_name": curr_process_column,
@@ -112,63 +94,7 @@ def tracklog_decorator(func):
         }
         MSG_ATTRIBUTES = {
             "user_id": {"DataType": "String", "StringValue": user_id},
-            # 'file_name': {
-            #     'DataType': 'String',
-            #     'StringValue': curr_process_file
-            # },
-            # 'column_name': {
-            #     'DataType': 'String',
-            #     'StringValue': curr_process_column
-            # },
-            # 'task_id': {
-            #     'DataType': 'String',
-            #     'StringValue': task_id
-            # },
-            # 'alert_type': {
-            #     'DataType': 'String',
-            #     'StringValue': alert_type
-            # },
-            # 'start_time': {
-            #     'DataType': 'String',
-            #     'StringValue': start_time,
-            # },
-            # 'end_time': {
-            #     'DataType': 'String',
-            #     'StringValue': end_time,
-            # },
-            # 'hostname': {
-            #     'DataType': 'String',
-            #     'StringValue': hostname,
-            # },
-            # 'host_ip': {
-            #     'DataType': 'String',
-            #     'StringValue': host_ip,
-            # },
-            # 'pid': {
-            #     'DataType': 'String',
-            #     'StringValue': str(pid),
-            # }
         }
-        # try:
-        #     # MSG_ATTRIBUTES["data"] = json.dumps(response)
-        #     MSG_ATTRIBUTES["data"] =
-        # except Exception as e:
-        # error_output = str(e).replace('"', " ").replace("'", " ")
-        # logger.error(f"Error :{error_output}")
-        # alert_type = SNSSubjectsAlert.SYSTEM_ERROR.name
-        # MSG_ATTRIBUTES["alert_type"] = alert_type
-        # MSG_ATTRIBUTES["error"] = error_output
-        # worker_state = WorkerState.FAILURE.name
-
-        # publish_message_sns(
-        #     message=json.dumps(sns_message),
-        #     subject=user_id,
-        #     topic_arn=sns_topic,
-        #     aws_access_key=aws_access_key,
-        #     aws_secret_access_key=aws_secret_access_key,
-        #     aws_region=aws_region,
-        # )
-
         # update worker state
         args[0].update_state(state=worker_state)
 
