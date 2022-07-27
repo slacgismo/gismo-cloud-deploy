@@ -6,6 +6,7 @@ from .my_modules import read_csv_from_s3
 import subprocess
 import os
 import boto3
+from genericpath import exists
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -82,31 +83,9 @@ def entrypoint(
         logger.error(f"Invoke k8s process file error: {e}")
         # res.terminate()
         proc.terminate()
-    # list all files in folder:
-    # glmfiles = []
-    # for _file in os.listdir(models_path):
-    #     if _file.endswith(".glm"):
-    #         # Prints only text file present in My Folder
-    #         file = models_path + "/" + _file
-    #         glmfiles.append(file)
-
-    # for _file in glmfiles:
-    # try:
-    #     command = ["gridlabd", _file]
-    #     print(command)
-    #     proc = subprocess.Popen(
-    #         command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
-    #     )
-    #     while True:
-    #         line = proc.stdout.readline()
-    #         if not line:
-    #             break
-    #         # the real code does filtering here
-    #         print("run validate:", line.rstrip())
-    # except KeyboardInterrupt as e:
-    #     logger.error(f"Invoke k8s process file error:{e}")
-    #     # res.terminate()
-    #     proc.terminate()
+    if exists(local_file):
+        os.remove(local_file)
+        print(f"Delete {local_file} success")
 
     save_data = {"data": "this gridlabd test_R2-12.47-1.glm"}
     # # ==================== Modify your code above ==================== ##
