@@ -10,16 +10,18 @@ logging.basicConfig(
 )
 # SQS
 
-def create_queue(queue_name, delay_seconds, visiblity_timeout, sqs_resource):
+def create_queue(queue_name:str = None, delay_seconds:int = 1, visiblity_timeout:int = 60, sqs_resource:str = None, tags:dict = None):
     """
     Create a standard SQS queue
     """
     try:
         response = sqs_resource.create_queue(QueueName=queue_name,
-                                             Attributes={
+                                            Attributes={
                                                  'DelaySeconds': delay_seconds,
                                                  'VisibilityTimeout': visiblity_timeout
-                                             })
+                                             },
+                                            tags=tags
+                                            )
     except ClientError:
         logger.exception(f'Could not create SQS queue - {queue_name}.')
         raise

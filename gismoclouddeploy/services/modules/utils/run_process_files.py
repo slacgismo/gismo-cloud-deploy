@@ -60,7 +60,7 @@ def run_process_files(
     aws_secret_access_key: str = None,
     aws_region: str = None,
     # sqs_url: str = None,
-    sns_topic: str = None,
+    # sns_topic: str = None,
     dlq_url: str = None,
     ecr_repo: str = None,
     repeatnumber:int = 1,
@@ -147,7 +147,8 @@ def run_process_files(
             queue_name=sqs_name,
             delay_seconds="0",
             visiblity_timeout="60",
-            sqs_resource=sqs_resource
+            sqs_resource=sqs_resource,
+            tags={'project':'pvinsight'}
         )
        
         sqs_url = create_res.url
@@ -167,7 +168,7 @@ def run_process_files(
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
             sqs_url=sqs_url,
-            sns_topic=sns_topic,
+            # sns_topic=sns_topic,
             dlq_url=dlq_url,
             ecr_repo=ecr_repo,
             current_repeat_number = current_repeat_number,
@@ -411,7 +412,7 @@ def run_process_files(
                     aws_access_key=aws_access_key,
                     aws_secret_access_key=aws_secret_access_key,
                     aws_region=aws_region,
-                    sns_topic=sns_topic,
+                    # sns_topic=sns_topic,
                     sqs_url=sqs_url,
                 )
             )
