@@ -1,4 +1,3 @@
-
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client
@@ -24,7 +23,6 @@ def remove_prevous_results_files(
     save_performance_file_local: str = None,
     save_plot_file_local: str = None,
 ) -> None:
-
 
     # remove previous save data
     if exists(save_data_file_local):
@@ -84,7 +82,7 @@ def long_pulling_sqs(
     previous_messages_time = time.time()  # flag of idle time
     num_total_tasks = -1
     uncompleted_task_id_set = set()
-    
+
     start_time = time.time()
     while True > 0:
         messages = receive_queue_message(
@@ -96,7 +94,7 @@ def long_pulling_sqs(
         if "Messages" in messages:
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
-                msg_dict =  json.loads(msg_body)
+                msg_dict = json.loads(msg_body)
                 # print("------------->")
                 # print(msg_dict)
                 receipt_handle = msg["ReceiptHandle"]
@@ -108,8 +106,8 @@ def long_pulling_sqs(
                 # )
                 # logger.info(f"subject: {subject}")
                 # logger.info(f"message_text: {message_text}")
-                MessageAttributes = msg['MessageAttributes']
-                user_id = MessageAttributes['user_id']['StringValue']
+                MessageAttributes = msg["MessageAttributes"]
+                user_id = MessageAttributes["user_id"]["StringValue"]
                 if user_id != worker_config.user_id:
                     # not this user's sqs message. do touch
                     continue
@@ -169,29 +167,39 @@ def long_pulling_sqs(
                         logger.warning(
                             "------------------------------------------------------"
                         )
-                
+
                     received_completed_task_ids_set.add(received_completed_id)
                     # Save loags
                     # file_name,column_name,task_id,alert_type,start_time,end_time,hostname,host_ip,pid,error
-                    _logs = {    
-                        "file_name":msg_dict['file_name'],
-                        "column_name":msg_dict['column_name'],
-                        "task_id":msg_dict['task_id'],
-                        "start_time":msg_dict["start_time"],
-                        "end_time":msg_dict["end_time"],
-                        "hostname":msg_dict["hostname"],
-                        "host_ip":msg_dict["host_ip"],
-                        "pid":msg_dict["pid"],
-                        "alert_type":msg_dict["alert_type"],
+                    _logs = {
+                        "file_name": msg_dict["file_name"],
+                        "column_name": msg_dict["column_name"],
+                        "task_id": msg_dict["task_id"],
+                        "start_time": msg_dict["start_time"],
+                        "end_time": msg_dict["end_time"],
+                        "hostname": msg_dict["hostname"],
+                        "host_ip": msg_dict["host_ip"],
+                        "pid": msg_dict["pid"],
+                        "alert_type": msg_dict["alert_type"],
                     }
                     logs_data.append(_logs)
                     # Save errors
                     if alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name:
-                        _error = {"error":msg_dict['error']}
+                        _error = {
+                            "file_name": msg_dict["file_name"],
+                            "column_name": msg_dict["column_name"],
+                            "task_id": msg_dict["task_id"],
+                            "start_time": msg_dict["start_time"],
+                            "end_time": msg_dict["end_time"],
+                            "hostname": msg_dict["hostname"],
+                            "host_ip": msg_dict["host_ip"],
+                            "pid": msg_dict["pid"],
+                            "error": msg_dict["error"],
+                        }
                         error_data.append(_error)
                     # Save data
                     if alert_type == SNSSubjectsAlert.SAVED_DATA.name:
-                        save_data.append(msg_dict['data'])
+                        save_data.append(msg_dict["data"])
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
                     continue
 
@@ -214,18 +222,15 @@ def long_pulling_sqs(
         # Appand to files
         # save data
         append_receive_data(
-            data_dict=save_data,
-            file_name=worker_config.save_data_file_local
+            data_dict=save_data, file_name=worker_config.save_data_file_local
         )
-        # save logs 
+        # save logs
         append_receive_data(
-            data_dict=logs_data,
-            file_name=worker_config.save_logs_file_local
+            data_dict=logs_data, file_name=worker_config.save_logs_file_local
         )
         # save
         append_receive_data(
-            data_dict=error_data,
-            file_name=worker_config.save_error_file_local
+            data_dict=error_data, file_name=worker_config.save_error_file_local
         )
 
         # Invoke received new message again
@@ -303,11 +308,10 @@ def long_pulling_sqs(
 
 
 def append_receive_data(
-    data_dict:dict = None,
-    file_name:str = None,
-
+    data_dict: dict = None,
+    file_name: str = None,
 ) -> None:
-    if len(data_dict) == 0 :
+    if len(data_dict) == 0:
         return
 
     try:
@@ -317,6 +321,6 @@ def append_receive_data(
                 file_name,
                 mode="a",
                 header=not os.path.exists(file_name),
-            )     
+            )
     except Exception as e:
         raise e

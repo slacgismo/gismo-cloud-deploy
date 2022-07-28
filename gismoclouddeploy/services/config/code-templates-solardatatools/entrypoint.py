@@ -36,6 +36,8 @@ def entrypoint(
     """
 
     ## ==================== Modify your code below ==================== ##
+    # curr_process_file = "PVO/PVOutput/10284.csv"
+    # curr_process_column = "Power(W)"
     logger.info(
         f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
     )
