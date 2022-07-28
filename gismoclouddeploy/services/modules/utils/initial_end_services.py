@@ -233,19 +233,6 @@ def initial_end_services(
                     image_name=service,
                     image_tag=image_tag,
                 )
-    # remove_running_services(
-    #     is_docker=is_docker,
-    #     services_config_list=services_config_list,
-    #     aws_access_key=aws_access_key,
-    #     aws_secret_access_key=aws_secret_access_key,
-    #     aws_region=aws_region,
-    # )
-
-    # try:
-
-    #     # purge_queue(queue_url=sqs_url, sqs_client=sqs_client)
-    # except Exception as e:
-    #     logger.error(f"Cannot purge queue.{e}")
 
     return
 
