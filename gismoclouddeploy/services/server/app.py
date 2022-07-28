@@ -92,45 +92,46 @@ def process_files(worker_config_str: str, first_n_files: str):
     # print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
-    # print(sqs_url)
-    for file in default_files:
-        if worker_config_json["data_file_type"] == ".csv":
-            matched_column_set = find_matched_column_name_set(
-                bucket_name=worker_config_json["data_bucket"],
-                columns_key=worker_config_json["process_column_keywords"],
-                file_path_name=file,
-                s3_client=s3_client,
-            )
-        else:
-            matched_column_set = {"None"}
+    repeat_number_per_round = int(worker_config_json["worker_config_json"])
+    for i in range(repeat_number_per_round):
+        for file in default_files:
+            if worker_config_json["data_file_type"] == ".csv":
+                matched_column_set = find_matched_column_name_set(
+                    bucket_name=worker_config_json["data_bucket"],
+                    columns_key=worker_config_json["process_column_keywords"],
+                    file_path_name=file,
+                    s3_client=s3_client,
+                )
+            else:
+                matched_column_set = {"None"}
 
-        # print(f"matched_column_set {matched_column_set}")
-        for column in matched_column_set:
-            task_input_json = worker_config_json
-            task_input_json["curr_process_file"] = file
-            task_input_json["curr_process_column"] = column
-            task_id = process_data_task.delay(**task_input_json)
-            task_ids.append(task_id)
-            MSG_ATTRIBUTES = {
-                "user_id": {"DataType": "String", "StringValue": user_id},
-            }
-            msg_body = {
-                "data": None,
-                "error": None,
-                "file_name": file,
-                "column_name": column,
-                "task_id": str(task_id),
-                "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
-            }
-            MSG_BODY = json.dumps(msg_body)
-            send_response = send_queue_message(
-                queue_url=sqs_url,
-                msg_attributes=MSG_ATTRIBUTES,
-                msg_body=MSG_BODY,
-                sqs_client=sqs_client,
-            )
+            # print(f"matched_column_set {matched_column_set}")
+            for column in matched_column_set:
+                task_input_json = worker_config_json
+                task_input_json["curr_process_file"] = file
+                task_input_json["curr_process_column"] = column
+                task_id = process_data_task.delay(**task_input_json)
+                task_ids.append(task_id)
+                MSG_ATTRIBUTES = {
+                    "user_id": {"DataType": "String", "StringValue": user_id},
+                }
+                msg_body = {
+                    "data": None,
+                    "error": None,
+                    "file_name": file,
+                    "column_name": column,
+                    "task_id": str(task_id),
+                    "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
+                }
+                MSG_BODY = json.dumps(msg_body)
+                send_response = send_queue_message(
+                    queue_url=sqs_url,
+                    msg_attributes=MSG_ATTRIBUTES,
+                    msg_body=MSG_BODY,
+                    sqs_client=sqs_client,
+                )
 
-            time.sleep(0.02)
+                time.sleep(0.02)
             # publish sns message
     # print("------------->")
     MSG_ATTRIBUTES2 = {
@@ -152,9 +153,6 @@ def process_files(worker_config_str: str, first_n_files: str):
     )
 
     return
-
-    # for id in task_ids:
-    #     print(id)
 
 
 @cli.command("revoke_task")
