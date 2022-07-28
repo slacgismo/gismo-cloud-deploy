@@ -92,7 +92,7 @@ def process_files(worker_config_str: str, first_n_files: str):
     # print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
-    repeat_number_per_round = int(worker_config_json["worker_config_json"])
+    repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])
     for i in range(repeat_number_per_round):
         for file in default_files:
             if worker_config_json["data_file_type"] == ".csv":
