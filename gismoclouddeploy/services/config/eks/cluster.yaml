@@ -9,11 +9,11 @@ metadata:
     manage: eksctl
 
 nodeGroups:
-  - name: gcd
+  - name: gcd-solar-2
     instanceType: t2.large
     desiredCapacity: 0
     minSize: 0
-    maxSize: 20
+    maxSize: 64
     tags:
       project: pvinsight
       manage: eksctl

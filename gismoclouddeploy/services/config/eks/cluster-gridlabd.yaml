@@ -5,7 +5,7 @@ metadata:
   name: gcd-gridlabd
   region: us-east-2
   tags:
-    project: pvinsight
+    project: hipas
     manage: eksctl
 
 nodeGroups:
@@ -13,7 +13,7 @@ nodeGroups:
     instanceType: t2.large
     desiredCapacity: 0
     minSize: 0
-    maxSize: 30
+    maxSize: 64
     tags:
-      project: gridlabd
+      project: hipas
       manage: eksctl
