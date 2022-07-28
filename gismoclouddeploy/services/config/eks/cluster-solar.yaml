@@ -2,7 +2,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: gcd-solar
+  name: gcd-solar-1
   region: us-east-2
   tags:
     project: pvinsight
