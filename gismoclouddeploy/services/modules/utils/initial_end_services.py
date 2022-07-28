@@ -8,7 +8,10 @@ from .process_log import (
     # analyze_local_logs_files,
 )
 from .eks_utils import scale_eks_nodes_and_wait
-from .invoke_function import invoke_docker_compose_down_and_remove
+from .invoke_function import (
+    invoke_docker_compose_down_and_remove,
+    invoke_kubectl_delete_all_deployment,
+)
 from .command_utils import delete_files_from_bucket
 
 from .sqs import delete_queue
@@ -209,6 +212,10 @@ def initial_end_services(
             nodegroup_name=nodegroup_name,
         )
 
+    if is_build_image:
+        res = invoke_kubectl_delete_all_deployment()
+        logger.info(res)
+        logger.info("----------->.  Delete k8s deployment ----------->")
     # Remove services.
     if check_environment_is_aws() and is_build_image:
         logger.info("----------->.  Delete Temp ECR image ----------->")
@@ -226,13 +233,13 @@ def initial_end_services(
                     image_name=service,
                     image_tag=image_tag,
                 )
-    remove_running_services(
-        is_docker=is_docker,
-        services_config_list=services_config_list,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
+    # remove_running_services(
+    #     is_docker=is_docker,
+    #     services_config_list=services_config_list,
+    #     aws_access_key=aws_access_key,
+    #     aws_secret_access_key=aws_secret_access_key,
+    #     aws_region=aws_region,
+    # )
 
     # try:
 
@@ -265,7 +272,10 @@ def remove_running_services(
                 secret=aws_secret_access_key,
                 region=aws_region,
             )
+
             for service in services_config_list:
+                # delete all k8s deployment
+
                 if service == "worker" or service == "server":
                     image_tag = services_config_list[service]["image_tag"]
                     delete_ecr_image(
