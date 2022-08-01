@@ -45,28 +45,13 @@ def entrypoint(
     print("=========================================")
     print(f"curr_process_file : {curr_process_file}")
     print("=========================================")
-    # define model folder
-    # models_path = "/app/project/gridlabd-models"
-    # if os.path.isdir(models_path) is False:
-    #     logger.info(f"Create local {models_path} path")
-    #     os.mkdir(models_path)
 
-    # src_dir = models_path
-
-    # # path to destination directory
-    # dest_dir = "/usr/local/src/gridlabd"
-    # all_files = os.listdir(models_path)
-    # shutil.copytree(src_dir, dest_dir)
-    # # print("------------>>>> ")
-    # # print(curr_process_file)
     break_file_path = curr_process_file.split("/")
-    download_file = break_file_path[-1]
-    save_file = "/app/project/" + download_file
+    target_process_file = break_file_path[-1]
+    project_folder = "/app/project"
+    # target_save_file = project_folder + download_file
 
-    print(f"download_file: {save_file} ")
-    # # print(download_file)
-    # # download file
-    # process_file = "feeder_NY_01/NY_01_2161.glm"
+    # download process files
     try:
         s3_client = boto3.client(
             "s3",
@@ -74,20 +59,42 @@ def entrypoint(
             aws_access_key_id=aws_access_key,
             aws_secret_access_key=aws_secret_access_key,
         )
-        #     # print(data_bucket)
-        #     # print(curr_process_file)
-        #     # local_file = models_path + "/" + download_file
-        #     print("------------>")
-        #     print(local_file)
-        #     print("------------>")
-        res = s3_client.download_file(data_bucket, curr_process_file, save_file)
-        print(res)
+        s3_resource = boto3.resource(
+            "s3",
+            region_name=aws_region,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        # res = s3_client.download_file(data_bucket, curr_process_file, save_file)
+        # print(res)
     except Exception as e:
-        logger.error(f"Download file error: {e}")
+        logger.error(f"AwS credentials failed: {e}")
+
+    # change current folder to app/project
     os.chdir("/app/project/")
     cwd = os.getcwd()
     print(f"cwd: {cwd}")
-    command = f"gridlabd {save_file} config.glm hosting_capacity.glm 1>>hosting_capacity.csv 2>>gridlabd.log"
+
+    download_necessary_folder = ["load_shape_2018_forecast", "weather_data"]
+    # download necessary files
+    for folder in download_necessary_folder:
+        downloadDirectoryFroms3(
+            bucketName=data_bucket, remoteDirectoryName=folder, s3_resource=s3_resource
+        )
+    # load_shape_2018_forecast
+
+    # download files list:
+    # download_necessary_files_lists = [ "hosting_capacity.py",,, target_process_file]
+    # try:
+    #     for d_file in download_necessary_files_lists:
+    #         _target_loaction_file = project_folder + "/" + d_file
+    #         res = s3_client.download_file(data_bucket, curr_process_file, _target_loaction_file)
+    #         print(f"Download {d_file} success")
+    # except Exception as e:
+    #     raise Exception(f"download {d_file} error: {e}")
+
+    process_file = project_folder + "/" + target_process_file
+    command = f"gridlabd {process_file} config.glm hosting_capacity.glm 1>>hosting_capacity.csv 2>>gridlabd.log"
     print("------------>")
     print(f"command: {command}")
     print("------------>")
@@ -106,3 +113,12 @@ def entrypoint(
     save_data = {"data": "this gridlabd test_R2-12.47-1.glm"}
     # # ==================== Modify your code above ==================== ##
     return save_data
+
+
+def downloadDirectoryFroms3(bucketName, remoteDirectoryName, s3_resource):
+
+    bucket = s3_resource.Bucket(bucketName)
+    for obj in bucket.objects.filter(Prefix=remoteDirectoryName):
+        if not os.path.exists(os.path.dirname(obj.key)):
+            os.makedirs(os.path.dirname(obj.key))
+        bucket.download_file(obj.key, obj.key)  # save to same path
