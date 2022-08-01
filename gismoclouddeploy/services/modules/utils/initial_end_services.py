@@ -182,25 +182,25 @@ def initial_end_services(
         secret=aws_secret_access_key,
         region=aws_region,
     )
-    try:
-        # check if totoal process time is longer than 60 sec
+    # try:
+    #     # check if totoal process time is longer than 60 sec
 
-        sqs_client = connect_aws_client(
-            client_name="sqs",
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
-        )
-        res = delete_queue(queue_url=sqs_url, sqs_client=sqs_client)
-        logger.info(f"Delete {sqs_url} success")
-        if total_process_time < 60:
-            sleep_time = round(60 - total_process_time)
-            logger.info(
-                f"total_process_time is shorter than 60 sec, wait {sleep_time}..."
-            )
-            time.sleep(sleep_time)
-    except Exception as e:
-        logger.error(f"Delete queue failed {e}")
+    #     sqs_client = connect_aws_client(
+    #         client_name="sqs",
+    #         key_id=aws_access_key,
+    #         secret=aws_secret_access_key,
+    #         region=aws_region,
+    #     )
+    #     res = delete_queue(queue_url=sqs_url, sqs_client=sqs_client)
+    #     logger.info(f"Delete {sqs_url} success")
+    #     if total_process_time < 60:
+    #         sleep_time = round(60 - total_process_time)
+    #         logger.info(
+    #             f"total_process_time is shorter than 60 sec, wait {sleep_time}..."
+    #         )
+    #         time.sleep(sleep_time)
+    # except Exception as e:
+    #     logger.error(f"Delete queue failed {e}")
 
     if check_environment_is_aws() and delete_nodes_after_processing is True:
         logger.info("======= >Delete node after processing")
@@ -212,10 +212,10 @@ def initial_end_services(
             nodegroup_name=nodegroup_name,
         )
 
-    if is_build_image:
-        res = invoke_kubectl_delete_all_deployment()
-        logger.info(res)
-        logger.info("----------->.  Delete k8s deployment ----------->")
+    # if is_build_image:
+    #     res = invoke_kubectl_delete_all_deployment()
+    #     logger.info(res)
+    #     logger.info("----------->.  Delete k8s deployment ----------->")
     # Remove services.
     if check_environment_is_aws() and is_build_image:
         logger.info("----------->.  Delete Temp ECR image ----------->")

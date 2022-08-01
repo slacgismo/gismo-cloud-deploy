@@ -1,0 +1,47 @@
+// hosting_capacity.glm
+//
+// Parameters
+//
+//   DATE (default is current date)
+//   DER_VALUE (default is 0 kW, i.e., no DER)
+//   TIME (default is current time)
+//   TZ (default is current timezone)
+
+#ifndef DER_VALUE
+#define DER_VALUE=0 kW
+#endif
+
+#ifndef TZ
+#define TZ=EST+5EDT
+#endif
+
+#ifndef DATE
+#define DATE=${SHELL date +'%Y-%m-%d'}
+#endif
+
+#ifndef HOUR
+#define HOUR=${SHELL date +'%M:00:00 %Z'}
+#endif
+
+#set warn=FALSE
+#set show_progress=FALSE
+
+module hosting_capacity;
+
+#ifdef ${modelname:0:10} != "feeder_NY_"
+#error feeder GLM must be loaded first
+#endif
+
+module powerflow
+{
+    voltage_violation_threshold 0.05;
+    voltage_fluctuation_threshold 0.03;
+    violation_record ${modelname/.glm/.csv};
+}
+
+clock
+{
+    timezone "${TZ}";
+    starttime "${DATE} ${TIME}";
+    stoptime "${DATE} ${TIME}";
+}

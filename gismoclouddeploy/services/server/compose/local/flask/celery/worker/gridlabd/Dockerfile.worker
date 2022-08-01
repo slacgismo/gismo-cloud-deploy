@@ -81,6 +81,7 @@ COPY ./server .
 COPY $code_path ./project/
 RUN chmod -R 755 ./project/
 
+# COPY ../config/code-templates-gridlabdNY /usr/local/src/gridlabd
 
 
 ENTRYPOINT ["/entrypoint"]
