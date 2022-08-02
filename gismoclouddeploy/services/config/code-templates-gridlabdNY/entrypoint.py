@@ -78,57 +78,40 @@ def entrypoint(
     print(f"cwd: {cwd}")
 
     download_necessary_folder = ["load_shape_2018_forecast", "weather_data"]
-    # # download necessary files
+    # download necessary files
     for folder in download_necessary_folder:
         downloadDirectoryFroms3(
             bucketName=data_bucket, remoteDirectoryName=folder, s3_resource=s3_resource
         )
-    # # load_shape_2018_forecast
+
     target_loaction_file = project_folder + "/" + target_process_file
     res = s3_client.download_file(data_bucket, curr_process_file, target_loaction_file)
-    print(res)
+    # print(res)
     # download files list:
-    # download_necessary_files_lists = [ "hosting_capacity.py",,, target_process_file]
-    # try:
 
-    #     for d_file in download_necessary_files_lists:
-    #         _target_loaction_file = project_folder + "/" + d_file
-    #         res = s3_client.download_file(data_bucket, curr_process_file, _target_loaction_file)
-    #         print(f"Download {d_file} success")
-    # except Exception as e:
-    #     raise Exception(f"download {d_file} error: {e}")
     # target_loaction_file = "feeder_NY_01/NY_01_2160.glm"
 
-    command = f"gridlabd {target_loaction_file} config.glm hosting_capacity.glm 1>>hosting_capacity.csv"
+    command = f"gridlabd {target_loaction_file} config.glm hosting_capacity.glm 1>>hosting_capacity.csv 2>>gridlabd.log"
     print("------------>")
     print(f"command: {command}")
     print("------------>")
+
     returncode = subprocess.call(command, shell=True)
+
     if returncode != 0:
-        raise Exception(f"Error run the {command}")
+        errorObject = open("gridlabd.log", "r")
+        error = errorObject.read()
+        print(error)
+        errorObject.close()
+        raise Exception(f"Error run the {error}")
+    fileObject = open("hosting_capacity.csv", "r")
+    data = fileObject.read()
+    print("------------>")
+    print(f"data: {data}")
+    print("------------>")
+    fileObject.close()
 
-    try:
-        result_df = pd.read_csv("hosting_capacity.csv")
-        print("--- result ===")
-        print(result_df.head())
-        print("--- end result ===")
-    except Exception as e:
-        logger.error(e)
-
-    try:
-        log_df = pd.read_csv("gridlabd.log")
-        print("--- result ===")
-        print(log_df.head())
-        print("--- end result ===")
-    except Exception as e:
-        logger.error(e)
-    result = result_df.to_string(index=False)
-    # buff=StringIO()
-    # #df is your DataFrame
-    # result_df.to_json(path_or_buf=buff,orient='records')
-    # dfJson=json.loads(buff)
-
-    save_data = {"file": target_loaction_file, "data": result}
+    save_data = {"file": target_loaction_file, "data": data}
     # # ==================== Modify your code above ==================== ##
     return save_data
 
