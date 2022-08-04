@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: worker
+  name: flower
 spec:
   # minReadySeconds: 30
   selector:
     matchLabels:
-      app: worker
+      app: flower
   replicas: 1
   template: # template for the pods
     metadata:
       labels:
-        app: worker
+        app: flower
     spec:
       topologySpreadConstraints:
         - maxSkew: 1
@@ -19,12 +19,12 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: worker
+              app: flower
       containers:
-        - name: worker
-          image: worker:latest
+        - name: flower
+          image: flower:latest
           imagePullPolicy: IfNotPresent
-          command: ["/start-celeryworker"]
+          command: ["/start-flower"]
           env:
             - name: FLASK_APP
               value: app

@@ -34,7 +34,8 @@ services:
       args:
         - CODES_FOLDER=code-templates-solardatatools
       dockerfile: ./server/compose/local/flask/celery/worker/${WORKER_DIRECTORY}/Dockerfile.worker
-    image: flask_celery_example_celery_flower
+    image: flower
+    container_name: flower
     command: /start-flower
     # volumes:
     #   - .:/app

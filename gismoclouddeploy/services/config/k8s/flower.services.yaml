@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flower
+
+spec:
+  # This defines which pods are going to be represented by this Service
+  # The service becomes a network endpoint for either other services
+  # or maybe external users to connect to (eg browser)
+  selector:
+    app: flower
+
+
+  ports:
+    - name: http
+      port: 5555
+      targetPort: 5555
+
+  type: LoadBalancer
