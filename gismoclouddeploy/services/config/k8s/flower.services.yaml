@@ -14,6 +14,6 @@ spec:
   ports:
     - name: http
       port: 5555
-      targetPort: 5555
+      nodePort: 30080
 
   type: LoadBalancer
