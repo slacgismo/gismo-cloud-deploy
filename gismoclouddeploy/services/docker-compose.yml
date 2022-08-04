@@ -6,7 +6,7 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=
+        - CODES_FOLDER=code-templates-solardatatools
       dockerfile: ./server/compose/local/flask/Dockerfile
 
     image: server
@@ -28,12 +28,31 @@ services:
   redis:
     image: redis:6-alpine
 
+  flower:
+    build:
+      context: .
+      args:
+        - CODES_FOLDER=code-templates-solardatatools
+      dockerfile: ./server/compose/local/flask/celery/worker/${WORKER_DIRECTORY}/Dockerfile.worker
+    image: flask_celery_example_celery_flower
+    command: /start-flower
+    # volumes:
+    #   - .:/app
+    environment:
+      - FLASK_APP=app
+      - CELERY_BROKER_URL=redis://redis:6379/0 
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    ports:
+      - 5557:5555
+    depends_on:
+      - redis
+
   celery_worker:
     # platform: linux/amd64
     build:
       context: .
       args:
-        - CODES_FOLDER=
+        - CODES_FOLDER=code-templates-solardatatools
       dockerfile: ./server/compose/local/flask/celery/worker/${WORKER_DIRECTORY}/Dockerfile.worker
     image: worker
     command: /start-celeryworker

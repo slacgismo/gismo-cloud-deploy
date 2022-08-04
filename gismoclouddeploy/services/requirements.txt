@@ -4,6 +4,7 @@ botocore==1.27.1
 botocore-stubs==1.27.8
 click==8.1.3
 flake8==4.0.1
+flower==1.1.0
 gcd==0.1
 halo==0.0.31
 kaleido==0.2.1
