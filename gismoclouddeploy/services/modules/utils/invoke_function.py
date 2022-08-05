@@ -140,13 +140,14 @@ def invoke_tag_image(
 ) -> str:
     command = f"docker image tag {origin_image} {update_image}:{image_tag}"
     output = exec_subprocess_command(command=command)
+    print(f"output :{output}")
     return output
 
 
 def invoke_push_image(image_name: str, image_tag: str, ecr_repo: str) -> str:
     command = f"docker push {ecr_repo}/{image_name}:{image_tag}"
     output = exec_subprocess_command(command=command)
-    print(output)
+
 
 
 def invoke_eksctl_scale_node(

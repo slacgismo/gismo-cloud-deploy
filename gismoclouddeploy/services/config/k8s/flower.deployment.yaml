@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flower
+  name: celeryflower
 spec:
   # minReadySeconds: 30
   selector:
     matchLabels:
-      app: flower
+      app: celeryflower
   replicas: 1
   template: # template for the pods
     metadata:
       labels:
-        app: flower
+        app: celeryflower
     spec:
       topologySpreadConstraints:
         - maxSkew: 1
@@ -19,10 +19,10 @@ spec:
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
-              app: flower
+              app: celeryflower
       containers:
-        - name: flower
-          image: flower:latest
+        - name: celeryflower
+          image: cceleryflower:latest
           imagePullPolicy: IfNotPresent
           command: ["/start-flower"]
           env:

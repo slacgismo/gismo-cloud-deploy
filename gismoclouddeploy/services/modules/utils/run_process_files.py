@@ -250,7 +250,7 @@ def run_process_files(
                 )
                 for service in services_config_list:
                     # only inspect worker and server
-                    if service == "worker" or service == "server" or  service == "flower":
+                    if service == "worker" or service == "server" or  service == "celeryflower":
                         # Updated image tag
                         update_image = service
                         if not is_local:
@@ -262,7 +262,10 @@ def run_process_files(
                             image_tag=temp_image_tag,
                         )
                         services_config_list[service]["image_tag"] = temp_image_tag
-
+                        # print("------------------>>")
+                        # print(f"service : {service} :{services_config_list[service] } ")
+                        # print("------------------>>")
+             
             if not is_local:
                 try:
                     validation_resp = invoke_ecr_validation(ecr_repo=ecr_repo)

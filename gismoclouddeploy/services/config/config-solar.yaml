@@ -43,12 +43,12 @@ services_config_list:
       image_name: "rabbitmq"
       image_tag: "latest"
   
-  flower:
+  celeryflower:
       desired_replicas: 1
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/flower.deployment.yaml"
       service_file: "./config/k8s/flower.services.yaml"
-      image_name: "flower"
+      image_name: "celeryflower"
       image_tag: "latest"
 
 # Parameters pass to woker container.

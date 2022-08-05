@@ -28,14 +28,14 @@ services:
   redis:
     image: redis:6-alpine
 
-  flower:
+  celeryflower:
     build:
       context: .
       args:
         - CODES_FOLDER=code-templates-solardatatools
       dockerfile: ./server/compose/local/flask/celery/worker/${WORKER_DIRECTORY}/Dockerfile.worker
-    image: flower
-    container_name: flower
+    image: celeryflower
+    container_name: celeryflower
     command: /start-flower
     # volumes:
     #   - .:/app

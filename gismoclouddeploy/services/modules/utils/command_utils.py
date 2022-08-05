@@ -339,7 +339,7 @@ def update_config_json_image_name_and_tag_base_on_env(
 
     for service in services_config_list:
         # only inspect worker and server
-        if service == "worker" or service == "server" or service =="flower":
+        if service == "worker" or service == "server" or service =="celeryflower":
             if is_local:
                 imagePullPolicy = "IfNotPresent"
                 logger.info(f"update {service} config in local")
