@@ -250,7 +250,7 @@ def run_process_files(
                 )
                 for service in services_config_list:
                     # only inspect worker and server
-                    if service == "worker" or service == "server":
+                    if service == "worker" or service == "server" or  service == "flower":
                         # Updated image tag
                         update_image = service
                         if not is_local:
