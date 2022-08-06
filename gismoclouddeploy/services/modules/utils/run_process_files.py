@@ -466,7 +466,6 @@ def run_process_files(
         print(
             f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== "
         )
-
     initial_end_services(
         worker_config=worker_config_obj,
         is_docker=is_docker,

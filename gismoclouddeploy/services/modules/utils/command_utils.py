@@ -99,20 +99,22 @@ def send_command_to_server(
         secret=worker_config_json["aws_secret_access_key"],
         region=worker_config_json["aws_region"],
     )
-    n_files = return_process_filename_base_on_command(
+    n_files = return_process_filename_base_on_command_and_sort_filesize(
         first_n_files=number,
         bucket=worker_config_json["data_bucket"],
         default_files=worker_config_json["default_process_files"],
         s3_client=s3_client,
         file_format=worker_config_json["data_file_type"],
     )
+
+
     # print(len(n_files))
     # print(n_files)
     # start_index = 0
     # end_index = num_file_to_process_per_round
     # if end_index > len(n_files):
     #     end_index = len(n_files)
-
+    
     total_tasks_ids = []
     # while start_index < len(n_files):
     process_files_list = []
@@ -133,7 +135,8 @@ def send_command_to_server(
     return None
 
 
-def return_process_filename_base_on_command(
+
+def return_process_filename_base_on_command_and_sort_filesize(
     first_n_files: str,
     bucket: str,
     default_files: List[str],
@@ -153,15 +156,54 @@ def return_process_filename_base_on_command(
             if int(first_n_files) == 0:
                 logger.info(f"Process all files in {bucket}")
                 for file in files_dict:
-                    n_files.append(file["Key"])
+                    n_files.append(file)
             else:
                 logger.info(f"Process first {first_n_files} files")
                 for file in files_dict[0 : int(first_n_files)]:
-                    n_files.append(file["Key"])
+                    n_files.append(file)
         except Exception as e:
             logger.error(f"Input {first_n_files} is not an integer")
             raise e
-    return n_files
+
+    # print(n_files)
+    # print("------------")
+    _temp_sorted_file_list = sorted(n_files, key=lambda k: k['Size'],reverse=True)
+
+    sorted_files = [d['Key'] for d in _temp_sorted_file_list]
+
+    return sorted_files
+
+
+# def return_process_filename_base_on_command(
+#     first_n_files: str,
+#     bucket: str,
+#     default_files: List[str],
+#     s3_client: "botocore.client.S3",
+#     file_format: str,
+# ) -> List[str]:
+
+#     n_files = []
+#     files_dict = list_files_in_bucket(
+#         bucket_name=bucket, s3_client=s3_client, file_format=file_format
+#     )
+
+#     if first_n_files is None:
+#         n_files = default_files
+#     else:
+#         try:
+#             if int(first_n_files) == 0:
+#                 logger.info(f"Process all files in {bucket}")
+#                 for file in files_dict:
+#                     n_files.append(file["Key"])
+#             else:
+#                 logger.info(f"Process first {first_n_files} files")
+#                 for file in files_dict[0 : int(first_n_files)]:
+#                     n_files.append(file["Key"])
+#         except Exception as e:
+#             logger.error(f"Input {first_n_files} is not an integer")
+#             raise e
+#     return n_files
+
 
 
 def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
