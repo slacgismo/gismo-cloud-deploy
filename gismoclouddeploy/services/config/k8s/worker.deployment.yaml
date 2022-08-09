@@ -23,13 +23,6 @@ spec:
       containers:
         - name: worker
           image: worker:latest
-          # resources:
-          #   requests:
-          # #     memory: "800Mi"
-          #     cpu: "500m"
-          #   limits:
-          #     # memory: "1Gi"
-          #     cpu: "500m"
           imagePullPolicy: IfNotPresent
           command: ["/start-celeryworker"]
           env:
