@@ -23,6 +23,13 @@ spec:
       containers:
         - name: worker
           image: worker:latest
+          # resources:
+          #   requests:
+          # #     memory: "800Mi"
+          #     cpu: "500m"
+          #   limits:
+          #     # memory: "1Gi"
+          #     cpu: "500m"
           imagePullPolicy: IfNotPresent
           command: ["/start-celeryworker"]
           env:
@@ -36,3 +43,32 @@ spec:
               value: "amqp://admin:admin@rabbitmq:5672/"
             - name: CELERY_RESULT_BACKEND
               value: "redis://redis:6379/0"
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
+
+
+
+# ---
+# apiVersion: autoscaling/v1
+# kind: HorizontalPodAutoscaler
+# metadata:
+#   name: worker
+#   namespace: default
+# spec:
+#   scaleTargetRef:
+#     apiVersion: apps/v1
+#     kind: Deployment
+#     name: worker
+#   minReplicas: 1
+#   maxReplicas: 10
+#   targetCPUUtilizationPercentage: 500
+  # metrics:
+  # - type: Resource
+  #   resource:
+  #     name: cpu
+  #     target:
+  #       type: Utilization
+  #       averageUtilization: 50
