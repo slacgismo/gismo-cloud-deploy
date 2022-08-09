@@ -72,3 +72,5 @@ override.tf.json
 secret.yaml
 runtime.png
 gismoclouddeploy/services/results/
+
+./gismoclouddeploy/notebooks/datasets/
