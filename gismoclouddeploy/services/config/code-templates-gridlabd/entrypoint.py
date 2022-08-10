@@ -67,26 +67,50 @@ def entrypoint(
     except Exception as e:
         logger.error(f"Download file error: {e}")
 
-    try:
-        command = ["gridlabd", local_file]
-        print(command)
-        proc = subprocess.Popen(
-            command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
-        )
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-            # the real code does filtering here
-            print("run validate:", line.rstrip())
-    except KeyboardInterrupt as e:
-        logger.error(f"Invoke k8s process file error: {e}")
-        # res.terminate()
-        proc.terminate()
-    if exists(local_file):
-        os.remove(local_file)
-        print(f"Delete {local_file} success")
+    command = f"gridlabd {local_file} 1>>data.csv 2>>gridlabd.log"
+    print("------------>")
+    print(f"command: {command}")
+    print("------------>")
 
-    save_data = {"data": "this gridlabd test_R2-12.47-1.glm"}
+    returncode = subprocess.call(command, shell=True)
+
+    if returncode != 0:
+        errorObject = open("gridlabd.log", "r")
+        error = errorObject.read()
+        print(error)
+        errorObject.close()
+        raise Exception(f"Error run the {error}")
+    fileObject = open("data.csv", "r")
+    data = fileObject.read()
+    print("------------>")
+    print(f"data: {data}")
+    print("------------>")
+    fileObject.close()
+
+    save_data = {"file": local_file, "data": data}
     # # ==================== Modify your code above ==================== ##
     return save_data
+
+    # try:
+    #     command = ["gridlabd", local_file]
+    #     print(command)
+    #     proc = subprocess.Popen(
+    #         command, cwd="/usr/local/src/gridlabd", stdout=subprocess.PIPE
+    #     )
+    #     while True:
+    #         line = proc.stdout.readline()
+    #         if not line:
+    #             break
+    #         # the real code does filtering here
+    #         print("run validate:", line.rstrip())
+    # except KeyboardInterrupt as e:
+    #     logger.error(f"Invoke k8s process file error: {e}")
+    #     # res.terminate()
+    #     proc.terminate()
+    # if exists(local_file):
+    #     os.remove(local_file)
+    #     print(f"Delete {local_file} success")
+
+    # save_data = {"data": "this gridlabd test_R2-12.47-1.glm"}
+    # # # ==================== Modify your code above ==================== ##
+    # return save_data
