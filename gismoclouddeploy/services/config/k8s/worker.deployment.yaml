@@ -13,13 +13,13 @@ spec:
       labels:
         app: worker
     spec:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: worker
+      # topologySpreadConstraints:
+      #   - maxSkew: 1
+      #     topologyKey: kubernetes.io/hostname
+      #     whenUnsatisfiable: DoNotSchedule
+      #     labelSelector:
+      #       matchLabels:
+      #         app: worker
       containers:
         - name: worker
           image: worker:latest
@@ -36,11 +36,11 @@ spec:
               value: "amqp://admin:admin@rabbitmq:5672/"
             - name: CELERY_RESULT_BACKEND
               value: "redis://redis:6379/0"
-          # resources:
-          #   limits:
-          #     cpu: 500m
-          #   requests:
-          #     cpu: 200m
+          resources:
+            limits:
+              cpu: 1000m
+            requests:
+              cpu: 500m
 
 
 
