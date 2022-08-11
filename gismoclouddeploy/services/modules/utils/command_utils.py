@@ -99,6 +99,8 @@ def send_command_to_server(
         secret=worker_config_json["aws_secret_access_key"],
         region=worker_config_json["aws_region"],
     )
+
+
     n_files = return_process_filename_base_on_command_and_sort_filesize(
         first_n_files=number,
         bucket=worker_config_json["data_bucket"],
@@ -151,6 +153,7 @@ def return_process_filename_base_on_command_and_sort_filesize(
 
     if first_n_files is None:
         n_files = default_files
+        return n_files
     else:
         try:
             if int(first_n_files) == 0:
