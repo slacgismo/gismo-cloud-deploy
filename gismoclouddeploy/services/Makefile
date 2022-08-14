@@ -1,23 +1,25 @@
+
+
+CLUSTER_FILE ?= $(shell bash -c 'read -p "Cluster_file: " cluster_file; echo $$cluster_file')
+
+
+
 .PHONY: create-cluster
 create-cluster:
-	@echo "Create Cluster from cluster.yaml"
-	eksctl create cluster -f ./config/eks/cluster.yaml
+	@clear
+	@echo "Create Cluster from ${cluster_file}.yaml"
+	eksctl create cluster -f ./config/eks/${cluster_file}.yaml
+
 
 .PHONY: delete-cluster
 delete-cluster:
-	@echo "Create Cluster from cluster.yaml"
-	eksctl delete cluster -f ./config/eks/cluster.yaml
+	@echo "Create Cluster from ${cluster_file}.yaml"
+	eksctl delete cluster -f ./config/eks/${cluster_file}.yaml
 
 .PHONY: get-cluster
 get-cluster:
 	eksctl get cluster
 
-
-.PHONY: rollout
-rollout:
-	@echo "Rollout kubernetes images"
-	kubectl rollout restart deployment/worker
-	kubectl rollout restart deployment/webapp
 
 .PHONY: get-nodegroup
 get-nodegroup:
