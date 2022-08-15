@@ -4,9 +4,10 @@ CLUSTER_FILE ?= $(shell bash -c 'read -p "Cluster_file: " cluster_file; echo $$c
 
 
 
-.PHONY: create-cluster
+# .PHONY: create-cluster
 create-cluster:
 	@clear
+	@read -p "Enter cluster file:" cluster_file; \  
 	@echo "Create Cluster from ${cluster_file}.yaml"
 	eksctl create cluster -f ./config/eks/${cluster_file}.yaml
 
