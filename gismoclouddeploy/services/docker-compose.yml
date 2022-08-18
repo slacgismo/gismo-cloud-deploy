@@ -6,7 +6,7 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates-solardatatools
+        - CODES_FOLDER=
       dockerfile: ./server/compose/local/flask/Dockerfile
 
     image: server
@@ -32,7 +32,7 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates-solardatatools
+        - CODES_FOLDER=
       dockerfile: ./server/compose/local/flask/celery/worker/${WORKER_DIRECTORY}/Dockerfile.worker
     image: celeryflower
     container_name: celeryflower
@@ -53,7 +53,7 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates-solardatatools
+        - CODES_FOLDER=
       dockerfile: ./server/compose/local/flask/celery/worker/${WORKER_DIRECTORY}/Dockerfile.worker
     image: worker
     command: /start-celeryworker

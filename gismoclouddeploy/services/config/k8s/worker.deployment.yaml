@@ -13,13 +13,13 @@ spec:
       labels:
         app: worker
     spec:
-      # topologySpreadConstraints:
-      #   - maxSkew: 1
-      #     topologyKey: kubernetes.io/hostname
-      #     whenUnsatisfiable: DoNotSchedule
-      #     labelSelector:
-      #       matchLabels:
-      #         app: worker
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: worker
       containers:
         - name: worker
           image: worker:latest
@@ -40,7 +40,7 @@ spec:
             limits:
               cpu: 1000m
             requests:
-              cpu: 500m
+              cpu: 1000m
 
 
 

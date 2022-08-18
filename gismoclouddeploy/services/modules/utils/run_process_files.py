@@ -147,7 +147,7 @@ def run_process_files(
     host_name = socket.gethostname()
     user_id = re.sub("[^a-zA-Z0-9]", "", host_name)
     sqs_name = f"gcd-{user_id}"
-
+    
     try:
         create_res = create_queue(
             queue_name=sqs_name,
@@ -293,6 +293,9 @@ def run_process_files(
                 for index, thread in enumerate(push_thread):
                     thread.join()
                     logging.info("Wait push to %s thread done", thread.name)
+
+
+
 
         if is_docker:
             logger.info("Running docker")
