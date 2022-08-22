@@ -115,13 +115,16 @@ def process_files(worker_config_str: str, first_n_files: str):
                 MSG_ATTRIBUTES = {
                     "user_id": {"DataType": "String", "StringValue": user_id},
                 }
+                send_time = time.time()
                 msg_body = {
                     "data": None,
                     "error": None,
                     "file_name": file,
                     "column_name": column,
                     "task_id": str(task_id),
+                    "send_time": str(send_time),
                     "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
+
                 }
                 MSG_BODY = json.dumps(msg_body)
                 send_response = send_queue_message(

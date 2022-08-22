@@ -108,9 +108,9 @@ def delete_k8s_all_po_sev_deploy_daemonset():
     logger.info("----------->.  Delete all daemonset ----------->")
     delete_daemonset = invoke_kubectl_delete_all_daemonset()
     logger.info(delete_daemonset)
-    logger.info("----------->.  Delete all po ----------->")
-    delete_po = invoke_kubectl_delete_all_po()
-    logger.info(delete_po)
+    # logger.info("----------->.  Delete all po ----------->")
+    # delete_po = invoke_kubectl_delete_all_po()
+    # logger.info(delete_po)
     return 
 
 

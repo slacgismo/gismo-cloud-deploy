@@ -130,9 +130,11 @@ def long_pulling_sqs(
                 # check alert type.
                 # 1. if the alert type is SEND_TASKID. add taskid in received_init_task_ids_set
                 if alert_type == SNSSubjectsAlert.SEND_TASKID.name:
-
+                    
                     try:
                         received_init_id = msg_dict["task_id"]
+                        send_time = msg_dict['send_time']
+                   
                     except:
                         logger.warning(
                             "------------------------------------------------------"

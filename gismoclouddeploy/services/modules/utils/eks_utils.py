@@ -52,7 +52,7 @@ def wait_pod_ready(
     num_container: str, container_prefix: str, counter: int, delay: int
 ) -> bool:
     cunrrent_num_container = 0
-    print(f"container_prefix :{container_prefix}")
+    # print(f"container_prefix :{container_prefix}")
     while counter:
         cunrrent_num_container = num_pod_ready(container_prefix=container_prefix)
         if cunrrent_num_container == num_container:
