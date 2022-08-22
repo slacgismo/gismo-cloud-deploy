@@ -25,9 +25,11 @@ def num_pod_ready(container_prefix: str) -> int:
     # find the latest version of deployemnt
     max_version = 0
     pod_name = None
-    available_replicas = 0
+    ready_replicas = 0
     for i in resp.items:
         pod_prefix = i.metadata.name.split("-")[0]
+  
+        
         if pod_prefix == container_prefix:
             if (
                 int(i.metadata.annotations["deployment.kubernetes.io/revision"])
@@ -38,8 +40,10 @@ def num_pod_ready(container_prefix: str) -> int:
                 )
                 pod_name = i.metadata.name
                 ready_replicas = i.status.ready_replicas
+                # print(f"container_prefix :{container_prefix} pod_name :{pod_name}")
+                # print("---------->")
     if pod_name is None:
-        raise Exception(f"No pod{container_prefix} in list")
+        raise Exception(f"No pod {container_prefix} in list")
 
     return ready_replicas
 
@@ -48,7 +52,7 @@ def wait_pod_ready(
     num_container: str, container_prefix: str, counter: int, delay: int
 ) -> bool:
     cunrrent_num_container = 0
-
+    print(f"container_prefix :{container_prefix}")
     while counter:
         cunrrent_num_container = num_pod_ready(container_prefix=container_prefix)
         if cunrrent_num_container == num_container:

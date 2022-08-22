@@ -54,9 +54,9 @@ def process_logs_from_local(
     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
 
     # save nodes info to csv.
-    print("----------------")
-    print(f"pods_info_dict: {pods_info_dict}")
-    print("----------------")
+    # print("----------------")
+    # print(f"pods_info_dict: {pods_info_dict}")
+    # print("----------------")
 
 
     # print(pods_info_dict)

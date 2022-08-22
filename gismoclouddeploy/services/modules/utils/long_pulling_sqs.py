@@ -173,9 +173,9 @@ def long_pulling_sqs(
                     # Save loags
                     # file_name,column_name,task_id,alert_type,start_time,end_time,hostname,host_ip,pid,error
                     node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
-                    print("-------------------")
-                    print(f"node_name: {node_name}")
-                    print("-------------------")
+                    # print("-------------------")
+                    # print(f"node_name: {node_name}")
+                    # print("-------------------")
                     _logs = {
                         "file_name": msg_dict["file_name"],
                         "column_name": msg_dict["column_name"],
