@@ -50,8 +50,15 @@ def process_logs_from_local(
 
     df = pd.read_csv(logs_file_path_name_local)
 
-    pods_name_prefix_set = ("worker", "webapp")
+    pods_name_prefix_set = ("worker")
     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
+
+    # save nodes info to csv.
+    print("----------------")
+    print(f"pods_info_dict: {pods_info_dict}")
+    print("----------------")
+
+
     # print(pods_info_dict)
     worker_dict = process_df_for_gantt(df)
     # # # # Show dataframe

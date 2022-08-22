@@ -2,6 +2,7 @@ from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client
 from .sqs import receive_queue_message, delete_queue_message
+from .eks_utils import match_hostname_from_node_name
 import time
 import json
 import logging
@@ -171,6 +172,10 @@ def long_pulling_sqs(
                     received_completed_task_ids_set.add(received_completed_id)
                     # Save loags
                     # file_name,column_name,task_id,alert_type,start_time,end_time,hostname,host_ip,pid,error
+                    node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
+                    print("-------------------")
+                    print(f"node_name: {node_name}")
+                    print("-------------------")
                     _logs = {
                         "file_name": msg_dict["file_name"],
                         "column_name": msg_dict["column_name"],
@@ -181,6 +186,7 @@ def long_pulling_sqs(
                         "host_ip": msg_dict["host_ip"],
                         "pid": msg_dict["pid"],
                         "alert_type": msg_dict["alert_type"],
+                        "node_name": node_name
                     }
                     logs_data.append(_logs)
                     # Save errors
