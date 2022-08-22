@@ -1,3 +1,4 @@
+from curses import flash
 from os.path import exists
 import botocore
 
@@ -376,6 +377,7 @@ def update_config_json_image_name_and_tag_base_on_env(
     ecr_repo: str = None,
     ecr_client=None,
     services_config_list: List[str] = None,
+    is_celeryflower_on: bool = False
 ) -> List[str]:
     """
     Update worker and server's image_name and tag based on local or aws.
@@ -385,6 +387,10 @@ def update_config_json_image_name_and_tag_base_on_env(
     for service in services_config_list:
         # only inspect worker and server
         if service == "worker" or service == "server" or service =="celeryflower":
+            if service =="celeryflower" and is_celeryflower_on is False:
+                logger.info("Skip celery flower service")
+                continue
+            
             if is_local:
                 imagePullPolicy = "IfNotPresent"
                 logger.info(f"update {service} config in local")

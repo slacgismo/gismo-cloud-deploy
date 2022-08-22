@@ -202,6 +202,7 @@ def run_process_files(
             ecr_client=ecr_client,
             ecr_repo=ecr_repo,
             services_config_list=services_config_list,
+            is_celeryflower_on=config_json["worker_config"]['is_celeryflower_on'] 
         )
 
         # check solver
@@ -255,6 +256,9 @@ def run_process_files(
                 for service in services_config_list:
                     # only inspect worker and server
                     if service == "worker" or service == "server" or  service == "celeryflower":
+                        if service == "celeryflower" and config_json["worker_config"]['is_celeryflower_on'] == False:
+                            logger.info("Celery flower is off ")
+                            continue
                         # Updated image tag
                         update_image = service
                         if not is_local:
@@ -327,6 +331,14 @@ def run_process_files(
                 except Exception as e:
                     logger("Scale nodes error")
 
+            # check if celery flower in it
+            if config_json["worker_config"]['is_celeryflower_on'] is False:
+                # remove celery_flower form config
+                if "celeryflower" in services_config_list:
+                    services_config_list.pop('celeryflower')
+                    print("remove celeryflower from services_config_list ")
+    
+
             # updae k8s
             # check worker deployment
             # loop k8s services list , create or update k8s depolyment and services
@@ -339,6 +351,7 @@ def run_process_files(
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
 
+      
                 # update deployment, if image tag or replicas are changed, update deployments
                 create_or_update_k8s_deployment(
                     service_name=service_name,
@@ -351,6 +364,7 @@ def run_process_files(
                 )
                 # service file exists
                 if service_file:
+
                     # check service exist
                     if not check_k8s_services_exists(name=service_name):
                         logger.info(
