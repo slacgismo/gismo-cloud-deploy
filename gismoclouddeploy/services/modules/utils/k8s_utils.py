@@ -105,18 +105,33 @@ def create_k8s_deployment_from_yaml(
             "imagePullPolicy"
         ] = imagePullPolicy
 
+    # ehceck daemonset or deployment 
+    kind = file_setting["kind"]
+            
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
-    try:
-        resp = apps_v1_api.create_namespaced_deployment(
-            body=file_setting, namespace=namspace
-        )
-        # print("Created. status='%s'" % str(resp.status))
-        return True
-    except Exception as e:
-        logger.error(f"create k8s deployment error: {e}")
-        raise e
-
+    if kind == "Deployment":
+        print(f"apply deployment {image_url_tag}")
+        try:
+            resp = apps_v1_api.create_namespaced_deployment(
+                body=file_setting, namespace=namspace
+            )
+            # print("Created. status='%s'" % str(resp.status))
+            return True
+        except Exception as e:
+            logger.error(f"create k8s deployment error: {e}")
+            raise e
+    elif kind == "DaemonSet":
+        print(f"apply damentset {image_url_tag}")
+        try:
+            resp = apps_v1_api.create_namespaced_daemon_set(
+                body=file_setting, namespace=namspace
+            )
+            # print("Created. status='%s'" % str(resp.status))
+            return True
+        except Exception as e:
+            logger.error(f"create k8s daemon set error: {e}")
+            raise e
 
 def get_k8s_deployment(prefix: str = None) -> str:
     config.load_kube_config()

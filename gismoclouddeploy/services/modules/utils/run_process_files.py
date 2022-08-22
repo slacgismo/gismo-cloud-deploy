@@ -10,7 +10,7 @@ from .command_utils import (
     checck_server_ready_and_get_name,
     send_command_to_server,
 )
-from .initial_end_services import initial_end_services, process_local_logs_and_upload_s3
+from .initial_end_services import initial_end_services, process_local_logs_and_upload_s3,delete_k8s_all_po_sev_deploy_daemonset
 
 from .process_log import analyze_all_local_logs_files
 import re
@@ -194,6 +194,7 @@ def run_process_files(
         if check_environment_is_aws():
             logger.info("======== Running on AWS ========")
             is_local = False
+            
 
         services_config_list = update_config_json_image_name_and_tag_base_on_env(
             is_local=is_local,
@@ -225,6 +226,7 @@ def run_process_files(
         if is_build_image:
             rollout = True  # build image always rollout sevices
             temp_image_tag = socket.gethostname()
+           
 
             if is_docker:
                 logger.info(
@@ -239,6 +241,8 @@ def run_process_files(
                 )
                 invoke_docker_compose_up()
             else:
+                logger.info("======== Delete previous k8s setting ========")
+                delete_k8s_all_po_sev_deploy_daemonset()
                 logger.info(
                     f" ========= Build images and run in k8s ======== {worker_config_obj.code_template_folder}"
                 )

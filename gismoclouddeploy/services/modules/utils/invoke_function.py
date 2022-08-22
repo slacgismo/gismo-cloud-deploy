@@ -60,6 +60,19 @@ def exec_docker_command(command: str) -> str:
     return result.stdout
 
 
+
+def invoke_kubectl_delete_all_daemonset():
+    command = ["kubectl", "delete", "DaemonSet", "--all"]
+
+    res = exec_docker_command(command)
+    return res
+
+def invoke_kubectl_delete_all_po():
+    command = ["kubectl", "delete", "po", "--all"]
+
+    res = exec_docker_command(command)
+    return res
+
 def invoke_kubectl_delete_all_services():
     command = ["kubectl", "delete", "svc", "--all"]
 

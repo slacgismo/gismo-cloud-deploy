@@ -1,5 +1,6 @@
 apiVersion: apps/v1
-kind: Deployment
+# kind: Deployment
+kind: DaemonSet
 metadata:
   name: worker
 spec:
@@ -13,13 +14,13 @@ spec:
       labels:
         app: worker
     spec:
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app: worker
+      # topologySpreadConstraints:
+      #   - maxSkew: 1
+      #     topologyKey: kubernetes.io/hostname
+      #     whenUnsatisfiable: DoNotSchedule
+      #     labelSelector:
+      #       matchLabels:
+      #         app: worker
       containers:
         - name: worker
           image: worker:latest

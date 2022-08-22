@@ -11,6 +11,11 @@ from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
     invoke_docker_compose_down_and_remove,
     invoke_kubectl_delete_all_deployment,
+    invoke_kubectl_delete_all_services,
+    invoke_kubectl_delete_all_daemonset,
+    invoke_kubectl_delete_all_po,
+
+
 )
 from .command_utils import delete_files_from_bucket
 
@@ -92,6 +97,21 @@ logging.basicConfig(
 #         aws_secret_access_key=aws_secret_access_key,
 #         aws_region=aws_region,
 #     )
+
+def delete_k8s_all_po_sev_deploy_daemonset():
+    logger.info("----------->.  Delete k8s deployment ----------->")
+    delete_deploy = invoke_kubectl_delete_all_deployment()
+    logger.info(delete_deploy)
+    logger.info("----------->.  Delete k8s services ----------->")
+    delete_svc = invoke_kubectl_delete_all_services()
+    logger.info(delete_svc)
+    logger.info("----------->.  Delete all daemonset ----------->")
+    delete_daemonset = invoke_kubectl_delete_all_daemonset()
+    logger.info(delete_daemonset)
+    logger.info("----------->.  Delete all po ----------->")
+    delete_po = invoke_kubectl_delete_all_po()
+    logger.info(delete_po)
+    return 
 
 
 def process_local_logs_and_upload_s3(
@@ -212,10 +232,13 @@ def initial_end_services(
             nodegroup_name=nodegroup_name,
         )
 
-    # if is_build_image:
-    #     res = invoke_kubectl_delete_all_deployment()
-    #     logger.info(res)
-    #     logger.info("----------->.  Delete k8s deployment ----------->")
+    if is_build_image:
+        delete_k8s_all_po_sev_deploy_daemonset()
+    
+        # res = invoke_kubectl_delete_all_deployment()
+        # logger.info(res)
+        # logger.info("----------->.  Delete k8s deployment ----------->")
+        # res = invo
     # Remove services.
     if check_environment_is_aws() and is_build_image:
         logger.info("----------->.  Delete Temp ECR image ----------->")
