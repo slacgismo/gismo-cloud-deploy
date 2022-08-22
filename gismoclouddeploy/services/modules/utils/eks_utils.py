@@ -129,6 +129,20 @@ def match_pod_ip_to_node_name(pods_name_sets: set) -> dict:
             pods[ip] = dict(POD_NAME=_pod_name, NOD_NAME=_node_name)
     return pods
 
+def match_hostname_from_node_name(hostname:str = None,pod_prefix:str = "worker") -> str:
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    # print("Listing pods with their IPs:")
+    ret = v1.list_pod_for_all_namespaces(watch=False)
+    pods = {}
+    for i in ret.items:
+        _pod_prefix = i.metadata.name.split("-")[0]
+        _pod_name = i.metadata.name
+        if _pod_prefix == pod_prefix and _pod_name == hostname:
+            _node_name = i.spec.node_name
+            return _node_name
+            
+    return None
 
 def replace_k8s_yaml_with_replicas(
     file_path: str, file_name: str, new_replicas: int, app_name: str, curr_replicas: int
