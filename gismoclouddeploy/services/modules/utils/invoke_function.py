@@ -290,7 +290,7 @@ def invoke_exec_k8s_run_process_files(
         )
         # out, err = res.communicate()
         # print(out)
-        return out
+        # return out
 
     except KeyboardInterrupt as e:
         logger.error(f"Invoke k8s process file error:{e}")
