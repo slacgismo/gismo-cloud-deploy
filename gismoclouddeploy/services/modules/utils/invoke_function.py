@@ -288,8 +288,8 @@ def invoke_exec_k8s_run_process_files(
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        out, err = res.communicate()
-        print(out)
+        # out, err = res.communicate()
+        # print(out)
         return out
 
     except KeyboardInterrupt as e:
