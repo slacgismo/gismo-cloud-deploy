@@ -284,13 +284,14 @@ def invoke_exec_k8s_run_process_files(
         f"{first_n_files}",
     ]
     try:
+        # print(f"command : {command}")
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        # out, err = res.communicate()
-        # print(out)
-        # return out
-        # print(res)
+        out, err = res.communicate()
+        print(out)
+        return out
+
     except KeyboardInterrupt as e:
         logger.error(f"Invoke k8s process file error:{e}")
         res.terminate()
@@ -316,7 +317,7 @@ def invoke_exec_k8s_ping_worker(
         "app.py",
         "ping_worker",
     ]
-
+    print(f"command : {command}")
     res = exec_docker_command(command)
     return res
 
@@ -337,6 +338,7 @@ def invoke_exec_k8s_check_task_status(
         "check_task_status",
         f"{task_id}",
     ]
+    print(f"command : {command}")
     # try:
     #     res = subprocess.Popen(
     #         command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT

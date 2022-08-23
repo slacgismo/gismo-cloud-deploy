@@ -1,4 +1,5 @@
 from curses import flash
+from http import server
 from os.path import exists
 import botocore
 
@@ -11,6 +12,7 @@ from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
+    get_k8s_pod_name_list,
 )
 
 from .invoke_function import (
@@ -49,32 +51,88 @@ def checck_server_ready_and_get_name(
     if is_docker:
 
         server_name = deployment_services_list["server"]["image_name"]
+        
     else:
         wait_time = 15
         delay = 5
+        number_server = deployment_services_list["server"]['desired_replicas']
+        print(f"number_server : {number_server}")
         while wait_time > 0:
 
             logger.info(f"K8s reboot Wait {wait_time} sec")
             time.sleep(delay)
             wait_time -= delay
         # server_name = get_k8s_deployment(prefix="server")
-        server_name = get_k8s_pod_name(pod_name="server")
+        # server_name = get_k8s_pod_name(pod_name="server")
+        server_name_list =  get_k8s_pod_name_list(pod_name="server", number_server=number_server)
+        logger.info(f"server_name_list ====> {server_name_list}")
 
-        logger.info(f"server name ====> {server_name}")
-
-        if server_name is None:
-            logger.error("Cannot find server pod")
+        # ping server and check status
+        if len(server_name_list) == 0:
             raise Exception("Find k8s pod server error")
-    if (
-        check_and_wait_server_ready(
-            is_docer=is_docker, server_name=server_name, counter=2, delay=1
-        )
-        is not True
-    ):
-        logger.error("Wait server ready failed")
-        raise Exception(f"Wait {server_name} failed")
+        # if is_docker is False:
+        #     ping_list = []
+        #     for s_name in server_name_list:
+        #         task_id = invoke_exec_k8s_ping_worker(service_name=s_name)
+        #         ping_info = {"name":s_name,"task_id":str(task_id).strip("\n")}
+        #         print(f"ping :{ping_info} ")
+        #         ping_list.append(ping_info)
+                # print(f"server_name :{s_name} task_id:{task_id} ")
+            # print("get result")
+            # for ping_dict in ping_list:
+            #     _name = ping_dict['name']
+            #     _task_id = ping_dict['task_id']
+            #     result = invoke_exec_k8s_check_task_status(
+            #         server_name=_name, task_id=_task_id
+            #     )
+            #     print(f"_name: {_name} task result :{result} ")
+
+        return server_name_list
+    #     logger.info(f"server name ====> {server_name}")
+
+    #     if server_name is None:
+    #         logger.error("Cannot find server pod")
+    #         raise Exception("Find k8s pod server error")
+    # if (
+    #     check_and_wait_server_ready(
+    #         is_docer=is_docker, server_name=server_name, counter=2, delay=1
+    #     )
+    #     is not True
+    # ):
+    #     logger.error("Wait server ready failed")
+    #     raise Exception(f"Wait {server_name} failed")
 
     return server_name
+
+
+def start_process_command_to_server(
+    server_list: list = None,
+    worker_config_json: str = None,
+    is_docker: bool = False,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+    sqs_url: str = None,
+) -> List[str]:
+    worker_config_json["aws_access_key"] = aws_access_key
+    worker_config_json["aws_secret_access_key"] = aws_secret_access_key
+    worker_config_json["aws_region"] = aws_region
+    worker_config_json["sqs_url"] = sqs_url
+
+    for index, server_name in enumerate(server_list):
+        _files_list = worker_config_json['num_files_per_server_list'][index]
+        worker_config_json["default_process_files"] = json.dumps(_files_list)
+        worker_config_json["po_server_name"] = server_name
+        worker_config_str = json.dumps(worker_config_json)
+        resp = invoke_process_files_to_server(
+            is_docker=is_docker,
+            server_name=server_name,
+            worker_config_str=worker_config_str,
+            number=None,
+        )
+        print(f"server_name:{server_name} resp: {resp} ")
+    return None
+
 
 
 def send_command_to_server(
@@ -109,6 +167,7 @@ def send_command_to_server(
         s3_client=s3_client,
         file_format=worker_config_json["data_file_type"],
     )
+
 
 
     # print(len(n_files))
@@ -371,6 +430,8 @@ def create_or_update_k8s_deployment(
 
 
 def update_config_json_image_name_and_tag_base_on_env(
+    number_of_server: int = 1,
+    number_of_queue: int = 1,
     is_local: bool = False,
     is_docker: bool = False,
     image_tag: str = None,
@@ -386,6 +447,10 @@ def update_config_json_image_name_and_tag_base_on_env(
 
     for service in services_config_list:
         # only inspect worker and server
+        if service == "server":
+            services_config_list[service]['desired_replicas'] = number_of_server
+        if service == "rabbitmq" or service == "redis":
+            services_config_list[service]['desired_replicas'] = number_of_queue
         if service == "worker" or service == "server" or service =="celeryflower":
             if service =="celeryflower" and is_celeryflower_on is False:
                 logger.info("Skip celery flower service")
@@ -596,7 +661,7 @@ def check_and_wait_server_ready(
             result = invoke_exec_k8s_check_task_status(
                 server_name=server_name, task_id=str(task_id).strip("\n")
             )
-        # logger.info(result)
+        logger.info(result)
         # conver json to
         res_json = {}
         dataform = str(result).strip("'<>() ").replace("'", '"').strip("\n")

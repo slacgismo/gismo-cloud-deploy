@@ -39,6 +39,7 @@ def tracklog_decorator(func):
             # sns_topic = kwargs["sns_topic"]
             sqs_url = kwargs["sqs_url"]
             user_id = kwargs["user_id"]
+            po_server_name = kwargs["po_server_name"]
 
         except Exception as e:
             raise Exception(f"Decorator Input key errir:{e}")
@@ -80,6 +81,7 @@ def tracklog_decorator(func):
         host_ip = socket.gethostbyname(hostname)
         pid = os.getpid()
         msg_body = {
+            "po_server_name":po_server_name,
             "file_name": curr_process_file,
             "column_name": curr_process_column,
             "task_id": task_id,

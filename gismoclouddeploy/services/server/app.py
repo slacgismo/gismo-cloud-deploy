@@ -71,6 +71,7 @@ def process_files(worker_config_str: str, first_n_files: str):
         raise
     default_files = json.loads(worker_config_json["default_process_files"])
     sqs_url = worker_config_json["sqs_url"]
+    po_server_name =  worker_config_json["po_server_name"]
     try:
         s3_client = connect_aws_client(
             client_name="s3",
@@ -94,7 +95,7 @@ def process_files(worker_config_str: str, first_n_files: str):
     user_id = worker_config_json["user_id"]
     repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])
     for i in range(repeat_number_per_round):
-        for file in default_files:
+        for index_file, file in enumerate(default_files):
             if worker_config_json["data_file_type"] == ".csv":
                 matched_column_set = find_matched_column_name_set(
                     bucket_name=worker_config_json["data_bucket"],
@@ -106,16 +107,22 @@ def process_files(worker_config_str: str, first_n_files: str):
                 matched_column_set = {"None"}
 
             # print(f"matched_column_set {matched_column_set}")
-            for column in matched_column_set:
+            for index_colium,  column in enumerate(matched_column_set):
                 task_input_json = worker_config_json
                 task_input_json["curr_process_file"] = file
                 task_input_json["curr_process_column"] = column
+                task_input_json["po_server_name"] = po_server_name
                 task_id = process_data_task.delay(**task_input_json)
+                print(f"======= task_id: {task_id}")
                 task_ids.append(task_id)
                 MSG_ATTRIBUTES = {
                     "user_id": {"DataType": "String", "StringValue": user_id},
                 }
                 send_time = time.time()
+
+                is_end_files_columns_and_repeat_number = False
+                if index_file == (len(default_files)-1 )and index_colium == (len(matched_column_set) - 1) and i == (repeat_number_per_round-1):
+                    is_end_files_columns_and_repeat_number = True
                 msg_body = {
                     "data": None,
                     "error": None,
@@ -123,6 +130,8 @@ def process_files(worker_config_str: str, first_n_files: str):
                     "column_name": column,
                     "task_id": str(task_id),
                     "send_time": str(send_time),
+                    "po_server_name":po_server_name,
+                    "is_end_files_columns_and_repeat_number": is_end_files_columns_and_repeat_number,
                     "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
 
                 }
@@ -137,23 +146,23 @@ def process_files(worker_config_str: str, first_n_files: str):
                 time.sleep(0.02)
             # publish sns message
     # print("------------->")
-    MSG_ATTRIBUTES2 = {
-        "user_id": {"DataType": "String", "StringValue": str(user_id)},
-    }
+    # MSG_ATTRIBUTES2 = {
+    #     "user_id": {"DataType": "String", "StringValue": str(user_id)},
+    # }
 
-    msg_body = {
-        "data": None,
-        "error": None,
-        "total_tasks": len(task_ids),
-        "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
-    }
-    MSG_BODY = json.dumps(msg_body)
-    send_response = send_queue_message(
-        queue_url=sqs_url,
-        msg_attributes=MSG_ATTRIBUTES2,
-        msg_body=MSG_BODY,
-        sqs_client=sqs_client,
-    )
+    # msg_body = {
+    #     "data": None,
+    #     "error": None,
+    #     "total_tasks": len(task_ids),
+    #     "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
+    # }
+    # MSG_BODY = json.dumps(msg_body)
+    # send_response = send_queue_message(
+    #     queue_url=sqs_url,
+    #     msg_attributes=MSG_ATTRIBUTES2,
+    #     msg_body=MSG_BODY,
+    #     sqs_client=sqs_client,
+    # )
 
     return
 

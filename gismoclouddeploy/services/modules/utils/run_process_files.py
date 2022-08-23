@@ -2,20 +2,24 @@ from os import system
 import time
 import os
 from os.path import exists
-
+import math
 from .command_utils import (
     check_solver_and_upload,
     update_config_json_image_name_and_tag_base_on_env,
     create_or_update_k8s_deployment,
     checck_server_ready_and_get_name,
     send_command_to_server,
+    return_process_filename_base_on_command_and_sort_filesize,
+    start_process_command_to_server,
+
+    
 )
 from .initial_end_services import initial_end_services, process_local_logs_and_upload_s3,delete_k8s_all_po_sev_deploy_daemonset
 
 from .process_log import analyze_all_local_logs_files
 import re
 
-from .long_pulling_sqs import long_pulling_sqs
+from .long_pulling_sqs import long_pulling_sqs,long_pulling_sqs_multi_server
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
 from .check_aws import (
@@ -177,6 +181,45 @@ def run_process_files(
             ecr_repo=ecr_repo,
             current_repeat_number=current_repeat_number,
         )
+        s3_client = connect_aws_client(
+            client_name="s3",
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+        )
+
+
+        n_files = return_process_filename_base_on_command_and_sort_filesize(
+            first_n_files=number,
+            bucket=config_json["worker_config"]["data_bucket"],
+            default_files=config_json["worker_config"]["default_process_files"],
+            s3_client=s3_client,
+            file_format=config_json["worker_config"]["data_file_type"],
+        )
+        num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
+        start_index = 0 
+        end_inedx = num_files_per_server
+        number_of_server = math.ceil( len(n_files) / num_files_per_server )
+        if number_of_server < 1 :
+            number_of_server = 1
+        number_of_queue = number_of_server
+        process_files_per_server_list = []
+        while start_index <= len(n_files):
+            _files = n_files[start_index : end_inedx]
+            process_files_per_server_list.append(_files)
+            start_index = end_inedx
+            end_inedx += num_files_per_server
+       
+        # update  files list of server
+        
+        config_json["worker_config"]['num_files_per_server_list'] = process_files_per_server_list
+
+        # update number of server, number of queue
+
+        # config_json["worker_config"]['services_config_list']['server']['desired_replicas'] = number_of_server
+        # config_json["worker_config"]['services_config_list']['rabbitmq']['desired_replicas'] = number_of_queue
+        # print(config_json["worker_config"]['services_config_list']['server']['desired_replicas'] )
+
 
         user_id = config_json["worker_config"]["user_id"]
         worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
@@ -197,6 +240,8 @@ def run_process_files(
             
 
         services_config_list = update_config_json_image_name_and_tag_base_on_env(
+            number_of_server = number_of_server,
+            number_of_queue = number_of_queue,
             is_local=is_local,
             image_tag=image_tag,
             ecr_client=ecr_client,
@@ -204,7 +249,7 @@ def run_process_files(
             services_config_list=services_config_list,
             is_celeryflower_on=config_json["worker_config"]['is_celeryflower_on'] 
         )
-
+    
         # check solver
         if worker_config_obj.solver.solver_name != "None":
             try:
@@ -351,7 +396,7 @@ def run_process_files(
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
 
-      
+                print(f"service_name :{service_name} desired_replicas :{desired_replicas}")
                 # update deployment, if image tag or replicas are changed, update deployments
                 create_or_update_k8s_deployment(
                     service_name=service_name,
@@ -415,53 +460,72 @@ def run_process_files(
 
         # check server ready and return running server name.
 
-        ready_server_name = checck_server_ready_and_get_name(
+        ready_server_list = checck_server_ready_and_get_name(
             deployment_services_list=services_config_list,
             is_docker=is_docker,
         )
-        if ready_server_name is None:
+        if len(ready_server_list) == 0:
             logger.error("Cannot get server name")
             return
-        logger.info(f"------ {ready_server_name}")
+        logger.info(f"------ {ready_server_list}")
 
         # send command to server and get task IDs
-        worker_replicas = 0
-        for key, value in services_config_list.items():
-            if key == "worker":
-                worker_replicas = value["desired_replicas"]
-        logger.info(f"Current worker replica:{worker_replicas}")
-        if worker_replicas == 0:
-            logger.error(f"Number of worker error:{worker_replicas} ")
-
-        proces = list()
-        try:
-            logger.info(
-                "============ Running invoke process files commmand in multiprocess ==========="
-            )
-            proc_x = Process(
-                target=send_command_to_server(
-                    server_name=ready_server_name,
-                    number=number,
-                    worker_config_json=config_json["worker_config"],
-                    is_docker=is_docker,
-                    num_file_to_process_per_round=worker_replicas * 3,
-                    aws_access_key=aws_access_key,
-                    aws_secret_access_key=aws_secret_access_key,
-                    aws_region=aws_region,
-                    # sns_topic=sns_topic,
-                    sqs_url=sqs_url,
-                )
-            )
-            proc_x.name = "Invoker process files"
-            initial_process_time = time.time() - start_time
-            proc_x.start()
-        except Exception as e:
-            logger.error(f"Invoke process files in server error:{e}")
-            return
-
+        # worker_replicas = 0
+        # for key, value in services_config_list.items():
+        #     if key == "worker":
+        #         worker_replicas = value["desired_replicas"]
+                
+        # logger.info(f"Current worker replica:{worker_replicas}")
+        # if worker_replicas == 0:
+        #     logger.error(f"Number of worker error:{worker_replicas} ")
+        target=start_process_command_to_server(
+                server_list = ready_server_list,
+                worker_config_json=config_json["worker_config"],
+                is_docker=is_docker,
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region,
+                sqs_url=sqs_url,
+        )
+        # try:
+        #     logger.info(
+        #         "============ Running invoke process files commmand in multiprocess ==========="
+        #     )
+        #     proc_x = Process(
+        #         target=start_process_command_to_server(
+        #             server_list = ready_server_list,
+        #             worker_config_json=config_json["worker_config"],
+        #             is_docker=is_docker,
+        #             aws_access_key=aws_access_key,
+        #             aws_secret_access_key=aws_secret_access_key,
+        #             aws_region=aws_region,
+        #             sqs_url=sqs_url,
+        #         )
+        #     )
+        #     # proc_x = Process(
+        #     #     target=send_command_to_server(
+        #     #         server_name=ready_server_name,
+        #     #         number=number,
+        #     #         worker_config_json=config_json["worker_config"],
+        #     #         is_docker=is_docker,
+        #     #         num_file_to_process_per_round=worker_replicas * 3,
+        #     #         aws_access_key=aws_access_key,
+        #     #         aws_secret_access_key=aws_secret_access_key,
+        #     #         aws_region=aws_region,
+        #     #         # sns_topic=sns_topic,
+        #     #         sqs_url=sqs_url,
+        #     #     )
+        #     # )
+        #     proc_x.name = "Invoker process files"
+        #     initial_process_time = time.time() - start_time
+        #     proc_x.start()
+        # except Exception as e:
+        #     logger.error(f"Invoke process files in server error:{e}")
+        #     return
+        
         delay = aws_config_obj.interval_of_check_dynamodb_in_second
         acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
-        unfinished_tasks_id_set = long_pulling_sqs(
+        unfinished_tasks_id_set = long_pulling_sqs_multi_server(
             delay=delay,
             sqs_url=sqs_url,
             worker_config=worker_config_obj,
@@ -469,7 +533,9 @@ def run_process_files(
             aws_access_key=aws_access_key,
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
+            server_list = ready_server_list
         )
+        return 
         logger.info(" ----- init end services process --------- ")
         total_process_time = time.time() - start_time
         num_unfinished_tasks = len(unfinished_tasks_id_set)
