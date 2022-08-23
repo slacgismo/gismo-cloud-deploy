@@ -535,7 +535,7 @@ def run_process_files(
             aws_region=aws_region,
             server_list = ready_server_list
         )
-        return 
+        initial_process_time = time.time() - start_time
         logger.info(" ----- init end services process --------- ")
         total_process_time = time.time() - start_time
         num_unfinished_tasks = len(unfinished_tasks_id_set)
