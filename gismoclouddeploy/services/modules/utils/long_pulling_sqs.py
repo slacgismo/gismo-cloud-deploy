@@ -193,7 +193,7 @@ def long_pulling_sqs_multi_server(
                     alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
                     or alert_type == SNSSubjectsAlert.SAVED_DATA.name
                 ):
-                    print("----  SAVED_DATA ------------------------")
+                    print(f"----  SAVED_DATA --------------------{po_server_name}")
                     try:
                         received_completed_id = msg_dict["task_id"]
                     except:
@@ -215,9 +215,9 @@ def long_pulling_sqs_multi_server(
                     # Save loags
                     # file_name,column_name,task_id,alert_type,start_time,end_time,hostname,host_ip,pid,error
                     node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
-                    print("-------------------")
-                    print(f"node_name: {node_name}")
-                    print("-------------------")
+                    # print("-------------------")
+                    # print(f"node_name: {node_name}")
+                    # print("-------------------")
 
                     _logs = {
                         "file_name": msg_dict["file_name"],
@@ -232,7 +232,7 @@ def long_pulling_sqs_multi_server(
                         "po_server_name":msg_dict["po_server_name"],
                         "node_name": node_name
                     }
-                    print(f"--------logs :{_logs}")
+                    # print(f"--------logs :{_logs}")
                     logs_data.append(_logs)
                     # Save errors
                     if alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name:
@@ -255,19 +255,6 @@ def long_pulling_sqs_multi_server(
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
                     continue
 
-                # if alert_type == SNSSubjectsAlert.SEND_TASKID_INFO.name:
-                #     is_receive_task_info = True
-                #     try:
-                #         num_total_tasks = int(msg_dict["total_tasks"])
-                #     except Exception as e:
-                #         logger.error(
-                #             "Cannot parse total task number from alert type SEND_TASKID_INFO. Chcek app.py"
-                #         )
-                #         raise Exception(
-                #             f"Cannot parse total tasks number from message {msg_dict} error: {e} "
-                #         )
-                #     delete_queue_message(sqs_url, receipt_handle, sqs_client)
-                #     continue
 
             # end of loop
 
@@ -278,7 +265,6 @@ def long_pulling_sqs_multi_server(
             data_dict=save_data, file_name=worker_config.save_data_file_local
         )
         # save logs
-        print(f"logs_data : {logs_data}")
         append_receive_data(
             data_dict=logs_data, file_name=worker_config.save_logs_file_local
         )
@@ -291,22 +277,43 @@ def long_pulling_sqs_multi_server(
         # chcek if receive task id end:
     
         # is_all_tasks_completed = True
-   
+        is_received_init_task_ids_dict_completed = True
         for server_name in server_list:
-            if server_name in received_init_task_ids_dict_completed and received_init_task_ids_dict_completed[server_name] is False:
+            if received_init_task_ids_dict_completed[server_name] is False:
                 is_received_init_task_ids_dict_completed = False
-                
-            if server_name in received_init_task_ids_dict_completed and received_init_task_ids_dict_completed[server_name] is True  and server_name in received_completed_task_ids_dict:
-                _totak_tasks_number_in_server = len(received_init_task_ids_dict[server_name])
-                
-                _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
-                logger.info(
-                    f"server_name:{server_name} total task: {_totak_tasks_number_in_server}. Completed task: {_current_complete_tasks_in_server}"
-                )
-                # total_tasks_number += _totak_tasks_number_in_server
+                break
 
-                if _totak_tasks_number_in_server == _current_complete_tasks_in_server:
-                    received_completed_task_ids_dict_comleted[server_name] = True
+        if is_received_init_task_ids_dict_completed is True:
+            for server_name in server_list:
+                if server_name in received_completed_task_ids_dict:
+                    _totak_tasks_number_in_server = len(received_init_task_ids_dict[server_name])
+                    _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
+                    logger.info("---------------------------")
+                    logger.info(
+                        f"server_name:{server_name} total task: {_totak_tasks_number_in_server}. Completed task: {_current_complete_tasks_in_server}"
+                    )
+                    logger.info("---------------------------")
+                    if _totak_tasks_number_in_server == _current_complete_tasks_in_server:
+                        received_completed_task_ids_dict_comleted[server_name] = True
+                    
+
+
+   
+        # for server_name in server_list:
+        #     if server_name in received_init_task_ids_dict_completed and received_init_task_ids_dict_completed[server_name] is False:
+        #         is_received_init_task_ids_dict_completed = False
+                
+        #     if server_name in received_init_task_ids_dict_completed and received_init_task_ids_dict_completed[server_name] is True  and server_name in received_completed_task_ids_dict:
+        #         _totak_tasks_number_in_server = len(received_init_task_ids_dict[server_name])
+                
+        #         _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
+                # logger.info(
+                #     f"server_name:{server_name} total task: {_totak_tasks_number_in_server}. Completed task: {_current_complete_tasks_in_server}"
+                # )
+        #         # total_tasks_number += _totak_tasks_number_in_server
+
+        #         if _totak_tasks_number_in_server == _current_complete_tasks_in_server:
+        #             received_completed_task_ids_dict_comleted[server_name] = True
             
         _is_all_tasks_completed = True
         total_tasks_number = 0 
@@ -678,7 +685,7 @@ def append_receive_data(
 ) -> None:
     if len(data_dict) == 0:
         return
-    print(f"<----->save files {file_name}  data_dict:{data_dict}")
+    # print(f"<----->save files {file_name}  data_dict:{data_dict}")
     try:
         if len(data_dict) > 0:
             save_data_df = pd.json_normalize(data_dict)
