@@ -78,6 +78,9 @@ def long_pulling_sqs_multi_server(
         received_init_task_ids_dict_completed[server] = False
 
     received_completed_task_ids_dict = dict()
+    received_completed_task_ids_dict_comleted = dict()
+    for server in server_list:
+        received_completed_task_ids_dict_comleted[server] = False
     # previous_init_task_ids_set_dict = len(
     #     received_init_task_ids_set
     # )  # flag to retrieve message again
@@ -288,6 +291,7 @@ def long_pulling_sqs_multi_server(
         # chcek if receive task id end:
     
         # is_all_tasks_completed = True
+   
         for server_name in server_list:
             if server_name in received_init_task_ids_dict_completed and received_init_task_ids_dict_completed[server_name] is False:
                 is_received_init_task_ids_dict_completed = False
@@ -299,12 +303,20 @@ def long_pulling_sqs_multi_server(
                 logger.info(
                     f"server_name:{server_name} total task: {_totak_tasks_number_in_server}. Completed task: {_current_complete_tasks_in_server}"
                 )
-                total_tasks_number += _totak_tasks_number_in_server
+                # total_tasks_number += _totak_tasks_number_in_server
 
-                if _totak_tasks_number_in_server != _current_complete_tasks_in_server:
-                    is_all_tasks_completed = False
+                if _totak_tasks_number_in_server == _current_complete_tasks_in_server:
+                    received_completed_task_ids_dict_comleted[server_name] = True
             
-
+        _is_all_tasks_completed = True
+        total_tasks_number = 0 
+        for server_name in server_list:
+            if received_completed_task_ids_dict_comleted[_is_all_tasks_completed] is False:
+                _is_all_tasks_completed = False
+                break
+        if _is_all_tasks_completed is True:
+            logger.info(f"All tasks completed :{total_tasks_number}")
+            return
         
         # if is_all_tasks_completed:
             
