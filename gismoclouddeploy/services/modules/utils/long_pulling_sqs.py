@@ -193,7 +193,8 @@ def long_pulling_sqs_multi_server(
                     alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
                     or alert_type == SNSSubjectsAlert.SAVED_DATA.name
                 ):
-                    print(f"----  SAVED_DATA --------------------{po_server_name}")
+                    print(f"----  SAVED_DATA: {po_server_name}----------")
+                    previous_messages_time
                     try:
                         received_completed_id = msg_dict["task_id"]
                     except:
@@ -288,32 +289,14 @@ def long_pulling_sqs_multi_server(
                 if server_name in received_completed_task_ids_dict:
                     _totak_tasks_number_in_server = len(received_init_task_ids_dict[server_name])
                     _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
-                    logger.info("---------------------------")
-                    logger.info(
-                        f"server_name:{server_name} total task: {_totak_tasks_number_in_server}. Completed task: {_current_complete_tasks_in_server}"
-                    )
-                    logger.info("---------------------------")
                     if _totak_tasks_number_in_server == _current_complete_tasks_in_server:
                         received_completed_task_ids_dict_comleted[server_name] = True
+            logger.info("---------------------------")
+            logger.info(
+                f"server_name:{server_name} total task: {_totak_tasks_number_in_server}. Completed task: {_current_complete_tasks_in_server}"
+            )
+            logger.info("---------------------------")
                     
-
-
-   
-        # for server_name in server_list:
-        #     if server_name in received_init_task_ids_dict_completed and received_init_task_ids_dict_completed[server_name] is False:
-        #         is_received_init_task_ids_dict_completed = False
-                
-        #     if server_name in received_init_task_ids_dict_completed and received_init_task_ids_dict_completed[server_name] is True  and server_name in received_completed_task_ids_dict:
-        #         _totak_tasks_number_in_server = len(received_init_task_ids_dict[server_name])
-                
-        #         _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
-                # logger.info(
-                #     f"server_name:{server_name} total task: {_totak_tasks_number_in_server}. Completed task: {_current_complete_tasks_in_server}"
-                # )
-        #         # total_tasks_number += _totak_tasks_number_in_server
-
-        #         if _totak_tasks_number_in_server == _current_complete_tasks_in_server:
-        #             received_completed_task_ids_dict_comleted[server_name] = True
             
         _is_all_tasks_completed = True
         total_tasks_number = 0 
@@ -379,7 +362,7 @@ def long_pulling_sqs_multi_server(
         #         return uncompleted_task_id_set
 
         # # Handle over time
-        # idle_time = time.time() - previous_messages_time
+        idle_time = time.time() - previous_messages_time
         # if idle_time >= acccepted_idle_time:
         #     logger.info(f"===== No messages receive over time {idle_time} sec ====")
 
@@ -393,11 +376,11 @@ def long_pulling_sqs_multi_server(
         #     )
         #     return uncompleted_task_id_set
 
-        # total_time = time.time() - start_time
-        # logger.info(
-        #     f" total_time .: {total_time} \
-        #     Idle Time: {idle_time} "
-        # )
+        total_time = time.time() - start_time
+        logger.info(
+            f" total_time .: {total_time} \
+            Idle Time: {idle_time} "
+        )
         time.sleep(delay)
         # wait_time -= int(delay)
 

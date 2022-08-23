@@ -478,50 +478,50 @@ def run_process_files(
         # logger.info(f"Current worker replica:{worker_replicas}")
         # if worker_replicas == 0:
         #     logger.error(f"Number of worker error:{worker_replicas} ")
-        # target=start_process_command_to_server(
-        #         server_list = ready_server_list,
-        #         worker_config_json=config_json["worker_config"],
-        #         is_docker=is_docker,
-        #         aws_access_key=aws_access_key,
-        #         aws_secret_access_key=aws_secret_access_key,
-        #         aws_region=aws_region,
-        #         sqs_url=sqs_url,
-        # )
-        try:
-            logger.info(
-                "============ Running invoke process files commmand in multiprocess ==========="
-            )
-            proc_x = Process(
-                target=start_process_command_to_server(
-                    server_list = ready_server_list,
-                    worker_config_json=config_json["worker_config"],
-                    is_docker=is_docker,
-                    aws_access_key=aws_access_key,
-                    aws_secret_access_key=aws_secret_access_key,
-                    aws_region=aws_region,
-                    sqs_url=sqs_url,
-                )
-            )
-            # proc_x = Process(
-            #     target=send_command_to_server(
-            #         server_name=ready_server_name,
-            #         number=number,
-            #         worker_config_json=config_json["worker_config"],
-            #         is_docker=is_docker,
-            #         num_file_to_process_per_round=worker_replicas * 3,
-            #         aws_access_key=aws_access_key,
-            #         aws_secret_access_key=aws_secret_access_key,
-            #         aws_region=aws_region,
-            #         # sns_topic=sns_topic,
-            #         sqs_url=sqs_url,
-            #     )
-            # )
-            proc_x.name = "Invoker process files"
-            initial_process_time = time.time() - start_time
-            proc_x.start()
-        except Exception as e:
-            logger.error(f"Invoke process files in server error:{e}")
-            return
+        target=start_process_command_to_server(
+                server_list = ready_server_list,
+                worker_config_json=config_json["worker_config"],
+                is_docker=is_docker,
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region,
+                sqs_url=sqs_url,
+        )
+        # try:
+        #     logger.info(
+        #         "============ Running invoke process files commmand in multiprocess ==========="
+        #     )
+        #     proc_x = Process(
+        #         target=start_process_command_to_server(
+        #             server_list = ready_server_list,
+        #             worker_config_json=config_json["worker_config"],
+        #             is_docker=is_docker,
+        #             aws_access_key=aws_access_key,
+        #             aws_secret_access_key=aws_secret_access_key,
+        #             aws_region=aws_region,
+        #             sqs_url=sqs_url,
+        #         )
+        #     )
+        #     # proc_x = Process(
+        #     #     target=send_command_to_server(
+        #     #         server_name=ready_server_name,
+        #     #         number=number,
+        #     #         worker_config_json=config_json["worker_config"],
+        #     #         is_docker=is_docker,
+        #     #         num_file_to_process_per_round=worker_replicas * 3,
+        #     #         aws_access_key=aws_access_key,
+        #     #         aws_secret_access_key=aws_secret_access_key,
+        #     #         aws_region=aws_region,
+        #     #         # sns_topic=sns_topic,
+        #     #         sqs_url=sqs_url,
+        #     #     )
+        #     # )
+        #     proc_x.name = "Invoker process files"
+        #     initial_process_time = time.time() - start_time
+        #     proc_x.start()
+        # except Exception as e:
+        #     logger.error(f"Invoke process files in server error:{e}")
+        #     return
         
         delay = aws_config_obj.interval_of_check_dynamodb_in_second
         acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
