@@ -311,7 +311,7 @@ def long_pulling_sqs_multi_server(
         _is_all_tasks_completed = True
         total_tasks_number = 0 
         for server_name in server_list:
-            if received_completed_task_ids_dict_comleted[_is_all_tasks_completed] is False:
+            if received_completed_task_ids_dict_comleted[server_name] is False:
                 _is_all_tasks_completed = False
                 break
         if _is_all_tasks_completed is True:
