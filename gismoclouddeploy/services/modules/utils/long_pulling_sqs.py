@@ -16,7 +16,6 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
 
-
 def remove_prevous_results_files(
     save_data_file_local: str = None,
     save_logs_file_local: str = None,
@@ -73,15 +72,17 @@ def long_pulling_sqs_multi_server(
     is_receive_task_info = False
 
     received_init_task_ids_dict = dict()
-    received_init_task_ids_dict_completed = dict()
-    for server in server_list:
-        received_init_task_ids_dict_completed[server] = False
-
+    received_init_task_total_num_dict = dict()
     received_completed_task_ids_dict = dict()
     received_completed_task_ids_dict_comleted = dict()
+    previous_received_completed_task_ids_set_len = dict()
     for server in server_list:
         received_completed_task_ids_dict_comleted[server] = False
         received_completed_task_ids_dict[server] = []
+        received_init_task_ids_dict[server] = []
+        previous_received_completed_task_ids_set_len[server] = 0
+        received_init_task_total_num_dict[server] = -1
+
     # previous_init_task_ids_set_dict = len(
     #     received_init_task_ids_set
     # )  # flag to retrieve message again
@@ -93,9 +94,11 @@ def long_pulling_sqs_multi_server(
     uncompleted_task_id_set = set()
     total_tasks_number = 0 
     
-  
+
+
     is_received_init_task_ids_dict_completed= True
     start_time = time.time()
+    print(f"1 received_completed_task_ids_dict_comleted : {received_completed_task_ids_dict_comleted}")
     while True > 0:
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
@@ -103,28 +106,20 @@ def long_pulling_sqs_multi_server(
         save_data = []
         logs_data = []
         error_data = []
+
+        _message_start_time = time.time()
         if "Messages" in messages:
+            # print(f"length of message: {len(messages)}")
+            loog_server_start = time.time()
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 msg_dict = json.loads(msg_body)
-                print("----->>>")
-                print(f"msg_dict :{msg_dict}")
-                print("------")
+                # print(f"msg_dict: {msg_dict}")
 
                 receipt_handle = msg["ReceiptHandle"]
-                # subject = (
-                #     msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
-                # )
-                # message_text = (
-                #     msg_body["Message"].strip("'<>() ").replace("'", '"').strip("\n")
-                # )
-                # logger.info(f"subject: {subject}")
-                # logger.info(f"message_text: {message_text}")
-                MessageAttributes = msg["MessageAttributes"]
-                user_id = MessageAttributes["user_id"]["StringValue"]
-                if user_id != worker_config.user_id:
-                    # not this user's sqs message. do touch
-                    continue
+                delete_queue_message(sqs_url, receipt_handle, sqs_client)
+
+  
                 # parse Message
                 previous_messages_time = time.time()
 
@@ -139,8 +134,7 @@ def long_pulling_sqs_multi_server(
                     logger.error(f"Cannot parse alert_type. Delete this message")
                     logger.error("----------------------------------------")
                     # numb_tasks_completed += 1
-                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
-                    continue
+                    
                 try:
                     po_server_name = msg_dict["po_server_name"]
                 except Exception as e:
@@ -149,8 +143,7 @@ def long_pulling_sqs_multi_server(
                     logger.error(f"Cannot parse alert_type. Delete this message")
                     logger.error("----------------------------------------")
                     # numb_tasks_completed += 1
-                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
-                    continue
+            
 
                 # check alert type.
                 # 1. if the alert type is SEND_TASKID. add taskid in received_init_task_ids_set
@@ -174,27 +167,21 @@ def long_pulling_sqs_multi_server(
                     # Get task_id
                     if po_server_name in received_init_task_ids_dict:
                         received_init_task_ids_dict[po_server_name].append(received_init_id)
-                    else:
-                        received_init_task_ids_dict[po_server_name] = [received_init_id]
 
-                    print(f"received_init_task_ids_dict :{received_init_task_ids_dict}")
 
-                    is_end_files_columns_and_repeat_number = msg_dict["is_end_files_columns_and_repeat_number"]
-                    if is_end_files_columns_and_repeat_number is True:
-                        received_init_task_ids_dict_completed[po_server_name] = True
+                    received_init_task_total_num_dict[po_server_name] = int(msg_dict["num_total_tasks"])
                     
-                    print(f"<------------>>>>received_init_task_ids_dict_completed : {received_init_task_ids_dict_completed}")
-                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
-                    continue
+
 
                 # 2. if the alert type is SYSTEM_ERROR, or SAVED_DATA
                 # add
-            
+                _process_save_data_stat = time.time()
                 if (
                     alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
                     or alert_type == SNSSubjectsAlert.SAVED_DATA.name
                 ):
-                    print(f"----  SAVED_DATA: {po_server_name}----------")
+                    # print(f"----  SAVED_DATA: {po_server_name}----------")
+                   
                     previous_messages_time
                     try:
                         received_completed_id = msg_dict["task_id"]
@@ -210,16 +197,9 @@ def long_pulling_sqs_multi_server(
                         )
                     if po_server_name in received_completed_task_ids_dict:
                         received_completed_task_ids_dict[po_server_name].append(received_completed_id)
-                    else:
-                        received_completed_task_ids_dict[po_server_name]= [received_completed_id]
-                    print(f"received_completed_task_ids_dict: {received_completed_task_ids_dict}")
-                    # received_completed_task_ids_set.add(received_completed_id)
-                    # Save loags
-                    # file_name,column_name,task_id,alert_type,start_time,end_time,hostname,host_ip,pid,error
-                    node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
-                    # print("-------------------")
-                    # print(f"node_name: {node_name}")
-                    # print("-------------------")
+   
+
+                    # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
 
                     _logs = {
                         "file_name": msg_dict["file_name"],
@@ -232,7 +212,8 @@ def long_pulling_sqs_multi_server(
                         "pid": msg_dict["pid"],
                         "alert_type": msg_dict["alert_type"],
                         "po_server_name":msg_dict["po_server_name"],
-                        "node_name": node_name
+                        # "node_name": node_name,
+                       
                     }
                     # print(f"--------logs :{_logs}")
                     logs_data.append(_logs)
@@ -254,135 +235,110 @@ def long_pulling_sqs_multi_server(
                     # Save data
                     if alert_type == SNSSubjectsAlert.SAVED_DATA.name:
                         save_data.append(msg_dict["data"])
-                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
-                    continue
+                    # end_process_save_data_stat = time.time() -  _process_save_data_stat
+                    # print(f'----end append save data time : {round(end_process_save_data_stat, 2)} ')
 
+            # loog_server_end = time.time() - loog_server_start
+            # print(f" ***** end messages loop server :{round(loog_server_end,2)}")
+            # END of receive message
 
-            # end of loop
 
         # Appand to files
         # save data
-        
+        # if len(save_data) > 0 :
+        #     pickle.dump(save_data, open('save_data.p', 'wb'))
         append_receive_data(
             data_dict=save_data, file_name=worker_config.save_data_file_local
         )
-        # save logs
+        # # save logs
+        # if len(logs_data) > 0 :
+        #     pickle.dump(logs_data, open('logs.p', 'wb'))
         append_receive_data(
             data_dict=logs_data, file_name=worker_config.save_logs_file_local
         )
-        # save
+        # # save
+        # if len(error_data) > 0 :
+        #     pickle.dump(error_data, open('error.p', 'wb'))
         append_receive_data(
             data_dict=error_data, file_name=worker_config.save_error_file_local
         )
         # Invoke received new message again
-
-        # chcek if receive task id end:
-    
-        # is_all_tasks_completed = True
-        is_received_init_task_ids_dict_completed = True
-        for server_name in server_list:
-            if received_init_task_ids_dict_completed[server_name] is False:
-                is_received_init_task_ids_dict_completed = False
-                break
-
-        if is_received_init_task_ids_dict_completed is True:
-            for server_name in server_list:
-                if server_name in received_completed_task_ids_dict:
-                    _totak_tasks_number_in_server = len(received_init_task_ids_dict[server_name])
-                    _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
-                    if _totak_tasks_number_in_server == _current_complete_tasks_in_server:
-                        received_completed_task_ids_dict_comleted[server_name] = True
-
-            logger.info(f"received_completed_task_ids_dict :{received_completed_task_ids_dict}")
+  
+        _is_receive_message_again = False
+        # if is_received_init_task_ids_dict_completed is True:
+        _totak_tasks_number_in_server = 0 
+        _total_tasks_of_all_server= 0
+        _current_length_tasks_of_all_server = 0
+        for server_name in  server_list:
+            if server_name in received_completed_task_ids_dict:
+                _totak_tasks_number_in_server = int(received_init_task_total_num_dict[server_name])
+                _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
+                _total_tasks_of_all_server += _totak_tasks_number_in_server
+                _current_length_tasks_of_all_server += _current_complete_tasks_in_server
+                if _totak_tasks_number_in_server  > 0  and _totak_tasks_number_in_server == _current_complete_tasks_in_server:
+                    received_completed_task_ids_dict_comleted[server_name] = True
                     
+                    # logger.info(f" server_name : {server_name } _totak_tasks_number_in_server:{_totak_tasks_number_in_server} compelted")
+                else:
+                    task_completion = 0
+                    if _totak_tasks_number_in_server > 0:
+                        task_completion = int(_current_complete_tasks_in_server * 100 / _totak_tasks_number_in_server)
+
+                    # logger.info(f" server_name : {server_name } _totak_tasks_number_in_server:{_totak_tasks_number_in_server} _current_complete_tasks_in_server : {_current_complete_tasks_in_server} task_completion: {task_completion} %")
+
+                if previous_received_completed_task_ids_set_len[server_name] != _current_complete_tasks_in_server :
+                    _is_receive_message_again = True
+                    previous_received_completed_task_ids_set_len[server_name] = _current_complete_tasks_in_server
+      
+        if _total_tasks_of_all_server > 0 :
+            all_task_completion = int(_current_length_tasks_of_all_server * 100 / _total_tasks_of_all_server)
+            logger.info(f"Tasks: {_current_length_tasks_of_all_server} / {_total_tasks_of_all_server} Completeion: {all_task_completion} %")
+
+        if _is_receive_message_again is True:
+            
+            # loop_time = time.time() -  _message_start_time 
+            # print(f"Receive message again :{round(loop_time,2)}")
+            time.sleep(0.1)
+            continue
+
+   
             
         _is_all_tasks_completed = True
-        total_tasks_number = 0 
+
         for server_name in server_list:
             if received_completed_task_ids_dict_comleted[server_name] is False:
                 _is_all_tasks_completed = False
                 break
         if _is_all_tasks_completed is True:
-            logger.info(f"All tasks completed :{total_tasks_number}")
+            # total_tasks_number = 0 
+            # if server_name in received_completed_task_ids_dict:
+            #     _totak_tasks_number_in_server = int(received_init_task_total_num_dict[server_name])
+            #     total_tasks_number +=  _totak_tasks_number_in_server
+            logger.info(f"All tasks completed :{_total_tasks_of_all_server}")
             return
         
-        # if is_all_tasks_completed:
-            
-        #     logger.info(f"All tasks completed :{total_tasks_number}")
-        #     return 
-
-        # Invoke received new message again
-        # if previous_received_completed_task_ids_set_len != len(
-        #     received_completed_task_ids_set
-        # ) or previous_init_task_ids_set_len != len(received_init_task_ids_set):
-        #     previous_init_task_ids_set_len = len(received_init_task_ids_set)
-        #     previous_received_completed_task_ids_set_len = len(
-        #         received_completed_task_ids_set
-        #     )
-            # logger.info(
-            #     f"Init task: {previous_init_task_ids_set_len}. Completed task: {previous_received_completed_task_ids_set_len}"
-            # )
-        #     time.sleep(0.1)
-        #     # don't wait ,get messages again
-        #     continue
-
-        # # Task completion
-        # if is_receive_task_info:
-        #     # calculate task completion.
-
-        #     num_completed_task = len(received_completed_task_ids_set)
-        #     if num_total_tasks > 0:
-        #         task_completion = int(num_completed_task * 100 / num_total_tasks)
-        #     logger.info(
-        #         f"{num_completed_task} tasks completed. Total task:{num_total_tasks}. Completion:{task_completion} %"
-        #     )
-
-        #     if len(received_completed_task_ids_set) == len(
-        #         received_init_task_ids_set
-        #     ) and num_total_tasks == len(received_init_task_ids_set):
-        #         # all task completed
-        #         logger.info("===== All task completed ====")
-        #         # save data
-        #         return uncompleted_task_id_set
-        #     # in case of comleted task id > received_init_task_ids_set
-        #     if len(received_completed_task_ids_set) > len(
-        #         received_init_task_ids_set
-        #     ) and num_total_tasks == len(received_init_task_ids_set):
-        #         logger.error("Something wrong !!! ")
-        #         for completed_id in received_completed_task_ids_set:
-        #             if completed_id in received_init_task_ids_set:
-        #                 continue
-        #             else:
-        #                 logger.error(
-        #                     f"{completed_id} does not exist in received_init_task_ids_set. Something Wroing !!!!"
-        #                 )
-        #                 uncompleted_task_id_set.add(completed_id)
-        #         return uncompleted_task_id_set
-
         # # Handle over time
         idle_time = time.time() - previous_messages_time
-        # if idle_time >= acccepted_idle_time:
-        #     logger.info(f"===== No messages receive over time {idle_time} sec ====")
-
-        #     for id in received_init_task_ids_set:
-        #         if id in received_completed_task_ids_set:
-        #             continue
-        #         uncompleted_task_id_set.add(id)
-
-        #     logger.info(
-        #         f"===== Number of unfinished tasks {len(uncompleted_task_id_set)} ===="
-        #     )
-        #     return uncompleted_task_id_set
+        if idle_time >= acccepted_idle_time:
+            uncompleted_task_length = _total_tasks_of_all_server - _current_length_tasks_of_all_server
+            logger.info(f"===== No messages receive over time {idle_time} sec ====")
+            logger.info(
+                f"===== Number of unfinished tasks {uncompleted_task_length} ===="
+            )
+            return uncompleted_task_length
 
         total_time = time.time() - start_time
         logger.info(
             f" total_time .: {total_time} \
             Idle Time: {idle_time} "
         )
-        time.sleep(delay)
+        time.sleep(1)
         # wait_time -= int(delay)
 
     return uncompleted_task_id_set
+
+
+
 
 
 

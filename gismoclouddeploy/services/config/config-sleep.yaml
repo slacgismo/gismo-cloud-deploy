@@ -14,7 +14,7 @@ aws_config:
 # Parameters used for cli in k8s config.
 services_config_list:
   worker:
-      desired_replicas: 1 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
+      desired_replicas: 2 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
       imagePullPolicy: "Always"
       deployment_file: "./config/k8s/worker.deployment.yaml"
       service_file: ""
@@ -53,7 +53,7 @@ services_config_list:
 
 # Parameters pass to woker container.
 worker_config:
-  worker_dockerfile_folder: "solardatatools"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
+  worker_dockerfile_folder: "sleep"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
   solver:
     solver_name: "MOSEK"
     saved_solver_bucket: "pv.insight.test"

@@ -7,7 +7,7 @@ services:
       context: .
       args:
         - CODES_FOLDER=
-      dockerfile: ./server/compose/local/flask/Dockerfile
+      dockerfile: ./server/compose/local/flask/celery/worker/${WORKER_DIRECTORY}/Dockerfile.worker
 
     image: server
     container_name: server

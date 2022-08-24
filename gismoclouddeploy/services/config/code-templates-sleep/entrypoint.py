@@ -1,5 +1,5 @@
 import logging
-from solardatatools.data_handler import DataHandler
+
 
 from os.path import exists
 from datetime import datetime
@@ -43,8 +43,18 @@ def entrypoint(
     )
     print("---------->")
     delay = 5
+    start_time = time.time()
+    i = 0
+    is_end = False
+    period = 0
+    end_time = 0
     print ("Start : %s" % time.ctime())
-    time.sleep(delay)
+    while period < delay:
+        i += 0
+        # _curr = time.time()
+        end_time =  time.time()
+        period = int(end_time - start_time)
+        print(f"period: {period}")
     print ("End : %s" % time.ctime())
 
     
@@ -55,7 +65,9 @@ def entrypoint(
         save_data = {
             "bucket": data_bucket,
             "delay": curr_process_file,
-            "delayTime": delay,
+            "period": period,
+            "start_time": start_time,
+            "end_time": end_time,
         }
     except Exception as e:
         raise Exception(f"Save data error: {e}")

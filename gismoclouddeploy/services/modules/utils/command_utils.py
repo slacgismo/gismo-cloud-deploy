@@ -204,6 +204,7 @@ def return_process_filename_base_on_command_and_sort_filesize(
     default_files: List[str],
     s3_client: "botocore.client.S3",
     file_format: str,
+    file_type: str 
 ) -> List[str]:
 
     n_files = []
@@ -223,7 +224,12 @@ def return_process_filename_base_on_command_and_sort_filesize(
             else:
                 logger.info(f"Process first {first_n_files} files")
                 for file in files_dict[0 : int(first_n_files)]:
-                    n_files.append(file)
+                    file_name = file['Key']
+                    split_tup = os.path.splitext(file_name)
+                    file_extension = split_tup[1]
+                    print(file_extension)
+                    if file_extension == file_type:
+                        n_files.append(file)
         except Exception as e:
             logger.error(f"Input {first_n_files} is not an integer")
             raise e

@@ -171,21 +171,7 @@ def run_process_files(
         start_time = time.time()
 
 
-        n_files = return_process_filename_base_on_command_and_sort_filesize(
-            first_n_files=number,
-            bucket=config_json["worker_config"]["data_bucket"],
-            default_files=config_json["worker_config"]["default_process_files"],
-            s3_client=s3_client,
-            file_format=config_json["worker_config"]["data_file_type"],
-        )
-        num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
-        start_index = 0 
-        end_inedx = num_files_per_server
-        number_of_server = math.ceil( len(n_files) / num_files_per_server )
-        if number_of_server < 1 :
-            number_of_server = 1
-        number_of_queue = number_of_server
-        nodesscale = nodesscale + (number_of_server)*3
+
 
         config_json = modiy_config_parameters(
             configfile=configfile,
@@ -206,7 +192,26 @@ def run_process_files(
             region=aws_region,
         )
 
-
+        n_files = return_process_filename_base_on_command_and_sort_filesize(
+            first_n_files=number,
+            bucket=config_json["worker_config"]["data_bucket"],
+            default_files=config_json["worker_config"]["default_process_files"],
+            s3_client=s3_client,
+            file_format=config_json["worker_config"]["data_file_type"],
+            file_type=config_json["worker_config"]['data_file_type']
+        )
+        num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
+        start_index = 0 
+        end_inedx = num_files_per_server
+        number_of_server = math.ceil( len(n_files) / num_files_per_server )
+        if number_of_server < 1 :
+            number_of_server = 1
+        number_of_queue = number_of_server
+        # _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*3/2)
+        if nodesscale is not None:
+            _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*3/2)
+            # udpate eks nodes number
+            config_json["aws_config"]["eks_nodes_number"] = _new_nodes
        
         process_files_per_server_list = []
         while start_index <= len(n_files):
@@ -372,7 +377,7 @@ def run_process_files(
                 invoke_eks_updagte_kubeconfig(cluster_name=aws_config_obj.cluster_name)
                 try:
                     scale_eks_nodes_and_wait(
-                        scale_node_num=aws_config_obj.eks_nodes_number,
+                        scale_node_num=config_json["aws_config"]["eks_nodes_number"],
                         total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
                         delay=1,
                         cluster_name=aws_config_obj.cluster_name,
