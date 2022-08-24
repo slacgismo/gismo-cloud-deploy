@@ -169,6 +169,24 @@ def run_process_files(
 
     while current_repeat_number < repeatnumber:
         start_time = time.time()
+
+
+        n_files = return_process_filename_base_on_command_and_sort_filesize(
+            first_n_files=number,
+            bucket=config_json["worker_config"]["data_bucket"],
+            default_files=config_json["worker_config"]["default_process_files"],
+            s3_client=s3_client,
+            file_format=config_json["worker_config"]["data_file_type"],
+        )
+        num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
+        start_index = 0 
+        end_inedx = num_files_per_server
+        number_of_server = math.ceil( len(n_files) / num_files_per_server )
+        if number_of_server < 1 :
+            number_of_server = 1
+        number_of_queue = number_of_server
+        nodesscale = nodesscale + (number_of_server)*3
+
         config_json = modiy_config_parameters(
             configfile=configfile,
             nodesscale=nodesscale,
@@ -189,20 +207,7 @@ def run_process_files(
         )
 
 
-        n_files = return_process_filename_base_on_command_and_sort_filesize(
-            first_n_files=number,
-            bucket=config_json["worker_config"]["data_bucket"],
-            default_files=config_json["worker_config"]["default_process_files"],
-            s3_client=s3_client,
-            file_format=config_json["worker_config"]["data_file_type"],
-        )
-        num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
-        start_index = 0 
-        end_inedx = num_files_per_server
-        number_of_server = math.ceil( len(n_files) / num_files_per_server )
-        if number_of_server < 1 :
-            number_of_server = 1
-        number_of_queue = number_of_server
+       
         process_files_per_server_list = []
         while start_index <= len(n_files):
             _files = n_files[start_index : end_inedx]
@@ -535,7 +540,7 @@ def run_process_files(
             aws_region=aws_region,
             server_list = ready_server_list
         )
-        # initial_process_time = time.time() - start_time
+        initial_process_time = time.time() - start_time
         logger.info(" ----- init end services process --------- ")
         total_process_time = time.time() - start_time
         # num_unfinished_tasks = len(unfinished_tasks_id_set)

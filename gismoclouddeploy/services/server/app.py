@@ -119,10 +119,7 @@ def process_files(worker_config_str: str, first_n_files: str):
                     "user_id": {"DataType": "String", "StringValue": user_id},
                 }
                 send_time = time.time()
-
-                is_end_files_columns_and_repeat_number = False
-                if index_file == (len(default_files)-1 )and index_colium == (len(matched_column_set) - 1) and i == (repeat_number_per_round-1):
-                    is_end_files_columns_and_repeat_number = True
+                num_total_tasks = len(default_files)*len(matched_column_set)*repeat_number_per_round
                 msg_body = {
                     "data": None,
                     "error": None,
@@ -131,7 +128,7 @@ def process_files(worker_config_str: str, first_n_files: str):
                     "task_id": str(task_id),
                     "send_time": str(send_time),
                     "po_server_name":po_server_name,
-                    "is_end_files_columns_and_repeat_number": is_end_files_columns_and_repeat_number,
+                    "num_total_tasks":num_total_tasks,
                     "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
 
                 }
