@@ -119,7 +119,11 @@ def process_files(worker_config_str: str, first_n_files: str):
                     "user_id": {"DataType": "String", "StringValue": user_id},
                 }
                 send_time = time.time()
-                num_total_tasks = len(default_files)*len(matched_column_set)*repeat_number_per_round
+                # num_total_tasks = len(default_files)*len(matched_column_set)*repeat_number_per_round
+                if i == repeat_number_per_round-1 and index_colium == len(matched_column_set) -1 and index_file == len(default_files) - 1:
+                    num_total_tasks = len(task_ids)
+                else:
+                    num_total_tasks = 0 
                 msg_body = {
                     "data": None,
                     "error": None,

@@ -97,7 +97,7 @@ def long_pulling_sqs_multi_server(
     
     # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
     match_nodemname_hostname_dict = collect_node_name_and_pod_name()
-    print(f"nodes_dict: {match_nodemname_hostname_dict}")
+    # print(f"nodes_dict: {match_nodemname_hostname_dict}")
     is_received_init_task_ids_dict_completed= True
     start_time = time.time()
     # match_nodemname_hostname_dict = dict()
@@ -171,8 +171,9 @@ def long_pulling_sqs_multi_server(
                     if po_server_name in received_init_task_ids_dict:
                         received_init_task_ids_dict[po_server_name].append(received_init_id)
 
-
-                    received_init_task_total_num_dict[po_server_name] = int(msg_dict["num_total_tasks"])
+                    _num_of_total_tasks_of_server = int(msg_dict["num_total_tasks"])
+                    if _num_of_total_tasks_of_server > 0:
+                        received_init_task_total_num_dict[po_server_name] = int(msg_dict["num_total_tasks"])
                     
 
 

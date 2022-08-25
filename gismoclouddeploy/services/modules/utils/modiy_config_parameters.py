@@ -182,6 +182,7 @@ def modiy_config_parameters(
         file_type=config_json["worker_config"]['data_file_type']
     )
     total_number_files = len(n_files)
+    print(total_number_files)
     number_worker_nodes = 1
     if check_environment_is_aws():
         number_worker_nodes = int(config_json["aws_config"]["eks_nodes_number"])
@@ -290,7 +291,7 @@ def return_process_filename_base_on_command_and_sort_filesize(
             logger.error(f"Input {first_n_files} is not an integer")
             raise e
 
-    # print(n_files)
+    print(f"len :{len(n_files)}")
     # print("------------")
     _temp_sorted_file_list = sorted(n_files, key=lambda k: k['Size'],reverse=True)
 
