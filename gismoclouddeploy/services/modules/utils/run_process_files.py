@@ -368,30 +368,30 @@ def run_process_files(
                         create_k8s_svc_from_yaml(full_path_name=service_file)
 
             # wait k8s pod  ready
-            threads = list()
-            try:
-                for key, value in services_config_list.items():
-                    # desired_replicas = value["desired_replicas"]
-                    desired_replicas = 1
-                    x = threading.Thread(
-                        target=wait_pod_ready,
-                        args=(
-                            desired_replicas,
-                            key,
-                            aws_config_obj.interval_of_wait_pod_ready,
-                            1,
-                        ),
-                    )
-                    x.name = key
-                    threads.append(x)
-                    x.start()
-            except Exception as e:
-                logger.error(f"{e}")
-                return
+            # threads = list()
+            # try:
+            #     for key, value in services_config_list.items():
+            #         # desired_replicas = value["desired_replicas"]
+            #         desired_replicas = 1
+            #         x = threading.Thread(
+            #             target=wait_pod_ready,
+            #             args=(
+            #                 desired_replicas,
+            #                 key,
+            #                 aws_config_obj.interval_of_wait_pod_ready,
+            #                 1,
+            #             ),
+            #         )
+            #         x.name = key
+            #         threads.append(x)
+            #         x.start()
+            # except Exception as e:
+            #     logger.error(f"{e}")
+            #     return
 
-            for index, thread in enumerate(threads):
-                thread.join()
-                logging.info("Wait %s thread done", thread.name)
+            # for index, thread in enumerate(threads):
+            #     thread.join()
+            #     logging.info("Wait %s thread done", thread.name)
 
         logger.info(" ========= Clean previous SQS ========= ")
         sqs_client = connect_aws_client(
