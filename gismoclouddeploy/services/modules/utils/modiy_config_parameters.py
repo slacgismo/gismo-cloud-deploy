@@ -209,7 +209,7 @@ def modiy_config_parameters(
         if _worker_replicas < 1:
             _worker_replicas = 1
         # udpate eks nodes number
-        config_json['services_config_list']['worker']['desired_replicas'] = nodesscale*2
+        config_json['services_config_list']['worker']['desired_replicas'] = _worker_replicas
         config_json["aws_config"]["eks_nodes_number"] = nodesscale
     
     process_files_per_server_list = []
