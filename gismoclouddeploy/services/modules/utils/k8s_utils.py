@@ -1,8 +1,6 @@
 import json
 import time
 from kubernetes import client, config
-from kubernetes import ApiException
-import re
 
 from typing import Tuple
 import logging
