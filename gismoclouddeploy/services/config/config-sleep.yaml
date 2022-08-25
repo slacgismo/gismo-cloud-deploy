@@ -1,6 +1,6 @@
 # AWS parameters used for cli.
 aws_config:
-  cluster_file: "./config/eks/cluster-solar.yaml"
+  cluster_file: "./config/eks/cluster.yaml"
   cluster_name: "None"                    # Generated from cluster_file
   nodegroup_name: "None"                  # Generated from cluster_file
   instanceType: "None"                    # Generated from cluster_file

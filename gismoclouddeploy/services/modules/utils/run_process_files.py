@@ -371,7 +371,8 @@ def run_process_files(
             threads = list()
             try:
                 for key, value in services_config_list.items():
-                    desired_replicas = value["desired_replicas"]
+                    # desired_replicas = value["desired_replicas"]
+                    desired_replicas = 1
                     x = threading.Thread(
                         target=wait_pod_ready,
                         args=(

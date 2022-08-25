@@ -205,9 +205,10 @@ def modiy_config_parameters(
     number_of_queue = number_of_server
     # _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*3/2)
     if nodesscale is not None:
-        _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*2/2) + 1
+        _worker_replicas = (int(nodesscale)  - (math.ceil( (number_of_server)*2/2) + 1))*2
         # udpate eks nodes number
-        config_json["aws_config"]["eks_nodes_number"] = _new_nodes
+        config_json['services_config_list']['worker']['desired_replicas'] = _worker_replicas
+        config_json["aws_config"]["eks_nodes_number"] = nodesscale
     
     process_files_per_server_list = []
 
