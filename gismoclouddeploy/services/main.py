@@ -7,6 +7,7 @@ import os
 import modules
 from modules.utils.AWS_CONFIG import AWS_CONFIG
 from modules.utils.run_process_files import run_process_files
+from modules.utils.create_eks_cluster import create_eks_cluster,delete_eks_cluster
 
 from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
@@ -275,26 +276,73 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
             return
 
 
-# ***************************
-#  Read DLQ
-# ***************************
+# # ***************************
+# #  Read DLQ
+# # ***************************
 
 
+# @main.command()
+# @click.option("--empty", "-e", is_flag=True, help=" Empty DLQ after receive message")
+# def read_dlq(empty):
+#     """Read messages from dlq"""
+#     click.echo(f"Read DLQ from :{DLQ_URL}. Delete message: {empty}")
+#     print_dlq(
+#         delete_messages=empty,
+#         aws_key=AWS_ACCESS_KEY_ID,
+#         aws_secret_key=AWS_SECRET_ACCESS_KEY,
+#         aws_region=AWS_DEFAULT_REGION,
+#         dlq_url=DLQ_URL,
+#         wait_time=80,
+#         delay=0.5,
+#     )
+
+
+# if __name__ == "__main__":
+#     main()
+
+
+# ***************************
+#  Create EKS cluster
+# ***************************
 @main.command()
-@click.option("--empty", "-e", is_flag=True, help=" Empty DLQ after receive message")
-def read_dlq(empty):
-    """Read messages from dlq"""
-    click.echo(f"Read DLQ from :{DLQ_URL}. Delete message: {empty}")
-    print_dlq(
-        delete_messages=empty,
-        aws_key=AWS_ACCESS_KEY_ID,
-        aws_secret_key=AWS_SECRET_ACCESS_KEY,
+@click.argument("configfile")
+
+def create_cluster(configfile):
+    """Create cluster from config file"""
+    click.echo(f"Create cluster from :{configfile}")
+    config_json = modiy_config_parameters(
+        configfile=configfile,
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
+        sqs_url=SQS_URL,
+        sns_topic=SNS_TOPIC,
         dlq_url=DLQ_URL,
-        wait_time=80,
-        delay=0.5,
+        ecr_repo=ECR_REPO,
     )
+    cluster_file = config_json['aws_config']['cluster_file']
+    create_eks_cluster(cluster_file)
 
 
-if __name__ == "__main__":
-    main()
+# ***************************
+#  Delete EKS cluster
+# ***************************
+@main.command()
+@click.argument("configfile")
+
+def create_cluster(configfile):
+    """Delete cluster from config file"""
+    click.echo(f"Delete cluster from :{configfile}")
+    config_json = modiy_config_parameters(
+        configfile=configfile,
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_region=AWS_DEFAULT_REGION,
+        sqs_url=SQS_URL,
+        sns_topic=SNS_TOPIC,
+        dlq_url=DLQ_URL,
+        ecr_repo=ECR_REPO,
+    )
+    cluster_file = config_json['aws_config']['cluster_file']
+    delete_eks_cluster(cluster_file)
+    

@@ -240,4 +240,5 @@ def scale_eks_nodes_and_wait(
         return False
     except Exception as e:
         logger.error(f"scale node number error: {e}")
-        return False
+        raise e
+

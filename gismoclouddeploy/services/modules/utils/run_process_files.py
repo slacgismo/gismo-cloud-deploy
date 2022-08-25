@@ -324,7 +324,8 @@ def run_process_files(
                         nodegroup_name=aws_config_obj.nodegroup_name,
                     )
                 except Exception as e:
-                    logger("Scale nodes error")
+                    logger.error("Scale nodes error")
+                    return 
 
             # check if celery flower in it
             if config_json["worker_config"]['is_celeryflower_on'] is False:
@@ -366,7 +367,7 @@ def run_process_files(
                             f"========= Create {service_file} services =========== "
                         )
                         create_k8s_svc_from_yaml(full_path_name=service_file)
-
+     
             # wait k8s pod  ready
             # threads = list()
             # try:
@@ -419,7 +420,7 @@ def run_process_files(
             logger.error("Cannot get server name")
             return
         logger.info(f"------ {ready_server_list}")
-
+    
         # send command to server and get task IDs
         # worker_replicas = 0
         # for key, value in services_config_list.items():

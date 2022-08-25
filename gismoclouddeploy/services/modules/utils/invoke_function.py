@@ -30,6 +30,9 @@ class Command(object):
         return self.process.returncode
 
 
+
+
+
 def exec_subprocess_command(command: str) -> str:
 
     process = subprocess.Popen(
@@ -59,6 +62,21 @@ def exec_docker_command(command: str) -> str:
     # print(result.returncode, result.stdout, result.stderr)
     return result.stdout
 
+
+def exec_eksctl_create_cluster(cluster_file:str) -> str:
+    try:
+        command = f"eksctl create cluster -f ./config/eks/{cluster_file}.yaml"
+        output = exec_subprocess_command(command=command)
+        return output
+    except Exception as e:
+        raise e
+def exec_eksctl_delete_cluster(cluster_file:str) -> str:
+    try:
+        command = f"eksctl delete cluster -f ./config/eks/{cluster_file}.yaml"
+        output = exec_subprocess_command(command=command)
+        return output
+    except Exception as e:
+        raise e
 
 
 def invoke_kubectl_delete_all_daemonset():
