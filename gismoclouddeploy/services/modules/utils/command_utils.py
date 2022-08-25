@@ -452,10 +452,10 @@ def update_config_json_image_name_and_tag_base_on_env(
 
     for service in services_config_list:
         # only inspect worker and server
-        if service == "server":
-            services_config_list[service]['desired_replicas'] = number_of_server
-        if service == "rabbitmq" or service == "redis":
-            services_config_list[service]['desired_replicas'] = number_of_queue
+        # if service == "server":
+        #     services_config_list[service]['desired_replicas'] = number_of_server
+        # if service == "rabbitmq" or service == "redis":
+        #     services_config_list[service]['desired_replicas'] = number_of_queue
         if service == "worker" or service == "server" or service =="celeryflower":
             if service =="celeryflower" and is_celeryflower_on is False:
                 logger.info("Skip celery flower service")

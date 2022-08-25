@@ -162,9 +162,6 @@ def run_process_files(
     while current_repeat_number < repeatnumber:
         start_time = time.time()
 
-
-
-
         config_json = modiy_config_parameters(
             configfile=configfile,
             nodesscale=nodesscale,
@@ -178,57 +175,6 @@ def run_process_files(
             s3_client= s3_client,
             first_n_files=number
         )
-
-        # n_files = return_process_filename_base_on_command_and_sort_filesize(
-        #     first_n_files=number,
-        #     bucket=config_json["worker_config"]["data_bucket"],
-        #     default_files=config_json["worker_config"]["default_process_files"],
-        #     s3_client=s3_client,
-        #     file_format=config_json["worker_config"]["data_file_type"],
-        #     file_type=config_json["worker_config"]['data_file_type']
-        # )
-        # total_number_files = len(n_files)
-        # number_worker_nodes = int(config_json["aws_config"]["eks_nodes_number"])
-        # num_worker_pods_per_server = int(config_json["worker_config"]["num_worker_pods_per_server"])
-        # number_of_server = math.ceil( number_worker_nodes / num_worker_pods_per_server )
-        # num_files_per_server =  math.ceil(total_number_files/number_of_server)
-        
-        # print(f"num_files_per_server :{num_files_per_server}")
-        # print(f"number_of_server :{number_of_server}")
-        
-        # # num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
-        # start_index = 0 
-        # end_inedx = num_files_per_server
-       
-        # if number_of_server < 1 :
-        #     number_of_server = 1
-        # number_of_queue = number_of_server
-        # # _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*3/2)
-        # if nodesscale is not None:
-        #     _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*3/2)
-        #     # udpate eks nodes number
-        #     config_json["aws_config"]["eks_nodes_number"] = _new_nodes
-       
-        # process_files_per_server_list = []
-
-        # while start_index < len(n_files):
-        #     _files = n_files[start_index : end_inedx]
-        #     print(f"{index} length files {len(_files)}")
-        #     process_files_per_server_list.append(_files)
-        #     start_index = end_inedx
-        #     end_inedx += num_files_per_server
-  
-       
-        # # update  files list of server
-        
-        # config_json["worker_config"]['num_files_per_server_list'] = process_files_per_server_list
-        # print( config_json["worker_config"]['num_files_per_server_list'])
-
-        # update number of server, number of queue
-
-        # config_json["worker_config"]['services_config_list']['server']['desired_replicas'] = number_of_server
-        # config_json["worker_config"]['services_config_list']['rabbitmq']['desired_replicas'] = number_of_queue
-        # print(config_json["worker_config"]['services_config_list']['server']['desired_replicas'] )
 
 
         user_id = config_json["worker_config"]["user_id"]
@@ -400,7 +346,7 @@ def run_process_files(
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
 
-                print(f"service_name :{service_name} desired_replicas :{desired_replicas}")
+                print(f"========service_name :{service_name} desired_replicas :{desired_replicas}")
                 # update deployment, if image tag or replicas are changed, update deployments
                 create_or_update_k8s_deployment(
                     service_name=service_name,
