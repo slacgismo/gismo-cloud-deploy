@@ -290,9 +290,6 @@ def run_process_files(
                 )
                 # invoke_docker_compose_build_and_run()
                 invoke_docker_compose_build(
-                    worker_folder=config_json["worker_config"][
-                        "worker_dockerfile_folder"
-                    ],
                     code_template_folder=worker_config_obj.code_template_folder,
                 )
                 invoke_docker_compose_up()
@@ -303,9 +300,6 @@ def run_process_files(
                     f" ========= Build images and run in k8s ======== {worker_config_obj.code_template_folder}"
                 )
                 invoke_docker_compose_build(
-                    worker_folder=config_json["worker_config"][
-                        "worker_dockerfile_folder"
-                    ],
                     code_template_folder=worker_config_obj.code_template_folder,
                 )
                 for service in services_config_list:

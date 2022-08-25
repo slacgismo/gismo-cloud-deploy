@@ -2,7 +2,7 @@ from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client
 from .sqs import receive_queue_message, delete_queue_message
-from .eks_utils import match_hostname_from_node_name
+from .eks_utils import match_hostname_from_node_name,get_all_nodes_name
 import time
 import json
 import logging
@@ -10,6 +10,7 @@ from server.models.SNSSubjectsAlert import SNSSubjectsAlert
 import os
 import pandas as pd
 from os.path import exists
+
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -94,11 +95,12 @@ def long_pulling_sqs_multi_server(
     uncompleted_task_id_set = set()
     total_tasks_number = 0 
     
-
-
+    # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
+    nodes_set = get_all_nodes_name()
+    print(f"nodes_set: {nodes_set}")
     is_received_init_task_ids_dict_completed= True
     start_time = time.time()
-    print(f"1 received_completed_task_ids_dict_comleted : {received_completed_task_ids_dict_comleted}")
+    match_nodemname_hostname_dict = dict()
     while True > 0:
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
@@ -152,7 +154,7 @@ def long_pulling_sqs_multi_server(
                     try:
                         received_init_id = msg_dict["task_id"]
                         send_time = msg_dict['send_time']
-                      
+
                     except:
                         logger.warning(
                             "------------------------------------------------------"
@@ -200,6 +202,14 @@ def long_pulling_sqs_multi_server(
    
 
                     # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
+                    hostname =  msg_dict["hostname"] 
+                    node_name = None
+                    if hostname not in match_nodemname_hostname_dict:
+                        node_name = match_hostname_from_node_name(hostname=hostname, pod_prefix="worker")
+                        match_nodemname_hostname_dict[hostname] = node_name
+                    else:
+                        node_name = match_nodemname_hostname_dict[hostname]
+                    
 
                     _logs = {
                         "file_name": msg_dict["file_name"],
@@ -212,7 +222,7 @@ def long_pulling_sqs_multi_server(
                         "pid": msg_dict["pid"],
                         "alert_type": msg_dict["alert_type"],
                         "po_server_name":msg_dict["po_server_name"],
-                        # "node_name": node_name,
+                        "node_name": node_name,
                        
                     }
                     # print(f"--------logs :{_logs}")

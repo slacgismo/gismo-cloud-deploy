@@ -50,7 +50,6 @@ def tracklog_decorator(func):
         try:
             solver_name = solver["solver_name"]
             if solver_name != "None":
-
                 check_and_download_solver(
                     solver_name=solver_name,
                     slover_lic_file_name=solver["solver_lic_file_name"],

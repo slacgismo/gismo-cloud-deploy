@@ -53,7 +53,7 @@ services_config_list:
 
 # Parameters pass to woker container.
 worker_config:
-  worker_dockerfile_folder: "sleep"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
+  # worker_dockerfile_folder: "code-templates-sleep"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
   solver:
     solver_name: "MOSEK"
     saved_solver_bucket: "pv.insight.test"

@@ -148,6 +148,20 @@ def match_hostname_from_node_name(hostname:str = None,pod_prefix:str = "worker")
             
     return None
 
+def get_all_nodes_name()  -> set:
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    # print("Listing pods with their IPs:")
+    ret = v1.list_pod_for_all_namespaces(watch=False)
+
+    nodes = set()
+    for i in ret.items:
+        _node_name = i.spec.node_name
+        nodes.add(_node_name)
+            
+    return nodes
+
+
 def replace_k8s_yaml_with_replicas(
     file_path: str, file_name: str, new_replicas: int, app_name: str, curr_replicas: int
 ) -> bool:

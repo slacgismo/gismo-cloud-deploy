@@ -171,8 +171,8 @@ def modiy_config_parameters(
 
 
 
-    worker_dockerfile_folder = config_json["worker_config"]["worker_dockerfile_folder"]
-    logger.info(f"------------- {worker_dockerfile_folder}")
+    # worker_dockerfile_folder = config_json["worker_config"]["worker_dockerfile_folder"]
+    # logger.info(f"------------- {worker_dockerfile_folder}")
 
 
 

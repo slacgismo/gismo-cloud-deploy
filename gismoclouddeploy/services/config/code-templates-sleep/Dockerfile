@@ -1,10 +1,12 @@
-
-
 FROM python:3.8
+
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ARG CODES_FOLDER
 ENV code_path  "../config/$CODES_FOLDER"
+
+
+
 
 RUN apt-get update \
   # dependencies for building Python packages
@@ -20,9 +22,9 @@ RUN apt update && apt install libblas3 liblapack3 liblapack-dev libblas-dev cmak
 RUN apt install libhdf5-dev -y
 
 # Requirements are installed here to ensure they will be cached.
-COPY ./server/requirements.txt /requirements.txt
-# COPY ../config/$CODES_FOLDER/requirements.txt /requirements.txt
-# COPY $code_path/requirements.txt /requirements.txt
+# COPY ./server/requirements.txt /requirements.txt
+# COPY ../config/code-templates/requirements.txt /requirements.txt
+COPY $code_path/requirements.txt /requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt
 
@@ -52,6 +54,7 @@ WORKDIR /app
 
 
 # copy project code
+
 
 COPY ./server .
 
