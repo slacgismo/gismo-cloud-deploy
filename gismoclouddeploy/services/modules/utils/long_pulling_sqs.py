@@ -201,6 +201,8 @@ def long_pulling_sqs_multi_server(
                         )
                     if po_server_name in received_completed_task_ids_dict:
                         received_completed_task_ids_dict[po_server_name].append(received_completed_id)
+                        if len(received_completed_id) < 5:
+                            print(f"---->received_completed_id error : {received_completed_id} **********")
    
 
                     # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
