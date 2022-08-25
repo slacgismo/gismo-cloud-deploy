@@ -296,11 +296,6 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
 #         delay=0.5,
 #     )
 
-
-if __name__ == "__main__":
-    main()
-
-
 # ***************************
 #  Create EKS cluster
 # ***************************
@@ -309,18 +304,12 @@ if __name__ == "__main__":
 def create_cluster(configfile):
     """Create cluster from config file"""
     click.echo(f"Create cluster from :{configfile}")
-    config_json = modiy_config_parameters(
-        configfile=configfile,
+
+    create_eks_cluster(
+        config_file=configfile, 
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        sqs_url=SQS_URL,
-        sns_topic=SNS_TOPIC,
-        dlq_url=DLQ_URL,
-        ecr_repo=ECR_REPO,
-    )
-    cluster_file = config_json['aws_config']['cluster_file']
-    create_eks_cluster(cluster_file)
+        aws_region=AWS_DEFAULT_REGION)
 
 
 # ***************************
@@ -332,16 +321,19 @@ def create_cluster(configfile):
 def delete_cluster(configfile):
     """Delete cluster from config file"""
     click.echo(f"Delete cluster from :{configfile}")
-    config_json = modiy_config_parameters(
-        configfile=configfile,
+
+    delete_eks_cluster(
+        config_file=configfile, 
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        sqs_url=SQS_URL,
-        sns_topic=SNS_TOPIC,
-        dlq_url=DLQ_URL,
-        ecr_repo=ECR_REPO,
-    )
-    cluster_file = config_json['aws_config']['cluster_file']
-    delete_eks_cluster(cluster_file)
+        aws_region=AWS_DEFAULT_REGION)
+
+
+
+
+if __name__ == "__main__":
+    main()
+
+
+
     

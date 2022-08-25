@@ -65,14 +65,14 @@ def exec_docker_command(command: str) -> str:
 
 def exec_eksctl_create_cluster(cluster_file:str) -> str:
     try:
-        command = f"eksctl create cluster -f ./config/eks/{cluster_file}.yaml"
+        command = f"eksctl create cluster -f {cluster_file}"
         output = exec_subprocess_command(command=command)
         return output
     except Exception as e:
         raise e
 def exec_eksctl_delete_cluster(cluster_file:str) -> str:
     try:
-        command = f"eksctl delete cluster -f ./config/eks/{cluster_file}.yaml"
+        command = f"eksctl delete cluster -f {cluster_file}"
         output = exec_subprocess_command(command=command)
         return output
     except Exception as e:

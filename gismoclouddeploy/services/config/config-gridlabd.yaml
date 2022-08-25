@@ -45,7 +45,6 @@ services_config_list:
 
 # Parameters pass to woker container.
 worker_config:
-  worker_dockerfile_folder: "gridlabd"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
   solver:
     solver_name: None
     saved_solver_bucket: None
@@ -85,3 +84,6 @@ worker_config:
   save_plot_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
   save_performance_aws: None    # It's a hint column that is generated in the CLI run-ime.
   repeat_number_per_round: 1    # Repeat overall tasks per round before run end services.
+  is_celeryflower_on: False     # Turn of / off flower 
+  num_files_per_server_list : None # It's a hint column that is generated in the CLI run-ime.
+  num_worker_pods_per_server: 5
