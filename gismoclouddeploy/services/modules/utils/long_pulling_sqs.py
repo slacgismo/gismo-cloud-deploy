@@ -2,7 +2,7 @@ from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client
 from .sqs import receive_queue_message, delete_queue_message
-from .eks_utils import match_hostname_from_node_name,get_all_nodes_name
+from .eks_utils import match_hostname_from_node_name,collect_node_name_and_pod_name
 import time
 import json
 import logging
@@ -96,11 +96,12 @@ def long_pulling_sqs_multi_server(
     total_tasks_number = 0 
     
     # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
-    nodes_set = get_all_nodes_name()
-    print(f"nodes_set: {nodes_set}")
+    match_nodemname_hostname_dict = collect_node_name_and_pod_name()
+    print(f"nodes_dict: {match_nodemname_hostname_dict}")
     is_received_init_task_ids_dict_completed= True
     start_time = time.time()
-    match_nodemname_hostname_dict = dict()
+    # match_nodemname_hostname_dict = dict()
+    # match_nodemname_hostname_dict = 
     while True > 0:
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay

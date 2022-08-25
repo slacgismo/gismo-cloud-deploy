@@ -37,14 +37,14 @@ spec:
               value: "amqp://admin:admin@rabbitmq:5672/"
             - name: CELERY_RESULT_BACKEND
               value: "redis://redis:6379/0"
-          resources:
-            limits:
-              cpu: 1000m
-            requests:
-              cpu: 1000m
-            args:
-              - -cpus
-              - "2"
+          # resources:
+          #   limits:
+          #     cpu: 1000m
+          #   requests:
+          #     cpu: 1000m
+          #   args:
+          #     - -cpus
+          #     - "2"
 
 
 
