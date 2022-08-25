@@ -91,18 +91,3 @@ def download_solver_licence_from_s3_and_save(
         raise e
 
 
-def list_files_in_bucket(bucket_name: str, s3_client):
-    """Get filename and size from S3 , remove non csv file"""
-    response = s3_client.list_objects_v2(Bucket=bucket_name)
-    files = response["Contents"]
-    filterFiles = []
-    for file in files:
-        split_tup = os.path.splitext(file["Key"])
-        file_extension = split_tup[1]
-        if file_extension == ".csv":
-            obj = {
-                "Key": file["Key"],
-                "Size": file["Size"],
-            }
-            filterFiles.append(obj)
-    return filterFiles

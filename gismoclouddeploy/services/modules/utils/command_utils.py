@@ -198,49 +198,48 @@ def send_command_to_server(
 
 
 
-def return_process_filename_base_on_command_and_sort_filesize(
-    first_n_files: str,
-    bucket: str,
-    default_files: List[str],
-    s3_client: "botocore.client.S3",
-    file_format: str,
-    file_type: str 
-) -> List[str]:
+# def return_process_filename_base_on_command_and_sort_filesize(
+#     first_n_files: str,
+#     bucket: str,
+#     default_files: List[str],
+#     s3_client: "botocore.client.S3",
+#     file_format: str,
+#     file_type: str 
+# ) -> List[str]:
 
-    n_files = []
-    files_dict = list_files_in_bucket(
-        bucket_name=bucket, s3_client=s3_client, file_format=file_format
-    )
+#     n_files = []
+#     files_dict = list_files_in_bucket(
+#         bucket_name=bucket, s3_client=s3_client, file_format=file_format
+#     )
 
-    if first_n_files is None:
-        n_files = default_files
-        return n_files
-    else:
-        try:
-            if int(first_n_files) == 0:
-                logger.info(f"Process all files in {bucket}")
-                for file in files_dict:
-                    n_files.append(file)
-            else:
-                logger.info(f"Process first {first_n_files} files")
-                for file in files_dict[0 : int(first_n_files)]:
-                    file_name = file['Key']
-                    split_tup = os.path.splitext(file_name)
-                    file_extension = split_tup[1]
-                    print(file_extension)
-                    if file_extension == file_type:
-                        n_files.append(file)
-        except Exception as e:
-            logger.error(f"Input {first_n_files} is not an integer")
-            raise e
+#     if first_n_files is None:
+#         n_files = default_files
+#         return n_files
+#     else:
+#         try:
+#             if int(first_n_files) == 0:
+#                 logger.info(f"Process all files in {bucket}")
+#                 for file in files_dict:
+#                     n_files.append(file)
+#             else:
+#                 logger.info(f"Process first {first_n_files} files")
+#                 for file in files_dict[0 : int(first_n_files)]:
+#                     file_name = file['Key']
+#                     split_tup = os.path.splitext(file_name)
+#                     file_extension = split_tup[1]
+#                     if file_extension == file_type:
+#                         n_files.append(file)
+#         except Exception as e:
+#             logger.error(f"Input {first_n_files} is not an integer")
+#             raise e
 
-    # print(n_files)
-    # print("------------")
-    _temp_sorted_file_list = sorted(n_files, key=lambda k: k['Size'],reverse=True)
+#     # print(n_files)
+#     # print("------------")
+#     _temp_sorted_file_list = sorted(n_files, key=lambda k: k['Size'],reverse=True)
 
-    sorted_files = [d['Key'] for d in _temp_sorted_file_list]
+#     sorted_files = [d['Key'] for d in _temp_sorted_file_list]
 
-    return sorted_files
+#     return sorted_files
 
 
 # def return_process_filename_base_on_command(
@@ -275,21 +274,21 @@ def return_process_filename_base_on_command_and_sort_filesize(
 
 
 
-def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
-    """Get filename and size from S3 , remove non csv file"""
-    response = s3_client.list_objects_v2(Bucket=bucket_name)
-    files = response["Contents"]
-    filterFiles = []
-    for file in files:
-        split_tup = os.path.splitext(file["Key"])
-        file_extension = split_tup[1]
-        if file_extension == file_format:
-            obj = {
-                "Key": file["Key"],
-                "Size": file["Size"],
-            }
-            filterFiles.append(obj)
-    return filterFiles
+# def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
+#     """Get filename and size from S3 , remove non csv file"""
+#     response = s3_client.list_objects_v2(Bucket=bucket_name)
+#     files = response["Contents"]
+#     filterFiles = []
+#     for file in files:
+#         split_tup = os.path.splitext(file["Key"])
+#         file_extension = split_tup[1]
+#         if file_extension == file_format:
+#             obj = {
+#                 "Key": file["Key"],
+#                 "Size": file["Size"],
+#             }
+#             filterFiles.append(obj)
+#     return filterFiles
 
 
 def invoke_process_files_to_server(
