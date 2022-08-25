@@ -1,6 +1,7 @@
 import json
 import time
 from kubernetes import client, config
+from kubernetes import ApiException
 import re
 
 from typing import Tuple
@@ -293,3 +294,20 @@ def get_k8s_pod_name_list(pod_name: str = None, number_server: int = 1) -> List[
     #     return latest_server_pod_name
 
     # return None
+
+
+# def get_cluster_name(namespace:str):
+#     clusters_info = []
+#     d1  = {}
+#     config.load_kube_config()
+#     #config.load_incluster_config()
+#     configuration = client.Configuration()
+#     api_instance = client.AppsV1beta2Api(client.ApiClient(configuration))
+#     try:
+#         api_response = api_instance.list_namespaced_stateful_set(namespace)
+#         for cluster in api_response.items:
+#             d1['name']=cluster.metadata.labels['operator.io/cluster']
+#             clusters_info.append(d1.copy())
+#         return clusters_info
+#     except ApiException as e:
+#         return "Exception when calling AppsV1beta2Api->patch_namespaced_stateful_set_status: %s\n" % e

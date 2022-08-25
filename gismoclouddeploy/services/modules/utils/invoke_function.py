@@ -76,8 +76,16 @@ def exec_eksctl_delete_cluster(cluster_file:str) -> str:
         output = exec_subprocess_command(command=command)
         return output
     except Exception as e:
-        raise e
+        raise e\
 
+def exec_eksctl_update_admin_arn(cluster_name:str, region:str, arn:str) -> str:
+    try:
+        command = f"eksctl create iamidentitymapping --cluster  {cluster_name} --region={region} --arn {arn} --group system:masters --username admin"
+        output = exec_subprocess_command(command=command)
+        return output
+    except Exception as e:
+        raise e
+\
 
 def invoke_kubectl_delete_all_daemonset():
     command = ["kubectl", "delete", "DaemonSet", "--all"]

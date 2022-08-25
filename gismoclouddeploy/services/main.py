@@ -330,7 +330,7 @@ def create_cluster(configfile):
 @main.command()
 @click.argument("configfile")
 
-def create_cluster(configfile):
+def delete_cluster(configfile):
     """Delete cluster from config file"""
     click.echo(f"Delete cluster from :{configfile}")
     config_json = modiy_config_parameters(

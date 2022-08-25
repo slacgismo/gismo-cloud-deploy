@@ -16,6 +16,14 @@ def create_eks_cluster(cluster_file:str) -> str:
     logger.info(res)
     return 
 
+def update_role_of_eks_cluster(cluster_file:str, iam_arn:str) -> str:
+    if not exists(cluster_file):
+            logger.error(f"{cluster_file} does not exist")
+            return 
+    res = exec_eksctl_create_cluster(cluster_file=cluster_file)
+    logger.info(res)
+    return 
+
 def delete_eks_cluster(cluster_file:str) -> str:
     if not exists(cluster_file):
         logger.error(f"{cluster_file} does not exist")
