@@ -76,7 +76,7 @@ def exec_eksctl_delete_cluster(cluster_file:str) -> str:
         output = exec_subprocess_command(command=command)
         return output
     except Exception as e:
-        raise e\
+        raise e
 
 def exec_eksctl_update_admin_arn(cluster_name:str, region:str, arn:str) -> str:
     try:
@@ -158,12 +158,17 @@ def invoke_docker_compose_up() -> str:
 def invoke_docker_compose_build(
     code_template_folder: str = None
 ) -> str:
-
+    # command = ["export",f"WORKER_DIRECTORY={code_template_folder}", "docker-compose", "build","--build-arg", f"CODES_FOLDER={code_template_folder}"]
     command = f"WORKER_DIRECTORY={code_template_folder} docker-compose build --build-arg CODES_FOLDER={code_template_folder}"
     # output = subprocess.check_output(["bash", "-c", command])
-    logger.info(f"docker build command: {command}")
-    output = exec_subprocess_command(command=command)
+    output = subprocess.check_output(["bash", "-c", command])
     return output
+    # try:
+    #     logger.info(f"docker build command: {command}")
+    #     output = exec_subprocess_command(command=command)
+    #     return output
+    # except Exception as e:
+    #     raise e
 
 
 def invoke_ecr_validation(ecr_repo: str_) -> str:

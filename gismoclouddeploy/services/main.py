@@ -297,8 +297,8 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
 #     )
 
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
 
 
 # ***************************
@@ -306,7 +306,6 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
 # ***************************
 @main.command()
 @click.argument("configfile")
-
 def create_cluster(configfile):
     """Create cluster from config file"""
     click.echo(f"Create cluster from :{configfile}")

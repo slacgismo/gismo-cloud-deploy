@@ -4,7 +4,6 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ARG CODES_FOLDER
 ENV code_path  "../config/$CODES_FOLDER"
-
 RUN apt-get update \
   # dependencies for building Python packages
   && apt-get install -y build-essential \

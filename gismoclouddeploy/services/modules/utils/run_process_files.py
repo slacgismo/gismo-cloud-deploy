@@ -234,20 +234,32 @@ def run_process_files(
                 logger.info(
                     f"========= Build images and run in docker ======== {worker_config_obj.code_template_folder}"
                 )
-                # invoke_docker_compose_build_and_run()
-                invoke_docker_compose_build(
-                    code_template_folder=worker_config_obj.code_template_folder,
-                )
-                invoke_docker_compose_up()
+                try:
+                    invoke_docker_compose_build(
+                        code_template_folder=worker_config_obj.code_template_folder,
+                    )
+                    invoke_docker_compose_up()
+                except Exception as e:
+                    logger.error("------------------")
+                    logger.error("Build Image Failed")
+                    logger.error("------------------")
+                    raise e
             else:
                 logger.info("======== Delete previous k8s setting ========")
                 delete_k8s_all_po_sev_deploy_daemonset()
                 logger.info(
                     f" ========= Build images and run in k8s ======== {worker_config_obj.code_template_folder}"
                 )
-                invoke_docker_compose_build(
-                    code_template_folder=worker_config_obj.code_template_folder,
-                )
+                try:
+                    invoke_docker_compose_build(
+                        code_template_folder=worker_config_obj.code_template_folder,
+                    )
+                except Exception as e:
+                    logger.error("------------------")
+                    logger.error("Build Image Failed")
+                    logger.error("------------------")
+                    raise e
+            
                 for service in services_config_list:
                     # only inspect worker and server
                     if service == "worker" or service == "server" or  service == "celeryflower":
