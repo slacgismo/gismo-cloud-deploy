@@ -148,7 +148,7 @@ def match_hostname_from_node_name(hostname:str = None,pod_prefix:str = "worker")
             
     return None
 
-def collect_node_name_and_pod_name(pod_prefix:str = "worker")  -> set:
+def collect_node_name_and_pod_name(pod_prefix:str = "worker")  -> dict:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     # print("Listing pods with their IPs:")
@@ -159,8 +159,9 @@ def collect_node_name_and_pod_name(pod_prefix:str = "worker")  -> set:
         _pod_prefix = i.metadata.name.split("-")[0]
         _pod_name = i.metadata.name
         if _pod_prefix == pod_prefix:
-            nodes[_pod_name] = _node_name
+           
             _node_name = i.spec.node_name
+            nodes[_pod_name] = _node_name
             
     return nodes
 
