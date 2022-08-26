@@ -119,11 +119,11 @@ def process_files(worker_config_str: str, first_n_files: str):
                     "user_id": {"DataType": "String", "StringValue": user_id},
                 }
                 send_time = time.time()
-                # num_total_tasks = len(default_files)*len(matched_column_set)*repeat_number_per_round
-                if i == repeat_number_per_round-1 and index_colium == len(matched_column_set) -1 and index_file == len(default_files) - 1:
-                    num_total_tasks = len(task_ids)
-                else:
-                    num_total_tasks = 0 
+                # # num_total_tasks = len(default_files)*len(matched_column_set)*repeat_number_per_round
+                # if i == repeat_number_per_round-1 and index_colium == len(matched_column_set) -1 and index_file == len(default_files) - 1:
+                #     num_total_tasks = len(task_ids)
+                # else:
+                #     num_total_tasks = 0 
                 msg_body = {
                     "data": None,
                     "error": None,
@@ -132,7 +132,6 @@ def process_files(worker_config_str: str, first_n_files: str):
                     "task_id": str(task_id),
                     "send_time": str(send_time),
                     "po_server_name":po_server_name,
-                    "num_total_tasks":num_total_tasks,
                     "index_file": index_file,
                     "index_colium": index_colium,
                     "repeat_number_per_round":i,
@@ -150,23 +149,24 @@ def process_files(worker_config_str: str, first_n_files: str):
                 time.sleep(0.02)
             # publish sns message
     # print("------------->")
-    # MSG_ATTRIBUTES2 = {
-    #     "user_id": {"DataType": "String", "StringValue": str(user_id)},
-    # }
+    MSG_ATTRIBUTES2 = {
+        "user_id": {"DataType": "String", "StringValue": str(user_id)},
+    }
 
-    # msg_body = {
-    #     "data": None,
-    #     "error": None,
-    #     "total_tasks": len(task_ids),
-    #     "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
-    # }
-    # MSG_BODY = json.dumps(msg_body)
-    # send_response = send_queue_message(
-    #     queue_url=sqs_url,
-    #     msg_attributes=MSG_ATTRIBUTES2,
-    #     msg_body=MSG_BODY,
-    #     sqs_client=sqs_client,
-    # )
+    msg_body = {
+        "data": None,
+        "error": None,
+        "po_server_name":po_server_name,
+        "total_tasks": len(task_ids),
+        "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
+    }
+    MSG_BODY = json.dumps(msg_body)
+    send_response = send_queue_message(
+        queue_url=sqs_url,
+        msg_attributes=MSG_ATTRIBUTES2,
+        msg_body=MSG_BODY,
+        sqs_client=sqs_client,
+    )
 
     return
 

@@ -6,6 +6,7 @@ import os
 import socket
 from .invoke_function import invoke_eks_get_cluster
 import re
+import pandas as pd
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -48,7 +49,7 @@ def modiy_config_parameters(
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
     host_name = (socket.gethostname())
     user_id = re.sub('[^a-zA-Z0-9]', '', host_name)
-    print(f"----- user_id :{user_id}")
+
     config_json["worker_config"]["user_id"] = user_id
     config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
         config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"]
@@ -178,6 +179,30 @@ def modiy_config_parameters(
         file_type=config_json["worker_config"]['data_file_type']
     )
     total_number_files = len(n_files)
+    # pd_files = pd.DataFrame(n_files)
+    # df = pd.read_csv("init_command_logs_644.csv")
+    # # print(pd_files)
+    # # print(df["file_name"])
+    # compare_set = set()
+    # for file in df["file_name"]:
+    #     compare_set.add(file)
+    # #     compare_set.add(file)
+    # # for f in compare_set:
+    # #     print(f"file: {f}")
+    # print(len(compare_set))
+
+    # for file in n_files:
+    #     if file in compare_set:
+    #         continue
+    #     else:
+    #         print(f"file:{file}")
+    
+    # for file in df["file_name"]:
+    #     print(file)
+        # if file in compare_set:
+        #     continue
+        # else:
+        #     print(f"file:{file}")
 
     number_worker_nodes = 1
     if check_environment_is_aws():

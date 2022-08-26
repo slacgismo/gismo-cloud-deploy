@@ -172,14 +172,14 @@ def long_pulling_sqs_multi_server(
                     if po_server_name in received_init_task_ids_dict:
                         received_init_task_ids_dict[po_server_name].append(received_init_id)
 
-                    _num_of_total_tasks_of_server = int(msg_dict["num_total_tasks"])
-                    if _num_of_total_tasks_of_server > 0:
-                        received_init_task_total_num_dict[po_server_name] = int(msg_dict["num_total_tasks"])
+                    # _num_of_total_tasks_of_server = int(msg_dict["num_total_tasks"])
+                    # if _num_of_total_tasks_of_server > 0:
+                    #     received_init_task_total_num_dict[po_server_name] = int(msg_dict["num_total_tasks"])
                     _receive_command = {
                         "file_name": msg_dict["file_name"],
                         "column_name": msg_dict["column_name"],
                         "task_id": msg_dict["task_id"],
-                        "po_server_name": msg_dict["num_total_tasks"],
+                        "po_server_name": po_server_name,
                         "send_time": msg_dict["send_time"],
                         "index_file":  msg_dict["index_file"],
                         "index_colium":  msg_dict["index_colium"],
@@ -211,9 +211,7 @@ def long_pulling_sqs_multi_server(
                         )
                     if po_server_name in received_completed_task_ids_dict:
                         received_completed_task_ids_dict[po_server_name].append(received_completed_id)
-                        if len(received_completed_id) < 5:
-                            print(f"---->received_completed_id error : {received_completed_id} **********")
-   
+                        
 
                     # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
                     hostname =  msg_dict["hostname"] 
@@ -261,6 +259,21 @@ def long_pulling_sqs_multi_server(
                         save_data.append(msg_dict["data"])
                     # end_process_save_data_stat = time.time() -  _process_save_data_stat
                     # print(f'----end append save data time : {round(end_process_save_data_stat, 2)} ')
+                
+                if alert_type == SNSSubjectsAlert.SEND_TASKID_INFO.name:
+
+                    try:
+                        num_total_tasks = int(msg_dict["total_tasks"])
+                        received_init_task_total_num_dict[po_server_name]  = num_total_tasks
+                    except Exception as e:
+                        logger.error(
+                            "Cannot parse total task number from alert type SEND_TASKID_INFO. Chcek app.py"
+                        )
+                        raise Exception(
+                            f"Cannot parse total tasks number from message {msg_dict} error: {e} "
+                        )
+                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
+  
 
             # loog_server_end = time.time() - loog_server_start
             # print(f" ***** end messages loop server :{round(loog_server_end,2)}")
