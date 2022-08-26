@@ -53,7 +53,7 @@ def checck_server_ready_and_get_name(
         server_name = deployment_services_list["server"]["image_name"]
         
     else:
-        wait_time = 15
+        wait_time = 25
         delay = 5
         number_server = deployment_services_list["server"]['desired_replicas']
         print(f"number_server : {number_server}")
@@ -70,6 +70,7 @@ def checck_server_ready_and_get_name(
         # ping server and check status
         if len(server_name_list) == 0:
             raise Exception("Find k8s pod server error")
+
         # if is_docker is False:
         #     ping_list = []
         #     for s_name in server_name_list:
@@ -130,7 +131,7 @@ def start_process_command_to_server(
             worker_config_str=worker_config_str,
             number=None,
         )
-        print(f"server_name:{server_name} resp: {resp} ")
+        # print(f"server_name:{server_name} resp: {resp} ")
     return None
 
 

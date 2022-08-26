@@ -20,8 +20,6 @@ def modiy_config_parameters(
     aws_secret_access_key: str = None,
     aws_region: str = None,
     sqs_url: str = None,
-    sns_topic: str = None,
-    dlq_url: str = None,
     ecr_repo: str = None,
     current_repeat_number:int= 0,
     s3_client = None,
@@ -166,9 +164,7 @@ def modiy_config_parameters(
     config_json["aws_config"]["aws_access_key"] = aws_access_key
     config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
     config_json["aws_config"]["aws_region"] = aws_region
-    config_json["aws_config"]["sns_topic"] = sns_topic
     config_json["aws_config"]["sqs_url"] = sqs_url
-    config_json["aws_config"]["dlq_url"] = dlq_url
     config_json["aws_config"]["ecr_repo"] = ecr_repo
 
 
@@ -182,7 +178,7 @@ def modiy_config_parameters(
         file_type=config_json["worker_config"]['data_file_type']
     )
     total_number_files = len(n_files)
-    print(total_number_files)
+
     number_worker_nodes = 1
     if check_environment_is_aws():
         number_worker_nodes = int(config_json["aws_config"]["eks_nodes_number"])
@@ -206,7 +202,7 @@ def modiy_config_parameters(
     number_of_queue = number_of_server
     # _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*3/2)
     if nodesscale is not None:
-        _worker_replicas = (int(nodesscale)  - (math.ceil( (number_of_server)*2/2) + 1))*2
+        _worker_replicas = (int(nodesscale)*2  - (( (number_of_server)*2) + 1))
         if _worker_replicas < 1:
             _worker_replicas = 1
         # udpate eks nodes number

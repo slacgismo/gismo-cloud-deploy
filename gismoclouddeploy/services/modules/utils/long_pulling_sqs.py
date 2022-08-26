@@ -109,6 +109,7 @@ def long_pulling_sqs_multi_server(
         save_data = []
         logs_data = []
         error_data = []
+        init_command_logs = []
 
         _message_start_time = time.time()
         if "Messages" in messages:
@@ -174,8 +175,17 @@ def long_pulling_sqs_multi_server(
                     _num_of_total_tasks_of_server = int(msg_dict["num_total_tasks"])
                     if _num_of_total_tasks_of_server > 0:
                         received_init_task_total_num_dict[po_server_name] = int(msg_dict["num_total_tasks"])
-                    
-
+                    _receive_command = {
+                        "file_name": msg_dict["file_name"],
+                        "column_name": msg_dict["column_name"],
+                        "task_id": msg_dict["task_id"],
+                        "po_server_name": msg_dict["num_total_tasks"],
+                        "send_time": msg_dict["send_time"],
+                        "index_file":  msg_dict["index_file"],
+                        "index_colium":  msg_dict["index_colium"],
+                        "repeat_number_per_round": msg_dict["repeat_number_per_round"],
+                    }
+                    init_command_logs.append(_receive_command)
 
                 # 2. if the alert type is SYSTEM_ERROR, or SAVED_DATA
                 # add
@@ -262,6 +272,9 @@ def long_pulling_sqs_multi_server(
         # if len(save_data) > 0 :
         #     pickle.dump(save_data, open('save_data.p', 'wb'))
         append_receive_data(
+            data_dict=init_command_logs, file_name="results/init_command_logs.csv"
+        )
+        append_receive_data(
             data_dict=save_data, file_name=worker_config.save_data_file_local
         )
         # # save logs
@@ -296,6 +309,7 @@ def long_pulling_sqs_multi_server(
                 else:
                     task_completion = 0
                     if _totak_tasks_number_in_server > 0:
+                        
                         task_completion = int(_current_complete_tasks_in_server * 100 / _totak_tasks_number_in_server)
 
                     # logger.info(f" server_name : {server_name } _totak_tasks_number_in_server:{_totak_tasks_number_in_server} _current_complete_tasks_in_server : {_current_complete_tasks_in_server} task_completion: {task_completion} %")

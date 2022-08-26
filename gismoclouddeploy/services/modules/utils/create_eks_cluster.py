@@ -24,7 +24,6 @@ def create_eks_cluster(config_file:str, aws_access_key:str,aws_secret_access_key
         )
     config_json = modiy_config_parameters(
             configfile=config_file,
-    
             aws_access_key=aws_access_key,
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
@@ -50,7 +49,6 @@ def delete_eks_cluster(config_file:str, aws_access_key:str,aws_secret_access_key
         )
     config_json = modiy_config_parameters(
             configfile=config_file,
-    
             aws_access_key=aws_access_key,
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
@@ -62,6 +60,6 @@ def delete_eks_cluster(config_file:str, aws_access_key:str,aws_secret_access_key
     if not exists(cluster_file):
         logger.error(f"{cluster_file} does not exist")
         return 
-    res = exec_eksctl_create_cluster(cluster_file=cluster_file)
+    res = exec_eksctl_delete_cluster(cluster_file=cluster_file)
     logger.info(res)
     return 

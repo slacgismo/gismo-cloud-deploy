@@ -21,8 +21,6 @@ AWS_ACCESS_KEY_ID = os.getenv("aws_access_key")
 AWS_SECRET_ACCESS_KEY = os.getenv("aws_secret_key")
 AWS_DEFAULT_REGION = os.getenv("aws_region")
 SQS_URL = os.getenv("SQS_URL")  # aws standard url
-SNS_TOPIC = os.getenv("SNS_TOPIC")  # aws sns
-DLQ_URL = os.getenv("DLQ_URL")  # dead letter queue url
 ECR_REPO = os.getenv("ECR_REPO")  # get ecr repo
 
 # logger config
@@ -147,10 +145,7 @@ def run_files(
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
-        # sqs_url=SQS_URL,
-        # sns_topic=SNS_TOPIC,
         ecr_repo=ECR_REPO,
-        dlq_url=DLQ_URL,
         repeatnumber=repeatnumber,
 
     )
@@ -179,8 +174,6 @@ def nodes_scale(min_nodes, configfile):
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
         sqs_url=SQS_URL,
-        sns_topic=SNS_TOPIC,
-        dlq_url=DLQ_URL,
         ecr_repo=ECR_REPO,
     )
     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
@@ -228,8 +221,6 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
         sqs_url=SQS_URL,
-        sns_topic=SNS_TOPIC,
-        dlq_url=DLQ_URL,
         ecr_repo=ECR_REPO,
     )
     build_resp = invoke_docker_compose_build( code_template_folder=config_json['worker_config']['code_template_folder'])
@@ -276,25 +267,7 @@ def build_images(tag: str = None, push: bool = False, configfile:str = "config.y
             return
 
 
-# # ***************************
-# #  Read DLQ
-# # ***************************
 
-
-# @main.command()
-# @click.option("--empty", "-e", is_flag=True, help=" Empty DLQ after receive message")
-# def read_dlq(empty):
-#     """Read messages from dlq"""
-#     click.echo(f"Read DLQ from :{DLQ_URL}. Delete message: {empty}")
-#     print_dlq(
-#         delete_messages=empty,
-#         aws_key=AWS_ACCESS_KEY_ID,
-#         aws_secret_key=AWS_SECRET_ACCESS_KEY,
-#         aws_region=AWS_DEFAULT_REGION,
-#         dlq_url=DLQ_URL,
-#         wait_time=80,
-#         delay=0.5,
-#     )
 
 # ***************************
 #  Create EKS cluster

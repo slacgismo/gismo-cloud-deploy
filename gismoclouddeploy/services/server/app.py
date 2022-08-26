@@ -133,6 +133,9 @@ def process_files(worker_config_str: str, first_n_files: str):
                     "send_time": str(send_time),
                     "po_server_name":po_server_name,
                     "num_total_tasks":num_total_tasks,
+                    "index_file": index_file,
+                    "index_colium": index_colium,
+                    "repeat_number_per_round":i,
                     "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
 
                 }

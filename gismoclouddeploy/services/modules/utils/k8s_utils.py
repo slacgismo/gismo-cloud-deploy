@@ -279,8 +279,9 @@ def get_k8s_pod_name_list(pod_name: str = None, number_server: int = 1) -> List[
     if len(sort_orders) >= number_server :
         _list =  sort_orders[0:number_server]
         res = [ sub['name'] for sub in _list ]
+        print(f"----------- get_k8s_pod_name_list :{ res}")
         return res
-    return None
+    return sort_orders
     # only get the latest server
     # if len(pods) > 0:
     #     max_date = pods[0]["started_at"]
