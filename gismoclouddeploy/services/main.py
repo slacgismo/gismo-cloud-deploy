@@ -4,11 +4,10 @@ import click
 import logging
 import os
 
-import modules
 from modules.utils.AWS_CONFIG import AWS_CONFIG
 from modules.utils.run_process_files import run_process_files
 from modules.utils.create_eks_cluster import create_eks_cluster,delete_eks_cluster
-
+from modules.utils.create_ec2 import create_ec2_bastion
 from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from modules.utils.check_aws import check_environment_is_aws
@@ -296,6 +295,23 @@ def delete_cluster(configfile):
     click.echo(f"Delete cluster from :{configfile}")
 
     delete_eks_cluster(
+        config_file=configfile, 
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_region=AWS_DEFAULT_REGION)
+
+
+# ***************************
+#  Create EC2 
+# ***************************
+@main.command()
+@click.argument("configfile")
+
+def create_ec2(configfile):
+    """Delete cluster from config file"""
+    click.echo(f"Create ec2 from :{configfile}")
+
+    create_ec2_bastion(
         config_file=configfile, 
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
