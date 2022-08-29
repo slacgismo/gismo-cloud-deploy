@@ -1,3 +1,4 @@
+from os import name
 import time
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
@@ -14,6 +15,8 @@ from .invoke_function import (
     invoke_kubectl_delete_all_services,
     invoke_kubectl_delete_all_daemonset,
     invoke_kubectl_delete_all_po,
+    invoke_kubectl_delete_namespaces,
+    invoke_kubectl_delete_all_from_namspace,
 
 
 )
@@ -31,13 +34,19 @@ logging.basicConfig(
 
 
 
-def delete_k8s_all_po_sev_deploy_daemonset():
+def delete_k8s_all_po_sev_deploy_daemonset(namespace: str="default"):
+    # for server_info in server_list:
+        # server_name = server_info['name']
+        # namespace = server_info['namespace']
     logger.info("----------->.  Delete k8s deployment ----------->")
-    delete_deploy = invoke_kubectl_delete_all_deployment()
+    delete_deploy = invoke_kubectl_delete_all_deployment(namespace=namespace)
     logger.info(delete_deploy)
     logger.info("----------->.  Delete k8s services ----------->")
-    delete_svc = invoke_kubectl_delete_all_services()
+    delete_svc = invoke_kubectl_delete_all_services(namespace=namespace)
     logger.info(delete_svc)
+    # logger.info("----------->.  Delete k8s namespace ----------->")
+    # delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
+    # logger.info(delete_namespace)
     # logger.info("----------->.  Delete all daemonset ----------->")
     # delete_daemonset = invoke_kubectl_delete_all_daemonset()
     # logger.info(delete_daemonset)
@@ -99,6 +108,7 @@ def process_local_logs_and_upload_s3(
 
 
 def initial_end_services(
+    server_list : list = None,
     worker_config: WORKER_CONFIG = None,
     is_docker: bool = False,
     delete_nodes_after_processing: bool = False,
@@ -146,12 +156,7 @@ def initial_end_services(
         )
         res = delete_queue(queue_url=sqs_url, sqs_client=sqs_client)
         logger.info(f"Delete {sqs_url} success")
-        if total_process_time < 60:
-            sleep_time = round(60 - total_process_time)
-            logger.info(
-                f"total_process_time is shorter than 60 sec, wait {sleep_time}..."
-            )
-            time.sleep(sleep_time)
+        
     except Exception as e:
         logger.error(f"Delete queue failed {e}")
 
@@ -166,12 +171,13 @@ def initial_end_services(
         )
 
     if is_build_image:
-        delete_k8s_all_po_sev_deploy_daemonset()
+        for server_info in server_list:
+            namespace = server_info['namespace']
+            # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
+            res = invoke_kubectl_delete_all_from_namspace(namespace = namespace)
+            print(res)
+            # invoke_kubectl_delete_namespaces(namespace=namespace)
     
-        # res = invoke_kubectl_delete_all_deployment()
-        # logger.info(res)
-        # logger.info("----------->.  Delete k8s deployment ----------->")
-        # res = invo
     # Remove services.
     if check_environment_is_aws() and is_build_image:
         logger.info("----------->.  Delete Temp ECR image ----------->")
@@ -189,7 +195,13 @@ def initial_end_services(
                     image_name=service,
                     image_tag=image_tag,
                 )
-
+    end_all_services_time = (time.time()-initial_process_time)
+    if end_all_services_time < 60:
+            sleep_time = round(60 - end_all_services_time)
+            logger.info(
+                f"total_process_time is shorter than 60 sec, wait {sleep_time}..."
+            )
+            time.sleep(sleep_time)
     return
 
 

@@ -1,4 +1,7 @@
+from email.policy import default
+from genericpath import exists
 import json
+from re import L
 import time
 from kubernetes import client, config
 
@@ -76,6 +79,8 @@ def create_k8s_deployment_from_yaml(
     file_name: str = None,
     namspace: str = "default",
 ) -> bool:
+
+    print(f"create_k8s_deployment_from_yaml {service_name} namspace :{namspace}, file_name:{file_name}")
     try:
         file_setting = read_k8s_yml(full_path_name=file_name)
     except Exception as e:
@@ -86,6 +91,8 @@ def create_k8s_deployment_from_yaml(
         "imagePullPolicy"
     ]
     default_replicas = file_setting["spec"]["replicas"]
+    print("----------------------------")
+    print(f"update yaml file :namspace {namspace}")
 
     print(str(desired_replicas), image_url_tag, imagePullPolicy)
     # update setting if not nont
@@ -111,7 +118,7 @@ def create_k8s_deployment_from_yaml(
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
     if kind == "Deployment":
-        print(f"apply deployment {image_url_tag}")
+        print(f"------> apply deployment {image_url_tag} namspace: {namspace}")
         try:
             resp = apps_v1_api.create_namespaced_deployment(
                 body=file_setting, namespace=namspace
@@ -175,11 +182,11 @@ def get_k8s_pod_info(prefix: str = None) -> dict:
     }
 
 
-def get_k8s_image_and_tag_from_deployment(prefix: str = None) -> Tuple[str, str, str]:
+def get_k8s_image_and_tag_from_deployment(prefix: str = None, namespace:str = "default") -> Tuple[str, str, str]:
     try:
         config.load_kube_config()
         v1 = client.AppsV1Api()
-        resp = v1.list_namespaced_deployment(namespace="default")
+        resp = v1.list_namespaced_deployment(namespace=namespace)
         deployment = []
         for i in resp.items:
             if i.metadata.name == prefix:
@@ -241,58 +248,149 @@ def get_k8s_pod_name(pod_name: str = None) -> List[dict]:
 
     return None
 
-
-def get_k8s_pod_name_list(pod_name: str = None, number_server: int = 1) -> List[dict]:
+def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str = "default") -> str:
     config.load_kube_config()
     v1 = client.CoreV1Api()
-    ret = v1.list_pod_for_all_namespaces(watch=False)
+    ret = v1.list_namespaced_pod(namespace)
     pods = []
-    # while counter > 0 :
-    for i in ret.items:
+    for i in ret.items:    
         status = i.status.conditions[-1].status
         podname = i.metadata.name.split("-")[0]
-        if podname == pod_name:
+        if podname == pod_name_prefix:
             # status = i.status.conditions
             name = i.metadata.name
-   
 
-            # state = i.status.container_statuses[-1].state
             ready = i.status.container_statuses[-1].ready
             if ready is True:
                 # if it's ready
                 started_at = i.status.container_statuses[-1].state.running.started_at
                 status = i.status
-                # print("==========")
-                # print(f"started_at {type(started_at)}")
                 timestamp =  started_at.timestamp()
-                # print(f"timestamp :{timestamp}")
-                # res = re.search('\(([^)]+)', str(started_at)).group(1)
-                # year, month, day, hours, minutes, sec, tz = res.split(', ')
-                # dattime_string = f"{year}/{month}/{day} {hours}:{minutes}:{sec}"
-                # print(dattime_string)
-                # timestamp = time.mktime(datetime.datetime.strptime(dattime_string, "%Y/%m/%d %H:%M:%S").timetuple())
-                # print(timestamp)
                 pod_info = {"name": name, "timestamp": timestamp}
                 pods.append(pod_info)
     sort_orders = sorted(pods, key=lambda d: d['timestamp'], reverse=True) 
-
-    if len(sort_orders) >= number_server :
-        _list =  sort_orders[0:number_server]
-        res = [ sub['name'] for sub in _list ]
-        print(f"----------- get_k8s_pod_name_list :{ res}")
+    if len(sort_orders) >= 0 :
+        res = [ sub['name'] for sub in sort_orders ][0]
+        print(f"----------- get first k8s_pod_name :{ res}")
         return res
-    return sort_orders
-    # only get the latest server
-    # if len(pods) > 0:
-    #     max_date = pods[0]["started_at"]
-    #     latest_server_pod_name = pods[0]["name"]
-    #     for pod in pods:
-    #         if max_date < pod["started_at"]:
-    #             max_date = pod["started_at"]
-    #             latest_server_pod_name = pod["name"]
-    #     return latest_server_pod_name
 
-    # return None
+
+def k8s_create_namespace(namespace:str = None, namspace_yaml_file:str = None):
+    if namespace is None:
+        logger.error("namespace is None")
+        return 
+    if not exists(namspace_yaml_file):
+        logger.error(f"{namspace_yaml_file} file not exists")
+        return
+    # try:
+    #     ns_read(namespace)
+    # except ApiException:
+    if not check_k8s_namespace_exits(namespace):
+        ns = client.V1Namespace()
+        ns.metadata = client.V1ObjectMeta(name=namespace)
+        v1 = client.CoreV1Api()
+        v1.create_namespace(ns)
+        logging.info(f'Created namespace "{namespace}"')
+        logging.debug((json.dumps(ns.metadata, default=str)))
+
+
+    # if not check_k8s_namespace_exits(namespace):
+    #     logger.info(f"Create {namespace} ")
+    #     config.load_kube_config()
+    #     v1 = client.CoreV1Api()
+    #     file_setting = read_k8s_yml(full_path_name=namspace_yaml_file)
+    #     namespace = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
+    #     resp = v1.create_namespace(namespace=namespace,body=)    
+    #     print(resp)
+
+    # else:
+    #     logger.info(f"{namespace} already exists ")
+    
+    return 
+
+
+
+
+def k8s_delete_namespace(namespace:str = None):
+    if namespace is None:
+        logger.error("namespace is None")
+        return 
+
+    if check_k8s_namespace_exits(namespace):
+        logger.info(f"Delete {namespace} ")
+    else:
+        logger.info(f"No {namespace} exists ")
+    return 
+    
+
+def check_k8s_namespace_exits(namespace:str = None) -> bool:
+    config.load_kube_config()
+    v1 = client.CoreV1Api() 
+    ret = v1.list_namespace()
+    for i in ret.items:    
+        name = i.metadata.name
+        if name == namespace:
+            logger.info(f"{namespace} already exits")
+            return True
+    return False
+def k8s_list_all_namespace():
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    ret = v1.list_namespace()
+    
+    print(ret)
+
+# def get_k8s_pod_name_list(pod_name: str = None, number_server: int = 1) -> List[dict]:
+#     config.load_kube_config()
+#     v1 = client.CoreV1Api()
+#     ret = v1.list_pod_for_all_namespaces(watch=False)
+#     pods = []
+#     # while counter > 0 :
+    # for i in ret.items:
+    #     status = i.status.conditions[-1].status
+    #     podname = i.metadata.name.split("-")[0]
+    #     if podname == pod_name:
+    #         # status = i.status.conditions
+    #         name = i.metadata.name
+   
+
+    #         # state = i.status.container_statuses[-1].state
+    #         ready = i.status.container_statuses[-1].ready
+    #         if ready is True:
+    #             # if it's ready
+    #             started_at = i.status.container_statuses[-1].state.running.started_at
+    #             status = i.status
+    #             # print("==========")
+    #             # print(f"started_at {type(started_at)}")
+    #             timestamp =  started_at.timestamp()
+    #             # print(f"timestamp :{timestamp}")
+    #             # res = re.search('\(([^)]+)', str(started_at)).group(1)
+    #             # year, month, day, hours, minutes, sec, tz = res.split(', ')
+    #             # dattime_string = f"{year}/{month}/{day} {hours}:{minutes}:{sec}"
+    #             # print(dattime_string)
+    #             # timestamp = time.mktime(datetime.datetime.strptime(dattime_string, "%Y/%m/%d %H:%M:%S").timetuple())
+    #             # print(timestamp)
+    #             pod_info = {"name": name, "timestamp": timestamp}
+    #             pods.append(pod_info)
+    # sort_orders = sorted(pods, key=lambda d: d['timestamp'], reverse=True) 
+
+    # if len(sort_orders) >= number_server :
+    #     _list =  sort_orders[0:number_server]
+    #     res = [ sub['name'] for sub in _list ]
+    #     print(f"----------- get_k8s_pod_name_list :{ res}")
+    #     return res
+#     return sort_orders
+#     # only get the latest server
+#     # if len(pods) > 0:
+#     #     max_date = pods[0]["started_at"]
+#     #     latest_server_pod_name = pods[0]["name"]
+#     #     for pod in pods:
+#     #         if max_date < pod["started_at"]:
+#     #             max_date = pod["started_at"]
+#     #             latest_server_pod_name = pod["name"]
+#     #     return latest_server_pod_name
+
+#     # return None
 
 
 # def get_cluster_name(namespace:str):

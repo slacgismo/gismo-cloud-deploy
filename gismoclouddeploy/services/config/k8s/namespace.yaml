@@ -1,0 +1,6 @@
+respapiVersion: v1
+kind: Namespace
+metadata:
+  name: "default"
+  labels:
+    name: "default"

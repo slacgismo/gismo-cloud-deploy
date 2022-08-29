@@ -48,7 +48,7 @@ def modiy_config_parameters(
 
     config_json = convert_yaml_to_json(yaml_file=config_yaml)
     host_name = (socket.gethostname())
-    user_id = re.sub('[^a-zA-Z0-9]', '', host_name)
+    user_id = re.sub('[^a-zA-Z0-9]', '', host_name).lower()
 
     config_json["worker_config"]["user_id"] = user_id
     config_json["worker_config"]["solver"]["saved_temp_path_in_bucket"] = (
@@ -179,69 +179,62 @@ def modiy_config_parameters(
         file_type=config_json["worker_config"]['data_file_type']
     )
     total_number_files = len(n_files)
-    # pd_files = pd.DataFrame(n_files)
-    # df = pd.read_csv("init_command_logs_644.csv")
-    # # print(pd_files)
-    # # print(df["file_name"])
-    # compare_set = set()
-    # for file in df["file_name"]:
-    #     compare_set.add(file)
-    # #     compare_set.add(file)
-    # # for f in compare_set:
-    # #     print(f"file: {f}")
-    # print(len(compare_set))
 
-    # for file in n_files:
-    #     if file in compare_set:
-    #         continue
-    #     else:
-    #         print(f"file:{file}")
-    
-    # for file in df["file_name"]:
-    #     print(file)
-        # if file in compare_set:
-        #     continue
-        # else:
-        #     print(f"file:{file}")
 
     number_worker_nodes = 1
     if check_environment_is_aws():
         number_worker_nodes = int(config_json["aws_config"]["eks_nodes_number"])
-    num_worker_pods_per_server = int(config_json["worker_config"]["num_worker_pods_per_server"])
-    number_of_server = math.ceil( number_worker_nodes / num_worker_pods_per_server )
-    num_files_per_server =  math.ceil(total_number_files/number_of_server)
+    num_worker_pods_per_namespace = int(config_json["worker_config"]["num_worker_pods_per_namespace"])
+    number_of_namespace = math.ceil( number_worker_nodes / num_worker_pods_per_namespace )
+
+    num_files_per_namespace =  math.ceil(total_number_files/number_of_namespace)
     
+    # define namespaces list to isolate group
+    k8s_namespace_list =[]
+    for i in range(number_of_namespace):
+        namespace = f"{i}-"+user_id  
+        k8s_namespace_list.append(namespace)
+
+    config_json["worker_config"]["k8s_namespace_list"] = k8s_namespace_list
+    print(config_json["worker_config"]["k8s_namespace_list"] )
+
     # update desired_replicas of server , rabbitmq and redis
     # config_json['services_config_list']['worker']['desired_replicas'] = 
-    config_json['services_config_list']['server']['desired_replicas'] = number_of_server
-    # config_json['services_config_list']['redis']['desired_replicas'] = number_of_server
-    config_json['services_config_list']['rabbitmq']['desired_replicas'] = number_of_server
+    # config_json['services_config_list']['server']['desired_replicas'] = number_of_server
+    # # config_json['services_config_list']['redis']['desired_replicas'] = number_of_server
+    # config_json['services_config_list']['rabbitmq']['desired_replicas'] = number_of_server
         
         
     # num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
     start_index = 0 
-    end_inedx = num_files_per_server
+    end_inedx = num_files_per_namespace
     
-    if number_of_server < 1 :
-        number_of_server = 1
-    number_of_queue = number_of_server
+    if number_of_namespace < 1 :
+        number_of_namespace = 1
+    # number_of_queue = number_of_server
     # _new_nodes = int(nodesscale) + math.ceil( (number_of_server)*3/2)
-    if nodesscale is not None:
-        _worker_replicas = (int(nodesscale)*2  - (( (number_of_server)*2) + 1))
-        if _worker_replicas < 1:
-            _worker_replicas = 1
+    if nodesscale is None:
+        nodesscale = number_worker_nodes
+    _total_worker_replicas = (int(nodesscale)*2  - (( (number_of_namespace)*3)))
+
+    if _total_worker_replicas < 1:
+        _total_worker_replicas = 1
+            
         # udpate eks nodes number
-        config_json['services_config_list']['worker']['desired_replicas'] = _worker_replicas
-        config_json["aws_config"]["eks_nodes_number"] = nodesscale
-    
+    worker_desired_replicas = math.ceil(_total_worker_replicas/number_of_namespace)
+    config_json['services_config_list']['worker']['desired_replicas'] = worker_desired_replicas
+    config_json["aws_config"]["eks_nodes_number"] = nodesscale
+    print(f"worker_desired_replicas: {worker_desired_replicas}")
     process_files_per_server_list = []
 
     while start_index < len(n_files):
         _files = n_files[start_index : end_inedx]
         process_files_per_server_list.append(_files)
+        print(f"length _files: {len(_files)}")
         start_index = end_inedx
-        end_inedx += num_files_per_server
+        end_inedx += num_files_per_namespace
 
+    
 
     # update  files list of server
     

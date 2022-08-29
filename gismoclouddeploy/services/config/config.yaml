@@ -51,6 +51,10 @@ services_config_list:
       image_name: "celeryflower"
       image_tag: "latest"
 
+  namespace:
+      name: "default"
+      deployment_file: "./config/k8s/namespace.yaml"
+
 # Parameters pass to woker container.
 worker_config:
   worker_dockerfile_folder: "code-templates-solardatatools"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
@@ -95,4 +99,5 @@ worker_config:
   repeat_number_per_round: 1    # Repeat overall tasks per round before run end services.
   is_celeryflower_on: False     # Turn of / off flower 
   num_files_per_server_list : None # It's a hint column that is generated in the CLI run-ime.
-  num_worker_pods_per_server: 5
+  num_worker_pods_per_namespace: 1
+  k8s_namespace_list: [] # It's a hint column that is generated in the CLI run-ime.

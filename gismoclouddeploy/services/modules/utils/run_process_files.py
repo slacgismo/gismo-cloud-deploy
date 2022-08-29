@@ -38,8 +38,17 @@ from .invoke_function import (
     invoke_ecr_validation,
     invoke_push_image,
     invoke_eks_updagte_kubeconfig,
+    invoke_kubectl_create_namespaces,
+    
+    
 )
-from .k8s_utils import check_k8s_services_exists, create_k8s_svc_from_yaml
+from .k8s_utils import (
+    check_k8s_services_exists, 
+    create_k8s_svc_from_yaml,
+    get_k8s_pod_name_from_namespace,
+    k8s_create_namespace,
+    check_k8s_namespace_exits
+)
 
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 
@@ -221,7 +230,7 @@ def run_process_files(
             except Exception as e:
                 logger.error(f"Upload Solver error:{e}")
                 return
-
+        namespace_list = config_json["worker_config"]['k8s_namespace_list']
         # check if build images.
         if is_build_image:
             rollout = True  # build image always rollout sevices
@@ -244,7 +253,10 @@ def run_process_files(
                     raise e
             else:
                 logger.info("======== Delete previous k8s setting ========")
-                delete_k8s_all_po_sev_deploy_daemonset()
+                for namespace in namespace_list:
+                    if check_k8s_namespace_exits(namespace=namespace):
+                        logger.info(f"{namespace} exist. Delete previous k8s services0-jimmysmacbookpro2local ")
+                        delete_k8s_all_po_sev_deploy_daemonset(namespace=namespace)
                 logger.info(
                     f" ========= Build images and run in k8s ======== {worker_config_obj.code_template_folder}"
                 )
@@ -343,41 +355,90 @@ def run_process_files(
                 if "celeryflower" in services_config_list:
                     services_config_list.pop('celeryflower')
                     print("remove celeryflower from services_config_list ")
-    
 
+         
+
+
+            
+            print(f"namespace_list : {namespace_list}")
+            print("update k8s deployment")
+            
+            ## ================== ##
+            ## Create neamespaces
+            ## ================== ##
+            for namespace in namespace_list:
+                namspace_yaml_file = config_json['services_config_list']['namespace']['deployment_file']
+                k8s_create_namespace(namespace=namespace, namspace_yaml_file = namspace_yaml_file)
+    
+            for namespace in namespace_list:
+                for key, value in services_config_list.items():
+                    service_name = key
+                    if service_name == "namespace":
+                        continue
+                    deployment_file = value["deployment_file"]
+                    service_file = value["service_file"]
+                    desired_replicas = value["desired_replicas"]
+                    image_base_url = value["image_name"]
+                    image_tag = value["image_tag"]
+                    imagePullPolicy =  value["image_tag"]
+                    imagePullPolicy = value["imagePullPolicy"]
+
+
+                    print(f"========namespace: {namespace} service_name :{service_name} desired_replicas :{desired_replicas} deployment_file:{deployment_file}")
+                    # update deployment, if image tag or replicas are changed, update deployments
+
+                    create_or_update_k8s_deployment(
+                        service_name=service_name,
+                        image_tag=image_tag,
+                        image_base_url=image_base_url,
+                        imagePullPolicy=imagePullPolicy,
+                        desired_replicas=desired_replicas,
+                        k8s_file_name=deployment_file,
+                        rollout=rollout,
+                        namespace=namespace,
+                    )
+
+                    if service_file:
+                        # check service exist
+                        if not check_k8s_services_exists(name=service_name):
+                            logger.info(
+                                f"========= Create {service_file} services in namespace: {namespace}  =========== "
+                            )
+                            create_k8s_svc_from_yaml(full_path_name=service_file, namspace=namespace)
+                            # create_k8s_svc_from_yaml(full_path_name=service_file, namespace= namespace)
             # updae k8s
             # check worker deployment
             # loop k8s services list , create or update k8s depolyment and services
-            for key, value in services_config_list.items():
-                service_name = key
-                deployment_file = value["deployment_file"]
-                service_file = value["service_file"]
-                desired_replicas = value["desired_replicas"]
-                image_base_url = value["image_name"]
-                image_tag = value["image_tag"]
-                imagePullPolicy = value["imagePullPolicy"]
+            # for key, value in services_config_list.items():
+            #     service_name = key
+            #     deployment_file = value["deployment_file"]
+            #     service_file = value["service_file"]
+            #     desired_replicas = value["desired_replicas"]
+            #     image_base_url = value["image_name"]
+            #     image_tag = value["image_tag"]
+            #     imagePullPolicy = value["imagePullPolicy"]
 
-                print(f"========service_name :{service_name} desired_replicas :{desired_replicas}")
-                # update deployment, if image tag or replicas are changed, update deployments
-                create_or_update_k8s_deployment(
-                    service_name=service_name,
-                    image_tag=image_tag,
-                    image_base_url=image_base_url,
-                    imagePullPolicy=imagePullPolicy,
-                    desired_replicas=desired_replicas,
-                    k8s_file_name=deployment_file,
-                    rollout=rollout,
-                )
-                # service file exists
-                if service_file:
+            #     print(f"========service_name :{service_name} desired_replicas :{desired_replicas}")
+            #     # update deployment, if image tag or replicas are changed, update deployments
+                # create_or_update_k8s_deployment(
+                #     service_name=service_name,
+                #     image_tag=image_tag,
+                #     image_base_url=image_base_url,
+                #     imagePullPolicy=imagePullPolicy,
+                #     desired_replicas=desired_replicas,
+                #     k8s_file_name=deployment_file,
+                #     rollout=rollout,
+                #     namespace = user_id,
+                # )
+            #     # service file exists
+                # if service_file:
 
-                    # check service exist
-                    if not check_k8s_services_exists(name=service_name):
-                        logger.info(
-                            f"========= Create {service_file} services =========== "
-                        )
-                        create_k8s_svc_from_yaml(full_path_name=service_file)
-     
+                #     # check service exist
+                #     if not check_k8s_services_exists(name=service_name):
+                #         logger.info(
+                #             f"========= Create {service_file} services =========== "
+                #         )
+                #         create_k8s_svc_from_yaml(full_path_name=service_file)
             # wait k8s pod  ready
             # threads = list()
             # try:
@@ -403,7 +464,6 @@ def run_process_files(
             # for index, thread in enumerate(threads):
             #     thread.join()
             #     logging.info("Wait %s thread done", thread.name)
-
         logger.info(" ========= Clean previous SQS ========= ")
         sqs_client = connect_aws_client(
             client_name="sqs",
@@ -421,15 +481,26 @@ def run_process_files(
         )
 
         # check server ready and return running server name.
-
-        ready_server_list = checck_server_ready_and_get_name(
-            deployment_services_list=services_config_list,
-            is_docker=is_docker,
-        )
+        ready_server_list = []
+        wait_time = 25
+        delay = 5
+        while wait_time > 0:
+            logger.info(f"K8s reboot Wait {wait_time} sec")
+            time.sleep(delay)
+            wait_time -= delay
+        for namespace in namespace_list:
+            
+            server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
+            _server_info = {'name': server_name, 'namespace':namespace}
+            ready_server_list.append(_server_info)
+        # ready_server_list = checck_server_ready_and_get_name(
+        #     deployment_services_list=services_config_list,
+        #     is_docker=is_docker,
+        # )
         if len(ready_server_list) == 0:
             logger.error("Cannot get server name")
             return
-        logger.info(f"------ {ready_server_list}")
+        logger.info(f"ready server list {ready_server_list}")
     
         # send command to server and get task IDs
         # worker_replicas = 0
@@ -516,6 +587,7 @@ def run_process_files(
             f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== "
         )
     initial_end_services(
+        server_list=ready_server_list,
         worker_config=worker_config_obj,
         is_docker=is_docker,
         delete_nodes_after_processing=delete_nodes,
@@ -552,3 +624,12 @@ def run_process_files(
     print("End of analyzing logs")
 
     return
+
+# Force delete namespace
+# NAMESPACE=
+# kubectl get namespace $NAMESPACE -o json > $NAMESPACE.json
+# sed -i -e 's/"kubernetes"//' $NAMESPACE.json
+# kubectl replace --raw "/api/v1/namespaces/$NAMESPACE/finalize" -f ./$NAMESPACE.json
+
+# deleta all resource in namspace
+# kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all

@@ -1,6 +1,7 @@
 from curses import flash
 from http import server
 from os.path import exists
+from re import I
 import botocore
 
 from typing import List
@@ -12,7 +13,7 @@ from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
     get_k8s_pod_name,
-    get_k8s_pod_name_list,
+    # get_k8s_pod_name_list,
 )
 
 from .invoke_function import (
@@ -41,22 +42,21 @@ logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
-
-
 def checck_server_ready_and_get_name(
-    deployment_services_list: List[str] = None,
+    sever_name: str = None,
     is_docker: bool = False,
+    namespace:str = "default"
 ) -> str:
     server_name = ""
     if is_docker:
 
-        server_name = deployment_services_list["server"]["image_name"]
+        server_name = sever_name
         
     else:
         wait_time = 25
         delay = 5
-        number_server = deployment_services_list["server"]['desired_replicas']
-        print(f"number_server : {number_server}")
+        # number_server = sever_name
+        # print(f"number_server : {number_server}")
         while wait_time > 0:
 
             logger.info(f"K8s reboot Wait {wait_time} sec")
@@ -64,47 +64,81 @@ def checck_server_ready_and_get_name(
             wait_time -= delay
         # server_name = get_k8s_deployment(prefix="server")
         # server_name = get_k8s_pod_name(pod_name="server")
-        server_name_list =  get_k8s_pod_name_list(pod_name="server", number_server=number_server)
+        server_name_list =  get_k8s_pod_name_list(pod_name="server", number_server=1)
         logger.info(f"server_name_list ====> {server_name_list}")
 
         # ping server and check status
         if len(server_name_list) == 0:
             raise Exception("Find k8s pod server error")
 
-        # if is_docker is False:
-        #     ping_list = []
-        #     for s_name in server_name_list:
-        #         task_id = invoke_exec_k8s_ping_worker(service_name=s_name)
-        #         ping_info = {"name":s_name,"task_id":str(task_id).strip("\n")}
-        #         print(f"ping :{ping_info} ")
-        #         ping_list.append(ping_info)
-                # print(f"server_name :{s_name} task_id:{task_id} ")
-            # print("get result")
-            # for ping_dict in ping_list:
-            #     _name = ping_dict['name']
-            #     _task_id = ping_dict['task_id']
-            #     result = invoke_exec_k8s_check_task_status(
-            #         server_name=_name, task_id=_task_id
-            #     )
-            #     print(f"_name: {_name} task result :{result} ")
 
         return server_name_list
-    #     logger.info(f"server name ====> {server_name}")
-
-    #     if server_name is None:
-    #         logger.error("Cannot find server pod")
-    #         raise Exception("Find k8s pod server error")
-    # if (
-    #     check_and_wait_server_ready(
-    #         is_docer=is_docker, server_name=server_name, counter=2, delay=1
-    #     )
-    #     is not True
-    # ):
-    #     logger.error("Wait server ready failed")
-    #     raise Exception(f"Wait {server_name} failed")
 
     return server_name
 
+
+# def checck_server_ready_and_get_name(
+#     deployment_services_list: List[str] = None,
+#     is_docker: bool = False,
+#     namespace:str = "default"
+# ) -> str:
+#     server_name = ""
+#     if is_docker:
+
+#         server_name = deployment_services_list["server"]["image_name"]
+        
+#     else:
+#         wait_time = 25
+#         delay = 5
+#         number_server = deployment_services_list["server"]['desired_replicas']
+#         print(f"number_server : {number_server}")
+#         while wait_time > 0:
+
+#             logger.info(f"K8s reboot Wait {wait_time} sec")
+#             time.sleep(delay)
+#             wait_time -= delay
+#         # server_name = get_k8s_deployment(prefix="server")
+#         # server_name = get_k8s_pod_name(pod_name="server")
+#         server_name_list =  get_k8s_pod_name_list(pod_name="server", number_server=number_server)
+#         logger.info(f"server_name_list ====> {server_name_list}")
+
+#         # ping server and check status
+#         if len(server_name_list) == 0:
+#             raise Exception("Find k8s pod server error")
+
+#         # if is_docker is False:
+#         #     ping_list = []
+#         #     for s_name in server_name_list:
+#         #         task_id = invoke_exec_k8s_ping_worker(service_name=s_name)
+#         #         ping_info = {"name":s_name,"task_id":str(task_id).strip("\n")}
+#         #         print(f"ping :{ping_info} ")
+#         #         ping_list.append(ping_info)
+#                 # print(f"server_name :{s_name} task_id:{task_id} ")
+#             # print("get result")
+#             # for ping_dict in ping_list:
+#             #     _name = ping_dict['name']
+#             #     _task_id = ping_dict['task_id']
+#             #     result = invoke_exec_k8s_check_task_status(
+#             #         server_name=_name, task_id=_task_id
+#             #     )
+#             #     print(f"_name: {_name} task result :{result} ")
+
+#         return server_name_list
+#     #     logger.info(f"server name ====> {server_name}")
+
+#     #     if server_name is None:
+#     #         logger.error("Cannot find server pod")
+#     #         raise Exception("Find k8s pod server error")
+#     # if (
+#     #     check_and_wait_server_ready(
+#     #         is_docer=is_docker, server_name=server_name, counter=2, delay=1
+#     #     )
+#     #     is not True
+#     # ):
+#     #     logger.error("Wait server ready failed")
+#     #     raise Exception(f"Wait {server_name} failed")
+
+#     return server_name
 
 def start_process_command_to_server(
     server_list: list = None,
@@ -120,19 +154,51 @@ def start_process_command_to_server(
     worker_config_json["aws_region"] = aws_region
     worker_config_json["sqs_url"] = sqs_url
 
-    for index, server_name in enumerate(server_list):
+    for index, server_info in enumerate(server_list):
+        server_name = server_info['name']
+        namespace = server_info['namespace']
+
+        logger.info(f"Invoke server: {server_name} in namespace: {namespace}")
+
         _files_list = worker_config_json['num_files_per_server_list'][index]
         worker_config_json["default_process_files"] = json.dumps(_files_list)
         worker_config_json["po_server_name"] = server_name
         worker_config_str = json.dumps(worker_config_json)
-        resp = invoke_process_files_to_server(
-            is_docker=is_docker,
+        resp = invoke_process_files_to_server_namespace(
+            is_docker= is_docker,
             server_name=server_name,
-            worker_config_str=worker_config_str,
-            number=None,
+            worker_config_str = worker_config_str,
+            namespace = namespace,
         )
-        # print(f"server_name:{server_name} resp: {resp} ")
+        print(f"namespace:{namespace} server_name:{server_name} resp: {resp} ")
     return None
+# def start_process_command_to_server(
+#     server_list: list = None,
+#     worker_config_json: str = None,
+#     is_docker: bool = False,
+#     aws_access_key: str = None,
+#     aws_secret_access_key: str = None,
+#     aws_region: str = None,
+#     sqs_url: str = None,
+# ) -> List[str]:
+#     worker_config_json["aws_access_key"] = aws_access_key
+#     worker_config_json["aws_secret_access_key"] = aws_secret_access_key
+#     worker_config_json["aws_region"] = aws_region
+#     worker_config_json["sqs_url"] = sqs_url
+
+#     for index, server_name in enumerate(server_list):
+#         _files_list = worker_config_json['num_files_per_server_list'][index]
+#         worker_config_json["default_process_files"] = json.dumps(_files_list)
+#         worker_config_json["po_server_name"] = server_name
+#         worker_config_str = json.dumps(worker_config_json)
+#         resp = invoke_process_files_to_server(
+#             is_docker=is_docker,
+#             server_name=server_name,
+#             worker_config_str=worker_config_str,
+#             number=None,
+#         )
+#         # print(f"server_name:{server_name} resp: {resp} ")
+#     return None
 
 
 
@@ -292,26 +358,58 @@ def send_command_to_server(
 #     return filterFiles
 
 
-def invoke_process_files_to_server(
+def invoke_process_files_to_server_namespace(
     is_docker: bool = False,
     server_name: str = None,
     worker_config_str: str = None,
-    number: int = None,
-) -> str:
-
+    namespace: str = "default"
+) ->str:
     if is_docker:
         _resp = invoke_exec_docker_run_process_files(
             config_params_str=worker_config_str,
             image_name=server_name,
-            first_n_files=number,
+            first_n_files=None,
+            namesapce = namespace,
         )
     else:
         _resp = invoke_exec_k8s_run_process_files(
             config_params_str=worker_config_str,
             pod_name=server_name,
-            first_n_files=number,
+            first_n_files=None,
+            namespace = namespace,
         )
+
+        # _resp = invoke_exec_k8s_run_process_files(
+        #     config_params_str=worker_config_str,
+        #     pod_name=server_name,
+        #     first_n_files=None,
+        #     namesapce = namespace,
+        # )
     return _resp
+
+def invoke_process_files_to_server(
+    is_docker: bool = False,
+    server_name: str = None,
+    worker_config_str: str = None,
+    number: int = None,
+    namesapce: str = "default"
+) -> str:
+    print(namesapce)
+    # if is_docker:
+    #     _resp = invoke_exec_docker_run_process_files(
+    #         config_params_str=worker_config_str,
+    #         image_name=server_name,
+    #         first_n_files=number,
+    #         namesapce = namesapce,
+    #     )
+    # else:
+    #     _resp = invoke_exec_k8s_run_process_files(
+    #         config_params_str=worker_config_str,
+    #         pod_name=server_name,
+    #         first_n_files=number,
+    #         namesapce = namesapce,
+    #     )
+    # return _resp
 
 
 def print_dlq(
@@ -362,6 +460,7 @@ def print_dlq(
         time.sleep(delay)
 
 
+
 def create_or_update_k8s_deployment(
     service_name: str = None,
     image_base_url: str = None,
@@ -370,10 +469,13 @@ def create_or_update_k8s_deployment(
     desired_replicas: int = 1,
     k8s_file_name: str = None,
     rollout: bool = False,
+    namespace:str = "default"
 ):
+
     try:
         curr_image, curr_tag, curr_status = get_k8s_image_and_tag_from_deployment(
-            prefix=service_name
+            prefix=service_name,
+            namespace = namespace
         )
         # print(curr_image,curr_tag, curr_status )
         image_url = f"{image_base_url}:{image_tag}"
@@ -383,13 +485,14 @@ def create_or_update_k8s_deployment(
             logger.info(
                 f"============== Deployment {image_url} does not exist =========="
             )
-            logger.info(f"============== Create {image_url} deployment ==========")
+            logger.info(f"============== Create {image_url} deployment  namespace: {namespace}==========")
             create_k8s_deployment_from_yaml(
                 service_name=service_name,
                 image_url_tag=image_url,
                 imagePullPolicy=imagePullPolicy,
                 desired_replicas=desired_replicas,
                 file_name=k8s_file_name,
+                namspace=namespace,
             )
         else:
             logger.info(
@@ -433,6 +536,7 @@ def create_or_update_k8s_deployment(
     except Exception as e:
         logger.info(e)
         raise e
+
 
 
 def update_config_json_image_name_and_tag_base_on_env(

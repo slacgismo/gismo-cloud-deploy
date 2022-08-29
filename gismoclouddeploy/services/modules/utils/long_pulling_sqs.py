@@ -77,12 +77,14 @@ def long_pulling_sqs_multi_server(
     received_completed_task_ids_dict = dict()
     received_completed_task_ids_dict_comleted = dict()
     previous_received_completed_task_ids_set_len = dict()
-    for server in server_list:
-        received_completed_task_ids_dict_comleted[server] = False
-        received_completed_task_ids_dict[server] = []
-        received_init_task_ids_dict[server] = []
-        previous_received_completed_task_ids_set_len[server] = 0
-        received_init_task_total_num_dict[server] = -1
+    for server_info in server_list:
+        server_name = server_info['name']
+        namespace = server_info['namespace']
+        received_completed_task_ids_dict_comleted[server_name] = False
+        received_completed_task_ids_dict[server_name] = []
+        received_init_task_ids_dict[server_name] = []
+        previous_received_completed_task_ids_set_len[server_name] = 0
+        received_init_task_total_num_dict[server_name] = -1
 
     # previous_init_task_ids_set_dict = len(
     #     received_init_task_ids_set
@@ -309,7 +311,8 @@ def long_pulling_sqs_multi_server(
         _totak_tasks_number_in_server = 0 
         _total_tasks_of_all_server= 0
         _current_length_tasks_of_all_server = 0
-        for server_name in  server_list:
+        for server_info in  server_list:
+            server_name = server_info['name']
             if server_name in received_completed_task_ids_dict:
                 _totak_tasks_number_in_server = int(received_init_task_total_num_dict[server_name])
                 _current_complete_tasks_in_server = len(received_completed_task_ids_dict[server_name])
@@ -346,7 +349,8 @@ def long_pulling_sqs_multi_server(
             
         _is_all_tasks_completed = True
 
-        for server_name in server_list:
+        for server_info in server_list:
+            server_name = server_info['name']
             if received_completed_task_ids_dict_comleted[server_name] is False:
                 _is_all_tasks_completed = False
                 break

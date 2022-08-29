@@ -85,32 +85,51 @@ def exec_eksctl_update_admin_arn(cluster_name:str, region:str, arn:str) -> str:
         return output
     except Exception as e:
         raise e
-\
 
-def invoke_kubectl_delete_all_daemonset():
-    command = ["kubectl", "delete", "DaemonSet", "--all"]
-
-    res = exec_docker_command(command)
-    return res
-
-def invoke_kubectl_delete_all_po():
-    command = ["kubectl", "delete", "po", "--all"]
+def invoke_kubectl_delete_all_daemonset(namespace: str = "default"):
+    command = ["kubectl", "delete", "DaemonSet", "--all","-n",f"{namespace}"]
 
     res = exec_docker_command(command)
     return res
 
-def invoke_kubectl_delete_all_services():
-    command = ["kubectl", "delete", "svc", "--all"]
+def invoke_kubectl_delete_all_po(namespace:str = "default"):
+    command = ["kubectl", "delete", "po", "--all", "-n", f"{namespace}"]
 
     res = exec_docker_command(command)
     return res
 
-
-def invoke_kubectl_delete_all_deployment():
-    command = ["kubectl", "delete", "deployment", "--all"]
+def invoke_kubectl_delete_all_services(namespace:str= "default"):
+    command = ["kubectl", "delete", "svc", "--all", "-n" ,f"{namespace}"]
 
     res = exec_docker_command(command)
     return res
+
+def invoke_kubectl_delete_all_deployment(namespace:str = "default"):
+    command = ["kubectl", "delete", "deployment", "--all","-n",f"{namespace}"]
+
+    res = exec_docker_command(command)
+    return res
+
+## Create Namespace 
+def invoke_kubectl_create_namespaces(namespace:str) -> str:
+    command = ["kubectl", "create", "namespace", f"{namespace}"]
+
+    res = exec_docker_command(command)
+    return res
+## Delete Namespace 
+def invoke_kubectl_delete_namespaces(namespace:str) -> str:
+    command = ["kubectl", "delete", "namespace", f"{namespace}"]
+
+    res = exec_docker_command(command)
+    return res
+
+def invoke_kubectl_delete_all_from_namspace(namespace:str) -> str:
+    command = ["kubectl", "delete","all","--all","-n", f"{namespace}"]
+    print(f"command :{command}")
+    res = exec_docker_command(command)
+
+    return res
+## ===================
 
 
 def invoke_kubectl_delete_deployment(name: str = None) -> str:
@@ -217,11 +236,14 @@ def invoke_exec_docker_run_process_files(
     config_params_str: str = None,
     image_name: str = None,
     first_n_files: str = None,
+    namespace:str = "default",
 ) -> str:
 
     command = [
         "docker",
         "exec",
+        "-n",
+        f"{namespace}"
         "-it",
         image_name,
         "python",
@@ -229,6 +251,7 @@ def invoke_exec_docker_run_process_files(
         "process_files",
         f"{config_params_str}",
         f"{first_n_files}",
+
     ]
     try:
         # print(command)
@@ -266,10 +289,13 @@ def invoke_exec_docker_ping_worker(
 def invoke_exec_docker_check_task_status(
     server_name: str = None,
     task_id: str = None,
+    namespace:str = "default"
 ) -> str:
     command = [
         "docker",
         "exec",
+        "-n",
+        f"{namespace}",
         "-it",
         server_name,
         "python",
@@ -299,11 +325,14 @@ def invoke_exec_k8s_run_process_files(
     config_params_str: str = None,
     pod_name: str = None,
     first_n_files: str = None,
+    namespace:str = "default"
 ) -> None:
 
     command = [
         "kubectl",
         "exec",
+        "-n",
+        f"{namespace}",
         pod_name,
         "--stdin",
         "--tty",
@@ -319,9 +348,9 @@ def invoke_exec_k8s_run_process_files(
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        # out, err = res.communicate()
-        # print(out)
-        # return out
+        out, err = res.communicate()
+        print(out)
+        return out
 
     except KeyboardInterrupt as e:
         logger.error(f"Invoke k8s process file error:{e}")
@@ -336,10 +365,13 @@ def invoke_exec_k8s_run_process_files(
 
 def invoke_exec_k8s_ping_worker(
     service_name: str = None,
+    namespace:str = "default"
 ) -> str:
     command = [
         "kubectl",
         "exec",
+        "-n",
+        f"{namespace}",
         service_name,
         "--stdin",
         "--tty",
@@ -356,10 +388,13 @@ def invoke_exec_k8s_ping_worker(
 def invoke_exec_k8s_check_task_status(
     server_name: str = None,
     task_id: str = None,
+    namespace :str = "default"
 ) -> str:
     command = [
         "kubectl",
         "exec",
+        "-n",
+        f"{namespace}",
         server_name,
         "--stdin",
         "--tty",
@@ -419,7 +454,7 @@ def invoke_ks8_exec_revoke_task(pod_name: str = None, task_id: str = None) -> st
     res = exec_docker_command(command)
     return res
 
-
+# kubectl exec --namespace 0-dhcpvisitor21818slacstanfordedu server-65bf8bc584-tzkgr  --stdin --tty -- python app.py ping_worker 
 def invoke_docker_check_image_exist(image_name: str = None):
     try:
         command = f"docker image inspect {image_name}"
