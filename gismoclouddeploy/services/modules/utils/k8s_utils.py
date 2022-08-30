@@ -204,10 +204,11 @@ def get_k8s_image_and_tag_from_deployment(prefix: str = None, namespace:str = "d
         raise e
 
 
-def check_k8s_services_exists(name: str = None) -> bool:
+def check_k8s_services_exists(name: str = None, namspace:str = "default") -> bool:
     config.load_kube_config()
     v1 = client.CoreV1Api()
-    resp = v1.list_service_for_all_namespaces(watch=False)
+    # resp = v1.list_service_for_all_namespaces(watch=False)
+    resp = v1.list_namespaced_service(namespace=namspace)
     for i in resp.items:
         if i.metadata.name == name:
             return True

@@ -397,15 +397,16 @@ def run_process_files(
                         rollout=rollout,
                         namespace=namespace,
                     )
-
+                    logger.info(f"Create service :{service_name} in namspace:{namespace} ")
                     if service_file:
                         # check service exist
-                        if not check_k8s_services_exists(name=service_name):
+                        if not check_k8s_services_exists(name=service_name, namspace = namespace):
                             logger.info(
                                 f"========= Create {service_file} services in namespace: {namespace}  =========== "
                             )
                             create_k8s_svc_from_yaml(full_path_name=service_file, namspace=namespace)
                             # create_k8s_svc_from_yaml(full_path_name=service_file, namespace= namespace)
+                    logger.info(f"End create service :{service_name} in namspace:{namespace} ")
             # updae k8s
             # check worker deployment
             # loop k8s services list , create or update k8s depolyment and services
