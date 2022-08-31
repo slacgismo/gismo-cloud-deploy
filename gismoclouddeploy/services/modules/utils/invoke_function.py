@@ -118,7 +118,7 @@ def invoke_kubectl_create_namespaces(namespace:str) -> str:
     return res
 ## Delete Namespace 
 def invoke_kubectl_delete_namespaces(namespace:str) -> str:
-    command = ["kubectl", "delete", "namespace", f"{namespace}"]
+    command = ["kubectl", "delete", "namespace", f"{namespace}", "--wait=false"]
 
     res = exec_docker_command(command)
     return res
@@ -348,9 +348,9 @@ def invoke_exec_k8s_run_process_files(
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        out, err = res.communicate()
-        print(out)
-        return out
+        # out, err = res.communicate()
+        # print(out)
+        # return out
 
     except KeyboardInterrupt as e:
         logger.error(f"Invoke k8s process file error:{e}")
@@ -468,3 +468,27 @@ def invoke_check_docker_services():
     command = "docker ps -q"
     output = subprocess.check_output(["bash", "-c", command])
     return output
+
+
+
+def invoke_force_delete_namespace(namespace:str = None):
+    try:
+        command = f"kubectl get namespace {namespace} -o json > {namespace}.json; sed -i -e 's/\"kubernetes\"//' {namespace}.json; kubectl replace --raw \"/api/v1/namespaces/{namespace}/finalize\" -f ./{namespace}.json"
+        output = subprocess.check_output(["bash", "-c", command])
+        return output
+    except Exception as e:
+        raise e
+
+
+def invoke_delete_all_resource_in_all_namespace():
+    command = '''kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all'''
+    output = subprocess.check_output(["bash", "-c", command])
+    return output
+
+    # NAMESPACE=
+    # kubectl get namespace $NAMESPACE -o json > $NAMESPACE.json
+    # sed -i -e 's/"kubernetes"//' $NAMESPACE.json
+    # kubectl replace --raw "/api/v1/namespaces/$NAMESPACE/finalize" -f ./$NAMESPACE.json
+
+# deleta all resource in namspace
+# kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all

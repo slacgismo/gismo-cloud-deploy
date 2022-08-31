@@ -7,6 +7,7 @@ import socket
 from .invoke_function import invoke_eks_get_cluster
 import re
 import pandas as pd
+import time
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -56,83 +57,106 @@ def modiy_config_parameters(
         + "/"
         + user_id
     )
-    config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}-{current_repeat_number}.png"
-    config_json["worker_config"][
-        "saved_performance_file"
-    ] = f"performance-{user_id}-{current_repeat_number}.txt"
-    config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}-{current_repeat_number}.csv"
-    config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}-{current_repeat_number}.csv"
-    config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}-{current_repeat_number}.csv"
-
-    # check if local path exist
+    filename = config_json["worker_config"]['filename']
     result_local_folder = config_json["worker_config"]["saved_path_local"]
-    if os.path.isdir(result_local_folder) is False:
-        logger.info(f"Create local {result_local_folder} path")
-        os.mkdir(result_local_folder)
+    result_aws_folder =  config_json["worker_config"]["saved_path_aws"] 
+    files_local = config_json["worker_config"]['files_local']
+    files_aws = config_json["worker_config"]['files_aws']
+    current_time = str(int(time.time()))
+    # check local path exists
+    local_full_path = os.path.join(result_local_folder, current_time)
+    local_path_isExist = os.path.exists(local_full_path)
+    if local_path_isExist is False:
+        print(f"{local_full_path} does not exist. Create path")
+        os.mkdir(local_full_path)
 
-    # Generate local results files name
+    aws_full_path =  os.path.join(result_aws_folder, current_time)
+    # assign filename and path to local and aws
+    for file in filename:
+        new_name_local = local_full_path+ "/"+ file
+        new_name_aws = aws_full_path + "/"+ file
+        files_local[file] = new_name_local
+        files_aws[file] = new_name_aws
+        # assign path to file and save in files_local and files_aws
 
-    config_json["worker_config"]["save_data_file_local"] = (
-        result_local_folder
-        + "/"
-        + config_json["worker_config"]["saved_data_target_filename"]
-    )
 
-    config_json["worker_config"]["save_logs_file_local"] = (
-        result_local_folder
-        + "/"
-        + config_json["worker_config"]["saved_logs_target_filename"]
-    )
+    # config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}-{current_repeat_number}.png"
+    # config_json["worker_config"][
+    #     "saved_performance_file"
+    # ] = f"performance-{user_id}-{current_repeat_number}.txt"
+    # config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}-{current_repeat_number}.csv"
+    # config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}-{current_repeat_number}.csv"
+    # config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}-{current_repeat_number}.csv"
 
-    config_json["worker_config"]["save_error_file_local"] = (
-        result_local_folder
-        + "/"
-        + config_json["worker_config"]["saved_error_target_filename"]
-    )
+    # # check if local path exist
+    # result_local_folder = config_json["worker_config"]["saved_path_local"]
+    # if os.path.isdir(result_local_folder) is False:
+    #     logger.info(f"Create local {result_local_folder} path")
+    #     os.mkdir(result_local_folder)
 
-    config_json["worker_config"]["save_plot_file_local"] = (
-        result_local_folder
-        + "/"
-        + config_json["worker_config"]["saved_rumtime_image_name"]
-    )
+    # # Generate local results files name
 
-    config_json["worker_config"]["save_performance_local"] = (
-        result_local_folder
-        + "/"
-        + config_json["worker_config"]["saved_performance_file"]
-    )
+    # config_json["worker_config"]["save_data_file_local"] = (
+    #     result_local_folder
+    #     + "/"
+    #     + config_json["worker_config"]["saved_data_target_filename"]
+    # )
 
-    # Generate AWS results files name
+    # config_json["worker_config"]["save_logs_file_local"] = (
+    #     result_local_folder
+    #     + "/"
+    #     + config_json["worker_config"]["saved_logs_target_filename"]
+    # )
 
-    config_json["worker_config"]["save_data_file_aws"] = (
-        config_json["worker_config"]["saved_path_aws"]
-        + "/"
-        + config_json["worker_config"]["saved_data_target_filename"]
-    )
+    # config_json["worker_config"]["save_error_file_local"] = (
+    #     result_local_folder
+    #     + "/"
+    #     + config_json["worker_config"]["saved_error_target_filename"]
+    # )
 
-    config_json["worker_config"]["save_logs_file_aws"] = (
-        config_json["worker_config"]["saved_path_aws"]
-        + "/"
-        + config_json["worker_config"]["saved_logs_target_filename"]
-    )
+    # config_json["worker_config"]["save_plot_file_local"] = (
+    #     result_local_folder
+    #     + "/"
+    #     + config_json["worker_config"]["saved_rumtime_image_name"]
+    # )
 
-    config_json["worker_config"]["save_error_file_aws"] = (
-        config_json["worker_config"]["saved_path_aws"]
-        + "/"
-        + config_json["worker_config"]["saved_error_target_filename"]
-    )
+    # config_json["worker_config"]["save_performance_local"] = (
+    #     result_local_folder
+    #     + "/"
+    #     + config_json["worker_config"]["saved_performance_file"]
+    # )
 
-    config_json["worker_config"]["save_plot_file_aws"] = (
-        config_json["worker_config"]["saved_path_aws"]
-        + "/"
-        + config_json["worker_config"]["saved_rumtime_image_name"]
-    )
+    # # Generate AWS results files name
 
-    config_json["worker_config"]["save_performance_aws"] = (
-        config_json["worker_config"]["saved_path_aws"]
-        + "/"
-        + config_json["worker_config"]["saved_performance_file"]
-    )
+    # config_json["worker_config"]["save_data_file_aws"] = (
+    #     config_json["worker_config"]["saved_path_aws"]
+    #     + "/"
+    #     + config_json["worker_config"]["saved_data_target_filename"]
+    # )
+
+    # config_json["worker_config"]["save_logs_file_aws"] = (
+    #     config_json["worker_config"]["saved_path_aws"]
+    #     + "/"
+    #     + config_json["worker_config"]["saved_logs_target_filename"]
+    # )
+
+    # config_json["worker_config"]["save_error_file_aws"] = (
+    #     config_json["worker_config"]["saved_path_aws"]
+    #     + "/"
+    #     + config_json["worker_config"]["saved_error_target_filename"]
+    # )
+
+    # config_json["worker_config"]["save_plot_file_aws"] = (
+    #     config_json["worker_config"]["saved_path_aws"]
+    #     + "/"
+    #     + config_json["worker_config"]["saved_rumtime_image_name"]
+    # )
+
+    # config_json["worker_config"]["save_performance_aws"] = (
+    #     config_json["worker_config"]["saved_path_aws"]
+    #     + "/"
+    #     + config_json["worker_config"]["saved_performance_file"]
+    # )
 
     # Update  eks cluster name and groupname
     if nodesscale is not None and check_environment_is_aws():
@@ -192,20 +216,16 @@ def modiy_config_parameters(
     # define namespaces list to isolate group
     k8s_namespace_list =[]
     for i in range(number_of_namespace):
-        namespace = f"{i}-"+user_id  
+        _curr = int(time.time())
+      
+        namespace = f"{_curr}-"+user_id  
         k8s_namespace_list.append(namespace)
+        print(f"namespace: {namespace}")
+        time.sleep(1)
 
     config_json["worker_config"]["k8s_namespace_list"] = k8s_namespace_list
     print(config_json["worker_config"]["k8s_namespace_list"] )
 
-    # update desired_replicas of server , rabbitmq and redis
-    # config_json['services_config_list']['worker']['desired_replicas'] = 
-    # config_json['services_config_list']['server']['desired_replicas'] = number_of_server
-    # # config_json['services_config_list']['redis']['desired_replicas'] = number_of_server
-    # config_json['services_config_list']['rabbitmq']['desired_replicas'] = number_of_server
-        
-        
-    # num_files_per_server = int(config_json["worker_config"]["num_files_per_server"])
     start_index = 0 
     end_inedx = num_files_per_namespace
     

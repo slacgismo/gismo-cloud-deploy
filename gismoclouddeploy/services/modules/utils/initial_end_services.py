@@ -17,7 +17,7 @@ from .invoke_function import (
     invoke_kubectl_delete_all_po,
     invoke_kubectl_delete_namespaces,
     invoke_kubectl_delete_all_from_namspace,
-
+    invoke_force_delete_namespace
 
 )
 from .command_utils import delete_files_from_bucket
@@ -68,39 +68,51 @@ def process_local_logs_and_upload_s3(
         secret=aws_secret_access_key,
         region=aws_region,
     )
+    saved_file_list = worker_config.filename
+    runtime_local = None
+    log_file_local = None
+    for file in saved_file_list:      
+        if "logs" in file:
+            log_file_local = worker_config.files_local[file]
+        if "runtime" in file:
+            runtime_local =  worker_config.files_local[file]
 
-    save_data_file_local = worker_config.save_data_file_local
-    save_error_file_local = worker_config.save_error_file_local
-    save_error_file_local = worker_config.save_error_file_local
-    save_logs_file_local = worker_config.save_logs_file_local
-    save_plot_file_local = worker_config.save_plot_file_local
-    save_performance_local = worker_config.save_performance_local
-    save_data_file_aws = worker_config.save_data_file_aws
-    save_error_file_aws = worker_config.save_error_file_aws
-    save_error_file_aws = worker_config.save_error_file_aws
-    save_logs_file_aws = worker_config.save_logs_file_aws
-    save_plot_file_aws = worker_config.save_plot_file_aws
-    save_performance_aws = worker_config.save_performance_aws
+    if log_file_local is None or runtime_local is None:
+        raise Exception(f"Cannot find file name log_file_path: {log_file_local} ,runtime_local:{runtime_local}")
+
+
+    # save_data_file_local = worker_config.save_data_file_local
+    # save_error_file_local = worker_config.save_error_file_local
+    # save_error_file_local = worker_config.save_error_file_local
+    # save_logs_file_local = worker_config.save_logs_file_local
+    # save_plot_file_local = worker_config.save_plot_file_local
+    # save_performance_local = worker_config.save_performance_local
+    # save_data_file_aws = worker_config.save_data_file_aws
+    # save_error_file_aws = worker_config.save_error_file_aws
+    # save_error_file_aws = worker_config.save_error_file_aws
+    # save_logs_file_aws = worker_config.save_logs_file_aws
+    # save_plot_file_aws = worker_config.save_plot_file_aws
+    # save_performance_aws = worker_config.save_performance_aws
 
     process_logs_from_local(
-        logs_file_path_name_local=save_logs_file_local,
-        saved_image_name_local=save_plot_file_local,
+        logs_file_path_name_local=log_file_local,
+        saved_image_name_local=runtime_local,
         s3_client=s3_client,
     )
 
     logger.info("Update results to S3")
     upload_results_to_s3(
         worker_config=worker_config,
-        save_data_file_local=save_data_file_local,
-        save_error_file_local=save_error_file_local,
-        save_logs_file_local=save_logs_file_local,
-        save_plot_file_local=save_plot_file_local,
-        save_performance_file_local=save_performance_local,
-        save_data_file_aws=save_data_file_aws,
-        save_error_file_aws=save_error_file_aws,
-        save_logs_file_aws=save_logs_file_aws,
-        save_plot_file_aws=save_plot_file_aws,
-        save_performance_file_aws=save_performance_aws,
+        # save_data_file_local=save_data_file_local,
+        # save_error_file_local=save_error_file_local,
+        # save_logs_file_local=save_logs_file_local,
+        # save_plot_file_local=save_plot_file_local,
+        # save_performance_file_local=save_performance_local,
+        # save_data_file_aws=save_data_file_aws,
+        # save_error_file_aws=save_error_file_aws,
+        # save_logs_file_aws=save_logs_file_aws,
+        # save_plot_file_aws=save_plot_file_aws,
+        # save_performance_file_aws=save_performance_aws,
         aws_access_key=aws_access_key,
         aws_secret_access_key=aws_secret_access_key,
         aws_region=aws_region,
@@ -160,6 +172,17 @@ def initial_end_services(
     except Exception as e:
         logger.error(f"Delete queue failed {e}")
 
+    if is_build_image:
+        for server_info in server_list:
+            namespace = server_info['namespace']
+            # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
+            _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace = namespace)
+            print(_delete_resource)
+            _delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
+            # _delete_namespace= invoke_force_delete_namespace(namespace=namespace)
+            print(f"Delete namespace :{namespace}")
+            print(_delete_resource)
+            print("==========================")
     if check_environment_is_aws() and delete_nodes_after_processing is True:
         logger.info("======= >Delete node after processing")
         scale_eks_nodes_and_wait(
@@ -170,13 +193,7 @@ def initial_end_services(
             nodegroup_name=nodegroup_name,
         )
 
-    if is_build_image:
-        for server_info in server_list:
-            namespace = server_info['namespace']
-            # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
-            res = invoke_kubectl_delete_all_from_namspace(namespace = namespace)
-            print(res)
-            # invoke_kubectl_delete_namespaces(namespace=namespace)
+    
     
     # Remove services.
     if check_environment_is_aws() and is_build_image:
@@ -323,90 +340,112 @@ def check_ecr_tag_exists(
 
 def upload_results_to_s3(
     worker_config: WORKER_CONFIG = None,
-    save_data_file_local: str = None,
-    save_logs_file_local: str = None,
-    save_error_file_local: str = None,
-    save_plot_file_local: str = None,
-    save_performance_file_local: str = None,
-    save_data_file_aws: str = None,
-    save_logs_file_aws: str = None,
-    save_error_file_aws: str = None,
-    save_plot_file_aws: str = None,
-    save_performance_file_aws: str = None,
+    # save_data_file_local: str = None,
+    # save_logs_file_local: str = None,
+    # save_error_file_local: str = None,
+    # save_plot_file_local: str = None,
+    # save_performance_file_local: str = None,
+    # save_data_file_aws: str = None,
+    # save_logs_file_aws: str = None,
+    # save_error_file_aws: str = None,
+    # save_plot_file_aws: str = None,
+    # save_performance_file_aws: str = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
     aws_region: str = None,
 ) -> None:
-    # upload data
-    if exists(save_data_file_local):
-        try:
-            upload_file_to_s3(
-                bucket=worker_config.saved_bucket,
-                source_file_local=save_data_file_local,
-                target_file_s3=save_data_file_aws,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
-        except Exception as e:
-            logger.error(f"Save data on S3 failed {e}")
-        logger.info("Save data on S3 success")
-    # upload logs
-    if exists(save_logs_file_local):
-        try:
-            upload_file_to_s3(
-                bucket=worker_config.saved_bucket,
-                source_file_local=save_logs_file_local,
-                target_file_s3=save_logs_file_aws,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
-        except Exception as e:
-            logger.error(f"Save logs on S3 failed {e}")
-        logger.info("Save logs on S3 success")
-    # upload logs
-    if exists(save_error_file_local):
-        try:
-            upload_file_to_s3(
-                bucket=worker_config.saved_bucket,
-                source_file_local=save_error_file_local,
-                target_file_s3=save_error_file_aws,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
-        except Exception as e:
-            logger.error(f"Save error on S3 failed {e}")
-        logger.info("Save error on S3 success")
-    # upload performance:
-    if exists(save_performance_file_local):
-        try:
-            upload_file_to_s3(
-                bucket=worker_config.saved_bucket,
-                source_file_local=save_performance_file_local,
-                target_file_s3=save_performance_file_aws,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
-        except Exception as e:
-            logger.error(f"Save save_performance_file on S3 failed {e}")
-        logger.info("Save save_performance_file on S3 success")
-        # upload performance:
-    if exists(save_plot_file_local):
-        try:
-            upload_file_to_s3(
-                bucket=worker_config.saved_bucket,
-                source_file_local=save_plot_file_local,
-                target_file_s3=save_plot_file_aws,
-                aws_access_key=aws_access_key,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_region=aws_region,
-            )
-        except Exception as e:
-            logger.error(f"Save save_plot_file_aws on S3 failed {e}")
-        logger.info("Save save_plot_file_aws on S3 success")
+
+    saved_file_list = worker_config.filename
+
+    for file in saved_file_list: 
+        file_local = worker_config.files_local[file]
+        file_aws =  worker_config.files_aws[file]
+        # check if local exist
+        if exists(file_local):
+            try:
+                upload_file_to_s3(
+                    bucket=worker_config.saved_bucket,
+                    source_file_local=file_local,
+                    target_file_s3=file_aws,
+                    aws_access_key=aws_access_key,
+                    aws_secret_access_key=aws_secret_access_key,
+                    aws_region=aws_region,
+                )
+                logger.info("Save data on S3 success")
+            except Exception as e:
+                logger.error(f"Save data on S3 failed {e}")
+    return 
+
+    # # upload data
+    # if exists(save_data_file_local):
+    #     try:
+    #         upload_file_to_s3(
+    #             bucket=worker_config.saved_bucket,
+    #             source_file_local=save_data_file_local,
+    #             target_file_s3=save_data_file_aws,
+    #             aws_access_key=aws_access_key,
+    #             aws_secret_access_key=aws_secret_access_key,
+    #             aws_region=aws_region,
+    #         )
+    #     except Exception as e:
+    #         logger.error(f"Save data on S3 failed {e}")
+    #     logger.info("Save data on S3 success")
+    # # upload logs
+    # if exists(save_logs_file_local):
+    #     try:
+    #         upload_file_to_s3(
+    #             bucket=worker_config.saved_bucket,
+    #             source_file_local=save_logs_file_local,
+    #             target_file_s3=save_logs_file_aws,
+    #             aws_access_key=aws_access_key,
+    #             aws_secret_access_key=aws_secret_access_key,
+    #             aws_region=aws_region,
+    #         )
+    #     except Exception as e:
+    #         logger.error(f"Save logs on S3 failed {e}")
+    #     logger.info("Save logs on S3 success")
+    # # upload logs
+    # if exists(save_error_file_local):
+    #     try:
+    #         upload_file_to_s3(
+    #             bucket=worker_config.saved_bucket,
+    #             source_file_local=save_error_file_local,
+    #             target_file_s3=save_error_file_aws,
+    #             aws_access_key=aws_access_key,
+    #             aws_secret_access_key=aws_secret_access_key,
+    #             aws_region=aws_region,
+    #         )
+    #     except Exception as e:
+    #         logger.error(f"Save error on S3 failed {e}")
+    #     logger.info("Save error on S3 success")
+    # # upload performance:
+    # if exists(save_performance_file_local):
+    #     try:
+    #         upload_file_to_s3(
+    #             bucket=worker_config.saved_bucket,
+    #             source_file_local=save_performance_file_local,
+    #             target_file_s3=save_performance_file_aws,
+    #             aws_access_key=aws_access_key,
+    #             aws_secret_access_key=aws_secret_access_key,
+    #             aws_region=aws_region,
+    #         )
+    #     except Exception as e:
+    #         logger.error(f"Save save_performance_file on S3 failed {e}")
+    #     logger.info("Save save_performance_file on S3 success")
+    #     # upload performance:
+    # if exists(save_plot_file_local):
+    #     try:
+    #         upload_file_to_s3(
+    #             bucket=worker_config.saved_bucket,
+    #             source_file_local=save_plot_file_local,
+    #             target_file_s3=save_plot_file_aws,
+    #             aws_access_key=aws_access_key,
+    #             aws_secret_access_key=aws_secret_access_key,
+    #             aws_region=aws_region,
+    #         )
+    #     except Exception as e:
+    #         logger.error(f"Save save_plot_file_aws on S3 failed {e}")
+    #     logger.info("Save save_plot_file_aws on S3 success")
 
 
 def upload_file_to_s3(

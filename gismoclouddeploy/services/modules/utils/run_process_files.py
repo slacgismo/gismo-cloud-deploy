@@ -124,10 +124,10 @@ def run_process_files(
         os.mkdir(result_local_folder)
     # # list all files in folder:
     # glmfiles = []
-    for _file in os.listdir(result_local_folder):
-        _full_file = f"{result_local_folder}/{_file}"
-        os.remove(_full_file)
-        logger.info(f"remove {_full_file}")
+    # for _file in os.listdir(result_local_folder):
+    #     _full_file = f"{result_local_folder}/{_file}"
+    #     os.remove(_full_file)
+    #     logger.info(f"remove {_full_file}")
 
     current_repeat_number = 0
 
@@ -181,8 +181,6 @@ def run_process_files(
             s3_client= s3_client,
             first_n_files=number
         )
-        
-
 
         user_id = config_json["worker_config"]["user_id"]
         worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
@@ -367,8 +365,8 @@ def run_process_files(
             ## Create neamespaces
             ## ================== ##
             for namespace in namespace_list:
-                namspace_yaml_file = config_json['services_config_list']['namespace']['deployment_file']
-                k8s_create_namespace(namespace=namespace, namspace_yaml_file = namspace_yaml_file)
+                
+                k8s_create_namespace(namespace=namespace)
     
             for namespace in namespace_list:
                 for key, value in services_config_list.items():
@@ -384,7 +382,7 @@ def run_process_files(
                     imagePullPolicy = value["imagePullPolicy"]
 
 
-                    print(f"========namespace: {namespace} service_name :{service_name} desired_replicas :{desired_replicas} deployment_file:{deployment_file}")
+                    print(f"========namespace: {namespace} service_namegit  :{service_name} desired_replicas :{desired_replicas} deployment_file:{deployment_file}")
                     # update deployment, if image tag or replicas are changed, update deployments
 
                     create_or_update_k8s_deployment(
@@ -569,6 +567,7 @@ def run_process_files(
             aws_region=aws_region,
             server_list = ready_server_list
         )
+
         initial_process_time = time.time() - start_time
         logger.info(" ----- init end services process --------- ")
         total_process_time = time.time() - start_time
@@ -576,6 +575,8 @@ def run_process_files(
         num_unfinished_tasks = 0
         init_process_time_list.append(round(initial_process_time, 2))
         total_proscee_time_list.append(round(total_process_time, 2))
+
+        
         process_local_logs_and_upload_s3(
             worker_config=worker_config_obj,
             aws_access_key=aws_access_key,
@@ -587,6 +588,8 @@ def run_process_files(
         print(
             f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== "
         )
+
+
     initial_end_services(
         server_list=ready_server_list,
         worker_config=worker_config_obj,
@@ -610,27 +613,34 @@ def run_process_files(
         instanceType=config_json["aws_config"]["instanceType"],
         sqs_url=sqs_url,
     )
-    analyze_all_local_logs_files(
-        instanceType=config_json["aws_config"]["instanceType"],
-        logs_file_path=config_json["worker_config"]["saved_path_local"],
-        init_process_time_list=init_process_time_list,
-        total_proscee_time_list=total_proscee_time_list,
-        eks_nodes_number=aws_config_obj.eks_nodes_number,
-        num_workers=services_config_list["worker"]["desired_replicas"],
-        save_file_path_name=config_json["worker_config"]["save_performance_local"],
-        num_unfinished_tasks=0,
-        code_templates_folder=config_json["worker_config"]["code_template_folder"],
-        repeat_number=repeatnumber,
-    )
-    print("End of analyzing logs")
+
+
+    # performance_file_local = None
+    # log_file_local = None
+    # files_dict  = config_json["worker_config"]["files_local"]
+    
+    # for file in files_dict:
+    #     if "performance" in file:
+    #         performance_file_local = files_dict[file]
+    #     if "logs" in file:
+    #         log_file_local =  files_dict[file]
+    # print(f'performance_file_local :{performance_file_local},log_file_local:{log_file_local}')
+
+    # analyze_all_local_logs_files(
+    #     instanceType=config_json["aws_config"]["instanceType"],
+    #     logs_file_path=log_file_local,
+    #     init_process_time_list=init_process_time_list,
+    #     total_proscee_time_list=total_proscee_time_list,
+    #     eks_nodes_number=aws_config_obj.eks_nodes_number,
+    #     num_workers=services_config_list["worker"]["desired_replicas"],
+    #     save_file_path_name=performance_file_local,
+    #     num_unfinished_tasks=0,
+    #     code_templates_folder=config_json["worker_config"]["code_template_folder"],
+    #     repeat_number=repeatnumber,
+    # )
+    # print("End of analyzing logs")
 
     return
 
-# Force delete namespace
-# NAMESPACE=
-# kubectl get namespace $NAMESPACE -o json > $NAMESPACE.json
-# sed -i -e 's/"kubernetes"//' $NAMESPACE.json
-# kubectl replace --raw "/api/v1/namespaces/$NAMESPACE/finalize" -f ./$NAMESPACE.json
 
-# deleta all resource in namspace
-# kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all
+

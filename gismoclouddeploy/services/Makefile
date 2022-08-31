@@ -25,3 +25,9 @@ get-cluster:
 .PHONY: get-nodegroup
 get-nodegroup:
 	eksctl  get nodegroups --cluster=gcd
+
+
+build:  
+    @read -p "Enter Module Name:" module; \  
+    module_dir=./modules/$$module; \
+    mkdir -p $$module_dir/build

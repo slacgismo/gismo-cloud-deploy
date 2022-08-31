@@ -1,6 +1,6 @@
 # AWS parameters used for cli.
 aws_config:
-  cluster_file: "./config/eks/cluster.yaml"
+  cluster_file: "./config/eks/cluster-solar.yaml"
   cluster_name: "None"                    # Generated from cluster_file
   nodegroup_name: "None"                  # Generated from cluster_file
   instanceType: "None"                    # Generated from cluster_file
@@ -51,13 +51,13 @@ services_config_list:
       image_name: "celeryflower"
       image_tag: "latest"
 
-  namespace:
-      name: "default"
-      deployment_file: "./config/k8s/namespace.yaml"
+  # namespace:
+  #     name: "default"
+  #     deployment_file: "./config/k8s/namespace.yaml"
 
 # Parameters pass to woker container.
 worker_config:
-  worker_dockerfile_folder: "code-templates-solardatatools"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
+  # worker_dockerfile_folder: "code-templates-solardatatools"        # This defines the worker dockerfile's folder . You can select "gridlabd" or "solardatatools" (If you chnage here, please change `code_template_folder` accordingly.)
   solver:
     solver_name: "MOSEK"
     saved_solver_bucket: "pv.insight.test"
@@ -65,6 +65,7 @@ worker_config:
     solver_lic_target_path: "/root/mosek"     # This location inside worker container is requires by MOSEK
     saved_temp_path_in_bucket: "lic_temp"     # Temporaty file location on S3 lic_temp/<user_id>.it grenerated in run-time and deleted after program completed.
     solver_lic_file_name: "mosek.lic"
+
   data_bucket: "pv.insight.nrel"
   data_file_type: ".csv"                 # Bucket contains origin data files.
   default_process_files: ["PVO/PVOutput/46851.csv","PVO/PVOutput/11106.csv","PVO/PVOutput/10010.csv"]   # Default process files. If users do not use option -n command.
@@ -72,30 +73,32 @@ worker_config:
   saved_bucket: "pv.insight.test"                         # Bucket of saved files.
   saved_path_aws: "results"                               # Path of saved files in bucket
   saved_path_local: "results"
-  acccepted_idle_time: 600
+  acccepted_idle_time: 360
   code_template_folder: "code-templates-solardatatools" # Code blocks folder example: "code-templates-solardatatools" (If you change here, you have to change `worker_dockerfile_folder` accordingly)
-  saved_rumtime_image_name: None            # "runtime-{user_id}.png"
-  saved_performance_file: None              # "performance-{user_id}.txt"
-  saved_data_target_filename: None          # "results-{user_id}.csv"
-  saved_logs_target_filename: None          # "logs-{user_id}.csv"
-  saved_error_target_filename: None         # "error-{user_id}.csv"
+  # saved_rumtime_image_name: None            # "runtime-{user_id}.png"
+  # saved_performance_file: None              # "performance-{user_id}.txt"
+  # saved_data_target_filename: None          # "results-{user_id}.csv"
+  # saved_logs_target_filename: None          # "logs-{user_id}.csv"
+  # saved_error_target_filename: None         # "error-{user_id}.csv"
+  filename: ['results.csv','logs.csv','errors.csv','performance.txt','runtime.png']
+  files_local : {}
+  files_aws : {}
   curr_process_file : None      # It's a hint column that is generated in the CLI run-time.
   curr_process_column : None    # It's a hint column that is generated in the CLI run-time.
   aws_access_key : None         # It's a hint column that is generated in the CLI run-time.
   aws_secret_access_key : None  # It's a hint column that is generated in the CLI run-time.
   aws_region : None             # It's a hint column that is generated in the CLI run-time.
-  sns_topic : None              # It's a hint column that is generated in the CLI run-time.
   user_id : None                # It's a hint column that is generated in the CLI run-ime.
-  save_data_file_local: None    # It's a hint column that is generated in the CLI run-ime.
-  save_error_file_local: None   # It's a hint column that is generated in the CLI run-ime.
-  save_logs_file_local: None    # It's a hint column that is generated in the CLI run-ime.
-  save_plot_file_local: None    # It's a hint column that is generated in the CLI run-ime.
-  save_performance_local: None  # It's a hint column that is generated in the CLI run-ime.
-  save_data_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
-  save_error_file_aws: None     # It's a hint column that is generated in the CLI run-ime.
-  save_logs_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
-  save_plot_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
-  save_performance_aws: None    # It's a hint column that is generated in the CLI run-ime.
+  # save_data_file_local: None    # It's a hint column that is generated in the CLI run-ime.
+  # save_error_file_local: None   # It's a hint column that is generated in the CLI run-ime.
+  # save_logs_file_local: None    # It's a hint column that is generated in the CLI run-ime.
+  # save_plot_file_local: None    # It's a hint column that is generated in the CLI run-ime.
+  # save_performance_local: None  # It's a hint column that is generated in the CLI run-ime.
+  # save_data_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
+  # save_error_file_aws: None     # It's a hint column that is generated in the CLI run-ime.
+  # save_logs_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
+  # save_plot_file_aws: None      # It's a hint column that is generated in the CLI run-ime.
+  # save_performance_aws: None    # It's a hint column that is generated in the CLI run-ime.
   repeat_number_per_round: 1    # Repeat overall tasks per round before run end services.
   is_celeryflower_on: False     # Turn of / off flower 
   num_files_per_server_list : None # It's a hint column that is generated in the CLI run-ime.

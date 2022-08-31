@@ -309,6 +309,7 @@ def analyze_all_local_logs_files(
     error_task = ["error_task"]
 
     index = 0
+    performance_dict = {}
     for logs_file in logs_files_list:
         logger.info(f"Porcess {logs_file}")
         logs_path_name = logs_file_path + "/" + logs_file
@@ -322,7 +323,7 @@ def analyze_all_local_logs_files(
             num_unfinished_tasks=0,
             code_templates_folder=code_templates_folder,
         )
-
+  
         repeat_number_str = f"Repeat {index}"
         file_name.append(logs_file)
         total_tasks.append(per_dict["total_tasks"])
@@ -338,12 +339,45 @@ def analyze_all_local_logs_files(
         effeciencyFactor.append(per_dict["effeciencyFactor"])
         header.append(repeat_number_str)
         index += 1
+        # save to dict 
+        performance_dict[logs_file]  = {
+            'total_tasks':total_tasks,
+            'average_task_duration' : per_dict["average_task_duration"],
+            'min_duration':per_dict["min_duration"],
+            'shortest_task':per_dict["shortest_task"],
+            'longest_task':per_dict["longest_task"],
+            'max_duration':per_dict["max_duration"],
+            'num_error_task':per_dict["num_error_task"],
+            'num_unfinished_tasks':per_dict["num_unfinished_tasks"],
+            'task_duration_in_parallelism':per_dict["task_duration_in_parallelism"],
+            'tasks_durtaion_sum':per_dict["task_duration_in_parallelism"],
+            'effeciencyFactor':per_dict["effeciencyFactor"],
+            'repeat_number_str':repeat_number_str
+        }
 
     initial_process_time = initial_process_time + init_process_time_list
     total_process_time = total_process_time + total_proscee_time_list
 
+    # _logs = {
+    #             "file_name": msg_dict["file_name"],
+    #             "column_name": msg_dict["column_name"],
+    #             "task_id": msg_dict["task_id"],
+    #             "start_time": msg_dict["start_time"],
+    #             "end_time": msg_dict["end_time"],
+    #             "hostname": msg_dict["hostname"],
+    #             "host_ip": msg_dict["host_ip"],
+    #             "pid": msg_dict["pid"],
+    #             "alert_type": msg_dict["alert_type"],
+    #             "po_server_name":msg_dict["po_server_name"],
+    #             "node_name": node_name,
+                
+    #         }
+    #                 # print(f"--------logs :{_logs}")
+    #                 logs_data.append(_logs)
+    _performance_list = []
     if repeat_number > 1:
         # Mean and Std
+
         header.append("Mean")
         header.append("Std")
         # average_task_duration
@@ -394,6 +428,17 @@ def analyze_all_local_logs_files(
         std_of_effeciencyFactor = round(statistics.stdev(effeciencyFactor[1:]), 2)
         effeciencyFactor.append(mean_of_effeciencyFactor)
         effeciencyFactor.append(std_of_effeciencyFactor)
+
+        # _performance_dict = {
+        #     "code_folder":code_templates_folder,
+        #     "number_nodes":eks_nodes_number,
+        #     "numer_worker":num_workers,
+        #     "instance_type": instanceType,
+        #     "file_name":file_name,
+        #     "total_tasks":total_tasks,
+
+
+        # }
 
     performance = [
         header,

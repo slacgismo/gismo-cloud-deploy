@@ -11,6 +11,7 @@ from modules.utils.create_ec2 import create_ec2_bastion
 from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from modules.utils.check_aws import check_environment_is_aws
+from modules.utils.invoke_function import invoke_force_delete_namespace
 from dotenv import load_dotenv
 from modules.utils.command_utils import print_dlq
 from modules.utils.invoke_function import invoke_docker_compose_build,invoke_ecr_validation,invoke_tag_image
@@ -318,7 +319,19 @@ def create_ec2(configfile):
         aws_region=AWS_DEFAULT_REGION)
 
 
+# ***************************
+#  Force delete namespace 
+# ***************************
+@main.command()
+@click.argument("namespace")
 
+def delete_namespace(namespace):
+    """Force delete namesapce """
+    click.echo(f"Force delete namespace :{namespace}")
+
+    res = invoke_force_delete_namespace(namespace = namespace)
+
+    click.echo(f"Response  :{res}")
 
 if __name__ == "__main__":
     main()

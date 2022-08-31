@@ -276,16 +276,10 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
         return res
 
 
-def k8s_create_namespace(namespace:str = None, namspace_yaml_file:str = None):
+def k8s_create_namespace(namespace:str = None):
     if namespace is None:
         logger.error("namespace is None")
         return 
-    if not exists(namspace_yaml_file):
-        logger.error(f"{namspace_yaml_file} file not exists")
-        return
-    # try:
-    #     ns_read(namespace)
-    # except ApiException:
     if not check_k8s_namespace_exits(namespace):
         ns = client.V1Namespace()
         ns.metadata = client.V1ObjectMeta(name=namespace)
@@ -294,18 +288,6 @@ def k8s_create_namespace(namespace:str = None, namspace_yaml_file:str = None):
         logging.info(f'Created namespace "{namespace}"')
         logging.debug((json.dumps(ns.metadata, default=str)))
 
-
-    # if not check_k8s_namespace_exits(namespace):
-    #     logger.info(f"Create {namespace} ")
-    #     config.load_kube_config()
-    #     v1 = client.CoreV1Api()
-    #     file_setting = read_k8s_yml(full_path_name=namspace_yaml_file)
-    #     namespace = client.V1Namespace(metadata=client.V1ObjectMeta(name=namespace))
-    #     resp = v1.create_namespace(namespace=namespace,body=)    
-    #     print(resp)
-
-    # else:
-    #     logger.info(f"{namespace} already exists ")
     
     return 
 

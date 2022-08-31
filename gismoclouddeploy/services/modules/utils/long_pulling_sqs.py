@@ -63,13 +63,13 @@ def long_pulling_sqs_multi_server(
 
     task_completion = 0
 
-    remove_prevous_results_files(
-        save_data_file_local=worker_config.save_data_file_local,
-        save_logs_file_local=worker_config.save_logs_file_local,
-        save_error_file_local=worker_config.save_error_file_local,
-        save_performance_file_local=worker_config.save_performance_local,
-        save_plot_file_local=worker_config.save_plot_file_local,
-    )
+    # remove_prevous_results_files(
+    #     save_data_file_local=worker_config.save_data_file_local,
+    #     save_logs_file_local=worker_config.save_logs_file_local,
+    #     save_error_file_local=worker_config.save_error_file_local,
+    #     save_performance_file_local=worker_config.save_performance_local,
+    #     save_plot_file_local=worker_config.save_plot_file_local,
+    # )
     is_receive_task_info = False
 
     received_init_task_ids_dict = dict()
@@ -108,10 +108,14 @@ def long_pulling_sqs_multi_server(
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
         )
+        # saved_file_list = worker_config.filename
+        # _temp_data = {}
+        # for file in saved_file_list:
+        #     _temp_data[file] = []
         save_data = []
         logs_data = []
         error_data = []
-        init_command_logs = []
+        # init_command_logs = []
 
         _message_start_time = time.time()
         if "Messages" in messages:
@@ -187,7 +191,7 @@ def long_pulling_sqs_multi_server(
                         "index_colium":  msg_dict["index_colium"],
                         "repeat_number_per_round": msg_dict["repeat_number_per_round"],
                     }
-                    init_command_logs.append(_receive_command)
+                    # init_command_logs.append(_receive_command)
 
                 # 2. if the alert type is SYSTEM_ERROR, or SAVED_DATA
                 # add
@@ -281,30 +285,24 @@ def long_pulling_sqs_multi_server(
             # print(f" ***** end messages loop server :{round(loog_server_end,2)}")
             # END of receive message
 
-
-        # Appand to files
-        # save data
-        # if len(save_data) > 0 :
-        #     pickle.dump(save_data, open('save_data.p', 'wb'))
-        append_receive_data(
-            data_dict=init_command_logs, file_name="results/init_command_logs.csv"
-        )
-        append_receive_data(
-            data_dict=save_data, file_name=worker_config.save_data_file_local
-        )
-        # # save logs
-        # if len(logs_data) > 0 :
-        #     pickle.dump(logs_data, open('logs.p', 'wb'))
-        append_receive_data(
-            data_dict=logs_data, file_name=worker_config.save_logs_file_local
-        )
-        # # save
-        # if len(error_data) > 0 :
-        #     pickle.dump(error_data, open('error.p', 'wb'))
-        append_receive_data(
-            data_dict=error_data, file_name=worker_config.save_error_file_local
-        )
-        # Invoke received new message again
+        # save data, logs errors 
+        saved_file_list = worker_config.filename
+        for file in saved_file_list:
+            # save results data
+            if "results" in file:
+                append_receive_data(
+                    data_dict=save_data, file_name=worker_config.files_local[file]
+                )
+             # save logs data
+            if "logs" in file:
+                append_receive_data(
+                    data_dict=logs_data, file_name=worker_config.files_local[file]
+                )
+             # save errors data
+            if "errors" in file:
+                append_receive_data(
+                    data_dict=error_data, file_name=worker_config.files_local[file]
+                )
   
         _is_receive_message_again = False
         # if is_received_init_task_ids_dict_completed is True:
@@ -339,9 +337,6 @@ def long_pulling_sqs_multi_server(
             logger.info(f"Tasks: {_current_length_tasks_of_all_server} / {_total_tasks_of_all_server} Completeion: {all_task_completion} %")
 
         if _is_receive_message_again is True:
-            
-            # loop_time = time.time() -  _message_start_time 
-            # print(f"Receive message again :{round(loop_time,2)}")
             time.sleep(0.1)
             continue
 
@@ -355,10 +350,6 @@ def long_pulling_sqs_multi_server(
                 _is_all_tasks_completed = False
                 break
         if _is_all_tasks_completed is True:
-            # total_tasks_number = 0 
-            # if server_name in received_completed_task_ids_dict:
-            #     _totak_tasks_number_in_server = int(received_init_task_total_num_dict[server_name])
-            #     total_tasks_number +=  _totak_tasks_number_in_server
             logger.info(f"All tasks completed :{_total_tasks_of_all_server}")
             return
         
