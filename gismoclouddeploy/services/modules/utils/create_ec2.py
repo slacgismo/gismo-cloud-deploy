@@ -136,15 +136,18 @@ def create_ec2_bastion(config_file:str, aws_access_key:str,aws_secret_access_key
     # print("wait 10 sec")
     # time.sleep(10)
  
-    # instance_id = "i-0443c269cef18d87b"
+    instance_id = "i-0c5b1d5ed59506aa3"
     # public_id = get_public_ip(
     #     ec2_client=ec2_client,
     #     instance_id=instance_id
     # )
+    # print("wait 10 sec")
+    # time.sleep(10)
     pem_location='/Users/jimmyleu/Development/AWS/JL-gismo-mac13.pem' # folder path to aws instance key
     run_command_in_ec2_ssh(
         user_name="ec2-user",
-        instance_id="i-0443c269cef18d87b",
+        instance_id=instance_id,
+
         pem_location=pem_location,
         ec2_client=ec2_client
     )
@@ -599,7 +602,8 @@ def run_command_in_ec2_ssh(
 
     # cmd_to_run='dropbox start && source /home/ubuntu/anaconda3/bin/activate py36 && cd /home/ubuntu/xx/yy/ && python3 func1.py' #you can seperate two shell commands by && or ;
 
-    command = f"git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy;cd /home/ec2-user/gismo-cloud-deploy"
+    # command = f"git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy;cd /home/ec2-user/gismo-cloud-deploy; git fetch ; git switch feature/namespace; source /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/deploy/ec2-setup.sh"
+    command = f"git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy\n cd /home/ec2-user/gismo-cloud-deploy \n git fetch \n  git switch feature/namespace \n sudo bash /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/deploy/ec2-setup.sh"
     (stdin, stdout, stderr) = ssh.exec_command(command)
     for line in stdout.readlines():
         print (line)
