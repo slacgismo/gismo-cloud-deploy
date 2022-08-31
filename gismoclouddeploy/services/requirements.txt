@@ -18,3 +18,4 @@ python-dotenv==0.20.0
 PyYAML==6.0
 terminaltables==3.1.10
 pre-commit>=2.18
+paramiko
