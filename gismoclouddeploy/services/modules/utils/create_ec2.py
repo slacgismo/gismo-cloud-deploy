@@ -4,6 +4,7 @@ from .invoke_function import exec_eksctl_create_cluster,exec_eksctl_delete_clust
 from .modiy_config_parameters import modiy_config_parameters
 from os.path import exists
 import boto3
+import botocore
 import time
 import os
 import json
@@ -104,18 +105,27 @@ def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_s
     # res = exec_eksctl_create_cluster(cluster_file=cluster_file)
     # logger.info(res)
 
+
+
     ec2_client = connect_aws_client(
         client_name="ec2",
         key_id=aws_access_key,
         secret=aws_secret_access_key,
         region=aws_region,
     )
-    tags = config_json['aws_config']['tags']
+    tags = config_json['aws_config']['tags']    
+    ec2_instance_id = config_json['aws_config']['ec2_instance_id']
+    ec2_image_id = config_json['aws_config']['ec2_image_id']
+    ec2_instance_type = config_json['aws_config']['ec2_instance_type']
+
     SecurityGroupIds = config_json['aws_config']['SecurityGroupIds']
     if SecurityGroupIds is None:
         logger.info(" Securtiy group ids is None, create security group ")
         # to be continue..
+        res = create_security_group(ec2_client=ec2_client, tags=tags)
+        print(res)
         return 
+
     # # stop_instance(instance_id="i-0a691aedf18d7aae9", ec2_client = ec2_client)
     # # time.sleep(5)
     # # terminate_instance(instance_id="i-0a691aedf18d7aae9", ec2_client = ec2_client)
@@ -123,9 +133,8 @@ def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_s
     key_pair_name, file_extenstion =pem_file.split(".") 
     # print(pem_path, key_pair_name)
     
-    ec2_instance_id = config_json['aws_config']['ec2_instance_id']
-    ec2_image_id = config_json['aws_config']['ec2_image_id']
-    ec2_instance_type = config_json['aws_config']['ec2_instance_type']
+
+
     if ec2_instance_id is None:
         logger.info("No exist instance id , create new ec2 instance")
         ec2_instance_id = create_instance(     
@@ -587,7 +596,7 @@ def create_key_pair():
     with os.fdopen(os.open("F:/RekhuAll/AWS/PythonAllAWS/aws_ec2_key.pem", os.O_WRONLY | os.O_CREAT, 0o400), "w+") as handle: handle.write(private_key)
 
 ## Create VPC
-def create_aws_vpc(ec2_client, tags) -> str:
+def create_aws_vpc(ec2_client, tags:list) -> str:
     # ec2_client = boto3.client("ec2", region_name="us-east-2")
     vpc = ec2_client.create_vpc( CidrBlock='172.16.0.0/16' )
     # vpc.create_tags(Tags=[{"Key": "Name", "Value": "eks_vpc"},{"Key": "manageBy", "Value": "boto3"}])
@@ -601,6 +610,39 @@ def create_aws_vpc(ec2_client, tags) -> str:
     return subnet['Subnet']['SubnetId']
 
 
+
+def create_security_group(ec2_client, vpc_id:str = None, tags:list = None) -> str:
+     #Create a security group and allow SSH inbound rule through the VPC
+    response = ec2_client.describe_vpcs()
+    if vpc_id is None:
+        vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
+    try:
+        response = ec2_client.create_security_group(
+            GroupName='SSH-ONLY', 
+            Description='only allow SSH traffic', 
+            VpcId=vpc_id,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'security-group',
+                    'Tags':tags 
+                }
+            ],
+        )
+        security_group_id = response['GroupId']
+        print('Security Group Created %s in vpc %s.' % (security_group_id, vpc_id))
+        data = ec2_client.authorize_security_group_ingress(
+            GroupId=security_group_id,
+            IpPermissions=[
+                {'IpProtocol': 'tcp',
+                'FromPort': 22,
+                'ToPort': 22,
+                'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
+            ]
+        )
+        print('Ingress Successfully Set %s' % data)
+        # tag = security_group.create_tags(Tags=tags)
+    except botocore.exceptions.ClientError as err:
+        print(err)
 
 
 ## EC2 instance boto3
@@ -874,4 +916,3 @@ def terminate_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aw
     print(f"terminate {ec2_instance_id}: {res_term}")
     return 
 
-    return 
