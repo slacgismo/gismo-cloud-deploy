@@ -26,7 +26,7 @@ TAGS = [
     {'Key': 'managedBy', 'Value': 'boto3'}
 ]
 
-def create_ec2_bastion(config_file:str, aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
+def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
     s3_client = connect_aws_client(
             client_name="s3",
             key_id=aws_access_key,
@@ -50,13 +50,13 @@ def create_ec2_bastion(config_file:str, aws_access_key:str,aws_secret_access_key
     # step 5 create ec2 instance
 
 
-    # config_json = modiy_config_parameters(
-    #         configfile=config_file,
-    #         aws_access_key=aws_access_key,
-    #         aws_secret_access_key=aws_secret_access_key,
-    #         aws_region=aws_region,
-    #         s3_client= s3_client,
-    #     )
+    config_json = modiy_config_parameters(
+            configfile=config_file,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+            s3_client= s3_client,
+        )
     # EKSAutoscaler_role_policy_document ={
     #         "Version": "2012-10-17","Statement": 
     #         [
@@ -110,53 +110,178 @@ def create_ec2_bastion(config_file:str, aws_access_key:str,aws_secret_access_key
         secret=aws_secret_access_key,
         region=aws_region,
     )
-    tags = [
-        {"Key": "Name", "Value": "GCD_bastion_boto3-5"}, 
-        {"Key": "project", "Value": "pvinsight"},
-        {"Key": "manageBy", "Value": "boto3"}
-    ]
-    SecurityGroupIds = [
-            'sg-0009d2a9a2498f600',
-        ]
+    tags = config_json['aws_config']['tags']
+    SecurityGroupIds = config_json['aws_config']['SecurityGroupIds']
+    if SecurityGroupIds is None:
+        logger.info(" Securtiy group ids is None, create security group ")
+        # to be continue..
+        return 
     # # stop_instance(instance_id="i-0a691aedf18d7aae9", ec2_client = ec2_client)
     # # time.sleep(5)
     # # terminate_instance(instance_id="i-0a691aedf18d7aae9", ec2_client = ec2_client)
+    pem_path, pem_file = os.path.split(pem_location)
+    key_pair_name, file_extenstion =pem_file.split(".") 
+    # print(pem_path, key_pair_name)
+    
+    ec2_instance_id = config_json['aws_config']['ec2_instance_id']
+    ec2_image_id = config_json['aws_config']['ec2_image_id']
+    ec2_instance_type = config_json['aws_config']['ec2_instance_type']
+    if ec2_instance_id is None:
+        logger.info("No exist instance id , create new ec2 instance")
+        ec2_instance_id = create_instance(     
+            ImageId=ec2_image_id,
+            InstanceType = ec2_instance_type,
+            key_piar_name = key_pair_name,
+            ec2_client=ec2_client,
+            tags= tags,
+            SecurityGroupIds = SecurityGroupIds
 
-    # instance_id = create_instance(
-        
-    #     ImageId="ami-0568773882d492fc8",
-    #     InstanceType = "t2.large",
-    #     key_piar_name = "JL-gismo-mac13",
-    #     ec2_client=ec2_client,
-    #     tags= tags,
-    #     SecurityGroupIds = SecurityGroupIds
+        )
+    instance = check_if_ec2_ready(
+        instance_id=ec2_instance_id,
+        wait_time=60,
+        delay=2
 
-    # )
-    # print(f"instance_id :{instance_id}")
-    # print("wait 10 sec")
-    # time.sleep(10)
- 
-    instance_id = "i-0c5b1d5ed59506aa3"
-    # public_id = get_public_ip(
-    #     ec2_client=ec2_client,
-    #     instance_id=instance_id
-    # )
-    # print("wait 10 sec")
-    # time.sleep(10)
-    pem_location='/Users/jimmyleu/Development/AWS/JL-gismo-mac13.pem' # folder path to aws instance key
+    )
+    
+    if instance is None:
+        logger.info(f"Cannot find running instance :{ec2_instance_id}")
+        logger.info(f"Please create a new ec2 instance or check aws account ")
+        return
+
+    public_id = get_public_ip(
+        ec2_client=ec2_client,
+        instance_id=ec2_instance_id
+    )
+
+    
+    # instance = check_if_ec2_ready(instance_id=instance_id, wait_time=60, delay=5)
+
+    # install eksctl 
+    logger.info("=============================")
+    logger.info("Start install eksctl ")
+    command = f"curl --silent --location \"https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz\" | tar xz -C /tmp \n sudo mv /tmp/eksctl /usr/local/bin"
     run_command_in_ec2_ssh(
         user_name="ec2-user",
-        instance_id=instance_id,
-
+        instance_id=ec2_instance_id,
+        command=command,
         pem_location=pem_location,
         ec2_client=ec2_client
     )
+    
+    logger.info("=============================")
+    logger.info("Start install aws cli ")
+    command = f"curl \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip\" -o \"awscliv2.zip\" \n unzip awscliv2.zip \n sudo ./aws/install"
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_location,
+        ec2_client=ec2_client
+    )
+    logger.info("=============================")
+    logger.info("Start install kubectl ")
+    command = f"export RELEASE=1.22.0 \n curl -LO https://storage.googleapis.com/kubernetes-release/release/v$RELEASE/bin/linux/amd64/kubectl \n chmod +x ./kubectl \n sudo mv ./kubectl /usr/local/bin/kubectl"
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_location,
+        ec2_client=ec2_client
+    )
+    logger.info("=============================")
+    logger.info("Start install docker ")
+    command = "amazon-linux-extras install docker -y \n  sudo service docker start \n sudo usermod -a -G docker ec2-user"
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_location,
+        ec2_client=ec2_client
+    )
+    logger.info("=============================")
+    logger.info("Start install docker-compose ")
 
+    command = " sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose \n sudo chmod +x /usr/local/bin/docker-compose"
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_location,
+        ec2_client=ec2_client
+    )
+    logger.info("=============================")
+    # start docker server
+    logger.info("git clone ")
+    command = f"git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy\n cd /home/ec2-user/gismo-cloud-deploy \n git fetch \n  git switch feature/namespace \n"
+    # run installation 
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_location,
+        ec2_client=ec2_client
+    )
+    logger.info("=============================")
+    logger.info("install python package ")
+    command = f"python3.8 -m venv /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/venv \n source /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/venv/bin/activate \n pip install --upgrade pip \n pip install -r /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/requirements.txt"
+    # run installation 
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_location,
+        ec2_client=ec2_client
+    )
+    logger.info("=============================")
 
-    # print(public_id)
-    # get_running_instances(ec2_client=ec2_client)
-    # i-0a691aedf18d7aae9
-    # return public_id
+    print("wait 5 sec")
+    time.sleep(5)
+    # upload solver 
+    local_solver_file = "/Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/config/license/mosek.lic"
+    remote_file="/home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config/license/mosek.lic"
+    logger.info("-------------------")
+    logger.info(f"upload solver")
+    logger.info("-------------------")
+ 
+    # # upload solver
+    upload_file_to_sc2(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        pem_location=pem_location,
+        ec2_client=ec2_client,
+        local_file=local_solver_file,
+        remote_file=remote_file,
+    )
+    logger.info("-------------------")
+    logger.info(f"upload .env")
+    logger.info("-------------------")
+    # upload .env
+    local_env = "/Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/.env"
+    remote_env="/home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/.env"
+    upload_file_to_sc2(
+        user_name="ec2-user",
+        instance_id=instance_id,
+        pem_location=pem_location,
+        ec2_client=ec2_client,
+        local_file=local_env,
+        remote_file=remote_env,
+    )
+    logger.info("-------------------")
+    logger.info(f"export aws credential from .env")
+    logger.info("-------------------")
+    # upload .env
+    command = f"export $( grep -vE \"^(#.*|\s*)$\" .env )"
+    # run installation 
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_location,
+        ec2_client=ec2_client
+    )
+    
+    return 
 
 
 def create_instance(
@@ -183,38 +308,7 @@ def create_instance(
             sudo yum install git -y
             # # install python 3.8
             sudo yum install -y amazon-linux-extras
-            # amazon-linux-extras install python3.8
-            # echo 'install python3.8' ' >> /home/ec2-user/installation.txt
-
-            # # install eksctl
-            # curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
-            # sudo mv /tmp/eksctl /usr/local/bin
-            # echo 'install eksctl' ' >> /home/ec2-user/installation.txt
-            # # install aws cli
-            # curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            # unzip awscliv2.zip
-            # sudo ./aws/install
-            # echo 'install aws cli' >> /home/ec2-user/installation.txt
-            # # install kubectl
-            # export RELEASE=1.22.0 # check AWS to get the latest kubectl version
-            # curl -LO https://storage.googleapis.com/kubernetes-release/release/v$RELEASE/bin/linux/amd64/kubectl
-            # chmod +x ./kubectl
-            # sudo mv ./kubectl /usr/local/bin/kubectl
-            # echo 'install kubectl' >> /home/ec2-user/installation.txt
-            # # kubectl version --client  2>&1 | tee /home/ec2-user/installation.txt
-            # # install docker
-            # sudo amazon-linux-extras install docker -y
-            # # start docker server
-            # sudo service docker start
-            # sudo usermod -a -G docker ec2-user
-            # # check docker is on
-            # sudo chkconfig docker on
-            # # install docker-compose
-            # sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
-            # sudo chmod +x /usr/local/bin/docker-compose
-            # # check docker-compose verison
-            # docker-compose version
-            # echo 'install docker-compose' >> /home/ec2-user/installation.txt
+            amazon-linux-extras install python3.8
             ''',
         TagSpecifications=[
                 {
@@ -229,19 +323,6 @@ def create_instance(
     
     return instancesID
 
-
-            # # install gismo-cloud-deploy
-            # git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy
-            # echo 'git clone gismo-cloud-deploy' >> /home/ec2-user/installation.txt
-            # cd /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/
-            # # create virtual environment 
-            # python3.8 -m venv venv
-            # echo 'create virtual environment' >> /home/ec2-user/installation.txt
-            # source ./venv/bin/activate
-            # pip install --upgrade pip
-            # pip install -r requirements.txt
-            # pip install .
-            # echo 'run pip install' >> /home/ec2-user/installation.txt
 
 def get_public_ip(
     ec2_client,
@@ -576,12 +657,66 @@ def run_command_in_ec2_ssh(
     instance_id:str,
     pem_location:str,
     ec2_client,
+    command:str,
     ):
 
     # user_name='ubuntu'
     # instance_id='i-08h873123123' #just an example
     # pem_addr='/Users/jimmyleu/Development/AWS/JL-gismo-mac13.pem' # folder path to aws instance key
     # aws_region='us-east-1' 
+
+    ec2 = boto3.resource('ec2')
+    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+  
+    p2_instance = None
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break;
+    if p2_instance is None:
+        print(f"{instance_id} is not ready")
+        return 
+
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+
+
+    (stdin, stdout, stderr) = ssh.exec_command(command)
+    for line in stdout.readlines():
+        print (line)
+
+    for err in stderr.readlines():
+        print(stderr)
+
+    ssh.close()
+
+def check_if_ec2_ready(instance_id, wait_time, delay) :
+    ec2 = boto3.resource('ec2')
+    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+    p2_instance = None
+    while wait_time > 0 or p2_instance is None:
+        for instance in instances:
+            if (instance.id==instance_id):
+                p2_instance=instance
+                return p2_instance
+        wait_time -= delay
+        time.sleep(delay)
+        logger.info(f"Wait: {wait_time}...")
+    logger.info(f"Cannot find running instance: {instance_id}")
+    return None
+
+
+def upload_file_to_sc2(    
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    local_file:str,
+    remote_file:str,
+    ec2_client,):
 
     ec2 = boto3.resource('ec2')
     instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
@@ -592,27 +727,30 @@ def run_command_in_ec2_ssh(
             p2_instance=instance
             break;
 
+    # if not exists(local_file):
+    #     raise Exception(f"{local_file} does not exist")
 
+    # check if directory exist
+    path, tail = os.path.split(remote_file)
+    print(f"path :{path}")
 
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
 
-
-    # cmd_to_run='dropbox start && source /home/ubuntu/anaconda3/bin/activate py36 && cd /home/ubuntu/xx/yy/ && python3 func1.py' #you can seperate two shell commands by && or ;
-
-    # command = f"git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy;cd /home/ec2-user/gismo-cloud-deploy; git fetch ; git switch feature/namespace; source /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/deploy/ec2-setup.sh"
-    command = f"git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy\n cd /home/ec2-user/gismo-cloud-deploy \n git fetch \n  git switch feature/namespace \n sudo bash /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/deploy/ec2-setup.sh"
+    command = f"if [ ! -d \"{path}\" ]; then \n echo {path} does not exist \n mkdir {path} \n echo create {path} \n fi"
     (stdin, stdout, stderr) = ssh.exec_command(command)
     for line in stdout.readlines():
         print (line)
-    # stdin4, stdout4, stderr4 = ssh.exec_command(cmd_to_run,timeout=None, get_pty=False)
-    # print("------")
-    # print(stdout4)
-
-    ssh.close()
-
+    # local_solver_file = "/Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/config/license/mosek.lic"
+    # remote_file="/home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config/license/mosek.lic"
+    # upload file
+    ftp_client=ssh.open_sftp()
+    ftp_client.put(local_file,remote_file)
+    ftp_client.close()
+    print(f"Uplodate {local_file} to {remote_file} success")
+    return 
             # echo 'install python3.8' ' >> /home/ec2-user/installation.txt
 
             # # install eksctl
@@ -685,3 +823,55 @@ def run_command_in_ec2_ssh(
 # # credentials to access your S3 buckets. 
 # for bucket in s3_resource.buckets.all():
 #     print(bucket.name)
+
+# export .env to environment virable
+# export $( grep -vE "^(#.*|\s*)$" .env )
+
+# aws configure get default.aws_access_key_id
+# aws configure get default.aws_secret_access_key
+
+
+
+def stop_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
+    s3_client = connect_aws_client(
+            client_name="s3",
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+        )
+    ec2 = boto3.resource('ec2')
+    config_json = modiy_config_parameters(
+            configfile=config_file,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+            s3_client= s3_client,
+        )
+    ec2_instance_id = config_json['aws_config']['ec2_instance_id']
+    res  = ec2.instances.filter(InstanceIds = [ec2_instance_id]).stop() #for stopping an ec2 instance
+    print(f"stop {ec2_instance_id}: {res}")
+    return 
+
+def terminate_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
+    s3_client = connect_aws_client(
+            client_name="s3",
+            key_id=aws_access_key,
+            secret=aws_secret_access_key,
+            region=aws_region,
+        )
+    ec2 = boto3.resource('ec2')
+    config_json = modiy_config_parameters(
+            configfile=config_file,
+            aws_access_key=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_region=aws_region,
+            s3_client= s3_client,
+        )
+    ec2_instance_id = config_json['aws_config']['ec2_instance_id']
+    res_stop = ec2.instances.filter(InstanceIds = [ec2_instance_id]).stop() #for stopping an ec2 instance
+    print(f"stop {ec2_instance_id}: {res_stop}")
+    res_term  = ec2.instances.filter(InstanceIds = [ec2_instance_id]).terminate() #for terminate an ec2 instance
+    print(f"terminate {ec2_instance_id}: {res_term}")
+    return 
+
+    return 
