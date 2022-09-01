@@ -1,7 +1,8 @@
+
 import logging
 from time import time
 from .invoke_function import exec_eksctl_create_cluster,exec_eksctl_delete_cluster
-from .modiy_config_parameters import modiy_config_parameters
+from .modiy_config_parameters import modiy_config_parameters, convert_yaml_to_json
 from os.path import exists
 import boto3
 import botocore
@@ -9,6 +10,7 @@ import time
 import os
 import json
 import paramiko
+import yaml
 
 from .check_aws import (
     connect_aws_client,
@@ -27,29 +29,13 @@ TAGS = [
     {'Key': 'managedBy', 'Value': 'boto3'}
 ]
 
-def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
+def create_ec2_bastion(config_file:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
     s3_client = connect_aws_client(
             client_name="s3",
             key_id=aws_access_key,
             secret=aws_secret_access_key,
             region=aws_region,
         )
-    # ec2_client =  connect_aws_client(
-    #         client_name="ec2",
-    #         key_id=aws_access_key,
-    #         secret=aws_secret_access_key,
-    #         region=aws_region,
-    # )
-    # step 1 create vpc 
-    # logger.info("Create VPC ")
-    # subnetId = create_aws_vpc(ec2_client = ec2_client, tags = TAGS)
-    # print(f"subnetId :{subnetId}")
-    # step 2 create security group 
-
-    # step 3 create policy
-    # step 4 create assume role
-    # step 5 create ec2 instance
-
 
     config_json = modiy_config_parameters(
             configfile=config_file,
@@ -58,53 +44,6 @@ def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_s
             aws_region=aws_region,
             s3_client= s3_client,
         )
-    # EKSAutoscaler_role_policy_document ={
-    #         "Version": "2012-10-17","Statement": 
-    #         [
-    #             { 
-    #                 "Effect": "Allow",
-    #                 "Resource": "*", 
-    #                 "Action":  [
-    #                     "autoscaling:DescribeAutoScalingGroups",
-    #                     "autoscaling:DescribeAutoScalingInstances",
-    #                     "autoscaling:DescribeLaunchConfigurations",
-    #                     "autoscaling:DescribeTags",
-    #                     "autoscaling:SetDesiredCapacity",
-    #                     "autoscaling:TerminateInstanceInAutoScalingGroup",
-    #                     "ec2:DescribeLaunchTemplateVersions"
-    #                 ]
-    #             }
-    #         ]
-    # }
-    
-    # iam_client = connect_aws_client(
-    #         client_name="iam",
-    #         key_id=aws_access_key,
-    #         secret=aws_secret_access_key,
-    #         region=aws_region,
-    #     )
-    # create_iam_policy(PolicyName="EKAAutoscler", policy_document=EKSAutoscaler_role_policy_document, iam_client=iam_client)
-    # CreateInstanceProfileRole()
-
-    # create_key_pair()
-
-    # returnedsubnetid  = create_aws_vpc()
-
-    # createdinstanceID = create_instance("subnet-3c845470")
-
-    # get_running_instances()
-
-    # get_public_ip("i-0705c070342b7b062")
-
-    # runRemoteShellCommands("i-0705c070342b7b062")
-    # cluster_file = config_json['aws_config']['cluster_file']
-
-    # if not exists(cluster_file):
-    #     logger.error(f"{cluster_file} does not exist")
-    #     return 
-    # res = exec_eksctl_create_cluster(cluster_file=cluster_file)
-    # logger.info(res)
-
 
 
     ec2_client = connect_aws_client(
@@ -113,31 +52,52 @@ def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_s
         secret=aws_secret_access_key,
         region=aws_region,
     )
-    tags = config_json['aws_config']['tags']    
-    ec2_instance_id = config_json['aws_config']['ec2_instance_id']
-    ec2_image_id = config_json['aws_config']['ec2_image_id']
-    ec2_instance_type = config_json['aws_config']['ec2_instance_type']
 
-    SecurityGroupIds = config_json['aws_config']['SecurityGroupIds']
-    if SecurityGroupIds is None:
-        logger.info(" Securtiy group ids is None, create security group ")
-        # to be continue..
-        res = create_security_group(ec2_client=ec2_client, tags=tags)
-        print(res)
+
+    ec2_bastion_saved_config_file  = config_json['aws_config']['ec2_bastion_saved_config_file']
+
+    # # ec2_config_yaml = f"./config/{configfile}"
+
+    if exists(ec2_bastion_saved_config_file) is False:
+        logger.error(
+            f"{ec2_bastion_saved_config_file} not exist, use default config.yaml instead"
+        )
         return 
 
-    # # stop_instance(instance_id="i-0a691aedf18d7aae9", ec2_client = ec2_client)
-    # # time.sleep(5)
-    # # terminate_instance(instance_id="i-0a691aedf18d7aae9", ec2_client = ec2_client)
-    pem_path, pem_file = os.path.split(pem_location)
-    key_pair_name, file_extenstion =pem_file.split(".") 
-    # print(pem_path, key_pair_name)
+
+    ec2_json = convert_yaml_to_json(yaml_file=ec2_bastion_saved_config_file)
+    key_pair_name = ec2_json['key_pair_name']
+    tags = ec2_json['tags']
+    pem_location = ec2_json['pem_location']
+    SecurityGroupIds = ec2_json['SecurityGroupIds']
+    vpc_id = ec2_json['vpc_id']
+    ec2_image_id = ec2_json['ec2_image_id']
+    ec2_instance_type = ec2_json['ec2_instance_type']
+
+    if pem_location is None or os.path.exists(pem_location) is None: 
+        logger.error(f"{pem_location} does not exist")
+        return 
     
+    if key_pair_name is None:
+        logger.error(f"{key_pair_name} does not exist. Please create key pair first")
+        return 
 
-
-    if ec2_instance_id is None:
-        logger.info("No exist instance id , create new ec2 instance")
-        ec2_instance_id = create_instance(     
+    if len(SecurityGroupIds) == 0 :
+        logger.info("Create security group")
+        try:
+            security_info_dict = create_security_group(
+                ec2_client=ec2_client,
+                vpc_id=vpc_id,
+                tags=tags
+            )
+        except Exception as e:
+            logger.info(f"Create Security group failed :{e}")
+            raise e
+        SecurityGroupIds = security_info_dict['security_group_id']
+        vpc_id = security_info_dict['vpc_id']
+        print(f"Create SecurityGroupIds : {SecurityGroupIds} in vpc_id:{vpc_id}")
+   
+    ec2_instance_id = create_instance(     
             ImageId=ec2_image_id,
             InstanceType = ec2_instance_type,
             key_piar_name = key_pair_name,
@@ -145,109 +105,64 @@ def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_s
             tags= tags,
             SecurityGroupIds = SecurityGroupIds
 
+    )
+    pem_file=pem_location +"/"+key_pair_name+".pem"
+    instance = check_if_ec2_ready_for_ssh(instance_id=ec2_instance_id, wait_time=60, delay=5, pem_location=pem_file,user_name="ec2-user")
+
+    public_ip = get_public_ip(
+            ec2_client=ec2_client,
+            instance_id=ec2_instance_id
         )
-    instance = check_if_ec2_ready(
+    print(f"public_ip :{public_ip}")
+
+
+
+    # upload install.sh
+    logger.info("-------------------")
+    logger.info(f"upload install.sh")
+    logger.info("-------------------")
+    # upload .env
+    local_env = "./config/deploy/install.sh"
+    remote_env="/home/ec2-user/install.sh"
+    upload_file_to_sc2(
+        user_name="ec2-user",
         instance_id=ec2_instance_id,
-        wait_time=60,
-        delay=2
-
-    )
-    
-    if instance is None:
-        logger.info(f"Cannot find running instance :{ec2_instance_id}")
-        logger.info(f"Please create a new ec2 instance or check aws account ")
-        return
-
-    public_id = get_public_ip(
+        pem_location=pem_file,
         ec2_client=ec2_client,
-        instance_id=ec2_instance_id
+        local_file=local_env,
+        remote_file=remote_env,
+    )
+    # run install.sh
+    logger.info("=============================")
+    logger.info("Run install.sh ")
+    logger.info("=============================")
+    command = f"bash /home/ec2-user/install.sh"
+    run_command_in_ec2_ssh(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        command=command,
+        pem_location=pem_file,
+        ec2_client=ec2_client
+    )
+    # upload .env
+    logger.info("-------------------")
+    logger.info(f"upload .env")
+    logger.info("-------------------")
+    # upload .env
+    local_env = ".env"
+    remote_env="/home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/.env"
+    upload_file_to_sc2(
+        user_name="ec2-user",
+        instance_id=ec2_instance_id,
+        pem_location=pem_file,
+        ec2_client=ec2_client,
+        local_file=local_env,
+        remote_file=remote_env,
     )
 
-    
-    # instance = check_if_ec2_ready(instance_id=instance_id, wait_time=60, delay=5)
 
-    # install eksctl 
-    logger.info("=============================")
-    logger.info("Start install eksctl ")
-    command = f"curl --silent --location \"https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz\" | tar xz -C /tmp \n sudo mv /tmp/eksctl /usr/local/bin"
-    run_command_in_ec2_ssh(
-        user_name="ec2-user",
-        instance_id=ec2_instance_id,
-        command=command,
-        pem_location=pem_location,
-        ec2_client=ec2_client
-    )
-    
-    logger.info("=============================")
-    logger.info("Start install aws cli ")
-    command = f"curl \"https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip\" -o \"awscliv2.zip\" \n unzip awscliv2.zip \n sudo ./aws/install"
-    run_command_in_ec2_ssh(
-        user_name="ec2-user",
-        instance_id=ec2_instance_id,
-        command=command,
-        pem_location=pem_location,
-        ec2_client=ec2_client
-    )
-    logger.info("=============================")
-    logger.info("Start install kubectl ")
-    command = f"export RELEASE=1.22.0 \n curl -LO https://storage.googleapis.com/kubernetes-release/release/v$RELEASE/bin/linux/amd64/kubectl \n chmod +x ./kubectl \n sudo mv ./kubectl /usr/local/bin/kubectl"
-    run_command_in_ec2_ssh(
-        user_name="ec2-user",
-        instance_id=ec2_instance_id,
-        command=command,
-        pem_location=pem_location,
-        ec2_client=ec2_client
-    )
-    logger.info("=============================")
-    logger.info("Start install docker ")
-    command = "amazon-linux-extras install docker -y \n  sudo service docker start \n sudo usermod -a -G docker ec2-user"
-    run_command_in_ec2_ssh(
-        user_name="ec2-user",
-        instance_id=ec2_instance_id,
-        command=command,
-        pem_location=pem_location,
-        ec2_client=ec2_client
-    )
-    logger.info("=============================")
-    logger.info("Start install docker-compose ")
-
-    command = " sudo curl -L https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose \n sudo chmod +x /usr/local/bin/docker-compose"
-    run_command_in_ec2_ssh(
-        user_name="ec2-user",
-        instance_id=ec2_instance_id,
-        command=command,
-        pem_location=pem_location,
-        ec2_client=ec2_client
-    )
-    logger.info("=============================")
-    # start docker server
-    logger.info("git clone ")
-    command = f"git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy\n cd /home/ec2-user/gismo-cloud-deploy \n git fetch \n  git switch feature/namespace \n"
-    # run installation 
-    run_command_in_ec2_ssh(
-        user_name="ec2-user",
-        instance_id=ec2_instance_id,
-        command=command,
-        pem_location=pem_location,
-        ec2_client=ec2_client
-    )
-    logger.info("=============================")
-    logger.info("install python package ")
-    command = f"python3.8 -m venv /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/venv \n source /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/venv/bin/activate \n pip install --upgrade pip \n pip install -r /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/requirements.txt"
-    # run installation 
-    run_command_in_ec2_ssh(
-        user_name="ec2-user",
-        instance_id=ec2_instance_id,
-        command=command,
-        pem_location=pem_location,
-        ec2_client=ec2_client
-    )
-    logger.info("=============================")
-
-    print("wait 5 sec")
-    time.sleep(5)
-    # upload solver 
-    local_solver_file = "/Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/config/license/mosek.lic"
+    # upload solver
+    local_solver_file = "./config/license/mosek.lic"
     remote_file="/home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config/license/mosek.lic"
     logger.info("-------------------")
     logger.info(f"upload solver")
@@ -257,27 +172,15 @@ def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_s
     upload_file_to_sc2(
         user_name="ec2-user",
         instance_id=ec2_instance_id,
-        pem_location=pem_location,
+        pem_location=pem_file,
         ec2_client=ec2_client,
         local_file=local_solver_file,
         remote_file=remote_file,
     )
+
+
     logger.info("-------------------")
-    logger.info(f"upload .env")
-    logger.info("-------------------")
-    # upload .env
-    local_env = "/Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/.env"
-    remote_env="/home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/.env"
-    upload_file_to_sc2(
-        user_name="ec2-user",
-        instance_id=instance_id,
-        pem_location=pem_location,
-        ec2_client=ec2_client,
-        local_file=local_env,
-        remote_file=remote_env,
-    )
-    logger.info("-------------------")
-    logger.info(f"export aws credential from .env")
+    logger.info(f"export aws credential to ec2 from .env")
     logger.info("-------------------")
     # upload .env
     command = f"export $( grep -vE \"^(#.*|\s*)$\" .env )"
@@ -286,12 +189,26 @@ def create_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aws_s
         user_name="ec2-user",
         instance_id=ec2_instance_id,
         command=command,
-        pem_location=pem_location,
+        pem_location=pem_file,
         ec2_client=ec2_client
     )
-    
-    return 
 
+    logger.info("-------------------")
+    logger.info(f"Export ec2 bastion setting to {ec2_bastion_saved_config_file}")
+    logger.info("-------------------")
+
+    # export ec2 bastion setting to yaml
+    ec2_json['SecurityGroupIds'] = SecurityGroupIds
+    ec2_json['vpc_id'] =vpc_id
+    ec2_json['ec2_instance_id'] = ec2_instance_id
+    ec2_json['public_ip'] = public_ip
+    write_aws_setting_to_yaml(file=ec2_bastion_saved_config_file, setting=ec2_json)
+   
+    logger.info("-------------------")
+    logger.info(f"Create ec2 bastion for EKS completed")
+    logger.info("-------------------")
+
+    return 
 
 def create_instance(
     ec2_client,
@@ -340,7 +257,7 @@ def get_public_ip(
 
     for reservation in reservations:
         for instance in reservation['Instances']:
-            print(instance.get("PublicIpAddress"))
+            return (instance.get("PublicIpAddress"))
 
 
 def get_running_instances(ec2_client, ):
@@ -585,15 +502,23 @@ def CreateInstanceProfileRole():
     print (response)
 
 ## Create EC2 key pair
-def create_key_pair():
-    print("I am inside key pair generation..")
-    ec2_client = boto3.client("ec2", region_name="us-east-1")
-    key_pair = ec2_client.create_key_pair(KeyName="ec2-key-pair")
+def create_key_pair(ec2_client,keyname:str, file_location:str):
+ 
+    try:
+        key_pair = ec2_client.create_key_pair(KeyName=keyname)
+    except Exception as e:
+        logger.error(e)
+        raise f"Create key pair: {keyname} Failed"
+
 
     private_key = key_pair["KeyMaterial"]
-
+    check_if_path_exist_and_create(file_location)
     ## write private key to file with 400 permissions
-    with os.fdopen(os.open("F:/RekhuAll/AWS/PythonAllAWS/aws_ec2_key.pem", os.O_WRONLY | os.O_CREAT, 0o400), "w+") as handle: handle.write(private_key)
+    with os.fdopen(os.open(f"{file_location}/{keyname}.pem", os.O_WRONLY | os.O_CREAT, 0o400), "w+") as handle: handle.write(private_key)
+    logger.info(f"Create {keyname} success, file location: {file_location}")
+    return 
+
+
 
 ## Create VPC
 def create_aws_vpc(ec2_client, tags:list) -> str:
@@ -611,10 +536,10 @@ def create_aws_vpc(ec2_client, tags:list) -> str:
 
 
 
-def create_security_group(ec2_client, vpc_id:str = None, tags:list = None) -> str:
+def create_security_group(ec2_client, vpc_id:str = None, tags:list = None) -> dict:
      #Create a security group and allow SSH inbound rule through the VPC
     response = ec2_client.describe_vpcs()
-    if vpc_id is None:
+    if vpc_id is None or vpc_id == "None":
         vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
     try:
         response = ec2_client.create_security_group(
@@ -641,6 +566,11 @@ def create_security_group(ec2_client, vpc_id:str = None, tags:list = None) -> st
         )
         print('Ingress Successfully Set %s' % data)
         # tag = security_group.create_tags(Tags=tags)
+        return {
+            'security_group_id':[security_group_id],
+            'vpc_id':vpc_id
+
+        }
     except botocore.exceptions.ClientError as err:
         print(err)
 
@@ -724,18 +654,23 @@ def run_command_in_ec2_ssh(
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    print('started...')
+    stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
 
+    for line in iter(stdout.readline, ""):
+        print(line, end="")
+    print('finished.')
 
-    (stdin, stdout, stderr) = ssh.exec_command(command)
-    for line in stdout.readlines():
-        print (line)
+    # (stdin, stdout, stderr) = ssh.exec_command(command)
+    # for line in stdout.readlines():
+    #     print (line)
 
-    for err in stderr.readlines():
-        print(stderr)
+    # for err in stderr.readlines():
+    #     print(stderr)
 
     ssh.close()
 
-def check_if_ec2_ready(instance_id, wait_time, delay) :
+def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user_name) :
     ec2 = boto3.resource('ec2')
     instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
     print(instances)
@@ -744,11 +679,26 @@ def check_if_ec2_ready(instance_id, wait_time, delay) :
         for instance in instances:
             if (instance.id==instance_id):
                 p2_instance=instance
-                return p2_instance
+                logger.info(f"{instance_id} is running")
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+                try:
+                    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+                except Exception as e:
+                    logger.warning(f"SSH to {instance_id} failed, try again")
+                    continue
+
+                logging.info(f"{instance_id} is ready to connect SSH")
+                return
         wait_time -= delay
         time.sleep(delay)
         logger.info(f"Wait: {wait_time}...")
+    
+       
     logger.info(f"Cannot find running instance: {instance_id}")
+
+    # try ssh to 
     return None
 
 
@@ -915,4 +865,85 @@ def terminate_ec2_bastion(config_file:str,pem_location:str,aws_access_key:str,aw
     res_term  = ec2.instances.filter(InstanceIds = [ec2_instance_id]).terminate() #for terminate an ec2 instance
     print(f"terminate {ec2_instance_id}: {res_term}")
     return 
+
+
+def create_ec2_keypair(
+        keyname:str,
+        file_location:str,
+        aws_access_key:str,
+        aws_secret_access_key:str,
+        aws_region:str):
+
+    ec2_client = connect_aws_client(
+        client_name="ec2",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    create_key_pair(ec2_client=ec2_client, keyname=keyname, file_location=file_location)
+    return 
+
+def write_aws_setting_to_yaml(file:str,setting:dict):
+    # check if directory exist
+    check_if_path_exist_and_create(file)
+
+    with open(file, 'w') as yaml_file:
+        yaml.dump(setting, yaml_file, default_flow_style=False)
+
+
+def check_if_path_exist_and_create(file:str):
+    path, tail = os.path.split(file)
+    local_path_isExist = os.path.exists(path)
+    if local_path_isExist is False:
+        print(f"{path} does not exist. Create path")
+        os.mkdir(path)
+        print(f"Create {path} success")
+    
+
+    # EKSAutoscaler_role_policy_document ={
+    #         "Version": "2012-10-17","Statement": 
+    #         [
+    #             { 
+    #                 "Effect": "Allow",
+    #                 "Resource": "*", 
+    #                 "Action":  [
+    #                     "autoscaling:DescribeAutoScalingGroups",
+    #                     "autoscaling:DescribeAutoScalingInstances",
+    #                     "autoscaling:DescribeLaunchConfigurations",
+    #                     "autoscaling:DescribeTags",
+    #                     "autoscaling:SetDesiredCapacity",
+    #                     "autoscaling:TerminateInstanceInAutoScalingGroup",
+    #                     "ec2:DescribeLaunchTemplateVersions"
+    #                 ]
+    #             }
+    #         ]
+    # }
+    
+    # iam_client = connect_aws_client(
+    #         client_name="iam",
+    #         key_id=aws_access_key,
+    #         secret=aws_secret_access_key,
+    #         region=aws_region,
+    #     )
+    # create_iam_policy(PolicyName="EKAAutoscler", policy_document=EKSAutoscaler_role_policy_document, iam_client=iam_client)
+    # CreateInstanceProfileRole()
+
+    # create_key_pair()
+
+    # returnedsubnetid  = create_aws_vpc()
+
+    # createdinstanceID = create_instance("subnet-3c845470")
+
+    # get_running_instances()
+
+    # get_public_ip("i-0705c070342b7b062")
+
+    # runRemoteShellCommands("i-0705c070342b7b062")
+    # cluster_file = config_json['aws_config']['cluster_file']
+
+    # if not exists(cluster_file):
+    #     logger.error(f"{cluster_file} does not exist")
+    #     return 
+    # res = exec_eksctl_create_cluster(cluster_file=cluster_file)
+    # logger.info(res)
 
