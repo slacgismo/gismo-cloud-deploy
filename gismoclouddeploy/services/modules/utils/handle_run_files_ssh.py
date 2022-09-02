@@ -1,3 +1,7 @@
+
+
+
+
 import logging
 from .invoke_function import exec_eksctl_create_cluster,exec_eksctl_delete_cluster
 from .modiy_config_parameters import modiy_config_parameters,convert_yaml_to_json
@@ -17,15 +21,14 @@ logging.basicConfig(
 )
 
 
-def handle_eks_cluster_action(
+
+def handle_run_files_ssh(
     config_file:str, 
     aws_access_key:str,
-    aws_secret_access_key:str, 
+    aws_secret_access_key:str,
     aws_region:str,
-    action:str
-)-> str:
-
-    
+    command:str,
+):
 
     s3_client = connect_aws_client(
             client_name="s3",
@@ -66,7 +69,6 @@ def handle_eks_cluster_action(
     key_pair_name = ec2_json['key_pair_name']
     pem_location = ec2_json['pem_location']
     ec2_instance_id = ec2_json['ec2_instance_id']
-    action = action.upper()
     pem_file=pem_location +"/"+key_pair_name+".pem"
     user_name = ec2_json['user_name']
     remote_base_path = f"/home/{user_name}/gismo-cloud-deploy/gismoclouddeploy/services"
@@ -82,21 +84,8 @@ def handle_eks_cluster_action(
 
     if check_environment_is_aws():
         # 
-        logger.info("On AWS ")
-        if action == "CREATE":
-            logger.info("Create cluster on AWS EC2")
-            create_eks_cluster(
-                cluster_file= cluster_file
-            )
-        elif action == "DELETE":
-            logger.info("Delete cluster on AWS EC2")
-            delete_eks_cluster(cluster_file=cluster_file)
-        else:
-            logger.error(f"unknow action: {action} ")
-
-        return 
+        logger.error("Current environemnt is AWS. Please use this command in your local machine. ")
     else:
-        # check ec2 bastion
 
         try:
             response = ec2_client.describe_instance_status(InstanceIds=[ec2_instance_id], IncludeAllInstances=True)
@@ -111,49 +100,26 @@ def handle_eks_cluster_action(
             # upload cluster file to EC2 bastion 
 
   
-            # upload cluster file
-            local_env = cluster_file
+            # upload code-templates folder
+            code_template_folder = config_json['worker_config']['code_template_folder']
+            local_env = code_template_folder
             localpath , file = os.path.split(cluster_file)
-            remote_env=f"{remote_base_path}/config/eks/{file}"
+            remote_env=f"{remote_base_path}/config/{code_template_folder}"
             logger.info("-------------------")
-            logger.info(f"Upload cluster file: {cluster_file}")
+            logger.info(f"upload code-tempate folder:{code_template_folder}")
             logger.info(f"upload local {local_env} to {remote_env}")
             logger.info("-------------------")
 
-            upload_file_to_sc2(
-                user_name="ec2-user",
-                instance_id=ec2_instance_id,
-                pem_location=pem_file,
-                ec2_client=ec2_client,
-                local_file=local_env,
-                remote_file=remote_env,
-            )
-
-            if action == "CREATE":
-                logger.info("Create cluster through SSH from local")
-                command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl create cluster -f {remote_env}"
-               
-            elif action == "DELETE":
-                logger.info("Delete cluster throuth SSH from local")
-                command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_env}"
-
-            elif action == "LIST":
-                logger.info("List all eks cluster")
-                command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl get cluster"
-
-            elif action == "SCALEZERO":
-                logger.info("Scale to zero")
-                cluster_dict = convert_yaml_to_json(yaml_file=cluster_file)
-                cluster_name = cluster_dict['metadata']['name']
-                if len (cluster_dict['nodeGroups']) == 0 :
-                    logger.error("nodeGroup does not defined")
-                    return 
-                group_name = cluster_dict['nodeGroups'][0]['name']
-                command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
-            else:
-                logger.error(f"unknow action: {action} ")
-                return 
-
+            # upload_file_to_sc2(
+            #     user_name="ec2-user",
+            #     instance_id=ec2_instance_id,
+            #     pem_location=pem_file,
+            #     ec2_client=ec2_client,
+            #     local_file=local_env,
+            #     remote_file=remote_env,
+            # )
+            command = f"cd {remote_base_path} \n source ./venv/bin/activate \n export $( grep -vE \"^(#.*|\s*)$\" .env ) \n python3 main.py run-files -n 1 -b -sc 1 -d "
+            print(command)
             run_command_in_ec2_ssh(
                     user_name=user_name,
                     instance_id=ec2_instance_id,
@@ -169,22 +135,68 @@ def handle_eks_cluster_action(
         return 
 
 
+# import paramiko
+# import os
+# class ExportPrepare(object):
+#     def __init__(self):
+#         pass
 
+#     def sftp_con(self):
+#         t = paramiko.Transport((self.ip, self.port))
+#         t.connect(username=self.username, password=self.password)
+#         return t
 
-def create_eks_cluster(cluster_file:str) -> str:
+#  # Find all the directories you want to upload already in files.
+#     def __get_all_files_in_local_dir(self, local_dir):
+#         all_files = list()
 
-    if not exists(cluster_file):
-        logger.error(f"{cluster_file} does not exist")
-        return 
-    res = exec_eksctl_create_cluster(cluster_file=cluster_file)
-    logger.info(res)
-    return 
+#         if os.path.exists(local_dir):
+#             files = os.listdir(local_dir)
+#             for x in files:
+#                 filename = os.path.join(local_dir, x)
+#                 print ("filename:" + filename)
+#                 # isdir
+#                 if os.path.isdir(filename):
+#                     all_files.extend(self.__get_all_files_in_local_dir(filename))
+#                 else:
+#                     all_files.append(filename)
+#             else:
+#                 print ('{}does not exist'.format(local_dir))
+#         return all_files
 
-
-def delete_eks_cluster(cluster_file:str) -> str:
-    if not exists(cluster_file):
-        logger.error(f"{cluster_file} does not exist")
-        return 
-    res = exec_eksctl_delete_cluster(cluster_file=cluster_file)
-    logger.info(res)
-    return 
+#  # Copy a local file (localpath) to the SFTP server as remotepath
+#     def sftp_put_dir(self):
+#         try:
+#             # Upload the local test directory to remote root / usr / below
+#             local_dir = "c:/test"
+#             remote_dir = "/root/usr/test"
+            
+#             t = self.sftp_con()
+#             sftp = paramiko.SFTPClient.from_transport(t)
+#             # sshclient
+#             ssh = paramiko.SSHClient()
+#             ssh.load_system_host_keys()
+#             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#             ssh.connect(self.ip, port=self.port, username=self.username, password=self.password, compress=True)
+#             ssh.exec_command('rm -rf ' + remote_dir)
+#             if remote_dir[-1] == '/':
+#                 remote_dir = remote_dir[0:-1]
+#             all_files = self.__get_all_files_in_local_dir(local_dir)
+#             for x in all_files:
+#                 filename = os.path.split(x)[-1]
+#                 remote_file = os.path.split(x)[0].replace(local_dir, remote_dir)
+#                 path = remote_file.replace('\\', '/')
+#             # The MKDIR that creates the directory SFTP can also be used, but can't create a multi-level directory, so use SSH to create.
+#                 tdin, stdout, stderr = ssh.exec_command('mkdir -p ' + path)
+#                 print( stderr.read())
+#                 remote_filename = path + '/' + filename
+#                 print (u'Put files...' + filename)
+#                 sftp.put(x, remote_filename)
+#             ssh.close()
+#         except Exception as e:
+#             print(e)
+ 
+ 
+# if __name__=='__main__':
+#  export_prepare = ExportPrepare()
+#  export_prepare.sftp_put_dir()

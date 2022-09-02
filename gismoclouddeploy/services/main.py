@@ -12,6 +12,7 @@ from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from modules.utils.check_aws import check_environment_is_aws
 from modules.utils.invoke_function import invoke_force_delete_namespace
+from modules.utils.handle_run_files_ssh import handle_run_files_ssh
 from dotenv import load_dotenv
 from modules.utils.command_utils import print_dlq
 from modules.utils.invoke_function import invoke_docker_compose_build,invoke_ecr_validation,invoke_tag_image
@@ -209,6 +210,31 @@ def handle_ekscluster(configfile, action):
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
         action = action
+        )
+
+
+
+# ***************************
+#  Handle run-files on AWS through ssh 
+# ***************************
+@main.command()
+@click.option(
+    "--configfile",
+    "-f",
+    help="Assign custom config files, Default files name is ./config/config.yaml",
+    default="config.yaml",
+)
+@click.argument("command")
+def ssh_runfiles(configfile, command):
+    """Use local machine to handle run-files command on AWS through SSH """
+    click.echo(f"handle cluster from :{configfile} action:{command}")
+
+    handle_run_files_ssh(
+        config_file=configfile, 
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_region=AWS_DEFAULT_REGION,
+        command = command
         )
         
     

@@ -109,7 +109,6 @@ def modiy_config_parameters(
     config_json["aws_config"]["aws_access_key"] = aws_access_key
     config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
     config_json["aws_config"]["aws_region"] = aws_region
-    # config_json["aws_config"]["sqs_url"] = sqs_url
     config_json["aws_config"]["ecr_repo"] = ecr_repo
 
 
