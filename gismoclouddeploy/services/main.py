@@ -6,8 +6,8 @@ import os
 
 from modules.utils.AWS_CONFIG import AWS_CONFIG
 from modules.utils.run_process_files import run_process_files
-from modules.utils.create_eks_cluster import create_eks_cluster,delete_eks_cluster
-from modules.utils.create_ec2 import create_ec2_bastion,stop_ec2_bastion,terminate_ec2_bastion
+from modules.utils.create_eks_cluster import create_eks_cluster,delete_eks_cluster,handle_eks_cluster_action
+from modules.utils.create_ec2 import create_ec2_keypair,handle_ec2_bastion
 from modules.utils.modiy_config_parameters import modiy_config_parameters
 from modules.utils.eks_utils import scale_eks_nodes_and_wait
 from modules.utils.check_aws import check_environment_is_aws
@@ -188,171 +188,72 @@ def nodes_scale(min_nodes, configfile):
 
 
 # ***************************
-#  build and push image status
-# ***************************
-
-
-# @main.command()
-# @click.option(
-#     "--tag",
-#     "-t",
-#     help="Rollout and restart of webapp and worker pod of kubernetes",
-#     default="latest",
-# )
-# @click.option(
-#     "--push",
-#     "-p",
-#     is_flag=True,
-#     help="Is push image to ecr : Default is False",
-# )
-# @click.option(
-#     "--configfile",
-#     "-f",
-#     help="Assign config files, Default files is config.yaml under /config",
-#     default="config.yaml",
-# )
-# def build_images(tag: str = None, push: bool = False, configfile:str = "config.yaml"):
-#     """Build image from docker-compose and push to ECR"""
-#     click.echo(f"Build image :{tag}")
-#     config_json = modiy_config_parameters(
-#         configfile=configfile,
-#         aws_access_key=AWS_ACCESS_KEY_ID,
-#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-#         aws_region=AWS_DEFAULT_REGION,
-#         sqs_url=SQS_URL,
-#         ecr_repo=ECR_REPO,
-#     )
-#     build_resp = invoke_docker_compose_build( code_template_folder=config_json['worker_config']['code_template_folder'])
-#     # click.echo(build_resp)
-#     services_list = ["worker", "server"]
-   
-        
-
-#     try:
-#         for service in services_list:
-        
-#             update_image = service
-#             if check_environment_is_aws():    
-#                 update_image = f"{ECR_REPO}/{service}"
-
-#             click.echo(f"Tag {update_image}:{tag}")
-#             tag_worker = invoke_tag_image(
-#                 origin_image=service,
-#                 update_image=update_image,
-#                 image_tag=tag,
-#             )
-#     except Exception as e:
-#         logger.error(f"Tag image error {e}")
-#         return
-
-#     if push:
-#         if tag == "latest" or tag == "develop":
-#             click.echo("======================= Error ========================\n")
-#             click.echo(f"{service}:{tag} pushed failed. \n")
-#             click.echo("It has to be push through Github Action CI/CD pipeline\n")
-#             click.echo("======================================================\n")
-#             return
-
-#         validation_resp = invoke_ecr_validation()
-#         click.echo(validation_resp)
-#         try:
-#             for service in services_list:
-#                 click.echo(f"push {ECR_REPO}/{service}:{tag}")
-#                 push_worker = modules.utils.invoke_push_image(
-#                     image_name=service, image_tag=tag, ecr_repo=ECR_REPO
-#                 )
-#         except Exception as e:
-#             logger.error("Push image error")
-#             return
-
-
-
-
-# ***************************
-#  Create EKS cluster
+#  Handle EKS cluster action, Create, Delete, List cluster
 # ***************************
 @main.command()
-@click.argument("configfile")
-def create_cluster(configfile):
+@click.option(
+    "--configfile",
+    "-f",
+    help="Assign custom config files, Default files name is ./config/config.yaml",
+    default="config.yaml",
+)
+@click.argument("action")
+def handle_ekscluster(configfile, action):
     """Create cluster from config file"""
-    click.echo(f"Create cluster from :{configfile}")
+    click.echo(f"handle cluster from :{configfile} action:{action}")
 
-    create_eks_cluster(
+    # step 1 , check environmnet if local . link to ec2 bastion
+    handle_eks_cluster_action(
         config_file=configfile, 
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION)
-
-
+        aws_region=AWS_DEFAULT_REGION,
+        action = action
+        )
+        
+    
 # ***************************
-#  Delete EKS cluster
-# ***************************
-@main.command()
-@click.argument("configfile")
-
-def delete_cluster(configfile):
-    """Delete cluster from config file"""
-    click.echo(f"Delete cluster from :{configfile}")
-
-    delete_eks_cluster(
-        config_file=configfile, 
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION)
-
-
-# ***************************
-#  Create EC2 
+#  Create Key Pair 
 # ***************************
 @main.command()
-@click.argument("configfile")
+@click.argument("keyname")
+@click.argument("file_location")
 
-def create_ec2(configfile):
+def create_keypair(keyname,file_location ):
     """Create EC2 from config file"""
-    click.echo(f"Create ec2 from :{configfile}")
+    click.echo(f"Create keypair :{keyname} save to  :{file_location}")
 
-    create_ec2_bastion(
-        config_file=configfile, 
-        pem_location =PEM_LOCATION,
+    create_ec2_keypair(
+        keyname = keyname,
+        file_location = file_location,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION)
 
 
+
 # ***************************
-#  Stop EC2 
+#  Handle EC2 Action, List,  Create , Start, Stop, or Terminate EC2 Instances
 # ***************************
 @main.command()
-@click.argument("configfile")
+@click.option(
+    "--configfile",
+    "-f",
+    help="Assign custom config files, Default files name is ./config/config.yaml",
+    default="config.yaml",
+)
+@click.argument("action")
 
-def stop_ec2(configfile):
-    """Stop EC2 from config file"""
-    click.echo(f"Stop ec2 from :{configfile}")
-
-    stop_ec2_bastion(
+def handle_ec2(configfile, action):
+    """Handle EC2 action"""
+    
+    handle_ec2_bastion(
         config_file=configfile, 
-        pem_location =PEM_LOCATION,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION)
-
-# ***************************
-#  Terminate EC2 
-# ***************************
-@main.command()
-@click.argument("configfile")
-
-def terminate_ec2(configfile):
-    """Terminate EC2 from config file"""
-    click.echo(f"Terminate ec2 from :{configfile}")
-
-
-    terminate_ec2_bastion(
-        config_file=configfile, 
-        pem_location =PEM_LOCATION,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION)
+        aws_region=AWS_DEFAULT_REGION,
+        action = action
+        )
 
 
 # ***************************

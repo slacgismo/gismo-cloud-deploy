@@ -21,7 +21,6 @@ def modiy_config_parameters(
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
     aws_region: str = None,
-    sqs_url: str = None,
     ecr_repo: str = None,
     current_repeat_number:int= 0,
     s3_client = None,
@@ -79,85 +78,6 @@ def modiy_config_parameters(
         files_aws[file] = new_name_aws
         # assign path to file and save in files_local and files_aws
 
-
-    # config_json["worker_config"]["saved_rumtime_image_name"] = f"gantt-{user_id}-{current_repeat_number}.png"
-    # config_json["worker_config"][
-    #     "saved_performance_file"
-    # ] = f"performance-{user_id}-{current_repeat_number}.txt"
-    # config_json["worker_config"]["saved_data_target_filename"] = f"data-{user_id}-{current_repeat_number}.csv"
-    # config_json["worker_config"]["saved_logs_target_filename"] = f"logs-{user_id}-{current_repeat_number}.csv"
-    # config_json["worker_config"]["saved_error_target_filename"] = f"error-{user_id}-{current_repeat_number}.csv"
-
-    # # check if local path exist
-    # result_local_folder = config_json["worker_config"]["saved_path_local"]
-    # if os.path.isdir(result_local_folder) is False:
-    #     logger.info(f"Create local {result_local_folder} path")
-    #     os.mkdir(result_local_folder)
-
-    # # Generate local results files name
-
-    # config_json["worker_config"]["save_data_file_local"] = (
-    #     result_local_folder
-    #     + "/"
-    #     + config_json["worker_config"]["saved_data_target_filename"]
-    # )
-
-    # config_json["worker_config"]["save_logs_file_local"] = (
-    #     result_local_folder
-    #     + "/"
-    #     + config_json["worker_config"]["saved_logs_target_filename"]
-    # )
-
-    # config_json["worker_config"]["save_error_file_local"] = (
-    #     result_local_folder
-    #     + "/"
-    #     + config_json["worker_config"]["saved_error_target_filename"]
-    # )
-
-    # config_json["worker_config"]["save_plot_file_local"] = (
-    #     result_local_folder
-    #     + "/"
-    #     + config_json["worker_config"]["saved_rumtime_image_name"]
-    # )
-
-    # config_json["worker_config"]["save_performance_local"] = (
-    #     result_local_folder
-    #     + "/"
-    #     + config_json["worker_config"]["saved_performance_file"]
-    # )
-
-    # # Generate AWS results files name
-
-    # config_json["worker_config"]["save_data_file_aws"] = (
-    #     config_json["worker_config"]["saved_path_aws"]
-    #     + "/"
-    #     + config_json["worker_config"]["saved_data_target_filename"]
-    # )
-
-    # config_json["worker_config"]["save_logs_file_aws"] = (
-    #     config_json["worker_config"]["saved_path_aws"]
-    #     + "/"
-    #     + config_json["worker_config"]["saved_logs_target_filename"]
-    # )
-
-    # config_json["worker_config"]["save_error_file_aws"] = (
-    #     config_json["worker_config"]["saved_path_aws"]
-    #     + "/"
-    #     + config_json["worker_config"]["saved_error_target_filename"]
-    # )
-
-    # config_json["worker_config"]["save_plot_file_aws"] = (
-    #     config_json["worker_config"]["saved_path_aws"]
-    #     + "/"
-    #     + config_json["worker_config"]["saved_rumtime_image_name"]
-    # )
-
-    # config_json["worker_config"]["save_performance_aws"] = (
-    #     config_json["worker_config"]["saved_path_aws"]
-    #     + "/"
-    #     + config_json["worker_config"]["saved_performance_file"]
-    # )
-
     # Update  eks cluster name and groupname
     if nodesscale is not None and check_environment_is_aws():
         logger.info(f"Update nodes eks and worker replicas to{nodesscale}")
@@ -189,7 +109,7 @@ def modiy_config_parameters(
     config_json["aws_config"]["aws_access_key"] = aws_access_key
     config_json["aws_config"]["aws_secret_access_key"] = aws_secret_access_key
     config_json["aws_config"]["aws_region"] = aws_region
-    config_json["aws_config"]["sqs_url"] = sqs_url
+    # config_json["aws_config"]["sqs_url"] = sqs_url
     config_json["aws_config"]["ecr_repo"] = ecr_repo
 
 
