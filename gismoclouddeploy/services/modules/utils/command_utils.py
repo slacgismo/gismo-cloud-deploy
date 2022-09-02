@@ -170,7 +170,7 @@ def start_process_command_to_server(
             worker_config_str = worker_config_str,
             namespace = namespace,
         )
-        print(f"namespace:{namespace} server_name:{server_name} resp: {resp} ")
+        # print(f"namespace:{namespace} server_name:{server_name} resp: {resp} ")
     return None
 # def start_process_command_to_server(
 #     server_list: list = None,
