@@ -458,6 +458,96 @@ def upload_file_to_sc2(
 
 
 
+def ssh_upload_folder_to_ec2(
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    ec2_client,
+    local_folder:str,
+    remote_folder:str,
+):
+
+    ec2 = boto3.resource('ec2')
+    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break;
+
+    # check if directory exist
+    local_files_list = get_all_files_in_local_dir(local_dir=local_folder)
+    # print(local_files_list)
+    # conver local files path to remote path 
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    # ftp_client=ssh.open_sftp()
+    # upload ./config/code-templates-solardatatools/requirements.txt to /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config/code-templates-solardatatools//config/code-templates-solardatatools/requirements.txt
+    # file ="./config/code-templates-solardatatools/requirements.txt"
+    # remote_file = "/home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config/code-templates-solardatatools/requirements.txt"
+    # upload_file_to_sc2(
+    #         user_name=user_name,
+    #         instance_id=instance_id,
+    #         pem_location=pem_location,
+    #         local_file=file,
+    #         remote_file=remote_file,
+    #         ec2_client=ec2_client
+    #     )
+    # check if remote dir exist, if it does not exist. Create a new directory.
+    upload_local_to_remote_dict = {}
+    for file in local_files_list:
+        relative_path, filename = os.path.split(file)
+        # remove ".""
+        relative_path = relative_path.replace(".","") 
+        # print(f"relative_path: {relative_path}")
+        # remote_file = remote_folder + "/" + relative_path  +"/" + filename
+        remote_dir = remote_folder  + relative_path
+        upload_local_to_remote_dict[file] = remote_dir  +"/" + filename
+        # print("------------------------------")
+        # print(f"upload {file} to {remote_file}")
+        # print(f"remote_dir: {remote_dir}")
+        command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir} \n fi"
+        (stdin, stdout, stderr) = ssh.exec_command(command)
+        for line in stdout.readlines():
+            print (line)
+
+    ftp_client=ssh.open_sftp()
+    for key,value in upload_local_to_remote_dict.items():
+    
+        try:
+            ftp_client.put(key,value)
+            logger.info(f"upload :{key} to {value} success")
+        except:
+            logger.error(f"upload :{key} to {value} failed")
+        # print(f"local :{key}")
+        # print(f"value :{value}")
+    ftp_client.close()
+    logger.info(f"Uplodate {local_folder} to {remote_folder} success!!!")
+    return 
+
+
+def get_all_files_in_local_dir( local_dir:str) -> list:
+    all_files = list()
+
+    if os.path.exists(local_dir):
+        files = os.listdir(local_dir)
+        for x in files:
+            filename = os.path.join(local_dir, x)
+            print ("filename:" + filename)
+            # isdir
+            if os.path.isdir(filename):
+                all_files.extend(get_all_files_in_local_dir(filename))
+            else:
+                all_files.append(filename)
+        else:
+            print ('{}does not exist'.format(local_dir))
+    else:
+        print(f"{local_dir} doese not exist")
+    return all_files
+
 
 
 

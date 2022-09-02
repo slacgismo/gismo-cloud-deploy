@@ -3,9 +3,10 @@
 
 
 import logging
+from wsgiref.handlers import read_environ
 from .invoke_function import exec_eksctl_create_cluster,exec_eksctl_delete_cluster
 from .modiy_config_parameters import modiy_config_parameters,convert_yaml_to_json
-from .create_ec2 import check_if_ec2_ready_for_ssh,run_command_in_ec2_ssh,upload_file_to_sc2
+from .create_ec2 import check_if_ec2_ready_for_ssh,run_command_in_ec2_ssh,upload_file_to_sc2,ssh_upload_folder_to_ec2
 from os.path import exists
 import boto3
 import os
@@ -102,28 +103,27 @@ def handle_run_files_ssh(
   
             # upload code-templates folder
             code_template_folder = config_json['worker_config']['code_template_folder']
-            local_env = code_template_folder
+            local_dir = f"./config/{code_template_folder}"
             localpath , file = os.path.split(cluster_file)
-            remote_env=f"{remote_base_path}/config/{code_template_folder}"
+            remote_dir=f"{remote_base_path}"
             logger.info("-------------------")
             logger.info(f"upload code-tempate folder:{code_template_folder}")
-            logger.info(f"upload local {local_env} to {remote_env}")
             logger.info("-------------------")
-
-            # upload_file_to_sc2(
-            #     user_name="ec2-user",
-            #     instance_id=ec2_instance_id,
-            #     pem_location=pem_file,
-            #     ec2_client=ec2_client,
-            #     local_file=local_env,
-            #     remote_file=remote_env,
-            # )
-            command = f"cd {remote_base_path} \n source ./venv/bin/activate \n export $( grep -vE \"^(#.*|\s*)$\" .env ) \n python3 main.py run-files -n 1 -b -sc 1 -d "
-            print(command)
+            ssh_upload_folder_to_ec2(
+                ec2_client=ec2_client,
+                user_name=user_name,
+                instance_id=ec2_instance_id,
+                pem_location=pem_file,
+                local_folder=local_dir,
+                remote_folder=remote_base_path
+            )
+            logger.info(f"==== Start command :{command} ===== ")
+            ssh_command = f"cd {remote_base_path} \n source ./venv/bin/activate\n export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n {command} "
+            # print(command)
             run_command_in_ec2_ssh(
                     user_name=user_name,
                     instance_id=ec2_instance_id,
-                    command=command,
+                    command=ssh_command,
                     pem_location=pem_file,
                     ec2_client=ec2_client
              )
@@ -135,6 +135,8 @@ def handle_run_files_ssh(
         return 
 
 
+
+    
 # import paramiko
 # import os
 # class ExportPrepare(object):
@@ -147,22 +149,22 @@ def handle_run_files_ssh(
 #         return t
 
 #  # Find all the directories you want to upload already in files.
-#     def __get_all_files_in_local_dir(self, local_dir):
-#         all_files = list()
+    # def __get_all_files_in_local_dir(self, local_dir):
+    #     all_files = list()
 
-#         if os.path.exists(local_dir):
-#             files = os.listdir(local_dir)
-#             for x in files:
-#                 filename = os.path.join(local_dir, x)
-#                 print ("filename:" + filename)
-#                 # isdir
-#                 if os.path.isdir(filename):
-#                     all_files.extend(self.__get_all_files_in_local_dir(filename))
-#                 else:
-#                     all_files.append(filename)
-#             else:
-#                 print ('{}does not exist'.format(local_dir))
-#         return all_files
+    #     if os.path.exists(local_dir):
+    #         files = os.listdir(local_dir)
+    #         for x in files:
+    #             filename = os.path.join(local_dir, x)
+    #             print ("filename:" + filename)
+    #             # isdir
+    #             if os.path.isdir(filename):
+    #                 all_files.extend(self.__get_all_files_in_local_dir(filename))
+    #             else:
+    #                 all_files.append(filename)
+    #         else:
+    #             print ('{}does not exist'.format(local_dir))
+    #     return all_files
 
 #  # Copy a local file (localpath) to the SFTP server as remotepath
 #     def sftp_put_dir(self):

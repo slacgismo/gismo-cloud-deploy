@@ -188,3 +188,5 @@ def delete_eks_cluster(cluster_file:str) -> str:
     res = exec_eksctl_delete_cluster(cluster_file=cluster_file)
     logger.info(res)
     return 
+
+# export $( grep -vE "^(#.*|\s*)$" .env)
