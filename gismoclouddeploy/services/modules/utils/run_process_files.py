@@ -175,7 +175,6 @@ def run_process_files(
             aws_access_key=aws_access_key,
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
-            sqs_url=sqs_url,
             ecr_repo=ecr_repo,
             current_repeat_number=current_repeat_number,
             s3_client= s3_client,
