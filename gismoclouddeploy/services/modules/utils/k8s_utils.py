@@ -270,7 +270,7 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
                 pod_info = {"name": name, "timestamp": timestamp}
                 pods.append(pod_info)
     sort_orders = sorted(pods, key=lambda d: d['timestamp'], reverse=True) 
-    if len(sort_orders) >= 0 :
+    if len(sort_orders) > 0 :
         res = [ sub['name'] for sub in sort_orders ][0]
         print(f"----------- get first k8s_pod_name :{ res}")
         return res
