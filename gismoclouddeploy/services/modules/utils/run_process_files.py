@@ -3,6 +3,7 @@ import time
 import os
 from os.path import exists
 import math
+from transitions import Machine
 from .command_utils import (
     check_solver_and_upload,
     update_config_json_image_name_and_tag_base_on_env,
@@ -21,6 +22,10 @@ import re
 from .long_pulling_sqs import long_pulling_sqs,long_pulling_sqs_multi_server
 from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
+
+
+from .GismoCloudDeploy import GismoCloudDeploy
+
 from .check_aws import (
     connect_aws_client,
     check_environment_is_aws,
@@ -108,6 +113,40 @@ def run_process_files(
     # remove all files in results
     # list all files in results folder
     # check config exist
+
+    
+
+    gcd = GismoCloudDeploy(
+        configfile=configfile,
+        num_inputfile=number,
+        env="local",
+        aws_access_key=aws_access_key,
+        aws_secret_access_key = aws_secret_access_key,
+        aws_region = aws_region,
+        
+    )
+    # print(gcd.state)
+    print(gcd.states)
+    try:
+        logger.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_load_config()
+        logger.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_prepare_system()
+        logger.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_build_and_tag_images()
+        logger.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_deploy_k8s()
+        logger.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_send_command_to_servers()
+        logger.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_long_pulling_sqs()
+        logger.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_clean_services()
+        logger.info(f" ===== State: {gcd.state} =======")
+    except Exception as e:
+        gcd.gcd.trigger_clean_services()
+        logger.info(f" ===== State: {gcd.state} =======")
+    return 
 
     config_yaml = f"./config/{configfile}"
 
@@ -227,6 +266,7 @@ def run_process_files(
             except Exception as e:
                 logger.error(f"Upload Solver error:{e}")
                 return
+ 
         namespace_list = config_json["worker_config"]['k8s_namespace_list']
         # check if build images.
         if is_build_image:
@@ -588,7 +628,7 @@ def run_process_files(
             f" ======== Completed  {current_repeat_number}, Total repeat:{repeatnumber} ========== "
         )
 
-
+    return 
     initial_end_services(
         server_list=ready_server_list,
         worker_config=worker_config_obj,

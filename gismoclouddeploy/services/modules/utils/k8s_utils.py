@@ -274,6 +274,7 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
         res = [ sub['name'] for sub in sort_orders ][0]
         print(f"----------- get first k8s_pod_name :{ res}")
         return res
+    return None
 
 
 def k8s_create_namespace(namespace:str = None):
