@@ -1,16 +1,70 @@
-from cmath import log
+
+from distutils import log
 from enum import Enum
+import imp
 from transitions import Machine
 from .modiy_config_parameters import modiy_config_parameters, convert_yaml_to_json
+from .check_aws import check_aws_validity, check_environment_is_aws
 import enum
 import os
-import logging
+import coloredlogs, logging
 from os.path import exists
-# logger config
-logger = logging.getLogger()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
+import re
+import socket
+import boto3
+import math
+import time
+import threading
+from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
+import json
+from .invoke_function import (
+    invoke_docker_compose_up,
+    invoke_docker_compose_build,
+    invoke_tag_image,
+    invoke_ecr_validation,
+    invoke_push_image,
+    invoke_eks_updagte_kubeconfig,
+    invoke_kubectl_create_namespaces,
+    # invoke_process_files_to_server_namespace,
+    invoke_exec_k8s_run_process_files
+    
+    
 )
+from .k8s_utils import (
+    check_k8s_services_exists, 
+    create_k8s_svc_from_yaml,
+    get_k8s_pod_name_from_namespace,
+    k8s_create_namespace,
+    check_k8s_namespace_exits
+)
+
+from typing import List
+from .check_aws import (
+    connect_aws_client,
+    check_environment_is_aws,
+    connect_aws_resource,
+)
+
+from .sqs import (
+    clean_user_previous_sqs_message,
+    send_queue_message,
+    receive_queue_message,
+    create_queue,
+    delete_queue,
+    list_queues,
+)
+from .command_utils import (
+    check_solver_and_upload,
+    update_config_json_image_name_and_tag_base_on_env,
+    create_or_update_k8s_deployment,
+    checck_server_ready_and_get_name,
+
+    start_process_command_to_server,
+
+    
+)
+import coloredlogs, logging
+coloredlogs.install()
 
 class Environments(enum.Enum):
     LOCAL = 0
@@ -19,7 +73,6 @@ class Environments(enum.Enum):
 class GismoCloudDeploy(object):
 
     states=['stop', 
-            'load_config', 
             'prepare_system',
             'build_tag_images',
             'deploy_k8s',
@@ -37,33 +90,65 @@ class GismoCloudDeploy(object):
             aws_access_key: str = None,
             aws_secret_access_key: str = None,
             aws_region: str = None,
+            ecr_repo: str = None
         ) -> None:
 
         self.configfile = configfile
         self.env = env.upper()
         self.num_inputfile = num_inputfile
-        self.aws_access_key = aws_access_key,
+        self.aws_access_key = aws_access_key
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_region = aws_region
-
-        self._repeat_index = 0
-        #eks properties
-        self.cluster_name = None   
-        self.nodegroup_name = None   
-        self.instanceType = None     
-
-        #k8s parameters
-        self.k8s_namespace_set = set()
-        self.separated_process_file_list_in_servers = []
-        self.config = {}
+        self.ecr_repo = ecr_repo
         
+   
+        #eks properties
+        self._cluster_file = ""
+        self._scale_eks_nodes_wait_time  = 1
+        self._interval_of_wait_pod_ready  = 1
+        self._cluster_name = ""
+        self._cluster_region = ""
+        self._nodes_maxSize = 1
+        
+        self._nodegroup_name = ""   
+        self._instanceType = ""    
+        self._total_num_nodes = 1
+        self._ec2_bastion_saved_config_file = ""
+
+        # private variables
+        self._k8s_namespace_set = set()
+        self._separated_process_file_list_in_servers = {}
+        self._config = {}
+        self._saved_path_cloud = ""
+        self._saved_path_local = ""
+        self._repeat_number_per_round = 1
+        self._is_celeryflower_on = False
+        self._repeat_index = 0
+        self._user_id = ""
+        self._host_name = ""
+        self._sqs_url = ""
+
+        self._code_template_folder = ""
+
+        self._data_bucket = ""
+        self._default_files  =[]
+        self._process_column_keywords = []
+        self._file_type = ".csv"
+        self._num_namesapces = 1
+        self._num_worker_pods_per_namespace = 8
+        self._total_number_files = 0
+        self._worker_desired_replicas = 1
+        self._services_config_list = {}
+        self._filename = {}
+        self._ready_server_list = []
+    
+
+
 
         # add handle error state 
-        # self.machine = Machine(model=self, states=GismoCloudDeploy.states, initial='stop', on_exception='handle_error', send_event=True)
+        # self.machine = Machine(model=self, states=GismoCloudDeploy.states, initial='stop',send_event=True)
         self.machine = Machine(model=self, states=GismoCloudDeploy.states, initial='stop', on_exception='handle_error',send_event=True)
-        
-        self.machine.add_transition(trigger='trigger_load_config', source='stop', dest='load_config', after='handle_read_config_yaml')
-        self.machine.add_transition(trigger='trigger_prepare_system', source='load_config', dest='prepare_system', after='handle_prepare_system')
+        self.machine.add_transition(trigger='trigger_prepare_system', source='stop', dest='prepare_system', before ='handle_read_config_yaml', after='handle_prepare_system')
         self.machine.add_transition(trigger='trigger_build_and_tag_images', source='prepare_system', dest='build_tag_images', before ='handle_build_and_tag_images',after='handle_push_images_to_cloud')
         self.machine.add_transition(trigger='trigger_deploy_k8s', source='build_tag_images', dest='deploy_k8s', before='handle_deploy_k8s',after='handle_verify_k8s_services')
         self.machine.add_transition(trigger='trigger_send_command_to_servers', source='deploy_k8s', dest='send_command_to_servers', after='handle_send_command_to_server')
@@ -71,6 +156,11 @@ class GismoCloudDeploy(object):
         self.machine.add_transition(trigger='trigger_clean_services', source='*', dest='stop', before='handle_clean_services', 
         after='handle_analyzing_logs')
 
+
+    @property
+    def repeat_index(self) -> int:
+        return self._repeat_index 
+        
     def save_file(self, file_name, env, file_path_local, file_path_cloud):
         """ return full saved file name and path based on env"""
         file_path_name = ""
@@ -80,7 +170,7 @@ class GismoCloudDeploy(object):
         else:
             # check if directory exist 
             if not os.path.exists(file_path_local):
-                logger.info(f"{file_path_local} does not exist. Create {file_path_local}")
+                logging.info(f"{file_path_local} does not exist. Create {file_path_local}")
                 os.mkdir(file_path_local)
             file_path_name = file_path_local +"/"+ file_name
             
@@ -108,78 +198,597 @@ class GismoCloudDeploy(object):
     def raise_error(self, event): raise ValueError("Oh no")
 
     def handle_error(self, event):
+        logging.error(event.error)
         print("Fixing things ...")
-        if self.is_aws():
-            print("handle error on AWS")
-        elif self.is_local():
-            print("handle error on LOCAL")
-
-        print(event.error)
+        # if self.is_aws():
+        #     logging.error("handle error on AWS")
+        # elif self.is_local():
+        #     logging.error("handle error on LOCAL")
         # del event.error  # it did not happen if we cannot see it ...
 
 
-    def is_aws(self) -> bool:
+    def _is_aws(self) -> bool:
         if self.env == Environments.AWS.name:
             return True
         return False
 
-    def is_local(self) -> bool:
+    def _is_local(self) -> bool:
         if self.env == Environments.LOCAL.name:
             return True
         return False
 
+    def _assert_keys_in_configfile(self):
+        try:
+            assert 'worker_config' in self._config
+            assert 'services_config_list' in self._config
+            assert 'aws_config' in self._config
+
+
+            # worker_config
+            worker_config_dict = self._config['worker_config']
+            assert 'data_bucket' in worker_config_dict
+            assert 'default_process_files'in  worker_config_dict
+            assert 'data_file_type' in worker_config_dict
+            assert 'process_column_keywords' in worker_config_dict
+            assert 'saved_bucket' in worker_config_dict
+  
+
+        except AssertionError as e:
+            raise AssertionError(f"Assert error {e}")
+
     # state function
 
     def handle_read_config_yaml(self,event):
-        config_yaml = f"./config/{self.configfile}"
-        if exists(self.configfile) is False:
-            logger.warning(
+        base_path = os.getcwd()
+        config_yaml = f"{base_path}/config/{self.configfile}"
+
+        if exists(config_yaml) is False:
+            logging.warning(
                 f"{config_yaml} not exist, use default config.yaml instead"
             )
+            config_yaml = f"{base_path}/config/config.yaml"
         try:
-            self.config = convert_yaml_to_json(yaml_file=config_yaml)
+            
+            self._config = convert_yaml_to_json(yaml_file=config_yaml)
+  
+            # assert keys  in configfile
+            self._assert_keys_in_configfile()
+            logging.info("=== Pass assert key test ======")
+            # services list
+            self._services_config_list = self._config["services_config_list"]
+
+            # worker config
+            worker_config = self._config["worker_config"]
+            self._data_bucket = worker_config["data_bucket"]
+            self._default_files = worker_config["default_process_files"]
+            self._file_type = worker_config["data_file_type"]
+            self._solver = worker_config["solver"]
+            self._code_template_folder  =  worker_config["code_template_folder"]
+
+            
+            self._repeat_number_per_round = worker_config["repeat_number_per_round"]
+            self._is_celeryflower_on = worker_config["is_celeryflower_on"]
+            self._num_worker_pods_per_namespace = worker_config["num_worker_pods_per_namespace"]
+            self._filename = worker_config["filename"]
+            # aws config
+            aws_config = self._config["aws_config"]
+            self._cluster_file  = aws_config['cluster_file']
+            self._scale_eks_nodes_wait_time  = aws_config['scale_eks_nodes_wait_time']
+            self._interval_of_wait_pod_ready  = aws_config['interval_of_wait_pod_ready']
         except Exception as e:
-            raise e
+            raise Exception(f"parse config file error :{e}")
+        # convert cluster file
+        if self._is_aws():
+            cluster_file = f"{base_path}/config/eks/{self._cluster_file}"
+            if exists(cluster_file) is False:
+                raise ValueError (f"{cluster_file} does not exist")
+            cluster_file_dict = convert_yaml_to_json(yaml_file=cluster_file)
+            # import cluster file parameters
+            self._cluster_name = cluster_file_dict['metadata']['name']
+            self._cluster_region = cluster_file_dict['metadata']['region']
+            if len(cluster_file_dict['nodeGroups']):
+                self._nodegroup_name = cluster_file_dict['nodeGroups'][0]['name']
+                self._nodes_maxSize = cluster_file_dict['nodeGroups'][0]['maxSize']
+                self._instanceType = cluster_file_dict['nodeGroups'][0]['instanceType']
+            else:
+                raise ValueError(f"nodeGroups does not exist")
+                
+        
+        try:
+            check_aws_validity(key_id=self.aws_access_key, secret=self.aws_secret_access_key)
+        except Exception as e:
+            logging.error(f"AWS credential failed: {e}")
+        return
 
     def handle_prepare_system(self, event):
-        print("handle_prepare_system")
-    
+        self._host_name = (socket.gethostname())
+        self._user_id = re.sub('[^a-zA-Z0-9]', '', self._host_name).lower()
+
+        s3_client = boto3.client(
+            "s3",
+            region_name=self.aws_region,
+            aws_access_key_id=self.aws_access_key,
+            aws_secret_access_key=self.aws_secret_access_key,
+        )
+
+        # define total process files accourding to input command
+        n_files = return_process_filename_base_on_command_and_sort_filesize(
+            first_n_files=self.num_inputfile,
+            bucket=self._data_bucket,
+            default_files=self._default_files ,
+            s3_client=s3_client,
+            file_type=self._file_type,
+            )
+
+        self._total_number_files = len(n_files)
+        self._number_of_namespace = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
+        num_files_per_namespace =  math.ceil(self._total_number_files/self._number_of_namespace)
+
+        # define how many worker pods replcas in each namespaces. 
+
+        self._worker_desired_replicas_per_namespaces =  self._num_worker_pods_per_namespace - 1
+        if self._worker_desired_replicas_per_namespaces < 1 :
+            self._worker_desired_replicas_per_namespaces = 1
+        
+        for i in range(self._number_of_namespace ):
+            curr_time = int(time.time())
+        
+            namespace = f"{curr_time}-"+ self._user_id  
+            self._k8s_namespace_set.add(namespace)
+
+
+        # assign process file into each namespace.
+        _index = 0
+        start_index = 0 
+        end_inedx = num_files_per_namespace
+        process_files_list_per_server_dict = {}
+        for namespace in self._k8s_namespace_set:
+            _files_list = n_files[start_index : end_inedx]
+            process_files_list_per_server_dict[namespace] = _files_list 
+            start_index = end_inedx
+            end_inedx += num_files_per_namespace
+            _index += 1
+        if end_inedx < len(n_files):
+            raise Exception(f"Assign files to namesapcce error: {end_inedx} < {len(n_files)}")
+        self._separated_process_file_list_in_servers = process_files_list_per_server_dict
+
+
+        for key, value in self._separated_process_file_list_in_servers.items():
+            logging.info(f"namespaces : {key} ; num of files {len(value)}")
+        
+        # create sqs
+        sqs_name = f"gcd-{self._user_id}"
+        sqs_resource = connect_aws_resource(
+            resource_name="sqs",
+            key_id=self.aws_access_key,
+            secret=self.aws_secret_access_key,
+            region=self.aws_region,
+        )
+        
+        _resp = create_queue(
+            queue_name=sqs_name,
+            delay_seconds="0",
+            visiblity_timeout="60",
+            sqs_resource=sqs_resource,
+            tags={"project": "pvinsight"},
+        )
+        self._sqs_url = _resp.url
+        logging.info(f"======== Create {self._sqs_url} success =======")
+        
+        # Upload solver 
+     
+        if len(self._solver):
+            try:
+                check_solver_and_upload(
+                    ecr_repo=self.ecr_repo,
+                    solver_name=self._solver['solver_name'],
+                    saved_solver_bucket=self._solver['saved_solver_bucket'],
+                    solver_lic_file_name=self._solver['solver_lic_file_name'],
+                    solver_lic_local_path=self._solver['solver_lic_local_path'],
+                    saved_temp_path_in_bucket=self._solver['saved_temp_path_in_bucket'],
+                    aws_access_key=self.aws_access_key,
+                    aws_secret_access_key=self.aws_secret_access_key,
+                    aws_region=self.aws_region,
+                )
+                logging.info(f"Upload Solver: {self._solver['solver_name']} scuccess")
+            except Exception as e:
+                logging.error(f"Upload Solver error:{e}")
+                return
+        else:
+            logging.info("No solver upload")
+
+        if self._is_celeryflower_on is False and "celeryflower" in self._services_config_list:
+            self._services_config_list.pop('celeryflower')
+            logging.info("Remove celerey flower from service list")
+         
+
+        
+        # update aws parameters 
+        if self._is_aws():
+            # update image rag 
+            for service_name in self._services_config_list:
+                if service_name == "worker" \
+                    or service_name =="server" \
+                    or service_name == "celeryflower":
+                    # update pull policy
+                    self._services_config_list[service_name]['imagePullPolicy'] = "Always"
+                    updated_name = update_image_tags_for_ecr(
+                        service_name=service_name,
+                        ecr_repo=self.ecr_repo,
+                    )
+                    self._services_config_list[service_name]['image_name'] = updated_name
+                logging.info(f"{service_name} : {updated_name}")
+
+
+
+
+        return 
+
+
+
     def handle_build_and_tag_images(self, event):    
-        print("handle_build_and_tag_images")
+        logging.info("handle_build_and_tag_images")
+        # docker build image
+        try:
+            invoke_docker_compose_build(
+                        code_template_folder= self._code_template_folder ,
+                    )
+        except Exception as e:
+            
+            raise Exception(f"Build Image Failed {e}")
+
+        # update image tag of aws for ecr
+        # loac images don't need to update image tags
+        if self._is_aws():
+            for service in self._services_config_list:
+                if service == "worker" or service == "server" or  service == "celeryflower":
+                    if self._is_celeryflower_on is False:
+                        logging.info("Celery flower is off")
+                        continue
+                    # Updated image tag
+                    update_image = f"{self.ecr_repo}/{service}" 
+                    # tag image with user_id
+                    invoke_tag_image(
+                            origin_image=service,
+                            update_image=update_image,
+                            image_tag=self._user_id,
+                        )
+        return 
 
     def handle_push_images_to_cloud(self, event):
-        print("handle_push_images_to_cloud")
-    
+        logging.info("handle_push_images_to_cloud")
+        if self._is_aws():
+            logging.info("Validate ECR repo")
+            try:
+                validation_resp = invoke_ecr_validation(ecr_repo=self.ecr_repo)
+            except Exception as e:
+                raise Exception(f"Validation ECR failed!!")
+
+            logging.info("PUSH images to ECR")
+            
+
+            push_thread = list()
+            try:
+                for service in self._services_config_list:
+                    logging.info(f"Push image to {self.ecr_repo}/{service}:{self._user_id}")
+                    x = threading.Thread(
+                            target=invoke_push_image,
+                            args=(service, self._user_id, self.ecr_repo),
+                        )
+                    x.name = service
+                    push_thread.append(x)
+                    x.start()
+            except Exception as e:
+                raise Exception(f"Push images failed")
+            
+            for index, thread in enumerate(push_thread):
+                    thread.join()
+                    logging.info("Wait push to %s thread done", thread.name)
+                  
+        return 
     def handle_deploy_k8s(self, event):
-        print("handle_deploy_k8s")
-    
+        logging.info("handle_deploy_k8s")
+
+        if self._is_aws():
+            logging.info("Update eks config ")
+            # update aws eks
+            invoke_eks_updagte_kubeconfig(cluster_name=self._cluster_name)
+            try:
+                logging.info("Scale up eks nodes ")
+                scale_eks_nodes_and_wait(
+                    scale_node_num=self._total_num_nodes,
+                    total_wait_time=self._scale_eks_nodes_wait_time,
+                    delay=1,
+                    cluster_name=self._cluster_name,
+                    nodegroup_name=self._nodegroup_name,
+                )
+                
+            except Exception as e:
+                raise Exception("Scale nodes error")
+
+        ## ================== ##
+        ## Create neamespaces
+        ## ================== ##
+        logging.info("Create k8s namespace")
+        for namespace in self._k8s_namespace_set:    
+            k8s_create_namespace(namespace=namespace)
+
+        # update k8s deployment 
+        logging.info("Apply k8s deployment, services in namespace")
+        for namespace in self._k8s_namespace_set:   
+            for key, value in self._services_config_list.items():
+                service_name = key
+                if service_name == "celeryflower" and self._is_celeryflower_on is False:
+                    continue
+                deployment_file = value["deployment_file"]
+                service_file = value["service_file"]
+                desired_replicas = value["desired_replicas"]
+                image_base_url = value["image_name"]
+                image_tag = value["image_tag"]
+                imagePullPolicy = value["imagePullPolicy"]
+
+                create_or_update_k8s_deployment(
+                            service_name=service_name,
+                            image_tag=image_tag,
+                            image_base_url=image_base_url,
+                            imagePullPolicy=imagePullPolicy,
+                            desired_replicas=desired_replicas,
+                            k8s_file_name=deployment_file,
+                            namespace=namespace,
+                        )
+                logging.info(f"Apply {deployment_file}:{service_name} in namspace:{namespace} ")
+                if service_file:
+                    # check service exist
+                    if not check_k8s_services_exists(name=service_name, namspace = namespace):
+                        logging.info(
+                            f" Apply {service_file} services in namespace: {namespace}"
+                        )
+                        create_k8s_svc_from_yaml(full_path_name=service_file, namspace=namespace)
+                        # create_k8s_svc_from_yaml(full_path_name=service_file, namespace= namespace)
+                logging.info(f"End create service :{service_name} in namspace:{namespace} ")
+
     def handle_verify_k8s_services(self, event):
-        print("handle_verify_k8s_services")
+        logging.info("handle_verify_k8s_services")
+        threads = list()
+        try:
+            for service, value in self._services_config_list.items():
+                desired_replicas = value["desired_replicas"]
+                logging.info(f"{service}: desired_replicas: {desired_replicas}")
+                x = threading.Thread(
+                    target=wait_pod_ready,
+                    args=(
+                        desired_replicas,
+                        service,
+                        self._interval_of_wait_pod_ready,
+                        1,
+                    ),
+                )
+                x.name = service
+                threads.append(x)
+                x.start()
+        except Exception as e:
+            raise Exception(f"Verify k8 services failed")
+
+        logging.info("get server's pod name in each namespace")
+
+        ready_server_list = []
+        wait_time = 25
+        delay = 5
+        while wait_time > 0:
+            logging.info(f"K8s reboot Wait {wait_time} sec")
+            time.sleep(delay)
+            wait_time -= delay
+
+        for namespace in self._k8s_namespace_set:
+            server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
+            _server_info = {'name': server_name, 'namespace':namespace}
+            ready_server_list.append(_server_info)
+
+        if len(ready_server_list) != len(self._k8s_namespace_set):
+            raise Exception(f"one of the namespace has no server ready")
+        self._ready_server_list = ready_server_list
+        logging.info(f"ready server list {ready_server_list}")
+        return
     
     def handle_send_command_to_server(self, event):
-        print("handle_send_command_to_server")
-
+        logging.info("handle_send_command_to_server")
+        
+        send_command_to_server(
+            read_server_list=self._ready_server_list,
+            files_list_in_namespace=self._separated_process_file_list_in_servers,
+            sqs_url=self._sqs_url,
+            aws_access_key=self.aws_access_key,
+            aws_secret_access_key= self.aws_secret_access_key,
+            aws_region=self.aws_region,
+            repeat_number_per_round=self._repeat_number_per_round,
+            data_file_type=self._file_type,
+            data_bucket=self._data_bucket,
+            process_column_keywords=self._process_column_keywords,
+            solver=self._solver,
+            user_id=self._user_id
+        )
     def handle_long_pulling_sqs(self, event):
-        print("handle_long_pulling_sqs")
+        logging.info("handle_long_pulling_sqs")
     
     
     def handle_clean_services(self, event):
-        print("handle_clean_services")
+        logging.info("handle_clean_services")
 
     
     def handle_analyzing_logs(self, event):
-        print("handle_analyzing_logs")
+        logging.info("handle_analyzing_logs")
 
 
-    @property
-    def repeat_index(self) -> int:
-        return self._repeat_index 
+
+
+def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
+    """Get filename and size from S3 , remove non csv file"""
+    try:
+        response = s3_client.list_objects_v2(Bucket=bucket_name)
+        files = response["Contents"]
+        filterFiles = []
+        for file in files:
+            split_tup = os.path.splitext(file["Key"])
+            file_extension = split_tup[1]
+            if file_extension == file_format:
+                obj = {
+                    "Key": file["Key"],
+                    "Size": file["Size"],
+                }
+                filterFiles.append(obj)
+        return filterFiles
+    except Exception as e:
+        raise Exception(f"list files in bucket error: {e}")
+
+
+def return_process_filename_base_on_command_and_sort_filesize(
+    first_n_files: str,
+    bucket: str,
+    default_files: list,
+    s3_client: "botocore.client.S3",
+    file_type: str,
+
+) -> list:
+
+    n_files = []
+ 
+
+    files_dict = list_files_in_bucket(
+        bucket_name=bucket, s3_client=s3_client, file_format=file_type
+    )
+
+    if first_n_files is None:
+        n_files = default_files
+        return n_files
+    else:
+        try:
+            if int(first_n_files) == 0:
+                logging.info(f"Process all files in {bucket}")
+                for file in files_dict:
+                    n_files.append(file)
+            else:
+                logging.info(f"Process first {first_n_files} files")
+                for file in files_dict[0 : int(first_n_files)]:
+                    file_name = file['Key']
+                    split_tup = os.path.splitext(file_name)
+                    file_extension = split_tup[1]
+                    if file_extension == file_type:
+                        n_files.append(file)
+        except Exception as e:
+            logging.error(f"Input {first_n_files} is not an integer")
+            raise e
+
+    logging.info(f"len :{len(n_files)}")
+    # print("------------")
+    _temp_sorted_file_list = sorted(n_files, key=lambda k: k['Size'],reverse=True)
+
+    sorted_files = [d['Key'] for d in _temp_sorted_file_list]
+
+    return sorted_files
+
+
+def update_image_tags_for_ecr(
+    service_name: int = 1,
+    ecr_repo: str = None,
+) -> List[str]:
+    """
+    Update worker and server's image_name and tag aws.
+
+    """
+    image_name = f"{ecr_repo}/{service_name}"
     
+    return image_name 
 
-# lump = GismoCloudDeploy()
-# m = Machine(lump, states, before_state_change='raise_error', on_exception='handle_error', send_event=True)
-# try:
-#     lump.to_gas()
-# except ValueError:
-#     pass
-# print(lump.state)
+
+
+
+def send_command_to_server(
+    read_server_list: list = [],
+    files_list_in_namespace: list =[],
+    sqs_url:str = None,
+    aws_access_key :str = None,            
+    aws_secret_access_key:str = None,
+    aws_region:str = None,
+    repeat_number_per_round: int = 1,
+    data_file_type:str = None,
+    data_bucket:str = None,
+    process_column_keywords: list = [],
+    solver: dict = {},
+    user_id : str = None,
+
+) -> List[str]:
+
+    for index, server_dict in enumerate(read_server_list):
+        print(f"index :{index}")
+        if not 'name' in server_dict or not 'namespace' in server_dict:
+            raise ValueError("name or namespace key does not exists")
+        
+        server_name = server_dict['name']
+        namespace = server_dict['namespace']
+
+        logging.info(f"Invoke server: {server_name} in namespace: {namespace}")
+        if namespace not in files_list_in_namespace:
+            raise Exception(f"cannot find {namespace} in  {files_list_in_namespace}")
+        process_file_lists = files_list_in_namespace[namespace]
+        
+        config_str= create_config_parameters_to_app(
+            po_server_name=server_name,
+            files_list=process_file_lists,
+            sqs_url = sqs_url,
+            aws_access_key= aws_access_key,
+            aws_secret_access_key = aws_secret_access_key,
+            aws_region = aws_region,
+            repeat_number_per_round = repeat_number_per_round,
+            data_file_type = data_file_type,
+            data_bucket = data_bucket,
+            process_column_keywords = process_column_keywords,
+            solver = solver,
+            user_id = user_id
+        )
+        # logging.info(f"config_str: {config_str}")
+
+        resp = invoke_exec_k8s_run_process_files(
+            config_params_str=config_str,
+            pod_name=server_name,
+            first_n_files= None,
+            namespace = namespace,
+        )
+        logging.info(f"invoke k8s resp:{resp}")
+        print(f"namespace:{namespace} server_name:{server_name} resp: {resp} ")
+    return None
+
+def create_config_parameters_to_app(
+    po_server_name:str = None,
+    files_list : list = [],
+    sqs_url :str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key :str = None,
+    aws_region :str = None,
+    repeat_number_per_round :int = 1,
+    data_file_type:str = None,
+    data_bucket:str = None,
+    process_column_keywords: str = None,
+    solver: dict = {},
+    user_id : str = None,
+
+) -> str:
+
+    config_dict = {}
+    try:
+        config_dict["default_process_files"] = json.dumps(files_list)
+        config_dict['po_server_name'] = po_server_name
+        config_dict['sqs_url'] = sqs_url
+        config_dict['aws_access_key'] = aws_access_key
+        config_dict['aws_secret_access_key'] = aws_secret_access_key
+        config_dict['aws_region'] = aws_region
+        config_dict['repeat_number_per_round'] = repeat_number_per_round
+        config_dict['data_file_type'] = data_file_type
+        config_dict['data_bucket'] = data_bucket
+        config_dict['process_column_keywords'] = process_column_keywords
+        config_dict['solver'] = solver
+        config_dict['user_id'] = user_id
+        config_str = json.dumps(config_dict)
+        logging.info(config_str)
+    except ValueError as e:
+        raise ValueError(f"pase config parametes failed {e}")
+    return config_str

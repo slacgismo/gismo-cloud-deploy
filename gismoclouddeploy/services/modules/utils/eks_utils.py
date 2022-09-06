@@ -59,9 +59,9 @@ def wait_pod_ready(
             logger.info(f"{num_container} {container_prefix} pods are running")
             return
         counter -= delay
-        # logger.info(
-        #     f"waiting {container_prefix} {cunrrent_num_container} .counter: {counter - delay} Time: {time.ctime(time.time())}"
-        # )
+        logger.info(
+            f"waiting {container_prefix} {cunrrent_num_container} .counter: {counter - delay} Time: {time.ctime(time.time())}"
+        )
         time.sleep(delay)
 
     raise Exception("Wait over time")

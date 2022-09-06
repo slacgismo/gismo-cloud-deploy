@@ -5,8 +5,9 @@ from subprocess import PIPE, run
 import subprocess
 import sys
 import threading
+import logging
 
-from numpy import str_
+
 
 
 class Command(object):
@@ -190,7 +191,7 @@ def invoke_docker_compose_build(
     #     raise e
 
 
-def invoke_ecr_validation(ecr_repo: str_) -> str:
+def invoke_ecr_validation(ecr_repo: str) -> str:
     command = f"aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin {ecr_repo}"
     output = subprocess.check_output(["bash", "-c", command])
     return output
@@ -327,7 +328,7 @@ def invoke_exec_k8s_run_process_files(
     first_n_files: str = None,
     namespace:str = "default"
 ) -> None:
-
+    print("invoke_exec_k8s_run_process_files")
     command = [
         "kubectl",
         "exec",
@@ -343,24 +344,20 @@ def invoke_exec_k8s_run_process_files(
         f"{config_params_str}",
         f"{first_n_files}",
     ]
+
     try:
-        # print(f"command : {command}")
+
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        # out, err = res.communicate()
-        # print(out)
-        # return out
+        out, err = res.communicate()
+        logger.debug(out, err)
+        return out
 
     except KeyboardInterrupt as e:
-        logger.error(f"Invoke k8s process file error:{e}")
+        print(f"Invoke k8s process file error:{e}")
         res.terminate()
-    return res
-    # return out
-    # res = exec_subprocess_command(command=command)
-    # res = exec_docker_command(command)
-    # return
-    # return res
+
 
 
 def invoke_exec_k8s_ping_worker(

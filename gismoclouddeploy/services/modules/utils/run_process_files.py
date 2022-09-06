@@ -68,10 +68,12 @@ from .sqs import (
 from multiprocessing.dummy import Process
 
 # logger config
-logger = logging.getLogger()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
-)
+# logger = logging.getLogger()
+# logging.basicConfig(
+#     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
+# )
+import coloredlogs, logging
+# coloredlogs.install()
 
 
 def run_process_files(
@@ -115,37 +117,36 @@ def run_process_files(
     # check config exist
 
     
-
+    
     gcd = GismoCloudDeploy(
         configfile=configfile,
         num_inputfile=number,
-        env="local",
+        env="loacl",
         aws_access_key=aws_access_key,
         aws_secret_access_key = aws_secret_access_key,
         aws_region = aws_region,
+        ecr_repo=ecr_repo
         
     )
     # print(gcd.state)
-    print(gcd.states)
-    try:
-        logger.info(f" ===== State: {gcd.state} =======")
-        gcd.trigger_load_config()
-        logger.info(f" ===== State: {gcd.state} =======")
-        gcd.trigger_prepare_system()
-        logger.info(f" ===== State: {gcd.state} =======")
-        gcd.trigger_build_and_tag_images()
-        logger.info(f" ===== State: {gcd.state} =======")
-        gcd.trigger_deploy_k8s()
-        logger.info(f" ===== State: {gcd.state} =======")
-        gcd.trigger_send_command_to_servers()
-        logger.info(f" ===== State: {gcd.state} =======")
-        gcd.trigger_long_pulling_sqs()
-        logger.info(f" ===== State: {gcd.state} =======")
-        gcd.trigger_clean_services()
-        logger.info(f" ===== State: {gcd.state} =======")
-    except Exception as e:
-        gcd.gcd.trigger_clean_services()
-        logger.info(f" ===== State: {gcd.state} =======")
+    # try:
+    logging.info(f" ===== State: {gcd.state} =======")
+    gcd.trigger_prepare_system()
+    logging.info(f" ===== State: {gcd.state} =======")
+    gcd.trigger_build_and_tag_images()
+    logging.info(f" ===== State: {gcd.state} =======")
+    gcd.trigger_deploy_k8s()
+    logging.info(f" ===== State: {gcd.state} =======")
+    gcd.trigger_send_command_to_servers()
+    logging.info(f" ===== State: {gcd.state} =======")
+    gcd.trigger_long_pulling_sqs()
+    logging.info(f" ===== State: {gcd.state} =======")
+        # gcd.trigger_clean_services()
+        # logging.info(f" ===== State: {gcd.state} =======")
+    # except Exception as e:
+    #     gcd.trigger_clean_services()
+    #     logging.info(f" ===== State: {gcd.state} =======")
+    # return 
     return 
 
     config_yaml = f"./config/{configfile}"
