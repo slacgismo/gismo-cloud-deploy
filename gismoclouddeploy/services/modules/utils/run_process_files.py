@@ -128,26 +128,43 @@ def run_process_files(
         ecr_repo=ecr_repo
         
     )
-    # print(gcd.state)
-    # try:
+    try:
+        # Initial state , read yaml file and update system variables
+        logging.info(f" ===== State: {gcd.state} =======")
+        gcd.trigger_initial() 
+        num_repetition = gcd.get_num_repetition()
+        repeat_index = gcd.get_repeat_index()
+    except Exception as e:
+        logging.error(f"Initial error :{e}")
+        return 
+    
+    while repeat_index < num_repetition:
+        try:
+            logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
+            # ready state, build , tag and push images
+            gcd.trigger_ready()
+            logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
+            # deploy state, deploy k8s , scale eks nodes
+            gcd.trigger_deploy()
+            logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
+            # processing state, send coammd to server, long pulling sqs
+            gcd.trigger_processing()
+            logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
+            # trigger repetition, increate repeat index and update file index
+            gcd.trigger_repetition()
+            repeat_index = gcd.get_repeat_index()
+            time.sleep(1)
+        except Exception as e:
+            # something wrong break while loop and clean services. 
+            logging.error(f"Somehting wrong : {e}")
+            break
+           
+
+    # clean up state, clean up k8s, delete namspaces, scale down eks nodes to 0 .
     logging.info(f" ===== State: {gcd.state} =======")
-    gcd.trigger_prepare_system()
+    gcd.trigger_cleanup()
     logging.info(f" ===== State: {gcd.state} =======")
-    gcd.trigger_build_and_tag_images()
-    logging.info(f" ===== State: {gcd.state} =======")
-    gcd.trigger_deploy_k8s()
-    logging.info(f" ===== State: {gcd.state} =======")
-    gcd.trigger_send_command_to_servers()
-    logging.info(f" ===== State: {gcd.state} =======")
-    gcd.trigger_long_pulling_sqs()
-    logging.info(f" ===== State: {gcd.state} =======")
-        # gcd.trigger_clean_services()
-        # logging.info(f" ===== State: {gcd.state} =======")
-    # except Exception as e:
-    #     gcd.trigger_clean_services()
-    #     logging.info(f" ===== State: {gcd.state} =======")
-    # return 
-    return 
+    return
 
     config_yaml = f"./config/{configfile}"
 

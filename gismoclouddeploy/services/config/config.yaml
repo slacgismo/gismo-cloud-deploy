@@ -3,25 +3,8 @@ aws_config:
   cluster_file: "cluster.yaml"
   scale_eks_nodes_wait_time : 90          # in second
   interval_of_wait_pod_ready: 90          # in second
-
-  # ec2_bastion_tags:
-  # - Key: Name
-  #   Value: gcd_eks
-  # - Key: project
-  #   Value: pvinsight
-  # - Key: manageBy
-  #   Value: boto3
-  # ec2_bastion_tags: [
-  #       {"Key": "Name", "Value": "gcd_eks"}, 
-  #       {"Key": "project", "Value": "pvinsight"},
-  #       {"Key": "manageBy", "Value": "boto3"}
-  #   ]
-  # ec2_image_id: "ami-0568773882d492fc8"
-  # ec2_instance_type: "t2.large" 
   ec2_bastion_saved_config_file: "./config/ec2/ec2-config.yaml"
-  # ec2_instance_id: "i-02785df1327c08400"  
-  # SecurityGroupIds:  ['sg-0009d2a9a2498f600']
-  # ec2_instance_type: "t2.large" 
+
 
 
 # Parameters used for cli in k8s config.
@@ -83,14 +66,17 @@ worker_config:
   saved_path_cloud: "results"                               # Path of saved files in bucket
   saved_path_local: "results"
   acccepted_idle_time: 360
+  interval_of_checking_sqs : 1
   code_template_folder: "code-templates-solardatatools" # Code blocks folder example: "code-templates-solardatatools" (If you change here, you have to change `worker_dockerfile_folder` accordingly)
   filename: 
     saved_data: 'results.csv'
-    logs: 'logs.csv'
-    errors: 'errors.csv'
+    logs_data: 'logs.csv'
+    error_data: 'errors.csv'
     performance: 'performance.txt'
     runtime_gantt_chart: 'runtime.png'
 
   repeat_number_per_round: 1    # Repeat overall tasks per round before run end services.
   is_celeryflower_on: False     # Turn of / off flower 
-  num_worker_pods_per_namespace: 8
+  num_worker_pods_per_namespace: 1
+  num_repetion: 2
+

@@ -63,7 +63,7 @@ def check_task_status(task_id: str = None):
 @click.argument("worker_config_str", nargs=1)
 @click.argument("first_n_files", nargs=1)
 def process_files(worker_config_str: str, first_n_files: str):
-
+    print("this is app process files")
     try:
         worker_config_json = json.loads(worker_config_str)
     except Exception as e:
@@ -113,7 +113,7 @@ def process_files(worker_config_str: str, first_n_files: str):
                 task_input_json["curr_process_column"] = column
                 task_input_json["po_server_name"] = po_server_name
                 task_id = process_data_task.delay(**task_input_json)
-                # print(f"======= task_id: {task_id}")
+                print(f"======= task_id: {task_id}")
                 task_ids.append(task_id)
                 MSG_ATTRIBUTES = {
                     "user_id": {"DataType": "String", "StringValue": user_id},

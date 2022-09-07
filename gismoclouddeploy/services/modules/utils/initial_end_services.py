@@ -1,5 +1,7 @@
 from os import name
 import time
+
+
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client, check_environment_is_aws
@@ -17,7 +19,8 @@ from .invoke_function import (
     invoke_kubectl_delete_all_po,
     invoke_kubectl_delete_namespaces,
     invoke_kubectl_delete_all_from_namspace,
-    invoke_force_delete_namespace
+    invoke_force_delete_namespace,
+    invoke_docker_system_prune_all
 
 )
 from .command_utils import delete_files_from_bucket
@@ -57,10 +60,15 @@ def delete_k8s_all_po_sev_deploy_daemonset(namespace: str="default"):
 
 
 def process_local_logs_and_upload_s3(
-    worker_config: WORKER_CONFIG = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
+    # worker_config: WORKER_CONFIG = None,
+    logs_file_path_name_local: str = None,
+    saved_image_name_local: str = None,
+    # saved_files_dict_local:dict= None,
+    # saved_files_dict_cloud :dict = None,
+    # databucket: str = None,
+    # aws_access_key: str = None,
+    # aws_secret_access_key: str = None,
+    # aws_region: str = None,
 ):
     s3_client = connect_aws_client(
         client_name="s3",
@@ -68,63 +76,29 @@ def process_local_logs_and_upload_s3(
         secret=aws_secret_access_key,
         region=aws_region,
     )
-    saved_file_list = worker_config.filename
-    runtime_local = None
-    log_file_local = None
-    for file in saved_file_list:      
-        if "logs" in file:
-            log_file_local = worker_config.files_local[file]
-        if "runtime" in file:
-            runtime_local =  worker_config.files_local[file]
 
-    if log_file_local is None or runtime_local is None:
-        raise Exception(f"Cannot find file name log_file_path: {log_file_local} ,runtime_local:{runtime_local}")
-
-
-    # save_data_file_local = worker_config.save_data_file_local
-    # save_error_file_local = worker_config.save_error_file_local
-    # save_error_file_local = worker_config.save_error_file_local
-    # save_logs_file_local = worker_config.save_logs_file_local
-    # save_plot_file_local = worker_config.save_plot_file_local
-    # save_performance_local = worker_config.save_performance_local
-    # save_data_file_aws = worker_config.save_data_file_aws
-    # save_error_file_aws = worker_config.save_error_file_aws
-    # save_error_file_aws = worker_config.save_error_file_aws
-    # save_logs_file_aws = worker_config.save_logs_file_aws
-    # save_plot_file_aws = worker_config.save_plot_file_aws
-    # save_performance_aws = worker_config.save_performance_aws
 
     process_logs_from_local(
-        logs_file_path_name_local=log_file_local,
-        saved_image_name_local=runtime_local,
+        logs_file_path_name_local=logs_file_path_name_local,
+        saved_image_name_local=saved_image_name_local,
         s3_client=s3_client,
     )
 
-    logger.info("Update results to S3")
-    upload_results_to_s3(
-        worker_config=worker_config,
-        # save_data_file_local=save_data_file_local,
-        # save_error_file_local=save_error_file_local,
-        # save_logs_file_local=save_logs_file_local,
-        # save_plot_file_local=save_plot_file_local,
-        # save_performance_file_local=save_performance_local,
-        # save_data_file_aws=save_data_file_aws,
-        # save_error_file_aws=save_error_file_aws,
-        # save_logs_file_aws=save_logs_file_aws,
-        # save_plot_file_aws=save_plot_file_aws,
-        # save_performance_file_aws=save_performance_aws,
-        aws_access_key=aws_access_key,
-        aws_secret_access_key=aws_secret_access_key,
-        aws_region=aws_region,
-    )
+    # logger.info("Update results to S3")
+    # upload_results_to_s3(
+    #     saved_files_dict_cloud=saved_files_dict_cloud,
+    #     saved_files_dict_local=saved_files_dict_local,
+    #     saved_bucket=databucket,
+    #     aws_access_key=aws_access_key,
+    #     aws_secret_access_key=aws_secret_access_key,
+    #     aws_region=aws_region,
+    # )
 
 
 def initial_end_services(
     server_list : list = None,
-    worker_config: WORKER_CONFIG = None,
-    is_docker: bool = False,
-    delete_nodes_after_processing: bool = False,
-    is_build_image: bool = False,
+    solver:dict = None,
+    user_id:str = None,
     services_config_list: List[str] = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
@@ -132,25 +106,21 @@ def initial_end_services(
     scale_eks_nodes_wait_time: int = None,
     cluster_name: str = None,
     nodegroup_name: str = None,
-    initial_process_time: float = None,
-    total_process_time: float = None,
-    eks_nodes_number: int = None,
-    num_workers: int = None,
-    num_unfinished_tasks: int = 0,
-    instanceType: str = None,
     sqs_url: str = None,
+    env:str = None,
+    initial_process_time: float = None,
 ):
 
-    logger.info("=========== delete solver lic in bucket ============ ")
-    if worker_config.solver.solver_name != "None":
-        delete_solver_lic_from_bucket(
-            saved_solver_bucket=worker_config.solver.saved_solver_bucket,
-            solver_lic_file_name=worker_config.solver.solver_lic_file_name,
-            saved_temp_path_in_bucket=worker_config.user_id,
-            aws_access_key=aws_access_key,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_region=aws_region,
-        )
+    # logger.info("=========== delete solver lic in bucket ============ ")
+    # if solver['solver_name'] != "None":
+    #     delete_solver_lic_from_bucket(
+    #         saved_solver_bucket=solver['saved_solver_bucket'],
+    #         solver_lic_file_name=solver['solver_lic_file_name'],
+    #         saved_temp_path_in_bucket=solver['saved_temp_path_in_bucket'] + "/" + user_id,
+    #         aws_access_key=aws_access_key,
+    #         aws_secret_access_key=aws_secret_access_key,
+    #         aws_region=aws_region,
+    #     )
     s3_client = connect_aws_client(
         client_name="s3",
         key_id=aws_access_key,
@@ -159,6 +129,15 @@ def initial_end_services(
     )
     try:
         # check if totoal process time is longer than 60 sec
+        current_time = time.time()
+        process_time = float(current_time) - initial_process_time
+        if process_time < 60:
+            wait_time = process_time
+            delay = 1
+            while wait_time > 0 :
+                logging.info(f"Wait {wait_time}")
+                wait_time -= delay
+                time.sleep(delay)
 
         sqs_client = connect_aws_client(
             client_name="sqs",
@@ -172,19 +151,19 @@ def initial_end_services(
     except Exception as e:
         logger.error(f"Delete queue failed {e}")
 
-    if is_build_image:
-        for server_info in server_list:
-            namespace = server_info['namespace']
-            # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
-            _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace = namespace)
-            print(_delete_resource)
-            _delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
-            # _delete_namespace= invoke_force_delete_namespace(namespace=namespace)
-            print(f"Delete namespace :{namespace}")
-            print(_delete_resource)
-            print("==========================")
-    if check_environment_is_aws() and delete_nodes_after_processing is True:
-        logger.info("======= >Delete node after processing")
+    
+    for server_info in server_list:
+        namespace = server_info['namespace']
+        # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
+        _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace = namespace)
+        print(_delete_resource)
+        _delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
+        # _delete_namespace= invoke_force_delete_namespace(namespace=namespace)
+        print(f"Delete namespace :{namespace}")
+        print(_delete_resource)
+        print("==========================")
+    if env == "AWS":
+        logger.info("Scale down EKS nodes ")
         scale_eks_nodes_and_wait(
             scale_node_num=0,
             total_wait_time=scale_eks_nodes_wait_time,
@@ -192,11 +171,6 @@ def initial_end_services(
             cluster_name=cluster_name,
             nodegroup_name=nodegroup_name,
         )
-
-    
-    
-    # Remove services.
-    if check_environment_is_aws() and is_build_image:
         logger.info("----------->.  Delete Temp ECR image ----------->")
         ecr_client = connect_aws_client(
             client_name="ecr",
@@ -212,49 +186,11 @@ def initial_end_services(
                     image_name=service,
                     image_tag=image_tag,
                 )
-    end_all_services_time = (time.time()-initial_process_time)
-    if end_all_services_time < 60:
-            sleep_time = round(60 - end_all_services_time)
-            logger.info(
-                f"total_process_time is shorter than 60 sec, wait {sleep_time}..."
-            )
-            time.sleep(sleep_time)
-    return
-
-
-def remove_running_services(
-    is_build_image: bool = False,
-    is_docker: bool = False,
-    services_config_list: List[str] = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-) -> None:
-    if is_build_image:
-        if is_docker:
-            # delete local docker images
-            logger.info("Delete local docker image")
-            invoke_docker_compose_down_and_remove()
-        else:
-
-            logger.info("----------->.  Delete Temp ECR image ----------->")
-            ecr_client = connect_aws_client(
-                client_name="ecr",
-                key_id=aws_access_key,
-                secret=aws_secret_access_key,
-                region=aws_region,
-            )
-
-            for service in services_config_list:
-                # delete all k8s deployment
-
-                if service == "worker" or service == "server":
-                    image_tag = services_config_list[service]["image_tag"]
-                    delete_ecr_image(
-                        ecr_client=ecr_client,
-                        image_name=service,
-                        image_tag=image_tag,
-                    )
+    
+    logger.info("Delete all docker images")
+    # invoke_docker_system_prune_all()
+        
+        
     return
 
 
@@ -285,8 +221,8 @@ def delete_solver_lic_from_bucket(
             bucket_name=saved_solver_bucket, full_path=full_path, s3_client=s3_client
         )
     except Exception as e:
-        logger.error(f"Delete solver lic errorf{e}")
-        raise e
+        logger.error(f"Delete solver lic Failed{e}")
+        logger.error(f"End services first. please fix this!!")
     return
 
 
@@ -339,113 +275,39 @@ def check_ecr_tag_exists(
 
 
 def upload_results_to_s3(
-    worker_config: WORKER_CONFIG = None,
-    # save_data_file_local: str = None,
-    # save_logs_file_local: str = None,
-    # save_error_file_local: str = None,
-    # save_plot_file_local: str = None,
-    # save_performance_file_local: str = None,
-    # save_data_file_aws: str = None,
-    # save_logs_file_aws: str = None,
-    # save_error_file_aws: str = None,
-    # save_plot_file_aws: str = None,
-    # save_performance_file_aws: str = None,
+    saved_files_dict_local:dict = None,
+    saved_files_dict_cloud:dict = None,
+    saved_bucket: str = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
     aws_region: str = None,
 ) -> None:
 
-    saved_file_list = worker_config.filename
+    # saved_file_list = worker_config.filename
+    logger.info("start update results")
+    for key , localfile in saved_files_dict_local.items(): 
+        file_local = saved_files_dict_local[key]
+        file_aws =  saved_files_dict_cloud[key]
+        logger.info(f"{key} file_local :{file_local} file_aws :{file_aws}")
 
-    for file in saved_file_list: 
-        file_local = worker_config.files_local[file]
-        file_aws =  worker_config.files_aws[file]
         # check if local exist
         if exists(file_local):
             try:
                 upload_file_to_s3(
-                    bucket=worker_config.saved_bucket,
+                    bucket=saved_bucket,
                     source_file_local=file_local,
                     target_file_s3=file_aws,
                     aws_access_key=aws_access_key,
                     aws_secret_access_key=aws_secret_access_key,
                     aws_region=aws_region,
                 )
-                logger.info("Save data on S3 success")
+                logger.info(f"Save {file_local} to {file_aws}  on {saved_bucket} success")
             except Exception as e:
                 logger.error(f"Save data on S3 failed {e}")
+                raise Exception(e)
     return 
 
-    # # upload data
-    # if exists(save_data_file_local):
-    #     try:
-    #         upload_file_to_s3(
-    #             bucket=worker_config.saved_bucket,
-    #             source_file_local=save_data_file_local,
-    #             target_file_s3=save_data_file_aws,
-    #             aws_access_key=aws_access_key,
-    #             aws_secret_access_key=aws_secret_access_key,
-    #             aws_region=aws_region,
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Save data on S3 failed {e}")
-    #     logger.info("Save data on S3 success")
-    # # upload logs
-    # if exists(save_logs_file_local):
-    #     try:
-    #         upload_file_to_s3(
-    #             bucket=worker_config.saved_bucket,
-    #             source_file_local=save_logs_file_local,
-    #             target_file_s3=save_logs_file_aws,
-    #             aws_access_key=aws_access_key,
-    #             aws_secret_access_key=aws_secret_access_key,
-    #             aws_region=aws_region,
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Save logs on S3 failed {e}")
-    #     logger.info("Save logs on S3 success")
-    # # upload logs
-    # if exists(save_error_file_local):
-    #     try:
-    #         upload_file_to_s3(
-    #             bucket=worker_config.saved_bucket,
-    #             source_file_local=save_error_file_local,
-    #             target_file_s3=save_error_file_aws,
-    #             aws_access_key=aws_access_key,
-    #             aws_secret_access_key=aws_secret_access_key,
-    #             aws_region=aws_region,
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Save error on S3 failed {e}")
-    #     logger.info("Save error on S3 success")
-    # # upload performance:
-    # if exists(save_performance_file_local):
-    #     try:
-    #         upload_file_to_s3(
-    #             bucket=worker_config.saved_bucket,
-    #             source_file_local=save_performance_file_local,
-    #             target_file_s3=save_performance_file_aws,
-    #             aws_access_key=aws_access_key,
-    #             aws_secret_access_key=aws_secret_access_key,
-    #             aws_region=aws_region,
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Save save_performance_file on S3 failed {e}")
-    #     logger.info("Save save_performance_file on S3 success")
-    #     # upload performance:
-    # if exists(save_plot_file_local):
-    #     try:
-    #         upload_file_to_s3(
-    #             bucket=worker_config.saved_bucket,
-    #             source_file_local=save_plot_file_local,
-    #             target_file_s3=save_plot_file_aws,
-    #             aws_access_key=aws_access_key,
-    #             aws_secret_access_key=aws_secret_access_key,
-    #             aws_region=aws_region,
-    #         )
-    #     except Exception as e:
-    #         logger.error(f"Save save_plot_file_aws on S3 failed {e}")
-    #     logger.info("Save save_plot_file_aws on S3 success")
+
 
 
 def upload_file_to_s3(
@@ -464,4 +326,4 @@ def upload_file_to_s3(
         region=aws_region,
     )
     response = s3_client.upload_file(source_file_local, bucket, target_file_s3)
-    logger.info("Upload solver success")
+    logger.info(f"Upload {source_file_local} success")

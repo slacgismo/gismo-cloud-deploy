@@ -328,7 +328,7 @@ def invoke_exec_k8s_run_process_files(
     first_n_files: str = None,
     namespace:str = "default"
 ) -> None:
-    print("invoke_exec_k8s_run_process_files")
+    # print("invoke_exec_k8s_run_process_files")
     command = [
         "kubectl",
         "exec",
@@ -350,9 +350,9 @@ def invoke_exec_k8s_run_process_files(
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        out, err = res.communicate()
-        logger.debug(out, err)
-        return out
+        # out, err = res.communicate()
+        # print(out, err)
+        # return out
 
     except KeyboardInterrupt as e:
         print(f"Invoke k8s process file error:{e}")
@@ -479,6 +479,11 @@ def invoke_force_delete_namespace(namespace:str = None):
 
 def invoke_delete_all_resource_in_all_namespace():
     command = '''kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all'''
+    output = subprocess.check_output(["bash", "-c", command])
+    return output
+
+def invoke_docker_system_prune_all():
+    command = 'docker system prune -a -f'
     output = subprocess.check_output(["bash", "-c", command])
     return output
 

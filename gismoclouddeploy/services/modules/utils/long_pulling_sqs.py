@@ -1,3 +1,4 @@
+from re import L
 from .WORKER_CONFIG import WORKER_CONFIG
 from typing import List
 from .check_aws import connect_aws_client
@@ -17,32 +18,36 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
 )
 
-def remove_prevous_results_files(
-    save_data_file_local: str = None,
-    save_logs_file_local: str = None,
-    save_error_file_local: str = None,
-    save_performance_file_local: str = None,
-    save_plot_file_local: str = None,
-) -> None:
+# def remove_prevous_results_files(
+#     save_data_file_local: str = None,
+#     save_logs_file_local: str = None,
+#     save_error_file_local: str = None,
+#     save_performance_file_local: str = None,
+#     save_plot_file_local: str = None,
+# ) -> None:
 
-    # remove previous save data
-    if exists(save_data_file_local):
-        os.remove(save_data_file_local)
+#     # remove previous save data
+#     if exists(save_data_file_local):
+#         os.remove(save_data_file_local)
 
-    if exists(save_logs_file_local):
-        os.remove(save_logs_file_local)
+#     if exists(save_logs_file_local):
+#         os.remove(save_logs_file_local)
 
-    if exists(save_error_file_local):
-        os.remove(save_error_file_local)
+#     if exists(save_error_file_local):
+#         os.remove(save_error_file_local)
 
-    if exists(save_performance_file_local):
-        os.remove(save_performance_file_local)
+#     if exists(save_performance_file_local):
+#         os.remove(save_performance_file_local)
 
-    if exists(save_plot_file_local):
-        os.remove(save_plot_file_local)
+#     if exists(save_plot_file_local):
+#         os.remove(save_plot_file_local)
 
 def long_pulling_sqs_multi_server(
-    worker_config: WORKER_CONFIG = None,
+    # worker_config: WORKER_CONFIG = None,
+    # saved_file_dict_local: dict = None,
+    save_data_file_path_name: str = None,
+    save_logs_file_paht_name:str = None,
+    errors_file_path_name:str = None,
     delay: int = None,
     sqs_url: str = None,
     acccepted_idle_time: int = 1,
@@ -50,8 +55,9 @@ def long_pulling_sqs_multi_server(
     aws_secret_access_key: str = None,
     aws_region: str = None,
     server_list: list = None,
-) -> None:
 
+) -> None:
+    start_time = time.time()
     # task_ids_set = set(task_ids)
     # total_task_length = len(task_ids_set)
     sqs_client = connect_aws_client(
@@ -63,13 +69,15 @@ def long_pulling_sqs_multi_server(
 
     task_completion = 0
 
-    # remove_prevous_results_files(
-    #     save_data_file_local=worker_config.save_data_file_local,
-    #     save_logs_file_local=worker_config.save_logs_file_local,
-    #     save_error_file_local=worker_config.save_error_file_local,
-    #     save_performance_file_local=worker_config.save_performance_local,
-    #     save_plot_file_local=worker_config.save_plot_file_local,
-    # )
+    # remove previous files 
+    # for key, filename in saved_file_dict_local.items():
+    #     file_local = saved_file_dict_local[key]
+    #     if exists(file_local):
+    #         os.remove(file_local)
+    #         logger.info(f"Previous {key} deleted")
+
+    # update file name a
+
     is_receive_task_info = False
 
     received_init_task_ids_dict = dict()
@@ -101,7 +109,7 @@ def long_pulling_sqs_multi_server(
     match_nodemname_hostname_dict = collect_node_name_and_pod_name()
     # print(f"nodes_dict: {match_nodemname_hostname_dict}")
     is_received_init_task_ids_dict_completed= True
-    start_time = time.time()
+    
     # match_nodemname_hostname_dict = dict()
     # match_nodemname_hostname_dict = 
     while True > 0:
@@ -286,23 +294,15 @@ def long_pulling_sqs_multi_server(
             # END of receive message
 
         # save data, logs errors 
-        saved_file_list = worker_config.filename
-        for file in saved_file_list:
-            # save results data
-            if "results" in file:
-                append_receive_data(
-                    data_dict=save_data, file_name=worker_config.files_local[file]
-                )
-             # save logs data
-            if "logs" in file:
-                append_receive_data(
-                    data_dict=logs_data, file_name=worker_config.files_local[file]
-                )
-             # save errors data
-            if "errors" in file:
-                append_receive_data(
-                    data_dict=error_data, file_name=worker_config.files_local[file]
-                )
+        append_receive_data(
+            data_dict=save_data, file_name=save_data_file_path_name
+        )
+        append_receive_data(
+            data_dict=logs_data, file_name=save_logs_file_paht_name
+        )
+        append_receive_data(
+            data_dict=error_data, file_name=errors_file_path_name
+        )
   
         _is_receive_message_again = False
         # if is_received_init_task_ids_dict_completed is True:
@@ -368,7 +368,7 @@ def long_pulling_sqs_multi_server(
             f" total_time .: {total_time} \
             Idle Time: {idle_time} "
         )
-        time.sleep(1)
+        time.sleep(delay)
         # wait_time -= int(delay)
 
     return uncompleted_task_id_set

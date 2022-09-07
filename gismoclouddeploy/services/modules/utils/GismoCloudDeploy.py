@@ -6,6 +6,8 @@ from transitions import Machine
 from .modiy_config_parameters import modiy_config_parameters, convert_yaml_to_json
 from .check_aws import check_aws_validity, check_environment_is_aws
 import enum
+from .initial_end_services import initial_end_services, process_local_logs_and_upload_s3,upload_results_to_s3
+from .long_pulling_sqs import long_pulling_sqs,long_pulling_sqs_multi_server
 import os
 import coloredlogs, logging
 from os.path import exists
@@ -30,6 +32,8 @@ from .invoke_function import (
     
     
 )
+
+from .process_log import analyze_all_local_logs_files,process_logs_from_local
 from .k8s_utils import (
     check_k8s_services_exists, 
     create_k8s_svc_from_yaml,
@@ -72,15 +76,23 @@ class Environments(enum.Enum):
 
 class GismoCloudDeploy(object):
 
-    states=['stop', 
-            'prepare_system',
-            'build_tag_images',
-            'deploy_k8s',
-            'send_command_to_servers',
-            'long_pulling_sqs',
-            'clean_services',
-            'analyzing_logs',
-            ]
+    # states=['stop', 
+    #         'prepare_system',
+    #         'build_tag_images',
+    #         'deploy_k8s',
+    #         'send_command_to_servers',
+    #         'long_pulling_sqs',
+    #         'clean_services',
+    #         'analyzing_logs',
+    #         ]
+    states=[
+        'system_stop', 
+        'system_initial',
+        'system_ready',
+        'system_deploy',
+        'system_processing',
+        ]
+
 
     def __init__(
             self, 
@@ -100,7 +112,7 @@ class GismoCloudDeploy(object):
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_region = aws_region
         self.ecr_repo = ecr_repo
-        
+      
    
         #eks properties
         self._cluster_file = ""
@@ -131,6 +143,7 @@ class GismoCloudDeploy(object):
         self._code_template_folder = ""
 
         self._data_bucket = ""
+        self._saved_bucket = ""
         self._default_files  =[]
         self._process_column_keywords = []
         self._file_type = ".csv"
@@ -141,40 +154,49 @@ class GismoCloudDeploy(object):
         self._services_config_list = {}
         self._filename = {}
         self._ready_server_list = []
+        self._acccepted_idle_time = 360
+        self._interval_of_checking_sqs = 3
+
+        self._save_file_absoulte_path_local =""
+        self._save_file_absoulte_path_cloud =""
+        self._saved_file_local = {}
+        self._start_time = time.time()
+        self._initial_process_time = 0
+        self._total_process_time = 0 
+        self._num_repetion = 1
+        self._unfinished_tasks_id_set = set()
+        self._init_process_time_list = []
+        self._total_proscee_time_list = []
+        # self.files_name_key = []
+
+    
+        self.machine = Machine(model=self, states=GismoCloudDeploy.states, initial='system_stop', on_exception='handle_error',send_event=True)
+        self.machine.add_transition(trigger='trigger_initial', source='system_stop', dest='system_initial', before ='handle_read_config_yaml', after='handle_prepare_system')
+        self.machine.add_transition(trigger='trigger_ready', source='system_initial', dest='system_ready', before ='handle_build_and_tag_images', after='handle_push_images_to_cloud')
+        self.machine.add_transition(trigger='trigger_deploy', source='system_ready', dest='system_deploy', before ='handle_deploy_k8s', after='handle_verify_k8s_services')
+        self.machine.add_transition(trigger='trigger_processing', source='system_deploy', dest='system_processing', before ='handle_send_command_and_long_polling_sqs')
+        self.machine.add_transition(trigger='trigger_cleanup', source='*', dest='system_stop', before ='handle_clean_services', after = 'handle_analyzing_logs')
+        self.machine.add_transition(trigger='trigger_repetition', source='system_processing', dest='system_initial',conditions=['is_repeatable'], before="increase_repeat_index")
+
+
+        
+    def is_repeatable(self, evnet):
+       
+        return (self._repeat_index < self._num_repetion)
+    
+    def increase_repeat_index(self,event):
+        self._repeat_index += 1
+        return self._repeat_index
+
+
+
+    def get_num_repetition(self) -> int:
+        return self._num_repetion
+        
+    def get_repeat_index(self) -> int:
+        return self._repeat_index 
     
 
-
-
-        # add handle error state 
-        # self.machine = Machine(model=self, states=GismoCloudDeploy.states, initial='stop',send_event=True)
-        self.machine = Machine(model=self, states=GismoCloudDeploy.states, initial='stop', on_exception='handle_error',send_event=True)
-        self.machine.add_transition(trigger='trigger_prepare_system', source='stop', dest='prepare_system', before ='handle_read_config_yaml', after='handle_prepare_system')
-        self.machine.add_transition(trigger='trigger_build_and_tag_images', source='prepare_system', dest='build_tag_images', before ='handle_build_and_tag_images',after='handle_push_images_to_cloud')
-        self.machine.add_transition(trigger='trigger_deploy_k8s', source='build_tag_images', dest='deploy_k8s', before='handle_deploy_k8s',after='handle_verify_k8s_services')
-        self.machine.add_transition(trigger='trigger_send_command_to_servers', source='deploy_k8s', dest='send_command_to_servers', after='handle_send_command_to_server')
-        self.machine.add_transition(trigger='trigger_long_pulling_sqs', source='send_command_to_servers', dest='long_pulling_sqs', after='handle_long_pulling_sqs')
-        self.machine.add_transition(trigger='trigger_clean_services', source='*', dest='stop', before='handle_clean_services', 
-        after='handle_analyzing_logs')
-
-
-    @property
-    def repeat_index(self) -> int:
-        return self._repeat_index 
-        
-    def save_file(self, file_name, env, file_path_local, file_path_cloud):
-        """ return full saved file name and path based on env"""
-        file_path_name = ""
-            
-        if env == Environments.AWS.name:
-            file_path_name = file_path_cloud +"/"+ file_name
-        else:
-            # check if directory exist 
-            if not os.path.exists(file_path_local):
-                logging.info(f"{file_path_local} does not exist. Create {file_path_local}")
-                os.mkdir(file_path_local)
-            file_path_name = file_path_local +"/"+ file_name
-            
-        return file_path_name   
           
     def add_namespace(self, namespace):
         # add namespace into property set
@@ -198,13 +220,9 @@ class GismoCloudDeploy(object):
     def raise_error(self, event): raise ValueError("Oh no")
 
     def handle_error(self, event):
-        logging.error(event.error)
-        print("Fixing things ...")
-        # if self.is_aws():
-        #     logging.error("handle error on AWS")
-        # elif self.is_local():
-        #     logging.error("handle error on LOCAL")
-        # del event.error  # it did not happen if we cannot see it ...
+        raise ValueError(f"Oh no {event.error}")
+       
+    
 
 
     def _is_aws(self) -> bool:
@@ -237,6 +255,7 @@ class GismoCloudDeploy(object):
             raise AssertionError(f"Assert error {e}")
 
     # state function
+    
 
     def handle_read_config_yaml(self,event):
         base_path = os.getcwd()
@@ -264,12 +283,39 @@ class GismoCloudDeploy(object):
             self._file_type = worker_config["data_file_type"]
             self._solver = worker_config["solver"]
             self._code_template_folder  =  worker_config["code_template_folder"]
-
+            self._saved_path_cloud = worker_config["saved_path_cloud"]
+            self._saved_path_local = worker_config["saved_path_local"]
             
             self._repeat_number_per_round = worker_config["repeat_number_per_round"]
             self._is_celeryflower_on = worker_config["is_celeryflower_on"]
             self._num_worker_pods_per_namespace = worker_config["num_worker_pods_per_namespace"]
             self._filename = worker_config["filename"]
+            self._acccepted_idle_time = worker_config["acccepted_idle_time"]
+            self._interval_of_checking_sqs = worker_config["interval_of_checking_sqs"]
+            self._process_column_keywords = worker_config['process_column_keywords']
+            self._num_repetion = worker_config['num_repetion']
+            self._saved_bucket = worker_config['saved_bucket']
+
+
+            # for key in self._filename.keys():
+            #     self.files_name_key.append(key)
+
+            self._host_name = (socket.gethostname())
+            self._user_id = re.sub('[^a-zA-Z0-9]', '', self._host_name).lower()
+            self._saved_file_local = {}
+
+            for key, value in self._filename.items():
+                self._saved_file_local[key] = []
+
+            logging.info(f"Remove previous files in {self._saved_path_local} folder")
+            absolute_saved_file_path = base_path +"/"+self._saved_path_local
+            for f in os.listdir(absolute_saved_file_path):
+                os.remove(os.path.join(absolute_saved_file_path, f))
+
+            self._save_file_absoulte_path_local = absolute_saved_file_path
+            self._save_file_absoulte_path_cloud = self._saved_path_cloud +"/" +self._user_id 
+
+
             # aws config
             aws_config = self._config["aws_config"]
             self._cluster_file  = aws_config['cluster_file']
@@ -292,7 +338,7 @@ class GismoCloudDeploy(object):
                 self._instanceType = cluster_file_dict['nodeGroups'][0]['instanceType']
             else:
                 raise ValueError(f"nodeGroups does not exist")
-                
+
         
         try:
             check_aws_validity(key_id=self.aws_access_key, secret=self.aws_secret_access_key)
@@ -301,8 +347,7 @@ class GismoCloudDeploy(object):
         return
 
     def handle_prepare_system(self, event):
-        self._host_name = (socket.gethostname())
-        self._user_id = re.sub('[^a-zA-Z0-9]', '', self._host_name).lower()
+
 
         s3_client = boto3.client(
             "s3",
@@ -321,8 +366,8 @@ class GismoCloudDeploy(object):
             )
 
         self._total_number_files = len(n_files)
-        self._number_of_namespace = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
-        num_files_per_namespace =  math.ceil(self._total_number_files/self._number_of_namespace)
+        self._num_namesapces = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
+        num_files_per_namespace =  math.ceil(self._total_number_files/self._num_namesapces)
 
         # define how many worker pods replcas in each namespaces. 
 
@@ -330,7 +375,7 @@ class GismoCloudDeploy(object):
         if self._worker_desired_replicas_per_namespaces < 1 :
             self._worker_desired_replicas_per_namespaces = 1
         
-        for i in range(self._number_of_namespace ):
+        for i in range(self._num_namesapces ):
             curr_time = int(time.time())
         
             namespace = f"{curr_time}-"+ self._user_id  
@@ -385,7 +430,7 @@ class GismoCloudDeploy(object):
                     saved_solver_bucket=self._solver['saved_solver_bucket'],
                     solver_lic_file_name=self._solver['solver_lic_file_name'],
                     solver_lic_local_path=self._solver['solver_lic_local_path'],
-                    saved_temp_path_in_bucket=self._solver['saved_temp_path_in_bucket'],
+                    saved_temp_path_in_bucket=self._solver['saved_temp_path_in_bucket'] + "/" +self._user_id,
                     aws_access_key=self.aws_access_key,
                     aws_secret_access_key=self.aws_secret_access_key,
                     aws_region=self.aws_region,
@@ -428,7 +473,8 @@ class GismoCloudDeploy(object):
 
     def handle_build_and_tag_images(self, event):    
         logging.info("handle_build_and_tag_images")
-        # docker build image
+        
+    # docker build image
         try:
             invoke_docker_compose_build(
                         code_template_folder= self._code_template_folder ,
@@ -549,6 +595,7 @@ class GismoCloudDeploy(object):
 
     def handle_verify_k8s_services(self, event):
         logging.info("handle_verify_k8s_services")
+        
         threads = list()
         try:
             for service, value in self._services_config_list.items():
@@ -590,8 +637,10 @@ class GismoCloudDeploy(object):
         logging.info(f"ready server list {ready_server_list}")
         return
     
-    def handle_send_command_to_server(self, event):
-        logging.info("handle_send_command_to_server")
+
+
+    def handle_send_command_and_long_polling_sqs(self, event):
+        logging.info("handle_send_command_to_server and long_pulling_sqs")
         
         send_command_to_server(
             read_server_list=self._ready_server_list,
@@ -607,19 +656,142 @@ class GismoCloudDeploy(object):
             solver=self._solver,
             user_id=self._user_id
         )
-    def handle_long_pulling_sqs(self, event):
-        logging.info("handle_long_pulling_sqs")
+
+        
+        # generate files name 
+        _temp_file_local_dict = {}
+        
+        
+        for key in  self._filename.keys():
+            _file_name_local=  upate_filename_path_with_repeat_index(
+                absolute_path=self._save_file_absoulte_path_local,
+                filename=self._filename[key],
+                repeat_index=self._repeat_index
+            )
+            _temp_file_local_dict[key] = _file_name_local
+
+            # store local file name and path
+            if key in self._saved_file_local:
+                self._saved_file_local[key].append(_file_name_local)
+            else:
+                self._saved_file_local[key] = [_file_name_local]
+
+        self._initial_process_time = time.time() - self._start_time
+        self._init_process_time_list.append(self._initial_process_time)
+        self._unfinished_tasks_id_set = long_pulling_sqs_multi_server(
+            save_data_file_path_name =_temp_file_local_dict['saved_data'],
+            save_logs_file_paht_name =_temp_file_local_dict['logs_data'],
+            errors_file_path_name = _temp_file_local_dict['error_data'],
+            delay=self._interval_of_checking_sqs,
+            sqs_url=self._sqs_url,
+            acccepted_idle_time=self._acccepted_idle_time,
+            aws_access_key=self.aws_access_key,
+            aws_secret_access_key=self.aws_secret_access_key,
+            aws_region=self.aws_region,
+            server_list = self._ready_server_list
+        )
+        
+        # process logs and generate gantts 
+
+        process_logs_from_local(
+            logs_file_path_name_local = _temp_file_local_dict['logs_data'],
+            saved_image_name_local= _temp_file_local_dict['runtime_gantt_chart'],
+        )
+
+        #update files to s3 
+        for key in self._filename.keys():
+            _file_name_cloud=  upate_filename_path_with_repeat_index(
+                absolute_path=self._save_file_absoulte_path_cloud,
+                filename=self._filename[key],
+                repeat_index=self._repeat_index
+            )
+            # check if local file exists 
+            if exists(_temp_file_local_dict[key]):
+                logging.info(f"Upload {_temp_file_local_dict[key]}")
+                upload_file_to_s3(
+                    bucket = self._saved_bucket,
+                    source_file_local=_temp_file_local_dict[key],
+                    target_file_s3=_file_name_cloud,
+                    aws_access_key=self.aws_access_key,
+                    aws_secret_access_key=self.aws_secret_access_key,
+                    aws_region=self.aws_region,
+                )
+        self._total_proscee_time =  time.time() - self._start_time
+        self._total_proscee_time_list.append(self._total_proscee_time)
+        return 
+       
+
+
+    # def handle_long_pulling_sqs(self, event):
+    #     logging.info("handle_long_pulling_sqs")
+        # delay = aws_config_obj.interval_of_check_dynamodb_in_second
+        # acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
+        # unfinished_tasks_id_set = long_pulling_sqs_multi_server(
+        #     saved_file_dict_local=self._saved_file_list_local,
+        #     delay=self._interval_of_checking_sqs,
+        #     sqs_url=self._sqs_url,
+        #     acccepted_idle_time=self._acccepted_idle_time,
+        #     aws_access_key=self.aws_access_key,
+        #     aws_secret_access_key=self.aws_secret_access_key,
+        #     aws_region=self.aws_region,
+        #     server_list = self._ready_server_list
+        # )
+        # self._initial_process_time = time.time() - self._start_time
+
     
     
     def handle_clean_services(self, event):
         logging.info("handle_clean_services")
+        initial_end_services(
+            server_list=self._ready_server_list,
+            services_config_list=self._services_config_list,
+            aws_access_key=self.aws_access_key,
+            aws_secret_access_key=self.aws_secret_access_key,
+            aws_region=self.aws_region,
+            scale_eks_nodes_wait_time=self._scale_eks_nodes_wait_time,
+            cluster_name=self._cluster_name,
+            nodegroup_name=self._nodegroup_name,
+            sqs_url=self._sqs_url,
+            initial_process_time= self._initial_process_time
+        )
 
-    
+    def generate_report(self, event):
+        logging.info("generate_report")
     def handle_analyzing_logs(self, event):
         logging.info("handle_analyzing_logs")
 
+        # logs_file_list = self._saved_file_local['logs_data']
+        analyze_all_local_logs_files(
+            instanceType=self._instanceType,
+            num_namspaces = self._num_namesapces,
+            init_process_time_list=self._init_process_time_list,
+            total_proscee_time_list=self._total_proscee_time_list,
+            eks_nodes_number=self._total_num_nodes,
+            num_workers=self._worker_desired_replicas,
+            logs_file_path=self._save_file_absoulte_path_local,
+            performance_file_txt=self._save_file_absoulte_path_local +"/" +self._filename['performance'],
+            num_unfinished_tasks=0,
+            code_templates_folder=self._code_template_folder,
+            repeat_number=self._num_repetion,
 
+        )
+        # update performance 
+        upload_file_to_s3(
+            bucket = self._saved_bucket,
+            source_file_local=self._save_file_absoulte_path_local +"/" +self._filename['performance'],
+            target_file_s3=self._save_file_absoulte_path_cloud + "/" + self._filename['performance'],
+            aws_access_key=self.aws_access_key,
+            aws_secret_access_key=self.aws_secret_access_key,
+            aws_region=self.aws_region,
+        )
+        return 
 
+def genereate_report():
+    logging.info("Generate report")
+
+# def upload_all_files_to_s3(
+
+# ):
 
 def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
     """Get filename and size from S3 , remove non csv file"""
@@ -640,6 +812,11 @@ def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
     except Exception as e:
         raise Exception(f"list files in bucket error: {e}")
 
+
+def upate_filename_path_with_repeat_index(absolute_path,filename,repeat_index) -> str:
+    name, extension = filename.split(".")
+    new_filename = f"{absolute_path}/{name}-{repeat_index}.{extension}"
+    return new_filename
 
 def return_process_filename_base_on_command_and_sort_filesize(
     first_n_files: str,
@@ -792,3 +969,45 @@ def create_config_parameters_to_app(
     except ValueError as e:
         raise ValueError(f"pase config parametes failed {e}")
     return config_str
+
+
+def get_file_path_based_on_env(file_name, env, file_path_local, file_path_cloud, repeat_index, user_id):
+    """ return full saved file name and path based on env"""
+    file_path_name = ""
+    # add repeat_index into filename
+    # _relative_path, filename = os.path.split(file_name)
+    # print(_relative_path, filename)
+    name, extension = file_name.split(".")
+   
+    new_filename = f"{name}-{repeat_index}.{extension}"
+    if env == Environments.AWS.name:
+        file_path_name = file_path_cloud +"/" + user_id + "/" + new_filename
+
+    else:
+        # check if directory exist 
+        base_path = os.getcwd()
+        local_full_path = f"{base_path}/{file_path_local}"
+        if not os.path.exists(local_full_path):
+            logging.info(f"{local_full_path} does not exist. Create {local_full_path}")
+            os.mkdir(local_full_path)
+        file_path_name = file_path_local +"/" + new_filename
+        
+    return file_path_name   
+
+def upload_file_to_s3(
+    bucket: str = None,
+    source_file_local: str = None,
+    target_file_s3: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+) -> None:
+
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    response = s3_client.upload_file(source_file_local, bucket, target_file_s3)
+    logging.info(f"Upload {source_file_local} success")

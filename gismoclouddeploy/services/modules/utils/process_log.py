@@ -270,21 +270,34 @@ def analyze_signle_local_logs_file(
     }
     return performance_dict
 
-
 def analyze_all_local_logs_files(
-    logs_file_path: str = None,
-    instanceType: str = None,
-    init_process_time_list: float = 0,
-    total_proscee_time_list: float = 0,
-    eks_nodes_number: int = 0,
-    num_workers: int = 0,
-    save_file_path_name: str = None,
-    num_unfinished_tasks: int = 0,
-    code_templates_folder: str = None,
-    repeat_number: int = 1,
-) -> List[str]:
-    if os.path.isdir(logs_file_path) is False:
-        raise Exception(f"{logs_file_path} not exist")
+        instanceType:str,
+        num_namspaces:int ,
+        init_process_time_list:float,
+        total_proscee_time_list:float,
+        eks_nodes_number:int,
+        num_workers:int,
+        logs_file_path:str,
+        performance_file_txt:str,
+        num_unfinished_tasks:int,
+        code_templates_folder:str,
+        repeat_number:int
+    ) -> List[str]:
+# def analyze_all_local_logs_files(
+#     logs_file_path: str = None,
+#     instanceType: str = None,
+#     init_process_time_list: float = 0,
+#     total_proscee_time_list: float = 0,
+#     eks_nodes_number: int = 0,
+#     num_workers: int = 0,
+#     save_file_path_name: str = None,
+#     num_unfinished_tasks: int = 0,
+#     code_templates_folder: str = None,
+#     repeat_number: int = 1,
+# ) -> List[str]:
+
+    
+
     logs_files_list = []
     for _file in os.listdir(logs_file_path):
         prefix = _file.split("-")[0]
@@ -443,8 +456,9 @@ def analyze_all_local_logs_files(
     performance = [
         header,
         ["Code templates folder", code_templates_folder, ""],
-        ["Number of nodes", f"{eks_nodes_number}"],
-        ["Number of workers", f"{num_workers}"],
+        ["Total number of nodes", f"{eks_nodes_number}"],
+        ["Number of namespaces",f"{num_namspaces}"],
+        ["Number of workers per namesapces", f"{num_workers}"],
         ["Instance type", f"{instanceType}"],
         file_name,
         total_tasks,
@@ -464,8 +478,8 @@ def analyze_all_local_logs_files(
     table1 = AsciiTable(performance)
     print(table1.table)
     print("---------")
-    print(save_file_path_name)
-    with open(save_file_path_name, "w") as file:
+    print(performance_file_txt)
+    with open(performance_file_txt, "w") as file:
         print(table1.table, file=file)
         file.close()
     return
