@@ -168,8 +168,13 @@ class GismoCloudDeploy(object):
         self._init_process_time_list = []
         self._total_proscee_time_list = []
         # self.files_name_key = []
-
-    
+        self._upload_file_dict = dict()
+        self._upload_file_name = None
+        self._upload_files_local_path = None
+        self._upload_files_target_path = None
+        self._solver_lic_file_name = None
+        self._solver = None
+  
         self.machine = Machine(model=self, states=GismoCloudDeploy.states, initial='system_stop', on_exception='handle_error',send_event=True)
         self.machine.add_transition(trigger='trigger_initial', source='system_stop', dest='system_initial', before ='handle_read_config_yaml', after='handle_prepare_system')
         self.machine.add_transition(trigger='trigger_ready', source='system_initial', dest='system_ready', before ='handle_build_and_tag_images', after='handle_push_images_to_cloud')
@@ -198,31 +203,29 @@ class GismoCloudDeploy(object):
     
 
           
-    def add_namespace(self, namespace):
-        # add namespace into property set
-        self.k8s_namespace_set.add(namespace)
+    # def add_namespace(self, namespace):
+    #     # add namespace into property set
+    #     self.k8s_namespace_set.add(namespace)
     
-    def remove_namespace(self, namespace):
-        self.k8s_namespace_set.remove(namespace)
+    # def remove_namespace(self, namespace):
+    #     self.k8s_namespace_set.remove(namespace)
     
-    def remove_all_namespace(self, namespace):
-        self.k8s_namespace_set.removeall()
+    # def remove_all_namespace(self, namespace):
+    #     self.k8s_namespace_set.removeall()
 
-    def add_server_pod_name(self, podname):
-        self.podname_of_server_dict
+    # def add_server_pod_name(self, podname):
+    #     self.podname_of_server_dict
 
     # process files
-    def add_separated_process_file_list_in_servers(self, files_list):
-        self.separated_process_file_list_in_servers.append(files_list)
+    # def add_separated_process_file_list_in_servers(self, files_list):
+    #     self.separated_process_file_list_in_servers.append(files_list)
     
     
 
-    def raise_error(self, event): raise ValueError("Oh no")
+    # def raise_error(self, event): raise ValueError("Oh no")
 
     def handle_error(self, event):
-        raise ValueError(f"Oh no {event.error}")
-       
-    
+        raise ValueError(f"Oh no {event.error}") 
 
 
     def _is_aws(self) -> bool:
@@ -281,7 +284,16 @@ class GismoCloudDeploy(object):
             self._data_bucket = worker_config["data_bucket"]
             self._default_files = worker_config["default_process_files"]
             self._file_type = worker_config["data_file_type"]
-            self._solver = worker_config["solver"]
+            # self._solver = worker_config["solver"]
+            if 'solver' in worker_config:
+                self._solver = worker_config['solver']
+            
+            if self._solver is not None:
+                self._solver_name = self._solver['solver_name']
+                self._solver_lic_local_path = self._solver['solver_lic_local_path']
+                self._solver_lic_target_path = self._solver['solver_lic_target_path']
+                self._solver_lic_file_name = self._solver['solver_lic_file_name']
+
             self._code_template_folder  =  worker_config["code_template_folder"]
             self._saved_path_cloud = worker_config["saved_path_cloud"]
             self._saved_path_local = worker_config["saved_path_local"]
@@ -315,6 +327,9 @@ class GismoCloudDeploy(object):
             self._save_file_absoulte_path_local = absolute_saved_file_path
             self._save_file_absoulte_path_cloud = self._saved_path_cloud +"/" +self._user_id 
 
+            # check if upload file path exist. if not create a empty license
+            
+
 
             # aws config
             aws_config = self._config["aws_config"]
@@ -325,7 +340,7 @@ class GismoCloudDeploy(object):
             raise Exception(f"parse config file error :{e}")
         # convert cluster file
         if self._is_aws():
-            cluster_file = f"{base_path}/config/eks/{self._cluster_file}"
+            cluster_file = f"{base_path}/config/{self._cluster_file}"
             if exists(cluster_file) is False:
                 raise ValueError (f"{cluster_file} does not exist")
             cluster_file_dict = convert_yaml_to_json(yaml_file=cluster_file)
@@ -422,25 +437,25 @@ class GismoCloudDeploy(object):
         
         # Upload solver 
      
-        if len(self._solver):
-            try:
-                check_solver_and_upload(
-                    ecr_repo=self.ecr_repo,
-                    solver_name=self._solver['solver_name'],
-                    saved_solver_bucket=self._solver['saved_solver_bucket'],
-                    solver_lic_file_name=self._solver['solver_lic_file_name'],
-                    solver_lic_local_path=self._solver['solver_lic_local_path'],
-                    saved_temp_path_in_bucket=self._solver['saved_temp_path_in_bucket'] + "/" +self._user_id,
-                    aws_access_key=self.aws_access_key,
-                    aws_secret_access_key=self.aws_secret_access_key,
-                    aws_region=self.aws_region,
-                )
-                logging.info(f"Upload Solver: {self._solver['solver_name']} scuccess")
-            except Exception as e:
-                logging.error(f"Upload Solver error:{e}")
-                return
-        else:
-            logging.info("No solver upload")
+        # if len(self._solver):
+        #     try:
+        #         check_solver_and_upload(
+        #             ecr_repo=self.ecr_repo,
+        #             solver_name=self._solver['solver_name'],
+        #             saved_solver_bucket=self._solver['saved_solver_bucket'],
+        #             solver_lic_file_name=self._solver['solver_lic_file_name'],
+        #             solver_lic_local_path=self._solver['solver_lic_local_path'],
+        #             saved_temp_path_in_bucket=self._solver['saved_temp_path_in_bucket'] + "/" +self._user_id,
+        #             aws_access_key=self.aws_access_key,
+        #             aws_secret_access_key=self.aws_secret_access_key,
+        #             aws_region=self.aws_region,
+        #         )
+        #         logging.info(f"Upload Solver: {self._solver['solver_name']} scuccess")
+        #     except Exception as e:
+        #         logging.error(f"Upload Solver error:{e}")
+        #         return
+        # else:
+        #     logging.info("No solver upload")
 
         if self._is_celeryflower_on is False and "celeryflower" in self._services_config_list:
             self._services_config_list.pop('celeryflower')
@@ -475,10 +490,28 @@ class GismoCloudDeploy(object):
         logging.info("handle_build_and_tag_images")
         
     # docker build image
+        
+        if self._solver is None:
+            logging.info("No upload file, create a dummy path")
+            self._solver_lic_local_path = "dummy"
+            self._solver_lic_target_path = "/root/dummy"
+            # check if license exist
+            base_path = os.getcwd()
+            dummy_full_path = base_path +f"/config/{self._solver_lic_local_path}"
+            if not os.path.exists(dummy_full_path):
+                access_rights = 0o755 
+                os.mkdir(dummy_full_path, access_rights)
+
+
         try:
             invoke_docker_compose_build(
                         code_template_folder= self._code_template_folder ,
+                        target_path_of_upload_file = self._solver_lic_target_path,
+                        source_path_of_upload_file = self._solver_lic_local_path
                     )
+            if self._solver_lic_local_path == "dummy":
+                logging.info("Remove the dummy path")
+                os.rmdir(dummy_full_path)
         except Exception as e:
             
             raise Exception(f"Build Image Failed {e}")
@@ -560,19 +593,22 @@ class GismoCloudDeploy(object):
             k8s_create_namespace(namespace=namespace)
 
         # update k8s deployment 
+        base_path = os.getcwd()  + "/config/"
         logging.info("Apply k8s deployment, services in namespace")
         for namespace in self._k8s_namespace_set:   
             for key, value in self._services_config_list.items():
                 service_name = key
                 if service_name == "celeryflower" and self._is_celeryflower_on is False:
                     continue
-                deployment_file = value["deployment_file"]
-                service_file = value["service_file"]
+                
+                deployment_file = base_path + value["deployment_file"]
+                
                 desired_replicas = value["desired_replicas"]
                 image_base_url = value["image_name"]
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
 
+                # create deployment 
                 create_or_update_k8s_deployment(
                             service_name=service_name,
                             image_tag=image_tag,
@@ -582,8 +618,10 @@ class GismoCloudDeploy(object):
                             k8s_file_name=deployment_file,
                             namespace=namespace,
                         )
-                logging.info(f"Apply {deployment_file}:{service_name} in namspace:{namespace} ")
-                if service_file:
+                # Apply services
+                if  "service_file" in value :
+                    service_file = base_path + value["service_file"]
+                    logging.info(f"Apply {deployment_file} services :{service_name} in namspace:{namespace} ")
                     # check service exist
                     if not check_k8s_services_exists(name=service_name, namspace = namespace):
                         logging.info(

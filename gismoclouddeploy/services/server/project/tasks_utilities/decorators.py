@@ -48,18 +48,18 @@ def tracklog_decorator(func):
         response = dict()
         # print("Start-------->")
         try:
-            solver_name = solver["solver_name"]
-            if solver_name != "None":
-                check_and_download_solver(
-                    solver_name=solver_name,
-                    slover_lic_file_name=solver["solver_lic_file_name"],
-                    solver_lic_target_path=solver["solver_lic_target_path"],
-                    saved_solver_bucket=solver["saved_solver_bucket"],
-                    saved_temp_path_in_bucket=solver["saved_temp_path_in_bucket"],
-                    aws_access_key=aws_access_key,
-                    aws_secret_access_key=aws_secret_access_key,
-                    aws_region=aws_region,
-                )
+            # solver_name = solver["solver_name"]
+            # if solver_name != "None":
+            #     check_and_download_solver(
+            #         solver_name=solver_name,
+            #         slover_lic_file_name=solver["solver_lic_file_name"],
+            #         solver_lic_target_path=solver["solver_lic_target_path"],
+            #         saved_solver_bucket=solver["saved_solver_bucket"],
+            #         saved_temp_path_in_bucket=solver["saved_temp_path_in_bucket"],
+            #         aws_access_key=aws_access_key,
+            #         aws_secret_access_key=aws_secret_access_key,
+            #         aws_region=aws_region,
+            #     )
 
             # calls original function
 

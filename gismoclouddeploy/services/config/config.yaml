@@ -1,9 +1,9 @@
 # AWS parameters used for cli.
 aws_config:
-  cluster_file: "cluster.yaml"
+  cluster_file: "k8s/cluster.yaml"
   scale_eks_nodes_wait_time : 90          # in second
   interval_of_wait_pod_ready: 90          # in second
-  ec2_bastion_saved_config_file: "./config/ec2/ec2-config.yaml"
+  ec2_bastion_saved_config_file: "ec2/ec2-config.yaml"
 
 
 
@@ -12,38 +12,37 @@ services_config_list:
   worker:
       desired_replicas: 1 # Define how many workers run parallel in k8s. The generated workers spread evenly among eks nodes.
       imagePullPolicy: "IfNotPresent"
-      deployment_file: "./config/k8s/worker.deployment.yaml"
-      service_file: ""
+      deployment_file: "k8s/worker.deployment.yaml"
       image_name: "worker"
       image_tag: "latest"
   server:
       desired_replicas: 1
       imagePullPolicy: "IfNotPresent"
-      deployment_file: "./config/k8s/server.deployment.yaml"
-      service_file: "./config/k8s/server.services.yaml"
+      deployment_file: "k8s/server.deployment.yaml"
+      service_file: "k8s/server.services.yaml"
       image_name: "server"
       image_tag: "latest"
   redis:
       desired_replicas: 1
       imagePullPolicy: "IfNotPresent"
-      deployment_file: "./config/k8s/redis.deployment.yaml"
-      service_file: "./config/k8s/redis.services.yaml"
+      deployment_file: "k8s/redis.deployment.yaml"
+      service_file: "k8s/redis.services.yaml"
       image_name: "redis"
       image_tag: "latest"
 
   rabbitmq:
       desired_replicas: 1
       imagePullPolicy: "IfNotPresent"
-      deployment_file: "./config/k8s/rabbitmq.deployment.yaml"
-      service_file: "./config/k8s/rabbitmq.services.yaml"
+      deployment_file: "k8s/rabbitmq.deployment.yaml"
+      service_file: "k8s/rabbitmq.services.yaml"
       image_name: "rabbitmq"
       image_tag: "latest"
 
   celeryflower:
       desired_replicas: 1
       imagePullPolicy: "IfNotPresent"
-      deployment_file: "./config/k8s/flower.deployment.yaml"
-      service_file: "./config/k8s/flower.services.yaml"
+      deployment_file: "k8s/flower.deployment.yaml"
+      service_file: "k8s/flower.services.yaml"
       image_name: "celeryflower"
       image_tag: "latest"
 
@@ -52,12 +51,10 @@ services_config_list:
 worker_config: 
   solver: 
     solver_name: "MOSEK"
-    saved_solver_bucket: "pv.insight.test"
-    solver_lic_local_path: "./config/license"
-    solver_lic_target_path: "/root/mosek"     # This location inside worker container is requires by MOSEK
-    saved_temp_path_in_bucket: "lic_temp"     # Temporaty file location on S3 lic_temp/<user_id>.it grenerated in run-time and deleted after program completed.
+    solver_lic_local_path: "license"
+    solver_lic_target_path: "/root/mosek"
     solver_lic_file_name: "mosek.lic"
-  
+
   data_bucket: "pv.insight.nrel"
   data_file_type: ".csv"                 # Bucket contains origin data files.
   default_process_files: ["PVO/PVOutput/46851.csv","PVO/PVOutput/11106.csv","PVO/PVOutput/10010.csv"]   # Default process files. If users do not use option -n command.
@@ -78,5 +75,5 @@ worker_config:
   repeat_number_per_round: 1    # Repeat overall tasks per round before run end services.
   is_celeryflower_on: False     # Turn of / off flower 
   num_worker_pods_per_namespace: 1
-  num_repetion: 2
+  num_repetion: 1
 

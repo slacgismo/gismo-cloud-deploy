@@ -65,10 +65,10 @@ def process_local_logs_and_upload_s3(
     saved_image_name_local: str = None,
     # saved_files_dict_local:dict= None,
     # saved_files_dict_cloud :dict = None,
-    # databucket: str = None,
-    # aws_access_key: str = None,
-    # aws_secret_access_key: str = None,
-    # aws_region: str = None,
+    databucket: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
 ):
     s3_client = connect_aws_client(
         client_name="s3",

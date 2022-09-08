@@ -136,14 +136,16 @@ def run_process_files(
         repeat_index = gcd.get_repeat_index()
     except Exception as e:
         logging.error(f"Initial error :{e}")
-        return 
-    
+
     while repeat_index < num_repetition:
         try:
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
             # ready state, build , tag and push images
+  
             gcd.trigger_ready()
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
+ 
+             
             # deploy state, deploy k8s , scale eks nodes
             gcd.trigger_deploy()
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")

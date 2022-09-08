@@ -7,6 +7,8 @@ services:
       context: .
       args:
         - CODES_FOLDER=code-templates-sleep
+          TARGET_PATH_OF_UPLOAD_FILE
+          SOURCE_PATH_OF_UPLOAD_FILE
       dockerfile: ./config/${WORKER_DIRECTORY}/Dockerfile
 
     image: server
@@ -33,6 +35,8 @@ services:
       context: .
       args:
         - CODES_FOLDER=code-templates-sleep
+          TARGET_PATH_OF_UPLOAD_FILE
+          SOURCE_PATH_OF_UPLOAD_FILE
       dockerfile:  ./config/${WORKER_DIRECTORY}/Dockerfile
     image: celeryflower
     container_name: celeryflower
@@ -54,6 +58,8 @@ services:
       context: .
       args:
         - CODES_FOLDER=code-templates-sleep
+          TARGET_PATH_OF_UPLOAD_FILE
+          SOURCE_PATH_OF_UPLOAD_FILE
       dockerfile:   ./config/${WORKER_DIRECTORY}/Dockerfile
     image: worker
     command: /start-celeryworker

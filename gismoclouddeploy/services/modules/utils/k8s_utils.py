@@ -81,6 +81,7 @@ def create_k8s_deployment_from_yaml(
 ) -> bool:
 
     print(f"create_k8s_deployment_from_yaml {service_name} namspace :{namspace}, file_name:{file_name}")
+    print("--------------------------")
     try:
         file_setting = read_k8s_yml(full_path_name=file_name)
     except Exception as e:

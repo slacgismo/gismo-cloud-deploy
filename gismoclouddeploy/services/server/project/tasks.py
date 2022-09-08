@@ -29,6 +29,9 @@ def process_data_task(
     *args,
     **kwargs,
 ):
+
+    solver_name = None
+    solver_file = None
     try:
         data_bucket = kwargs["data_bucket"]
         curr_process_file = kwargs["curr_process_file"]
@@ -36,15 +39,39 @@ def process_data_task(
         aws_access_key = kwargs["aws_access_key"]
         aws_secret_access_key = kwargs["aws_secret_access_key"]
         aws_region = kwargs["aws_region"]
-        solver_name = kwargs["solver"]["solver_name"]
-        solver_file = (
-            kwargs["solver"]["solver_lic_target_path"]
-            + "/"
-            + kwargs["solver"]["solver_lic_file_name"]
-        )
-        user_id = kwargs["user_id"]
     except Exception as e:
         raise Exception(f"Input key error:{e}")
+    try: 
+        if 'solver' in kwargs:
+            solver = kwargs['solver']
+            print(f"solver :{solver}")
+            if solver is not None:
+                if 'solver_name' in solver:    
+                    solver_name = solver['solver_name']
+                if 'solver_lic_target_path' in solver and 'solver_lic_file_name' in solver:
+                    solver_file = (
+                        solver["solver_lic_target_path"]
+                        + "/"
+                        + solver["solver_lic_file_name"]
+                    )
+    except Exception as e:
+        raise Exception(f"parse {kwargs} key error:{e}")
+
+
+    # try:
+    #     if "solver" in kwargs:
+    #         if "solver_name" in kwargs["solver"] \
+    #             and "solver_lic_target_path" in kwargs["solver"]  \
+    #                 and "solver_lic_file_name" in kwargs["solver"]:
+    #             solver_name = kwargs["solver"]["solver_name"]
+                # solver_file = (
+                #     kwargs["solver"]["solver_lic_target_path"]
+                #     + "/"
+                #     + kwargs["solver"]["solver_lic_file_name"]
+                # )
+    #     user_id = kwargs["user_id"]
+    # except Exception as e:
+    #     raise Exception(f"Input key error:{e}")
 
     response = entrypoint(
         data_bucket=data_bucket,

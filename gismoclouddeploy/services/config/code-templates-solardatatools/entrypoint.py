@@ -44,8 +44,8 @@ def entrypoint(
 
     # check solver file exist: The download function is inside `check_and_download_solver` function ""
     if solver_name is not None and (exists(solver_file) is False):
-        return Exception(f"solver_file:{solver_file} dose not exist")
-
+        raise Exception(f"solver_file:{solver_file} dose not exist")
+    
     # read csv file from s3
     try:
         df = read_csv_from_s3(

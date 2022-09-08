@@ -3,7 +3,13 @@ FROM python:3.8
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ARG CODES_FOLDER
+
+ARG TARGET_PATH_OF_UPLOAD_FILE
+ARG SOURCE_PATH_OF_UPLOAD_FILE
+
 ENV code_path  "../config/$CODES_FOLDER"
+ENV source_path_of_upload_file "../config/$SOURCE_PATH_OF_UPLOAD_FILE"
+
 
 
 RUN apt-get update \
@@ -26,6 +32,8 @@ COPY $code_path/requirements.txt /requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt
 
+# copy specific file to images 
+
 COPY ./server/compose/local/flask/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
@@ -43,6 +51,11 @@ RUN chmod +x /start-celeryworker
 COPY ./server/compose/local/flask/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
+
+# COPY if [ -d $source_path_of_upload_file ] ; then COPY $source_path_of_upload_file/  $TARGET_PATH_OF_UPLOAD_FILE
+
+COPY $source_path_of_upload_file/  $TARGET_PATH_OF_UPLOAD_FILE
+
 
 # WORKDIR /app
 
