@@ -301,14 +301,14 @@ def create_aws_vpc(ec2_client, tags:list) -> str:
 
 
 
-def create_security_group(ec2_client, vpc_id:str = None, tags:list = None) -> dict:
+def create_security_group(ec2_client, vpc_id:str = None, tags:list = None, group_name:str = 'SSH-ONLY') -> dict:
      #Create a security group and allow SSH inbound rule through the VPC
     response = ec2_client.describe_vpcs()
     if vpc_id is None or vpc_id == "None":
         vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
     try:
         response = ec2_client.create_security_group(
-            GroupName='SSH-ONLY', 
+            GroupName=group_name, 
             Description='only allow SSH traffic', 
             VpcId=vpc_id,
             TagSpecifications=[

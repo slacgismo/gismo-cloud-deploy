@@ -5,6 +5,7 @@ from multiprocessing.resource_sharer import stop
 import click
 import logging
 import os
+from modules.utils.check_aws import connect_aws_client
 from modules.utils.EC2Action import EC2Action
 from modules.utils.CreateEC2Bastion import CreateEC2Bastion
 
@@ -273,6 +274,17 @@ def create_ec2():
         aws_region= AWS_DEFAULT_REGION
     )
      # Collect cloud resources info
+    # ec2_client = connect_aws_client(
+    #     client_name='ec2',
+    #     key_id= AWS_ACCESS_KEY_ID,
+    #     secret=AWS_SECRET_ACCESS_KEY,
+    #     region=AWS_DEFAULT_REGION
+    # )
+    
+    # response = ec2_client.describe_vpcs()
+    # for vpc in response.get('Vpcs', [{}]):
+    #     print(vpc)
+
 
     create_ec2_bastion.set_ec2_action()
     action = create_ec2_bastion.get_ec2_action()
@@ -300,6 +312,7 @@ def create_ec2():
         logging.info(f" ===== State: {create_ec2_bastion.state} =======")
         # eks ready 
         # ssh upload files 
+        return 
         create_ec2_bastion.trigger_cleanup()
         # system stop 
         # if terminate clean created resources
