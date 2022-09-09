@@ -75,16 +75,6 @@ class Environments(enum.Enum):
     AWS = 1
 
 class GismoCloudDeploy(object):
-
-    # states=['stop', 
-    #         'prepare_system',
-    #         'build_tag_images',
-    #         'deploy_k8s',
-    #         'send_command_to_servers',
-    #         'long_pulling_sqs',
-    #         'clean_services',
-    #         'analyzing_logs',
-    #         ]
     states=[
         'system_stop', 
         'system_initial',
@@ -167,7 +157,6 @@ class GismoCloudDeploy(object):
         self._unfinished_tasks_id_set = set()
         self._init_process_time_list = []
         self._total_proscee_time_list = []
-        # self.files_name_key = []
         self._upload_file_dict = dict()
         self._upload_file_name = None
         self._upload_files_local_path = None
@@ -284,7 +273,7 @@ class GismoCloudDeploy(object):
             self._data_bucket = worker_config["data_bucket"]
             self._default_files = worker_config["default_process_files"]
             self._file_type = worker_config["data_file_type"]
-            # self._solver = worker_config["solver"]
+
             if 'solver' in worker_config:
                 self._solver = worker_config['solver']
             

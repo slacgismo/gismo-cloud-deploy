@@ -1,8 +1,12 @@
+from email.policy import default
 from multiprocessing.dummy import Process
+from multiprocessing.resource_sharer import stop
 
 import click
 import logging
 import os
+from modules.utils.EC2Action import EC2Action
+from modules.utils.CreateEC2Bastion import CreateEC2Bastion
 
 from modules.utils.AWS_CONFIG import AWS_CONFIG
 from modules.utils.run_process_files import run_process_files
@@ -17,6 +21,7 @@ from dotenv import load_dotenv
 from modules.utils.command_utils import print_dlq
 from modules.utils.invoke_function import invoke_docker_compose_build,invoke_ecr_validation,invoke_tag_image
 load_dotenv()
+
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
@@ -256,10 +261,74 @@ def create_keypair(keyname,file_location ):
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION)
 
+# ***************************
+#  Create EC2 Bastion
+# ***************************
+@main.command()
 
+def create_ec2():
+    create_ec2_bastion = CreateEC2Bastion(
+        aws_access_key=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        aws_region= AWS_DEFAULT_REGION
+    )
+     # Collect cloud resources info
+
+    create_ec2_bastion.set_ec2_action()
+    action = create_ec2_bastion.get_ec2_action()
+
+    if action == EC2Action.create.name:
+        logger.info("Create instance and start from scratch !!!")
+        create_ec2_bastion.set_vpc_info()
+        create_ec2_bastion.set_security_group_info()
+        create_ec2_bastion.set_keypair_info()
+        create_ec2_bastion.set_ec2_info()
+        create_ec2_bastion.set_eks_cluster_info()
+        create_ec2_bastion.set_runfiles_command()
+        create_ec2_bastion.trigger_initial() 
+        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
+    
+        is_confirm = create_ec2_bastion.is_confirm_creation()
+        if not is_confirm:
+            return 
+        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
+        create_ec2_bastion.trigger_resources_ready()
+        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
+        create_ec2_bastion.trigger_create_ec2()
+        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
+        create_ec2_bastion.trigger_create_eks()
+        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
+        # eks ready 
+        # ssh upload files 
+        create_ec2_bastion.trigger_cleanup()
+        # system stop 
+        # if terminate clean created resources
+        return 
+    
+
+    elif action == EC2Action.start.name or  action == EC2Action.stop.name or action == EC2Action.terminate.name:
+        logging.info("Import ec2 parameters from existing config yaml file and operate instance!!")
+        # step 1 ,  Import config file
+        # step 2 ,  check inputs
+        # step 3 ,  taek action
+
+    elif action == EC2Action.ssh.name:
+        logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
+        # step 1 , set input command 
+        # step 2 , load config file
+        # step 3 , check inputs
+        # step 4 , ssh connection
+        # step 5 , ssh upload files
+        # step 6 , run command 
+
+    else:
+        logging.info("Unknow action")
+        return 
+
+    
 
 # ***************************
-#  Handle EC2 Action, List,  Create , Start, Stop, or Terminate EC2 Instances
+#  Handle EC2 Action, List , Start, Stop, or Terminate EC2 Instances
 # ***************************
 @main.command()
 @click.option(
@@ -272,7 +341,7 @@ def create_keypair(keyname,file_location ):
 
 def handle_ec2(configfile, action):
     """Handle EC2 action"""
-    
+    print("Handle ec2")
     handle_ec2_bastion(
         config_file=configfile, 
         aws_access_key=AWS_ACCESS_KEY_ID,
