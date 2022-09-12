@@ -90,7 +90,7 @@ def process_files(worker_config_str: str, first_n_files: str):
         logger.error(f"AWS validation failed {e}")
         return "AWS validation fail"
 
-    # print(default_files)
+    print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
     repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])

@@ -332,7 +332,7 @@ def invoke_exec_k8s_run_process_files(
     first_n_files: str = None,
     namespace:str = "default"
 ) -> None:
-    # print("invoke_exec_k8s_run_process_files")
+    
     command = [
         "kubectl",
         "exec",
@@ -348,15 +348,15 @@ def invoke_exec_k8s_run_process_files(
         f"{config_params_str}",
         f"{first_n_files}",
     ]
-
+    print(f"command: {command}")
     try:
 
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        # out, err = res.communicate()
-        # print(out, err)
-        # return out
+        out, err = res.communicate()
+        print(out, err)
+        return out
 
     except KeyboardInterrupt as e:
         print(f"Invoke k8s process file error:{e}")
