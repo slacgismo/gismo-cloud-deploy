@@ -329,6 +329,7 @@ class GismoCloudDeploy(object):
             self._cluster_file  = aws_config['cluster_file']
             self._scale_eks_nodes_wait_time  = aws_config['scale_eks_nodes_wait_time']
             self._interval_of_wait_pod_ready  = aws_config['interval_of_wait_pod_ready']
+            self._total_num_nodes = aws_config['total_num_nodes']
         except Exception as e:
             raise Exception(f"parse config file error :{e}")
         # convert cluster file
