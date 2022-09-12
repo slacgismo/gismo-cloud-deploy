@@ -28,7 +28,8 @@ from .invoke_function import (
     invoke_eks_updagte_kubeconfig,
     invoke_kubectl_create_namespaces,
     # invoke_process_files_to_server_namespace,
-    invoke_exec_k8s_run_process_files
+    invoke_exec_k8s_run_process_files,
+    invoker_check_docker_running
     
     
 )
@@ -424,6 +425,27 @@ class GismoCloudDeploy(object):
         self._sqs_url = _resp.url
         logging.info(f"======== Create {self._sqs_url} success =======")
         
+        # Upload solver 
+     
+        # if len(self._solver):
+        #     try:
+        #         check_solver_and_upload(
+        #             ecr_repo=self.ecr_repo,
+        #             solver_name=self._solver['solver_name'],
+        #             saved_solver_bucket=self._solver['saved_solver_bucket'],
+        #             solver_lic_file_name=self._solver['solver_lic_file_name'],
+        #             solver_lic_local_path=self._solver['solver_lic_local_path'],
+        #             saved_temp_path_in_bucket=self._solver['saved_temp_path_in_bucket'] + "/" +self._user_id,
+        #             aws_access_key=self.aws_access_key,
+        #             aws_secret_access_key=self.aws_secret_access_key,
+        #             aws_region=self.aws_region,
+        #         )
+        #         logging.info(f"Upload Solver: {self._solver['solver_name']} scuccess")
+        #     except Exception as e:
+        #         logging.error(f"Upload Solver error:{e}")
+        #         return
+        # else:
+        #     logging.info("No solver upload")
 
         if self._is_celeryflower_on is False and "celeryflower" in self._services_config_list:
             self._services_config_list.pop('celeryflower')
@@ -456,9 +478,12 @@ class GismoCloudDeploy(object):
 
     def handle_build_and_tag_images(self, event):    
         logging.info("handle_build_and_tag_images")
-        
-    # docker build image
-        
+
+        # Should check the docker server is running.
+        # if not invoker_check_docker_running():
+        #     raise Exception("Docker is not running")
+        # docker build image
+
         if self._solver is None:
             logging.info("No upload file, create a dummy path")
             self._solver_lic_local_path = "dummy"

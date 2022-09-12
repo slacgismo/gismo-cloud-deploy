@@ -1,4 +1,5 @@
 from asyncio.log import logger
+import re
 
 from subprocess import PIPE, run
 
@@ -497,3 +498,13 @@ def invoke_docker_system_prune_all():
 
 # deleta all resource in namspace
 # kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all
+
+# def invoker_check_docker_running() -> bool:
+
+#     s = subprocess.check_output('docker ps', shell=True)
+
+#     if s.find('containername') != -1:
+#         print ('docker found!')
+#         return True
+#     else:
+#         return False
