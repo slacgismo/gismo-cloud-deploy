@@ -24,7 +24,7 @@ from .AWS_CONFIG import AWS_CONFIG
 from .WORKER_CONFIG import WORKER_CONFIG
 
 
-from .GismoCloudDeploy import GismoCloudDeploy
+from .GismoCloudDeploy import Environments, GismoCloudDeploy
 
 from .check_aws import (
     connect_aws_client,
@@ -116,12 +116,14 @@ def run_process_files(
     # list all files in results folder
     # check config exist
 
-    
+    env = Environments.LOCAL.name
+    if check_environment_is_aws():
+         env = Environments.AWS.name
     
     gcd = GismoCloudDeploy(
         configfile=configfile,
         num_inputfile=number,
-        env="loacl",
+        env=env,
         aws_access_key=aws_access_key,
         aws_secret_access_key = aws_secret_access_key,
         aws_region = aws_region,
@@ -141,11 +143,8 @@ def run_process_files(
         try:
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
             # ready state, build , tag and push images
-  
             gcd.trigger_ready()
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
- 
-             
             # deploy state, deploy k8s , scale eks nodes
             gcd.trigger_deploy()
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
