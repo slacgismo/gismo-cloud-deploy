@@ -308,8 +308,11 @@ class GismoCloudDeploy(object):
 
             for key, value in self._filename.items():
                 self._saved_file_local[key] = []
-
+            if not exists(self._saved_path_local):
+                logging.info(f"Make dir {self._saved_path_local} ")
+                os.makedirs(self._saved_path_local)
             logging.info(f"Remove previous files in {self._saved_path_local} folder")
+      
             absolute_saved_file_path = base_path +"/"+self._saved_path_local
             for f in os.listdir(absolute_saved_file_path):
                 os.remove(os.path.join(absolute_saved_file_path, f))
