@@ -1,6 +1,7 @@
 from email.policy import default
 from multiprocessing.dummy import Process
 from multiprocessing.resource_sharer import stop
+from unicodedata import name
 
 import click
 import logging
@@ -287,6 +288,7 @@ def create_ec2():
 
 
     create_ec2_bastion.set_ec2_action()
+    # get action put
     action = create_ec2_bastion.get_ec2_action()
 
     if action == EC2Action.create.name:
@@ -312,33 +314,39 @@ def create_ec2():
         logging.info(f" ===== State: {create_ec2_bastion.state} =======")
         # eks ready 
         # ssh upload files 
-        return 
-        create_ec2_bastion.trigger_cleanup()
         # system stop 
         # if terminate clean created resources
+        
+    elif action == EC2Action.start.name:
+        logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
+        create_ec2_bastion.handle_import_configfile()
+        create_ec2_bastion.handle_ec2_action()
         return 
-    
-
-    elif action == EC2Action.start.name or  action == EC2Action.stop.name or action == EC2Action.terminate.name:
-        logging.info("Import ec2 parameters from existing config yaml file and operate instance!!")
-        # step 1 ,  Import config file
-        # step 2 ,  check inputs
-        # step 3 ,  taek action
-
     elif action == EC2Action.ssh.name:
         logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
-        # step 1 , set input command 
-        # step 2 , load config file
-        # step 3 , check inputs
-        # step 4 , ssh connection
+        create_ec2_bastion.handle_import_configfile()
+        create_ec2_bastion.trigger_ssh()
+        create_ec2_bastion.ssh_update_config_folder()
+        is_breaking_ssh = create_ec2_bastion.get_breaking_ssh()
+        print(f"is_breaking_ssh :{is_breaking_ssh}" )
+        while not is_breaking_ssh:
+            create_ec2_bastion.set_and_run_ssh_command()
+            create_ec2_bastion.set_breaking_ssh()
+           
+            is_breaking_ssh = create_ec2_bastion.get_breaking_ssh()
+            logging.info(f"is_breaking_ssh: {is_breaking_ssh}")
         # step 5 , ssh upload files
-        # step 6 , run command 
 
-    else:
-        logging.info("Unknow action")
-        return 
+        # step 6 , set action stop or terminate
 
+
+    create_ec2_bastion.set_ec2_action()
+        
     
+    action = create_ec2_bastion.get_ec2_action()
+    create_ec2_bastion.handle_ec2_action()
+
+
 
 # ***************************
 #  Handle EC2 Action, List , Start, Stop, or Terminate EC2 Instances

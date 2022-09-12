@@ -379,7 +379,7 @@ def run_command_in_ec2_ssh(
 
     ssh.close()
 
-def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user_name) :
+def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user_name)  -> bool:
     ec2 = boto3.resource('ec2')
     instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
     print(instances)
@@ -401,7 +401,7 @@ def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user
                     continue
 
                 logging.info(f"{instance_id} is ready to connect SSH")
-                return
+                return True
         wait_time -= delay
         time.sleep(delay)
         logger.info(f"Wait: {wait_time}...")
@@ -410,7 +410,7 @@ def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user
     logger.info(f"Cannot find running instance: {instance_id}")
 
     # try ssh to 
-    return None
+    return False
 
 
 def upload_file_to_sc2(    
@@ -506,6 +506,7 @@ def ssh_upload_folder_to_ec2(
         # remote_file = remote_folder + "/" + relative_path  +"/" + filename
         remote_dir = remote_folder  + relative_path
         upload_local_to_remote_dict[file] = remote_dir  +"/" + filename
+
         # print("------------------------------")
         # print(f"upload {file} to {remote_file}")
         # print(f"remote_dir: {remote_dir}")
@@ -543,7 +544,7 @@ def get_all_files_in_local_dir( local_dir:str) -> list:
             else:
                 all_files.append(filename)
         else:
-            print ('{}does not exist'.format(local_dir))
+            print ('-- {}does not exist'.format(local_dir))
     else:
         print(f"{local_dir} doese not exist")
     return all_files
