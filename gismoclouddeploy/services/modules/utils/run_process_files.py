@@ -162,9 +162,9 @@ def run_process_files(
            
 
     # clean up state, clean up k8s, delete namspaces, scale down eks nodes to 0 .
-    logging.info(f" ===== State: {gcd.state} =======")
-    gcd.trigger_cleanup()
-    logging.info(f" ===== State: {gcd.state} =======")
+    # logging.info(f" ===== State: {gcd.state} =======")
+    # gcd.trigger_cleanup()
+    # logging.info(f" ===== State: {gcd.state} =======")
     return
 
     config_yaml = f"./config/{configfile}"

@@ -332,7 +332,10 @@ def invoke_exec_k8s_run_process_files(
     first_n_files: str = None,
     namespace:str = "default"
 ) -> None:
-    
+    full_command = f"kubectl exec -n {namespace} {pod_name} --stdin --tty -- python app.py process_files \'{config_params_str}\' \'{first_n_files}\'"
+    print("full command -----")
+    print(full_command)
+    print(" -----")
     command = [
         "kubectl",
         "exec",
@@ -405,7 +408,7 @@ def invoke_exec_k8s_check_task_status(
         "check_task_status",
         f"{task_id}",
     ]
-    print(f"command : {command}")
+   
     try:
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT

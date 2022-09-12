@@ -29,6 +29,7 @@ logging.basicConfig(
 @cli.command("ping_worker")
 def ping_worker():
     task_id = pong_worker.delay()
+    print("ping_worker")
     print(task_id)
 
 
