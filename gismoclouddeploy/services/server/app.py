@@ -56,14 +56,14 @@ def check_task_status(task_id: str = None):
 # ***************************
 # Process first n files : first_n_files is integer
 # Process all files  : first_n_files is 0
-# Process define files : first_n_files is None
+
 # ***************************
 
 
 @cli.command("process_files")
 @click.argument("worker_config_str", nargs=1)
-@click.argument("first_n_files", nargs=1)
-def process_files(worker_config_str: str, first_n_files: str):
+
+def process_files(worker_config_str: str):
     print("this is app process files")
     try:
         worker_config_json = json.loads(worker_config_str)

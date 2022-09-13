@@ -51,12 +51,15 @@ def num_pod_ready(container_prefix: str) -> int:
 def wait_pod_ready(
     num_container: str, container_prefix: str, counter: int, delay: int
 ) -> bool:
+    print("Handle wait pod ready -----")
+    print(f"num_container {num_container} container_prefix {container_prefix}")
     cunrrent_num_container = 0
     # print(f"container_prefix :{container_prefix}")
-    while counter:
+    while counter > 0 :
         cunrrent_num_container = num_pod_ready(container_prefix=container_prefix)
         if cunrrent_num_container == num_container:
-            logger.info(f"{num_container} {container_prefix} pods are running")
+            logger.info(f"{num_container} {container_prefix} pods are running --> break")
+            
             return
         counter -= delay
         logger.info(

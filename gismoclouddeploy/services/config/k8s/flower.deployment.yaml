@@ -23,7 +23,7 @@ spec:
       containers:
         - name: celeryflower
           image: cceleryflower:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["/start-flower"]
           env:
             - name: FLASK_APP

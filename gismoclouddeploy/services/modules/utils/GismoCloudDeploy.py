@@ -429,27 +429,7 @@ class GismoCloudDeploy(object):
         self._sqs_url = _resp.url
         logging.info(f"======== Create {self._sqs_url} success =======")
         
-        # Upload solver 
-     
-        # if len(self._solver):
-        #     try:
-        #         check_solver_and_upload(
-        #             ecr_repo=self.ecr_repo,
-        #             solver_name=self._solver['solver_name'],
-        #             saved_solver_bucket=self._solver['saved_solver_bucket'],
-        #             solver_lic_file_name=self._solver['solver_lic_file_name'],
-        #             solver_lic_local_path=self._solver['solver_lic_local_path'],
-        #             saved_temp_path_in_bucket=self._solver['saved_temp_path_in_bucket'] + "/" +self._user_id,
-        #             aws_access_key=self.aws_access_key,
-        #             aws_secret_access_key=self.aws_secret_access_key,
-        #             aws_region=self.aws_region,
-        #         )
-        #         logging.info(f"Upload Solver: {self._solver['solver_name']} scuccess")
-        #     except Exception as e:
-        #         logging.error(f"Upload Solver error:{e}")
-        #         return
-        # else:
-        #     logging.info("No solver upload")
+
 
         if self._is_celeryflower_on is False and "celeryflower" in self._services_config_list:
             self._services_config_list.pop('celeryflower')
@@ -458,8 +438,16 @@ class GismoCloudDeploy(object):
 
         
         # update aws parameters 
-        if self._is_aws():
+        if self._is_local():
             # update image rag 
+            for service_name in self._services_config_list:
+                if service_name == "worker" \
+                    or service_name =="server" \
+                    or service_name == "celeryflower":
+                    # update pull policy
+                    self._services_config_list[service_name]['imagePullPolicy'] = "IfNotPresent"
+                
+        elif self._is_aws():
             for service_name in self._services_config_list:
                 if service_name == "worker" \
                     or service_name =="server" \
@@ -474,7 +462,7 @@ class GismoCloudDeploy(object):
                 logging.info(f"{service_name} : {updated_name}")
 
 
-
+    
 
         return 
 
@@ -604,7 +592,7 @@ class GismoCloudDeploy(object):
                 image_base_url = value["image_name"]
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
-
+                print(f"service_name {service_name} image_base_url: {image_base_url}:{image_tag}")
                 # create deployment 
                 create_or_update_k8s_deployment(
                             service_name=service_name,
@@ -631,27 +619,33 @@ class GismoCloudDeploy(object):
     def handle_verify_k8s_services(self, event):
         logging.info("handle_verify_k8s_services")
         
-        threads = list()
-        try:
-            for service, value in self._services_config_list.items():
-                desired_replicas = value["desired_replicas"]
-                logging.info(f"{service}: desired_replicas: {desired_replicas}")
-                x = threading.Thread(
-                    target=wait_pod_ready,
-                    args=(
-                        desired_replicas,
-                        service,
-                        self._interval_of_wait_pod_ready,
-                        1,
-                    ),
-                )
-                x.name = service
-                threads.append(x)
-                x.start()
-        except Exception as e:
-            raise Exception(f"Verify k8 services failed")
+        # threads = list()
+        # try:
+        #     for service, value in self._services_config_list.items():
+        #         desired_replicas = value["desired_replicas"]
+        #         logging.info(f"{service}: desired_replicas: {desired_replicas}")
+        #         wait_pod_ready(
+        #             num_container=desired_replicas,
+        #             container_prefix=service,
+        #             counter=self._interval_of_wait_pod_ready,
+        #             delay= 1
+        #         )
+        #         # x = threading.Thread(
+        #         #     target=wait_pod_ready,
+        #         #     args=(
+        #         #         desired_replicas,
+        #         #         service,
+        #         #         self._interval_of_wait_pod_ready,
+        #         #         1,
+        #         #     ),
+        #         # )
+        #         # x.name = service
+        #         # threads.append(x)
+        #         # x.start()
+        # except Exception as e:
+        #     raise Exception(f"Verify k8 services failed")
 
-        logging.info("get server's pod name in each namespace")
+        # logging.info("get server's pod name in each namespace")
 
         ready_server_list = []
         wait_time = 25
@@ -663,6 +657,8 @@ class GismoCloudDeploy(object):
 
         for namespace in self._k8s_namespace_set:
             server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
+            if server_name is None:
+                continue
             _server_info = {'name': server_name, 'namespace':namespace}
             ready_server_list.append(_server_info)
 
@@ -962,7 +958,6 @@ def send_command_to_server(
         resp = invoke_exec_k8s_run_process_files(
             config_params_str=config_str,
             pod_name=server_name,
-            first_n_files= None,
             namespace = namespace,
         )
         logging.info(f"invoke k8s resp:{resp}")

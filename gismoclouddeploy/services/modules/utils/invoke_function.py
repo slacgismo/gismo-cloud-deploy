@@ -329,13 +329,9 @@ def invoke_eks_get_cluster() -> str:
 def invoke_exec_k8s_run_process_files(
     config_params_str: str = None,
     pod_name: str = None,
-    first_n_files: str = None,
     namespace:str = "default"
 ) -> None:
-    full_command = f"kubectl exec -n {namespace} {pod_name} --stdin --tty -- python app.py process_files \'{config_params_str}\' \'{first_n_files}\'"
-    print("full command -----")
-    print(full_command)
-    print(" -----")
+
     command = [
         "kubectl",
         "exec",
@@ -348,10 +344,9 @@ def invoke_exec_k8s_run_process_files(
         "python",
         "app.py",
         "process_files",
-        f"{config_params_str}",
-        f"{first_n_files}",
+        f"{config_params_str}"
     ]
-    print(f"command: {command}")
+    print(f"run-fils command: {command}")
     try:
 
         res = subprocess.Popen(
