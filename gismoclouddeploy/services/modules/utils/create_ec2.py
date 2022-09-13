@@ -29,7 +29,7 @@ TAGS = [
     {'Key': 'managedBy', 'Value': 'boto3'}
 ]
 
-def create_ec2_bastion(config_file:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
+def hand_ec2_bastion(config_file:str,aws_access_key:str,aws_secret_access_key:str, aws_region:str) -> str:
     s3_client = connect_aws_client(
             client_name="s3",
             key_id=aws_access_key,
@@ -487,7 +487,7 @@ def ssh_upload_folder_to_ec2(
         if (instance.id==instance_id):
             p2_instance=instance
             break;
-
+    
     # check if directory exist
     local_files_list = get_all_files_in_local_dir(local_dir=local_folder)
     # print(local_files_list)
@@ -496,6 +496,13 @@ def ssh_upload_folder_to_ec2(
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    
+    # if folder exist 
+
+    # command = f"if [ ! -d \"{path}\" ]; then \n echo {path} does not exist \n mkdir {path} \n echo create {path} \n fi"
+    # (stdin, stdout, stderr) = ssh.exec_command(command)
+    # for line in stdout.readlines():
+    #     print (line)
     # ftp_client=ssh.open_sftp()
     # upload ./config/code-templates-solardatatools/requirements.txt to /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config/code-templates-solardatatools//config/code-templates-solardatatools/requirements.txt
     # file ="./config/code-templates-solardatatools/requirements.txt"
@@ -512,20 +519,25 @@ def ssh_upload_folder_to_ec2(
     upload_local_to_remote_dict = {}
     for file in local_files_list:
         relative_path, filename = os.path.split(file)
+        
         # remove ".""
         relative_path = relative_path.replace(".","") 
+        print(f"relative_path :{relative_path} filename :{filename}")
         # print(f"relative_path: {relative_path}")
         # remote_file = remote_folder + "/" + relative_path  +"/" + filename
         remote_dir = remote_folder  + relative_path
         upload_local_to_remote_dict[file] = remote_dir  +"/" + filename
-
+        # print("----------------------------")
+        # print(upload_local_to_remote_dict[file] )
         # print("------------------------------")
         # print(f"upload {file} to {remote_file}")
         # print(f"remote_dir: {remote_dir}")
+
         command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir} \n fi"
         (stdin, stdout, stderr) = ssh.exec_command(command)
         for line in stdout.readlines():
             print (line)
+        # print("----------------------------")
 
     ftp_client=ssh.open_sftp()
     for key,value in upload_local_to_remote_dict.items():
@@ -533,8 +545,8 @@ def ssh_upload_folder_to_ec2(
         try:
             ftp_client.put(key,value)
             logger.info(f"upload :{key} to {value} success")
-        except:
-            logger.error(f"upload :{key} to {value} failed")
+        except Exception as e :
+            logger.error(f"upload :{key} to {value} failed: {e}")
         # print(f"local :{key}")
         # print(f"value :{value}")
     ftp_client.close()

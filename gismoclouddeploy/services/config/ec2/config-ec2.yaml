@@ -1,7 +1,7 @@
 SecurityGroupIds:
 - sg-00c487a2d59a5fa6e
 ec2_image_id: ami-0568773882d492fc8
-ec2_instance_id: i-040ca25ee7d7b7d83
+ec2_instance_id: i-0a08f95ca724aef8b
 ec2_instance_type: t2.large
 ec2_volume: '20'
 key_pair_name: JL-2
@@ -10,7 +10,7 @@ tags:
 - Key: managedBy
   Value: boto3
 - Key: Name
-  Value: gcd-202
+  Value: gcd-2
 - Key: project
   Value: pvinsight
 vpc_id: vpc-a27c77ca

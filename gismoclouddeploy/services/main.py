@@ -8,7 +8,7 @@ import logging
 import os
 from modules.utils.check_aws import connect_aws_client
 from modules.utils.EC2Action import EC2Action
-from modules.utils.CreateEC2Bastion import CreateEC2Bastion
+from modules.utils.HandleEC2Bastion import HandleEC2Bastion
 
 from modules.utils.AWS_CONFIG import AWS_CONFIG
 from modules.utils.run_process_files import run_process_files
@@ -164,112 +164,112 @@ def run_files(
 # ***************************
 
 
-@main.command()
-@click.argument("min_nodes")
-@click.option(
-    "--configfile",
-    "-f",
-    help="Assign config files, Default files is config.yaml under /config",
-    default="config.yaml",
-)
-def nodes_scale(min_nodes, configfile):
-    """Increate or decrease nodes number"""
-    logger.info(f"Scale nodes {min_nodes} {configfile}")
-    # check aws credential
-    config_json = modiy_config_parameters(
-        configfile=configfile,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        ecr_repo=ECR_REPO,
-    )
-    aws_config_obj = AWS_CONFIG(config_json["aws_config"])
+# @main.command()
+# @click.argument("min_nodes")
+# @click.option(
+#     "--configfile",
+#     "-f",
+#     help="Assign config files, Default files is config.yaml under /config",
+#     default="config.yaml",
+# )
+# def nodes_scale(min_nodes, configfile):
+#     """Increate or decrease nodes number"""
+#     logger.info(f"Scale nodes {min_nodes} {configfile}")
+#     # check aws credential
+#     config_json = modiy_config_parameters(
+#         configfile=configfile,
+#         aws_access_key=AWS_ACCESS_KEY_ID,
+#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+#         aws_region=AWS_DEFAULT_REGION,
+#         ecr_repo=ECR_REPO,
+#     )
+#     aws_config_obj = AWS_CONFIG(config_json["aws_config"])
 
-    # worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
-    scale_eks_nodes_and_wait(
-        scale_node_num=int(min_nodes),
-        total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
-        delay=1,
-        cluster_name=aws_config_obj.cluster_name,
-        nodegroup_name=aws_config_obj.nodegroup_name,
-    )
+#     # worker_config_obj = WORKER_CONFIG(config_json["worker_config"])
+#     scale_eks_nodes_and_wait(
+#         scale_node_num=int(min_nodes),
+#         total_wait_time=aws_config_obj.scale_eks_nodes_wait_time,
+#         delay=1,
+#         cluster_name=aws_config_obj.cluster_name,
+#         nodegroup_name=aws_config_obj.nodegroup_name,
+#     )
 
 
 # ***************************
 #  Handle EKS cluster action, Create, Delete, List cluster
 # ***************************
-@main.command()
-@click.option(
-    "--configfile",
-    "-f",
-    help="Assign custom config files, Default files name is ./config/config.yaml",
-    default="config.yaml",
-)
-@click.argument("action")
-def handle_ekscluster(configfile, action):
-    """Create cluster from config file"""
-    click.echo(f"handle cluster from :{configfile} action:{action}")
+# @main.command()
+# @click.option(
+#     "--configfile",
+#     "-f",
+#     help="Assign custom config files, Default files name is ./config/config.yaml",
+#     default="config.yaml",
+# )
+# @click.argument("action")
+# def handle_ekscluster(configfile, action):
+#     """Create cluster from config file"""
+#     click.echo(f"handle cluster from :{configfile} action:{action}")
 
-    # step 1 , check environmnet if local . link to ec2 bastion
-    handle_eks_cluster_action(
-        config_file=configfile, 
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        action = action
-        )
+#     # step 1 , check environmnet if local . link to ec2 bastion
+#     handle_eks_cluster_action(
+#         config_file=configfile, 
+#         aws_access_key=AWS_ACCESS_KEY_ID,
+#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+#         aws_region=AWS_DEFAULT_REGION,
+#         action = action
+#         )
 
 
 
 # ***************************
 #  Handle run-files on AWS through ssh 
 # ***************************
-@main.command()
-@click.option(
-    "--configfile",
-    "-f",
-    help="Assign custom config files, Default files name is ./config/config.yaml",
-    default="config.yaml",
-)
-@click.argument("command")
-def ssh_runfiles(configfile, command):
-    """Use local machine to handle run-files command on AWS through SSH """
-    click.echo(f"handle cluster from :{configfile} action:{command}")
+# @main.command()
+# @click.option(
+#     "--configfile",
+#     "-f",
+#     help="Assign custom config files, Default files name is ./config/config.yaml",
+#     default="config.yaml",
+# )
+# @click.argument("command")
+# def ssh_runfiles(configfile, command):
+#     """Use local machine to handle run-files command on AWS through SSH """
+#     click.echo(f"handle cluster from :{configfile} action:{command}")
 
-    handle_run_files_ssh(
-        config_file=configfile, 
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        command = command
-        )
+#     handle_run_files_ssh(
+#         config_file=configfile, 
+#         aws_access_key=AWS_ACCESS_KEY_ID,
+#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+#         aws_region=AWS_DEFAULT_REGION,
+#         command = command
+#         )
         
     
 # ***************************
 #  Create Key Pair 
 # ***************************
-@main.command()
-@click.argument("keyname")
-@click.argument("file_location")
+# @main.command()
+# @click.argument("keyname")
+# @click.argument("file_location")
 
-def create_keypair(keyname,file_location ):
-    """Create EC2 from config file"""
-    click.echo(f"Create keypair :{keyname} save to  :{file_location}")
+# def create_keypair(keyname,file_location ):
+#     """Create EC2 from config file"""
+#     click.echo(f"Create keypair :{keyname} save to  :{file_location}")
 
-    create_ec2_keypair(
-        keyname = keyname,
-        file_location = file_location,
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION)
+#     create_ec2_keypair(
+#         keyname = keyname,
+#         file_location = file_location,
+#         aws_access_key=AWS_ACCESS_KEY_ID,
+#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+#         aws_region=AWS_DEFAULT_REGION)
 
 # ***************************
 #  Create EC2 Bastion
 # ***************************
 @main.command()
 
-def create_ec2():
-    create_ec2_bastion = CreateEC2Bastion(
+def handle_ec2():
+    handle_ec2_bastion = HandleEC2Bastion(
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region= AWS_DEFAULT_REGION
@@ -287,104 +287,102 @@ def create_ec2():
     #     print(vpc)
 
 
-    create_ec2_bastion.set_ec2_action()
+    handle_ec2_bastion.set_ec2_action()
     # get action put
-    action = create_ec2_bastion.get_ec2_action()
+    action = handle_ec2_bastion.get_ec2_action()
 
     if action == EC2Action.create.name:
         logger.info("Create instance and start from scratch !!!")
-        create_ec2_bastion.set_vpc_info()
-        create_ec2_bastion.set_security_group_info()
-        create_ec2_bastion.set_keypair_info()
-        create_ec2_bastion.set_ec2_info()
-        create_ec2_bastion.set_eks_cluster_info()
-        create_ec2_bastion.set_runfiles_command()
-        create_ec2_bastion.trigger_initial() 
-        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
+        handle_ec2_bastion.set_vpc_info()
+        handle_ec2_bastion.set_security_group_info()
+        handle_ec2_bastion.set_keypair_info()
+        handle_ec2_bastion.set_ec2_info()
+        # handle_ec2_bastion.set_eks_cluster_info()
+        # handle_ec2_bastion.set_runfiles_command()
+        handle_ec2_bastion.trigger_initial() 
+        logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
     
-        is_confirm = create_ec2_bastion.is_confirm_creation()
+        is_confirm = handle_ec2_bastion.is_confirm_creation()
         if not is_confirm:
             return 
-        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
-        create_ec2_bastion.trigger_resources_ready()
-        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
-        create_ec2_bastion.trigger_create_ec2()
-        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
-        create_ec2_bastion.trigger_create_eks()
-        logging.info(f" ===== State: {create_ec2_bastion.state} =======")
-        # eks ready 
-        # ssh upload files 
-        # system stop 
-        # if terminate clean created resources
-        
-    elif action == EC2Action.start.name:
-        logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
-        create_ec2_bastion.handle_import_configfile()
-        create_ec2_bastion.handle_ec2_action()
+        logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
+        handle_ec2_bastion.trigger_resources_ready()
+        logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
+        handle_ec2_bastion.trigger_create_ec2()
+        logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
         return 
-    elif action == EC2Action.ssh.name:
+        
+    elif action == EC2Action.running.name or action == EC2Action.stop.name or action == EC2Action.terminate.name:
         logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
-        create_ec2_bastion.handle_import_configfile()
-        create_ec2_bastion.trigger_ssh()
-        create_ec2_bastion.ssh_update_config_folder()
-        is_breaking_ssh = create_ec2_bastion.get_breaking_ssh()
+        handle_ec2_bastion.handle_import_configfile()
+        handle_ec2_bastion.handle_ec2_action()
+        return 
+    elif action == EC2Action.ssh.name or action == EC2Action.ssh_create_eks.name or action == EC2Action.ssh_delete_eks.name:
+        logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
+        handle_ec2_bastion.handle_import_configfile()
+        handle_ec2_bastion.trigger_ssh()
+        handle_ec2_bastion.ssh_update_config_folder()
+        is_breaking_ssh = handle_ec2_bastion.get_breaking_ssh()
         print(f"is_breaking_ssh :{is_breaking_ssh}" )
-        while not is_breaking_ssh:
-            create_ec2_bastion.set_and_run_ssh_command()
-            create_ec2_bastion.set_breaking_ssh()
-           
-            is_breaking_ssh = create_ec2_bastion.get_breaking_ssh()
-            logging.info(f"is_breaking_ssh: {is_breaking_ssh}")
-        # step 5 , ssh upload files
+        if action == EC2Action.ssh.name:
+            while not is_breaking_ssh:
+                handle_ec2_bastion.set_and_run_ssh_command()
+                handle_ec2_bastion.set_breaking_ssh()
+            
+                is_breaking_ssh = handle_ec2_bastion.get_breaking_ssh()
+                logging.info(f"is_breaking_ssh: {is_breaking_ssh}")
+            # step 5 , ssh upload files
+        elif action == EC2Action.ssh_create_eks.name or action == EC2Action.ssh_delete_eks.name:
+            handle_ec2_bastion.handle_eks_action()
+
+        handle_ec2_bastion.set_ec2_action()
+        handle_ec2_bastion.handle_ec2_action()
 
         # step 6 , set action stop or terminate
 
 
-    create_ec2_bastion.set_ec2_action()
-        
-    
-    action = create_ec2_bastion.get_ec2_action()
-    create_ec2_bastion.handle_ec2_action()
+
+
 
 
 
 # ***************************
 #  Handle EC2 Action, List , Start, Stop, or Terminate EC2 Instances
 # ***************************
-@main.command()
-@click.option(
-    "--configfile",
-    "-f",
-    help="Assign custom config files, Default files name is ./config/config.yaml",
-    default="config.yaml",
-)
-@click.argument("action")
+# @main.command()
+# @click.option(
+#     "--configfile",
+#     "-f",
+#     help="Assign custom config files, Default files name is ./config/config.yaml",
+#     default="config.yaml",
+# )
+# @click.argument("action")
 
-def handle_ec2(configfile, action):
-    """Handle EC2 action"""
-    print("Handle ec2")
-    handle_ec2_bastion(
-        config_file=configfile, 
-        aws_access_key=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region=AWS_DEFAULT_REGION,
-        action = action
-        )
+# def handle_ec2(configfile, action):
+#     """Handle EC2 action"""
+#     print("Handle ec2")
+#     handle_ec2_bastion(
+#         config_file=configfile, 
+#         aws_access_key=AWS_ACCESS_KEY_ID,
+#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+#         aws_region=AWS_DEFAULT_REGION,
+#         action = action
+#         )
 
 
 # ***************************
 #  Force delete namespace 
 # ***************************
-@main.command()
-@click.argument("namespace")
+# @main.command()
+# @click.argument("namespace")
 
-def delete_namespace(namespace):
-    """Force delete namesapce """
-    click.echo(f"Force delete namespace :{namespace}")
+# def delete_namespace(namespace):
+#     """Force delete namesapce """
+#     click.echo(f"Force delete namespace :{namespace}")
 
-    res = invoke_force_delete_namespace(namespace = namespace)
+#     res = invoke_force_delete_namespace(namespace = namespace)
 
-    click.echo(f"Response  :{res}")
+#     click.echo(f"Response  :{res}")
 
 
 # ***************************

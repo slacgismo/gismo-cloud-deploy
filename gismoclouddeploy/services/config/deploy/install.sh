@@ -57,7 +57,7 @@ cd /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/
 git fetch 
 git switch feature/sshAndFSM
 
-sudo chmod +755 /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config
+sudo chmod +rwx /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config
 # create virtual environment 
 python3.8 -m venv venv
 echo 'create virtual environment' >> /home/ec2-user/installation.txt

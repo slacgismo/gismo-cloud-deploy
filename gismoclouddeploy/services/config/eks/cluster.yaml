@@ -2,7 +2,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: solarDeleteme
+  name: solarTest3
   region: us-east-2
   tags:
     project: pvinsight
@@ -14,7 +14,7 @@ metadata:
 #       us-east-2a: { id: subnet-01234567890abcdef }
 
 nodeGroups:
-  - name: solarDeleteme
+  - name: solarTest3
     instanceType: t2.large
     desiredCapacity: 0
     minSize: 0
