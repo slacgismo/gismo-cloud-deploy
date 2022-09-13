@@ -32,6 +32,188 @@ Tools for executing time-consuming tasks with developer-defined custom code bloc
 
 ## Install & Setup
 
+### Quick start
+
+#### Installations
+
+Download the source code from github.
+
+```bash
+git clone https://github.com/slacgismo/gismo-cloud-deploy.git
+```
+
+Create a python virtual environment and activate the virtual environment
+
+```bash
+cd gismo-cloud-deploy/gismoclouddeploy/services 
+python3.8 -m venv venv
+source ./venv/bin/activate
+```
+
+Install python dependencies.
+
+```bash
+pip install -upgrade pip 
+pip install -r requirement.txt
+```
+
+#### Create EC2 bastion
+
+Create a `.env` file with following AWS credentials: (Plase ask the progrect creator or account manager to add permission into your AWS account)
+
+```bash
+AWS_ACCESS_KEY_ID=<your-aws-access-key>
+AWS_SECRET_ACCESS_KEY=<your-aws-secrect-access-key>
+AWS_DEFAULT_REGION=<your-aws-region>
+ECR_REPO=<your-ecr-repository-url>
+```
+
+***Note*** If you are using your own account other than SLAC Gismo group account. Please create a private ECR repositories that will contains three temporary images (`server`, `worker`, `celeryflower`). Those images are created during the run-time, and will are deleted after the process completed.
+
+Run handle ec2 command to create a ec2 bastion that control AWS EKS.( Under path: `gismo-cloud-deploy/gismoclouddeploy/services`).
+
+```bash
+python3 main.py handle-ec2
+```
+
+A selection menu pop up , please select `create` command.
+
+```bash
+ > create
+   running
+   stop
+   terminate
+   ssh
+   ssh_create_eks
+   ssh_delete_eks
+```
+
+Follow the instructions to fullfil the setting ot create ec2 bastions. The instructions includes:
+
+```bash
+Use default VPC ?(default:yes) (must be yes/no): yes # type yes to use default VPC 
+Create a new security group allow SSH connection only ?(default:yes) (must be yes/no): # type yes to create a new security group that only alow SSH connection. 
+Create a new keypair ?(default:yes) (must be yes/no): yes # If you already had a pem file, type `no`, otherwise type `yes` to create a new one.
+Enter existing keypair name: JS-ss # type your existing key pair pem file. (If you enter no in previous quesiton. This question is skipped.)
+Enter the pem path (hit enter to use default path: /Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/config/keypair):  #(type your pem file location. hit enter button to use default setting)
+Creat a EC2 name  : my-first-ec2 # give your ec2 a name
+Creat a project name in tag: my-project # give your ec2 a project name in tags. 
+Select instance type (suggest 't2.large')?: t2.large # select ec2 type
+ > t2.large
+   t2.medium
+   t2.xlarge
+Enter the ec2 volume (enter for default: 20): # define ec2 storage (hit enter to use default value:20)
+Enter the export file name (enter for default:config-ec2.yaml): # define the export file name of ec2.
+```
+
+A table will shows all the settings you just key in and ask for the confirmation. Type `yes` to create your ec2 bastion.
+
+```bash
+Comfim to process creation (must be yes/no):
+```
+
+#### Create EKS Cluster
+
+Run handle ec2 command to create a ec2 bastion that control AWS EKS.( Under path: `gismo-cloud-deploy/gismoclouddeploy/services`).
+
+```bash
+python3 main.py handle-ec2
+```
+
+Before creating a eks cluster to hold all the services, plase define your cluster name in the file `gismo-cloud-deploy/gismoclouddeploy/services/config/eks/cluster.yaml`
+
+A selection menu pop up , please select `ssh_create_eks` command. This command will eks cluster from the defined yaml file through SSH.
+
+```bash
+   create
+   running
+   stop
+   terminate
+   ssh
+ > ssh_create_eks
+   ssh_delete_eks
+```
+
+Creating eks cluster takes about 10 ~ 20 minutes depend on the system. After the creating is completed, it pop up a following questions to ask how to handle ec2 action again.
+Please select `ssh` to run commands to control eks you just created.
+
+```bash
+ > ssh
+   running
+   stop
+   terminate
+```
+
+A question pop up to ask update config file :
+
+```bash
+Is update config folder?: yes 
+ > yes
+   no
+```
+
+Select `yes` to upload the all `config` folder to ec2 bastion. It will overwirte the `config` folder in the AWS ec2 to keep your local config folder the same as your AWS ec2 folder.
+
+#### Start the application
+
+Follow the previous command. If you see the terminal ask another question:
+Congrtulations!!. You have set up the environments correct. We can start to run real process.
+Please type `python3 main.py run-files -n 1` in the terminal after the question as follow:
+
+```bash
+Please type your command: python3 main.py run-files -n 1
+```
+
+The program starts to process the first file in the S3 bucket that defined in `gismo-cloud-deploy/gismoclouddeploy/services/config/config.yaml`
+After couple minutes waiting, the program will show the results in the terminals. 
+Congrautaltions!! You have completed your fist process file analysis.
+The program will ask you to run ssh again or not. Select no to try another ssh command or select `yes` to close the ssh connection.
+
+```bash
+ breaking ssh ?: no
+  > yes
+    no
+```
+
+Then select `stop` to stop the instance.
+
+
+
+#### Delete EKS Cluster 
+
+A running eks cluster is charged in hour rate by AWS. If you complete your process, please remember to delete eks cluster to avoid extra cost. 
+Run the `handle-c2` command and select `ssh_delete_eks` command.
+
+```bash
+python3 main.py handle-ec2
+   create
+   running
+   stop
+   terminate
+   ssh
+   ssh_create_eks
+ > ssh_delete_eks
+```
+
+This commnad will scale down the nodes to 0 and delete eks cluster defined from the `cluster.yaml` file.
+***Note*** Please delete eks cluster before your terminate youre ec2 basion. Otherwiser you may face some permission issue.
+
+#### Start or terminate EKS Cluster
+
+A running ec2 basion will be charge in hour rate. If you complete your porcess, please remember to stop or terminated your ec2.
+Run the `handle-c2` command and select `terminate` command.
+
+```bash
+python3 main.py handle-ec2
+   create
+   running
+   stop
+   terminate
+   ssh
+   ssh_create_eks
+ > ssh_delete_eks
+```
+
 ### Quick start on AWS
 
 1. Login to `slac-gismo` AWS account.
