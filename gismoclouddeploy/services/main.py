@@ -61,67 +61,18 @@ def main():
     """,
     default=None,
 )
-@click.option(
-    "--deletenodes",
-    "-d",
-    is_flag=True,
-    help="Enable deleting eks node after complete this application. Default value is False.",
-)
+
 @click.option(
     "--configfile",
     "-f",
     help="Assign custom config files, Default files name is ./config/config.yaml",
     default="config.yaml",
 )
-@click.option(
-    "--rollout",
-    "-r",
-    is_flag=True,
-    help="Enable deleting current k8s deployment services and re-deployment services. Default value is False",
-)
-@click.option(
-    "--imagetag",
-    "-i",
-    help="Specifiy the image tag. Default value is 'latest'",
-    default="latest",
-)
-@click.option(
-    "--docker",
-    "-do",
-    is_flag=True,
-    help="Default value is False. If it is True, the services run in docker environment.Otherwise, the services run in k8s environment.",
-)
-@click.option(
-    "--build",
-    "-b",
-    is_flag=True,
-    help="Build a temp image and use it. If on AWS k8s environment, \
-    build and push image to ECR with temp image tag. These images will be deleted after used.\
-    If you would like to preserve images, please use build-image command instead ",
-)
-@click.option(
-    "--nodesscale",
-    "-sc",
-    help="Scale up eks nodes and worker replcas as the same number. This input number replaces the worker_repliacs and eks_nodes_number in config files",
-    default=None,
-)
-@click.option(
-    "--repeatnumber",
-    "-rn",
-    help="Scale up eks nodes and worker replcas as the same number. This input number replaces the worker_repliacs and eks_nodes_number in config files",
-    default=1,
-)
 
 def run_files(
     number: int = 1,
-    deletenodes: bool = False,
     configfile: str = None,
-    rollout: str = False,
-    imagetag: str = "latest",
-    docker: bool = False,
-    build: bool = False,
-    nodesscale: int = None,
-    repeatnumber :int = 1,
+
 ):
     """
     Proccess files in defined bucket
@@ -129,33 +80,17 @@ def run_files(
                         If number is None, this application process defined files in config.yaml.
                         If number is 0, this application processs all files in the defined bucket in config.yaml.
                         If number is an integer, this applicaion process the first `number` files in the defined bucket in config.yaml.
-    :param deletenodes: Enable deleting eks node after complete this application. Default value is False.
+                        
     :param configfile:  Define config file name. Default value is "./config/config.yaml"
-    :param rollout:     Enable delete current k8s deployment and re-deployment. Default value is False
-    :param imagetag:    Specifiy the image tag. Default value is 'latest'.This option command did not work with [ -b | --build ] option command.
-    :param docker:      Default value is False. If it is True, the services run in docker environment.
-                        Otherwise, the services run in k8s environment.
-    :param build:       Build a temp image and use it. If on AWS k8s environment, \
-                        build and push image to ECR with temp image tag. These images will be deleted after used.\
-                        If you would like to preserve images, please use build-image command instead
-    :param nodesscale:  Scale up eks nodes and worker replcas as the same number. \
-                        This input number replaces the worker_repliacs and eks_nodes_number in config files
+
     """
     run_process_files(
         number=number,
-        delete_nodes=deletenodes,
         configfile=configfile,
-        rollout=rollout,
-        image_tag=imagetag,
-        is_docker=docker,
-        is_build_image=build,
-        nodesscale=nodesscale,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
         ecr_repo=ECR_REPO,
-        repeatnumber=repeatnumber,
-
     )
 
 
@@ -274,17 +209,6 @@ def handle_ec2():
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region= AWS_DEFAULT_REGION
     )
-     # Collect cloud resources info
-    # ec2_client = connect_aws_client(
-    #     client_name='ec2',
-    #     key_id= AWS_ACCESS_KEY_ID,
-    #     secret=AWS_SECRET_ACCESS_KEY,
-    #     region=AWS_DEFAULT_REGION
-    # )
-    
-    # response = ec2_client.describe_vpcs()
-    # for vpc in response.get('Vpcs', [{}]):
-    #     print(vpc)
 
 
     handle_ec2_bastion.set_ec2_action()

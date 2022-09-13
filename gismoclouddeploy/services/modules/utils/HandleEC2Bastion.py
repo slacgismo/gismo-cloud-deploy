@@ -313,7 +313,7 @@ class HandleEC2Bastion(object):
             inst_question = [
                 inquirer.List('action',
                                 message="Select action type ?",
-                                choices=[EC2Action.running.name,EC2Action.stop.name, EC2Action.terminate.name],
+                                choices=[EC2Action.ssh.name, EC2Action.running.name,EC2Action.stop.name, EC2Action.terminate.name],
                             ),
             ]
 
@@ -342,6 +342,20 @@ class HandleEC2Bastion(object):
             try:
                 res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for start an ec2 instance
                 instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=60, delay=5, pem_location=self._pem_full_path_name,user_name=self._login_user)
+                ec2_client = connect_aws_client(
+                    client_name='ec2',
+                    key_id=self.aws_access_key,
+                    secret= self.aws_secret_access_key,
+                    region=self.aws_region
+                )
+                public_ip = get_public_ip(
+                    ec2_client=ec2_client,
+                    instance_id=self._ec2_instance_id
+                )
+                logging.info("------------------")
+                logging.info(f"public_ip :{public_ip}")
+                logging.info("------------------")
+
             except Exception as e:
                 raise Exception(f"Start ec2 failed: {e}")
             logging.info("Start instance success")

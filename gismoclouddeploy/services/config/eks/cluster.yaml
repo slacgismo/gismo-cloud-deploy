@@ -2,19 +2,15 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: solarTest3
-  region: us-east-2
+  name: solarTest3  # eks cluster name
+  region: us-east-2 # region 
   tags:
-    project: pvinsight
+    project: pvinsight 
     manage: eksctl
-# vpc:
-#   id: "vpc-11111"
-#   subnets:
-#     private:
-#       us-east-2a: { id: subnet-01234567890abcdef }
+
 
 nodeGroups:
-  - name: solarTest3
+  - name: solarTest3 # nodegroup name
     instanceType: t2.large
     desiredCapacity: 0
     minSize: 0

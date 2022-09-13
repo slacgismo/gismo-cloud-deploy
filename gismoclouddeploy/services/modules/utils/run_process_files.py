@@ -78,20 +78,11 @@ import coloredlogs, logging
 
 def run_process_files(
     number: int = 1,
-    delete_nodes: bool = False,
     configfile: str = None,
-    rollout: bool = False,
-    image_tag: str = None,
-    is_docker: bool = False,
-    is_local: bool = False,
-    is_build_image: bool = False,
-    nodesscale: int = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
     aws_region: str = None,
-    dlq_url: str = None,
     ecr_repo: str = None,
-    repeatnumber: int = 1,
 ) -> None:
     """
     Proccess files in defined bucket
