@@ -69,7 +69,7 @@ class CreateEC2Bastion(object):
         self._ec2_public_ip = None
         self._image_id = "ami-0568773882d492fc8"
         self._instancetype= "t2.large"
-        self._volume = 16
+        self._volume = 20
         self._ec2_name = None
         self._ec2_config_file = 'config-ec2.yaml'
         self._project = None
@@ -100,7 +100,7 @@ class CreateEC2Bastion(object):
         self._is_update_config_folder = "yes"
 
         self._is_breaking_ssh = "no"
-
+        self._base_path = os.getcwd()
         
         
         self.machine = Machine(model=self, states=CreateEC2Bastion.states, initial='system_stop', on_exception='handle_error',send_event=True)
@@ -683,7 +683,8 @@ class CreateEC2Bastion(object):
                 key_piar_name = self._keypair_name,
                 ec2_client=ec2_client,
                 tags= self._tags,
-                SecurityGroupIds = self._sg_ids
+                SecurityGroupIds = self._sg_ids,
+                volume=self._volume
 
             )
             logging.info(f"ec2_instance_id: {ec2_instance_id}")

@@ -55,7 +55,9 @@ git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gis
 echo 'git clone gismo-cloud-deploy' >> /home/ec2-user/installation.txt
 cd /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/
 git fetch 
-git switch feature/namespace
+git switch feature/sshAndFSM
+
+sudo chmod +755 /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config
 # create virtual environment 
 python3.8 -m venv venv
 echo 'create virtual environment' >> /home/ec2-user/installation.txt

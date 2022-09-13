@@ -204,6 +204,7 @@ def create_instance(
     InstanceType:str,
     key_piar_name: str,
     tags:dict,
+    volume:int,
     SecurityGroupIds,
     ) -> str:
 
@@ -228,6 +229,17 @@ def create_instance(
                 }
         ],
         SecurityGroupIds=SecurityGroupIds,
+        BlockDeviceMappings=[
+        {
+            'DeviceName': '/dev/xvda',
+            'Ebs': {
+
+                'DeleteOnTermination': True,
+                'VolumeSize': int(volume),
+                'VolumeType': 'gp2'
+            },
+        },
+        ],
     )
     instancesID = instances["Instances"][0]["InstanceId"]
     print(instances["Instances"][0]["InstanceId"])
