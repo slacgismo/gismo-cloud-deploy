@@ -518,7 +518,7 @@ class GismoCloudDeploy(object):
         if self._is_aws():
             for service in self._services_config_list:
                 if service == "worker" or service == "server" or  service == "celeryflower":
-                    if self._is_celeryflower_on is False:
+                    if self._is_celeryflower_on is False and service == "celeryflower":
                         logging.info("Celery flower is off")
                         continue
                     # Updated image tag
