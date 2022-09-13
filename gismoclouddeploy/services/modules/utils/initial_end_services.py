@@ -2,7 +2,7 @@ from os import name
 import time
 
 
-from .WORKER_CONFIG import WORKER_CONFIG
+
 from typing import List
 from .check_aws import connect_aws_client, check_environment_is_aws
 import logging

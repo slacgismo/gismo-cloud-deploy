@@ -3,11 +3,11 @@ from distutils import log
 from enum import Enum
 import imp
 from transitions import Machine
-from .modiy_config_parameters import modiy_config_parameters, convert_yaml_to_json
-from .check_aws import check_aws_validity, check_environment_is_aws
+from .modiy_config_parameters import convert_yaml_to_json
+from .check_aws import check_aws_validity
 import enum
-from .initial_end_services import initial_end_services, process_local_logs_and_upload_s3,upload_results_to_s3
-from .long_pulling_sqs import long_pulling_sqs,long_pulling_sqs_multi_server
+from .initial_end_services import initial_end_services
+from .long_pulling_sqs import long_pulling_sqs_multi_server
 import os
 import coloredlogs, logging
 from os.path import exists
@@ -20,13 +20,11 @@ import threading
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 import json
 from .invoke_function import (
-    invoke_docker_compose_up,
     invoke_docker_compose_build,
     invoke_tag_image,
     invoke_ecr_validation,
     invoke_push_image,
     invoke_eks_updagte_kubeconfig,
-    invoke_kubectl_create_namespaces,
     # invoke_process_files_to_server_namespace,
     invoke_exec_k8s_run_process_files,
     # invoker_check_docker_running
@@ -40,33 +38,21 @@ from .k8s_utils import (
     create_k8s_svc_from_yaml,
     get_k8s_pod_name_from_namespace,
     k8s_create_namespace,
-    check_k8s_namespace_exits
 )
 
 from typing import List
 from .check_aws import (
     connect_aws_client,
-    check_environment_is_aws,
     connect_aws_resource,
 )
 
 from .sqs import (
-    clean_user_previous_sqs_message,
-    send_queue_message,
-    receive_queue_message,
+
     create_queue,
-    delete_queue,
-    list_queues,
 )
 from .command_utils import (
-    check_solver_and_upload,
-    update_config_json_image_name_and_tag_base_on_env,
+
     create_or_update_k8s_deployment,
-    checck_server_ready_and_get_name,
-
-    start_process_command_to_server,
-
-    
 )
 import coloredlogs, logging
 coloredlogs.install()
