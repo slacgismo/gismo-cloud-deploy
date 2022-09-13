@@ -439,6 +439,7 @@ class GismoCloudDeploy(object):
         
         # update aws parameters 
         if self._is_local():
+            print("---------------RUNNING LOCAL")
             # update image rag 
             for service_name in self._services_config_list:
                 if service_name == "worker" \
@@ -448,12 +449,13 @@ class GismoCloudDeploy(object):
                     self._services_config_list[service_name]['imagePullPolicy'] = "IfNotPresent"
                 
         elif self._is_aws():
+            print("---------------RUNNING AWS")
             for service_name in self._services_config_list:
                 if service_name == "worker" \
                     or service_name =="server" \
                     or service_name == "celeryflower":
                     # update pull policy
-                    self._services_config_list[service_name]['imagePullPolicy'] = "Always"
+                    # self._services_config_list[service_name]['imagePullPolicy'] = "Always"
                     updated_name = update_image_tags_for_ecr(
                         service_name=service_name,
                         ecr_repo=self.ecr_repo,
