@@ -1,4 +1,4 @@
-# gismo-cloud-deployment
+# Gismo-Cloud-Deployment
 
 <table>
 <tr>
@@ -26,7 +26,9 @@
 </tr>
 </table>
 
-Tools for executing time-consuming tasks with developer-defined custom code blocks in parallel on the AWS EKS platform.
+A tool for executing time-consuming tasks with developer-defined custom code blocks in parallel on the AWS EKS platform.
+
+The custom code blocks is designed to be build as docker images that temporaty stored on an AWS ECR repository. When users request to run the code block on multiple AWS instances in simultaneously. Each AWS instances (EKS nodes) pulls dowm those images from AWS ECR and execute them in parallel. Please follow the [System diagram](#system-diagram) to see more details.
 
 ---
 
@@ -36,7 +38,7 @@ Tools for executing time-consuming tasks with developer-defined custom code bloc
 
 #### Installations
 
-Download the source code from github.
+Download the source code from the github repository.
 
 ```bash
 git clone https://github.com/slacgismo/gismo-cloud-deploy.git
@@ -59,6 +61,8 @@ pip install -r requirement.txt
 
 #### Create EC2 bastion
 
+Before we start to create an EC2 instance to control EKS. We need set up the AWS credentials.
+
 Create a `.env` file with following AWS credentials: (Plase ask the progrect creator or account manager to add permission into your AWS account)
 
 ```bash
@@ -69,6 +73,8 @@ ECR_REPO=<your-ecr-repository-url>
 ```
 
 ***Note*** If you are using your own account other than SLAC Gismo group account. Please create a private ECR repositories that will contains three temporary images (`server`, `worker`, `celeryflower`). Those images are created during the run-time, and will are deleted after the process completed.
+
+If you want to include a private `solver license`, such as `MOSEK` inside this project. Please include your `solver license` in the `gismo-cloud-deploy/gismoclouddeploy/services/config/license` folder of your local machine. Please follow the [Include MOSEK licenses](#include-mosek-license) section to get more detail.
 
 Run handle ec2 command to create a ec2 bastion that control AWS EKS.( Under path: `gismo-cloud-deploy/gismoclouddeploy/services`).
 
@@ -88,14 +94,14 @@ A selection menu pop up , please select `create` command.
    ssh_delete_eks
 ```
 
-Follow the instructions to fullfil the setting ot create ec2 bastions. The instructions includes:
+Follow the instructions to setup the ec2. The instructions includes:
 
 ```bash
 Use default VPC ?(default:yes) (must be yes/no): yes # type yes to use default VPC 
 Create a new security group allow SSH connection only ?(default:yes) (must be yes/no): # type yes to create a new security group that only alow SSH connection. 
 Create a new keypair ?(default:yes) (must be yes/no): yes # If you already had a pem file, type `no`, otherwise type `yes` to create a new one.
 Enter existing keypair name: JS-ss # type your existing key pair pem file. (If you enter no in previous quesiton. This question is skipped.)
-Enter the pem path (hit enter to use default path: /Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/config/keypair):  #(type your pem file location. hit enter button to use default setting)
+Enter the pem path (hit enter to use default path: /Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/config/keypair):  #(type your pem file location. hit enter button to use default setting) 
 Creat a EC2 name  : my-first-ec2 # give your ec2 a name
 Creat a project name in tag: my-project # give your ec2 a project name in tags. 
 Select instance type (suggest 't2.large')?: t2.large # select ec2 type
@@ -106,11 +112,23 @@ Enter the ec2 volume (enter for default: 20): # define ec2 storage (hit enter to
 Enter the export file name (enter for default:config-ec2.yaml): # define the export file name of ec2.
 ```
 
+***NOTE*** When you generate `pem file`. It important to keep this pem file privacy and never show to others for security purpose.
+
 A table will shows all the settings you just key in and ask for the confirmation. Type `yes` to create your ec2 bastion.
 
 ```bash
-Comfim to process creation (must be yes/no):
+Confim to process creation (must be yes/no):
 ```
+
+Then it will start to create an EC2 instance and install all the dependencies.
+It includes:
+- [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
+- [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
+- [awscli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+- [git](https://git-scm.com/)
+- [docker](https://docs.docker.com/)
+- [docker-compose](https://docs.docker.com/compose/install/)
+- [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy)
 
 #### Create EKS Cluster
 
@@ -170,18 +188,17 @@ Congrautaltions!! You have completed your fist process file analysis.
 The program will ask you to run ssh again or not. Select no to try another ssh command or select `yes` to close the ssh connection.
 
 ```bash
- breaking ssh ?: no
+ breaking ssh ?: yes
   > yes
     no
 ```
 
-Then select `stop` to stop the instance.
+Then select `running` to keep the instance running. We need to delete EKS cluster to avoid running cost from AWS.
 
+#### Delete EKS Cluster
 
+A running eks cluster is charged in hour rate by AWS. If you complete your process, please remember to delete eks cluster to avoid extra cost.
 
-#### Delete EKS Cluster 
-
-A running eks cluster is charged in hour rate by AWS. If you complete your process, please remember to delete eks cluster to avoid extra cost. 
 Run the `handle-c2` command and select `ssh_delete_eks` command.
 
 ```bash
@@ -196,9 +213,10 @@ python3 main.py handle-ec2
 ```
 
 This commnad will scale down the nodes to 0 and delete eks cluster defined from the `cluster.yaml` file.
-***Note*** Please delete eks cluster before your terminate youre ec2 basion. Otherwiser you may face some permission issue.
 
-#### Start or terminate EKS Cluster
+***Note*** Please delete eks cluster before your terminate youre ec2 basion. Otherwiser you may face some permission issue. Then you have to delete the eks cluster in your online console.
+
+#### Stop or terminate the EC2
 
 A running ec2 basion will be charge in hour rate. If you complete your porcess, please remember to stop or terminated your ec2.
 Run the `handle-c2` command and select `terminate` command.
@@ -207,211 +225,100 @@ Run the `handle-c2` command and select `terminate` command.
 python3 main.py handle-ec2
    create
    running
-   stop
+ > stop
    terminate
    ssh
    ssh_create_eks
- > ssh_delete_eks
+   ssh_delete_eks
 ```
 
 ### Quick start on AWS
 
-1. Login to `slac-gismo` AWS account.
-2. Go to the `EC2` page in the `us-east-2` region and select `AMIs` in the `Images` tab in the left options menu.
-3. Select the template `pvinsight-eks-bastion-template` from AMIs private image and click `Launch instance from AMIs.`
-This image had been installed necessary dependenciues included:
+Running command from local machine and control AWS EC2 through SSH is slow, and debug could be challenge. Therefore, running command on the AWS ec2 bastion is highly recommended. Follow the steps to configure your AWS EC2.
 
-- [kubectl](https://docs.aws.amazon.com/eks/latest/userguide/install-kubectl.html)
-- [eksctl](https://docs.aws.amazon.com/eks/latest/userguide/eksctl.html)
-- [awscli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
-- [git](https://git-scm.com/)
-- [docker](https://docs.docker.com/)
-- [docker-compose](https://docs.docker.com/compose/install/)
-- [gismo-cloud-deploy project](https://github.com/slacgismo/gismo-cloud-deploy)
+If you have follow up the [Create EC2 bastion](#create-ec2-bastion) steps. All the necessary environmental dependencies and privacy files such as `solver license` and `.env` file that contains AWS crendetials had been upload to the EC2 during process time. 
 
-#### Launch a instance
+However, we still need configure `AWS CLI` to give the ec2 permission to control kubernetes and EKS.
 
-- Give this new instance a name you like (eg. `gcd-eks-test`), and select `Add additional tags` button next to Name column.
+#### Fetch public ip of EC2
 
-- Create a tag called: `project:pvinsight` for budget management purposes.
-
-- This program runs in multiple threads. Please select at least `2 vcpus` instance type.  Under `Instance types`, select `t2.large` type is recommended.
-
-- Under `Configure Storage`, select the instance volume should be `16 GB` at least.
-
-- Under the `Key pair(login)` option, create a new key pair or use your existing key pairs.
-
-- Click the `Launch instance` button to launch an EC2 instance.
-
-
-#### Launch the application
-
-- When the EC2 instance is running, use your ssh key to connect to the EC2 tunnel in your local terminal. Get the IP address from the `Public IPv4 address` in the `Detail` tabs.
-
-Change `pem-file` permission.
+Run run `handle-ec2` command, select `running` in the pop up menu.
 
 ```bash
-cd /path-of-pem-file
-chmod 400 <pem-file>
+[?] Select action type ?: running
+   create
+ > running
+   stop
+   terminate
+   ssh
+   ssh_create_eks
+   ssh_delete_eks
 ```
 
-Connect to the EC2
+It requests you to enter the config file of ec2. The file is the export file that created when you run `create` command.
 
 ```bash
-ssh -i <path/pem-file> ec2-user@<Public IPv4 address>
+Enter the ec2 config file name (enter for default:config-ec2.yaml): 
 ```
 
-#### Setup AWS credentials
+Enter the pem file location to provid ssh key:
 
-- Inside the instance, set up AWS credentials to access EKS and ECR. **_NOTE:_** `(Reach out to this project's owner to get the AWS credentials).`
+ ```bash
+ Enter the ec2 config file name (enter for default:config-ec2.yaml): 
+ ```
+
+ If everything is correct, you will see the public ip of the ec2.
+
+ ```bash
+ i-0a08f95xxxx is ready to connect SSH
+ ------------------
+ public_ip :3.1x.84.xx
+ ------------------
+ ```
+
+ ***Note*** The public ip changed when you re-start the EC2 instance.
+
+#### Login to your EC2
+
+Under you key pair folder (for example:`/gismoclouddeploy/services/config/keypair`)
+RUN ssh command. Replace `<your-key-pair-file>` with your keypair file. `<ec2_public_ip>` is the public ip that you get from the running ec2 in previous step.
+
+```bash
+ssh -i <your-key-pair-file> ec2-user@<ec2_public_ip>
+```
+
+Then you will login to your ec2 and control the ec2 in your terminal. 
+
+***Note*** If you use `VScode` as editor. You can use its `SSH` features to control the EC2 from your local editor. Here is [link](https://code.visualstudio.com/docs/remote/ssh) describes how to do the configuration.
+
+Once you have login to your EC2. Run the following command to set up the AWS CLI:
 
 ```bash
 aws configure
-```
-- Setup AWS credentials
-
-~~~
-AWS Access Key ID :
-AWS Secret Access Key:
-Default region name:
-Default output format [None]:
-~~~
-
-- Check current IAM user role
-
-```bash
-aws sts get-caller-identity
+AWS Access Key ID : # key in your aws access key
+AWS Secret Access Key:  # key in your aws secrect access key
+Default region name:  # key in your aws region 
+Default output format [None]: # we don't need this one. 
 ```
 
-The output should return the IAM user details for designated_user.
+Congratulation!! You have completed the environment setup.
 
-~~~
-{
-    "UserId": "XXXXXXXXXXXXXXXXXXXXX",
-    "Account": "XXXXXXXXXXXX",
-    "Arn": "arn:aws:iam::XXXXXXXXXXXX:user/designated_user"
-}
-~~~
+#### Run command on AWS
 
-:warning: Confirmed with the cluster's creator that this IAM role has permission to access it.
-
-- Find out the existing EKS clusters name on AWS EKS page of your AWS account with specify region (eg. `us-east-2`). Under EKS pages, you will see the clusters name, such as `gcd`.
-- Update existing EKS information to this new EC2 instance. Otherwise, this new EC2 instance cannot access the existing eks cluster by following command. For example, replace < your-cluster-name > with `gcd` and replace < your-region-code > with `us-east-2`
-  
-~~~
-aws eks update-kubeconfig --region <your-region-code> --name <your-cluster-name>
-~~~
-
-:warning: If no eks cluster exists on AWS, please follow [EKS configuration](#eks-configuration) to create a new cluster.
-
-
-### Root user
-
-If you log in as a root user, you can find out the `gismo-cloud-deploy` folder in `/home/ec2-user/gismo-cloud-deploy` folder.
-
-#### Pull down the latest git repository
-
-- In `gismo-cloud-deploy` directory, use command `git checkout main` to checkout to main branchm, and use `git pull` to  pull down latest repository from [gismo-cloud-deploy.git](git@github.com:slacgismo/gismo-cloud-deploy.git) in `main` branch.
-
-#### Update the .env file
-
-- Set up a `.env` file for `CLI` program usage.
+Activate your pyton3 virtual environment.
 
 ```bash
-touch ./gismoclouddeploy/services/.env
-```
-
-Below are the sample variables in the .env file, and replace `<your-aws-key>` with the correct keys.
-
-~~~
-AWS_ACCESS_KEY_ID=<your-aws-access-key-id>
-AWS_SECRET_ACCESS_KEY=<your-aws-secret-access-key-id>
-AWS_DEFAULT_REGION=<your-aws-default-region>
-SQS_URL=<your-sqs-url>
-DLQ_URL=<your-dlq-url>
-SNS_TOPIC=<your-sns-topic>
-ECR_REPO=<your-ecr-repo>
-~~~
-
-#### Install dependencies
-
-- The AMIs image should have installed all the python packages of `CLI` tools in the environment.
-In case developers need to re-install the dependencies of `CLI`, please follow the below command:
-
-- Activate the virtual environment.
-
-```bash
-cd gismoclouddeploy/services/
+cd gismo-cloud-deploy/gismoclouddeploy/services
 source ./venv/bin/activate
 ```
 
-- Upgrade pip
-
-```bash
-pip install --upgrade pip
-```
-
-- Update dependencies.
-
-```bash
-pip install -r requirements.txt
-```
-
-- **_NOTE:_** In case the virtual environment was not created, please create the virtual environment first.
-
-```bash
-cd gismoclouddeploy/services
-```
-
-```bash
-python3.8 -m venv venv
-```
-
-Upgrade pip and install all dependencies.
-
-- Check if the EKS cluster exists.
-
-```bash
-eksctl get cluster
-```
-
-If a cluster exists, it returns the output as below.
-
-~~~
-NAME    REGION    EKSCTL CREATED
-gcd   us-east-2   True
-~~~
-
-If a cluster does not exist, please follow [EKS configuration yaml files](#eks-configuration) section to create a cluster first.
-
-#### Include the solver license
-
-- Include the solver license file under `./gismoclouddeploy/services/config/license` folder.(eg. `./gismoclouddeploy/services/config/license/mosek.lic`) Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
-
-- If you have your mosek license on S3, you can use the following command to upload file to ec2 instance:
-
-~~~
-aws s3 cp s3://<bucket_name>/<path>/<lic_file_name> /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/
-services/config/license/mosek.lic
-~~~
-
-#### Modify the code blocks
-
-- To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
-For example, you can modify the calculation of `data_clearness_score`.
-
-~~~
- data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 0.5 * 100))
-~~~
-
-#### Run the command
-
-- Under the virtual environment `(venv)`, run the `run-files` command to test it.
+Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
 cd ./gismoclouddeploy/services
-gcd run-files -n 1 -d -b -sc 1
+python3 main.py run-files -n 1 
 ```
+
 Please follwo [Command](#command) section to explore the command detail.
 :warning: If you see some error messages related to **unauthorized** actions, it means this cluster didn't authorize the permission to this role. Please reach out the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster
 
@@ -437,9 +344,30 @@ After it completed, the terminal prints out the performance analysis as below:
 +-------------------------------------+-----------------------+---------------------------------+
 ~~~
 
-- Check the saved data file, Gantt plot, and tasks performance in `./gismoclouddeploy/services/results` folder.
+Check the saved data file, Gantt plot, and tasks performance in `./gismoclouddeploy/services/results` folder.
 
 ---
+
+### Root user
+
+If you log in as a root user, you can find out the `gismo-cloud-deploy` folder in `/home/ec2-user/gismo-cloud-deploy` folder.
+
+
+#### Modify the code blocks
+
+- To implement your own code in a custom code block, please modify the `entrypoint` function in `./gismoclouddeploy/services/config/code-templates/entrypoint.py`.
+For example, you can modify the calculation of `data_clearness_score`.
+
+~~~
+ data_clearness_score = float("{:.1f}".format(dh.data_clearness_score * 0.5 * 100))
+~~~
+
+#### Include the solver license
+
+- Include the solver license file under `./gismoclouddeploy/services/config/license` folder.(eg. `./gismoclouddeploy/services/config/license/mosek.lic`) Please follow [Include MOSEK license](#include-MOSEK-licence) section to get detail.
+
+
+
 
 ## Command
 
@@ -448,7 +376,7 @@ The gcd command supports the following subcommands:
 ### run-files command
 
 ~~~
-Usage: gcd run-files [OPTIONS]
+Usage: python3 main.py run-files [OPTIONS]
 
 Run Process Files
 
@@ -460,32 +388,8 @@ Options:
                           bucket in config.yaml. If the number is an integer, this
                           application processes the first `number` files in the
                           defined bucket in config.yaml.
-
-  -d, --deletenodes BOOL  Enable deleting eks node after completing this
-                          application. The default value is False.
-
   -f, --configfile TEXT   Assign custom config files, The default files name is
                           ./config/config.yaml
-
-  -r, --rollout  BOOL     Enable deleting current k8s deployment services and
-                          re-deployment services. The default value is False
-
-  -i, --imagetag TEXT     Specify the image tag. The default value is 'latest'
-                          This option command did not work with [ -b | --build ] option command.
-
-  -do, --docker  BOOL     Default value is False. If it is True, the services
-                          run in docker environment. Otherwise, the services run
-                          in kubernetes◊ environment.
-
-  -b, --build             Build a temp image and use it. If on AWS k8s
-                          environment,     build and push image to ECR with
-                          the temp image tag. These images will be deleted after
-                          used. If you would like to preserve images, please
-                          use build-image command instead
-
-  -sc, --nodesscale TEXT  Scale up eks nodes and worker replicas as the same
-                          number. This input number replaces the
-                          worker_repliacs and eks_nodes_number in config files
 
   --help                  Show this message and exit.
 ~~~
@@ -493,19 +397,15 @@ Options:
 - If you use the default `run-files` command with no option, this program processes the files defined in the `config.yaml` file and generates the saved results in a file specified in `config.yaml` file.
 
 - The process file command with option command `-n` followed by an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first ten files in the specified bucket )
-If `number=0`, it processes all files in the buckets.
+- If `number=0`, it processes all files in the buckets.
 
 - The option command `[ --configfile | -f ] [filename]`  imports custom configuration yaml files under `gismoclouddeploy/services/config` folder.
 If this [-f] option command is not assigned, the default configure file is `gismoclouddeploy/services/config/config.yaml`.
 
-- The option command `[ --build | -b ]` build custom images based on `./gismoclouddeply/services/server` and `./gismoclouddeply/services/config/code-templates` folder. If your environment is on AWS, this option command builds and pushes `worker` and `server` service images to AWS ECR with a temporary image tag. This temporary tag will be deleted after this application completes processing. Please read section [Build and push images](#build-and-push-images) to get more information.
-
-- The option command `[ --nodesscale | -sc ]` generates the same number of eks nodes and worker replicas on AWS. (eg. The `-sc 5` option command generates five nodes and five worker replicas. The five workers' replicas evenly spread among five nodes.)
-
-#### Examples:
+#### Example
 
 ```bash
-gcd run-files -b -n 1 -d -f test_config.yaml -sc 5
+python3 main.py run-files -n 0 -f test_config.yaml
 ```
 
 Command details:
@@ -519,22 +419,12 @@ On the AWS environment ,the above command starts the following processes:
 6. The `woker` service is the major service to process time-consuming tasks, such as analyzing data with a defined algorithm. To process the time-consuming tasks in parallel on AWS, a developer can increase the `replicas` of the `worker`. This application spreads multiple `worker` services evenly among generated `nodes`(ec2-instances) of AWS EKS.
 7. Since [-n] <1> option command is specified, this application starts to process the `first 1` file of the defined bucket in `test_config.yaml`.
 8. After the process is done, this application deletes temporary images on ECR.
-**NOTE** If developers want to preserve images, please use the `gcd build-images` command instead.
-9. Since [-d] option command is specified, this application deletes all nodes(ec2-instances) of AWS EKS.
+
 
 ### Another support command
 
-- gcd --help
-- gcd nodes-scale [integer_number] [--help]
-- gcd build-images [-t|--tag] <image_tag> [-p|--push] [--help]
-- gcd read-dlq  [-e] [--help]
-
-The `nodes-scale` command scales up or down the eks nodes.
-
-The `build-images` command builds images from `docker-compose`. Please read this [Build and push images](#build-and-push-images) to get more information.
-
-The `read-dlq` command checks current DLQ(dead letter queue) on AWS. The `-e` option command enables or disables deleting messages after invoking this command.
-The default value is `False`.
+- python3 main.py --help
+- handle-ec2
 
 ---
 
