@@ -234,7 +234,7 @@ class GismoCloudDeploy(object):
             self._assert_keys_in_configfile()
             logging.info("=== Pass assert key test ======")
             # services list
-            k8s_configfile =  f"{self._base_path}/k8s/config-k8s.yaml"
+            k8s_configfile =  f"{self._base_path}/config/k8s/config-k8s.yaml"
             if not exists(k8s_configfile):
                 raise Exception(f"{k8s_configfile} does not exist.")
 

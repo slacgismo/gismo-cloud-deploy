@@ -6,6 +6,7 @@ from email.mime import base
 from genericpath import exists
 import re
 import socket
+
 from transitions import Machine
 import os
 import coloredlogs, logging
@@ -56,6 +57,7 @@ class HandleEC2Bastion(object):
         self.aws_access_key =aws_access_key
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_region = aws_region
+        self._project_path = None
 
 
         self._use_deafualt_vpc = 'yes'
@@ -186,31 +188,31 @@ class HandleEC2Bastion(object):
     def handle_import_configfile(self):
         logging.info("Handle import config files")
         
-        # step 1 get config input
+        # step 1 enter project folder
         self._base_path = os.getcwd()
+        self._project_path = self._base_path +"/projects/solardatatools"
         while True:
-            config_file = str(input(f"Enter the config file name (Hit `Enter` button to use default:{self._config_file} file): ") or self._config_file)
-            name, extenstion = config_file.split(".")
-            logging.info(f"Config file:{config_file}")
+            project_path = str(input(f"Enter project folder (Hit `Enter` button to use default path:{self._project_path} file): ") or self._project_path)
 
-            if extenstion != "yaml":
-                logging.error("file extension is not yaml")
-            # if not exists(fullpath):
-            #     logging.error(f"{fullpath} does not exist")
-            if not exists(config_file):
-                logging.error(f"file: {config_file} does not exist!!")
+            if not os.path.exists(project_path):
+                raise Exception(f"project path: {project_path} does not exist!!")
             else:
                 break
   
-        fullpath = self._base_path +f"/config/{config_file}"
-        if not exists(fullpath):
-            logging.error(f"{fullpath} does not exists!!")
-            return 
-        self._config_file = fullpath
-        # step 2 
-        if self._ec2_action == EC2Action.create_new.name:
-            logging.info()
+        self._project_path = project_path
 
+        # check if config file exists
+        self._config_file = self._project_path + "/config.yaml"
+
+        if not exists(self._config_file):
+            raise Exception(f"config.yaml: {self._config_file} does not exist!!")
+        # check entrypoint folder and entrypoint.py exists
+        entrypoint_path = self._project_path +"/entrypoint"
+        if not os.path.exists(entrypoint_path):
+            raise Exception(f"Entrypoint driecrory: {entrypoint_path} does not exist!!")
+        entrypoint_file = entrypoint_path +"/entrypoint.py"
+        if not exists(entrypoint_file):
+            raise Exception(f"entrypoint.py: {entrypoint_file} does not exist!!")
 
         # step 2 log import file
         ec2_config_dict = convert_yaml_to_json(yaml_file=self._ec2_config_file)

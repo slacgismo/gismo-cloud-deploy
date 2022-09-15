@@ -17,7 +17,7 @@
 | num_unfinished_tasks             | 0                               |  |
 | task_duration_in_parallelism     | 5.0                             |  |
 | tasks_durtaion_sum               | 5.0                             |  |
-| initial_process_time             | 34.329891204833984              |  |
-| total_process_time               | 44.03632593154907               |  |
+| initial_process_time             | 34.81839609146118               |  |
+| total_process_time               | 44.91213893890381               |  |
 | effeciencyFactor                 | 1.0                             |  |
 +----------------------------------+---------------------------------+--+
