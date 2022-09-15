@@ -72,5 +72,8 @@ override.tf.json
 secret.yaml
 runtime.png
 gismoclouddeploy/services/results/
-
+gismoclouddeploy/services/projects/solardatatools/license/
+gismoclouddeploy/services/projects/statisticclearsky/license/
 ./gismoclouddeploy/notebooks/datasets/
+*.pem
+gismoclouddeploy/services/config/keypair/
