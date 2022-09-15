@@ -177,13 +177,13 @@ def invoke_docker_compose_up() -> str:
 
 
 def invoke_docker_compose_build(
-    code_template_folder: str = None,
+    project: str = None,
     target_path_of_upload_file :str = None,
     source_path_of_upload_file :str = None,
     
 ) -> str:
     # command = ["export",f"WORKER_DIRECTORY={code_template_folder}", "docker-compose", "build","--build-arg", f"CODES_FOLDER={code_template_folder}"]
-    command = f"WORKER_DIRECTORY={code_template_folder} docker-compose build --build-arg CODES_FOLDER={code_template_folder} --build-arg TARGET_PATH_OF_UPLOAD_FILE={target_path_of_upload_file} --build-arg SOURCE_PATH_OF_UPLOAD_FILE={source_path_of_upload_file}"
+    command = f"WORKER_DIRECTORY={project} docker-compose build --build-arg CODES_FOLDER={project} --build-arg TARGET_PATH_OF_UPLOAD_FILE={target_path_of_upload_file} --build-arg SOURCE_PATH_OF_UPLOAD_FILE={source_path_of_upload_file}"
     # output = subprocess.check_output(["bash", "-c", command])
     output = subprocess.check_output(["bash", "-c", command])
     return output

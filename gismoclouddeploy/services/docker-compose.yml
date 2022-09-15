@@ -6,10 +6,10 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates-sleep
+        - CODES_FOLDER=solardatatools
           TARGET_PATH_OF_UPLOAD_FILE
           SOURCE_PATH_OF_UPLOAD_FILE
-      dockerfile: ./config/${WORKER_DIRECTORY}/Dockerfile
+      dockerfile: ./projects/${WORKER_DIRECTORY}/Dockerfile
 
     image: server
     container_name: server
@@ -34,10 +34,10 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates-sleep
+        - CODES_FOLDER=solardatatools
           TARGET_PATH_OF_UPLOAD_FILE
           SOURCE_PATH_OF_UPLOAD_FILE
-      dockerfile:  ./config/${WORKER_DIRECTORY}/Dockerfile
+      dockerfile:  ./projects/${WORKER_DIRECTORY}/Dockerfile
     image: celeryflower
     container_name: celeryflower
     command: /start-flower
@@ -57,10 +57,10 @@ services:
     build:
       context: .
       args:
-        - CODES_FOLDER=code-templates-sleep
+        - CODES_FOLDER=solardatatools
           TARGET_PATH_OF_UPLOAD_FILE
           SOURCE_PATH_OF_UPLOAD_FILE
-      dockerfile:   ./config/${WORKER_DIRECTORY}/Dockerfile
+      dockerfile:   ./projects/${WORKER_DIRECTORY}/Dockerfile
     image: worker
     command: /start-celeryworker
     # volumes:

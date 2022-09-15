@@ -29,7 +29,9 @@ import coloredlogs, logging
 
 def run_process_files(
     number: int = 1,
-    configfile: str = None,
+    project: str =None,
+    scale_nodes : int = 1,
+    repeat :int = 1,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
     aws_region: str = None,
@@ -53,10 +55,12 @@ def run_process_files(
     env = Environments.LOCAL.name
     if check_environment_is_aws():
          env = Environments.AWS.name
-    
+
     gcd = GismoCloudDeploy(
-        configfile=configfile,
+        project=project,
         num_inputfile=number,
+        scale_nodes= scale_nodes,
+        repeat = repeat,
         env=env,
         aws_access_key=aws_access_key,
         aws_secret_access_key = aws_secret_access_key,
@@ -64,6 +68,8 @@ def run_process_files(
         ecr_repo=ecr_repo
         
     )
+
+
     try:
         # Initial state , read yaml file and update system variables
         logging.info(f" ===== State: {gcd.state} =======")

@@ -271,6 +271,7 @@ def analyze_signle_local_logs_file(
     return performance_dict
 
 def analyze_all_local_logs_files(
+        project:str ,
         instanceType:str,
         num_namspaces:int ,
         init_process_time_list:float,
@@ -455,7 +456,7 @@ def analyze_all_local_logs_files(
 
     performance = [
         header,
-        ["Code templates folder", code_templates_folder, ""],
+        ["Project", project, ""],
         ["Total number of nodes", f"{eks_nodes_number}"],
         ["Number of namespaces",f"{num_namspaces}"],
         ["Number of workers per namesapces", f"{num_workers}"],

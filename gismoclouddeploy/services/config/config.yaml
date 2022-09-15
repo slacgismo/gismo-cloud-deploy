@@ -1,10 +1,10 @@
 # AWS parameters used for cli.
 aws_config:
   cluster_file: "eks/cluster.yaml"
+  ec2_bastion_saved_config_file: "ec2/config-ec2.yaml"
   scale_eks_nodes_wait_time : 90          # in second
   interval_of_wait_pod_ready: 90          # in second
-  ec2_bastion_saved_config_file: "ec2/ec2-config.yaml"
-  total_num_nodes : 2
+  total_num_nodes : 1
 
 
 # Parameters used for cli in k8s config.

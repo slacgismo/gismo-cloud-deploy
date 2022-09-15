@@ -53,16 +53,32 @@ def main():
     default=None,
 )
 
+
 @click.option(
-    "--configfile",
-    "-f",
-    help="Assign custom config files, Default files name is ./config/config.yaml",
-    default="config.yaml",
+    "--project",
+    "-p",
+    help="Project folder name",
+    default="solardatatools",
 )
+@click.option(
+    "--scalenodes",
+    "-s",
+    help="Total number of nodes(instances)",
+    default=1,
+)
+@click.option(
+    "--repeat",
+    "-r",
+    help="Repeat time",
+    default=1,
+)
+
 
 def run_files(
     number: int = 1,
-    configfile: str = None,
+    scalenodes:int = 1,
+    project: str = "solardatatools",
+    repeat: int = 1
 
 ):
     """
@@ -77,7 +93,9 @@ def run_files(
     """
     run_process_files(
         number=number,
-        configfile=configfile,
+        project = project,
+        scale_nodes= scalenodes,
+        repeat = repeat,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
@@ -86,7 +104,7 @@ def run_files(
 
 
 # ***************************
-#  Create EC2 Bastion
+#  Handle EC2 Bastion
 # ***************************
 @main.command()
 
@@ -102,14 +120,25 @@ def handle_ec2():
     # get action put
     action = handle_ec2_bastion.get_ec2_action()
 
+    handle_ec2_bastion.handle_import_configfile()
+    if action == EC2Action.create_new.name:
+        logging.info("Create a new project !!!")
+    elif action == EC2Action.start_from_existing.name:
+        logging.info("Start from existing project !!!")
+    elif action == EC2Action.ssh.name:
+        logging.info("Estibalish ssh connection from config file !!!")
+    elif action == EC2Action.cleanup_resources.name:
+         logging.info("Estibalish ssh connection from config file !!!")
+    else:
+        logging.error("Unknow action")
+
+    return 
     if action == EC2Action.create.name:
         logger.info("Create instance and start from scratch !!!")
         handle_ec2_bastion.set_vpc_info()
         handle_ec2_bastion.set_security_group_info()
         handle_ec2_bastion.set_keypair_info()
         handle_ec2_bastion.set_ec2_info()
-        # handle_ec2_bastion.set_eks_cluster_info()
-        # handle_ec2_bastion.set_runfiles_command()
         handle_ec2_bastion.trigger_initial() 
         logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
     

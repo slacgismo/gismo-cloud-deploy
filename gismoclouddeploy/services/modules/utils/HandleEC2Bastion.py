@@ -4,7 +4,8 @@
 
 from email.mime import base
 from genericpath import exists
-from re import S
+import re
+import socket
 from transitions import Machine
 import os
 import coloredlogs, logging
@@ -47,7 +48,11 @@ class HandleEC2Bastion(object):
             aws_secret_access_key: str = None,
             aws_region: str = None,
         ) -> None:
-        
+        self._ec2_config_file = 'ec2/config-ec2.yaml'
+        self._gcd_config_file = 'config.yaml'
+        self._eks_configfile = 'eks/cluster.yaml'
+
+
         self.aws_access_key =aws_access_key
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_region = aws_region
@@ -57,13 +62,14 @@ class HandleEC2Bastion(object):
         self._is_creating_sg ='yes'
         self._is_creating_keypair = 'yes'
         self._is_creating_eks = 'yes'
-        self._eks_configfile = 'cluster.yaml'
+        
         self._vpc_id = None
         self._sg_ids = []
         self._keypair_name = None
         self._keypair_download_path = None
         self._pem_full_path_name = None
-    
+
+
 
         self._ec2_instance_id  = None
         self._ec2_public_ip = None
@@ -71,7 +77,7 @@ class HandleEC2Bastion(object):
         self._instancetype= "t2.large"
         self._volume = 20
         self._ec2_name = None
-        self._ec2_config_file = 'config-ec2.yaml'
+  
         self._project = None
         self._tags = [
             {'Key': 'managedBy', 'Value': 'boto3'}
@@ -99,8 +105,36 @@ class HandleEC2Bastion(object):
         self._instancetState = None
         self._is_update_config_folder = "yes"
 
+
+        # gcd parameters
+        self._code_block_folder = ""
+        self._num_of_nodes = 1
+        self._process_first_n_files = 1
+        self._use_default_files = "no"
+        self._data_bucket = ""
+        self._saved_bucket = ""
+        self._process_column_keywords =[]
+        self._use_default_ec2_bastion = "yes"
+        self._use_default_eks_cluster = "yes"
+
+        self._user_id = self.get_user_id()
+
+
         self._is_breaking_ssh = "no"
         self._base_path = os.getcwd()
+        self._ec2_client = connect_aws_client(
+                    client_name='ec2',
+                    key_id=self.aws_access_key,
+                    secret= self.aws_secret_access_key,
+                    region=self.aws_region
+                )
+
+        self._ec2_resource = connect_aws_resource(
+            resource_name='ec2',
+            key_id=self.aws_access_key,
+            secret=self.aws_secret_access_key,
+            region=self.aws_region
+        )
         
         
         self.machine = Machine(model=self, states=HandleEC2Bastion.states, initial='system_stop', on_exception='handle_error',send_event=True)
@@ -118,19 +152,7 @@ class HandleEC2Bastion(object):
 
     def testing_fun(self):
         # testing
-        ec2_client = connect_aws_client(
-            client_name='ec2',
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region
-        )
-        # check_vpc_id_exists(
-        #     ec2_client=ec2_client,
-        #     vpc_id= "vpc-a27c77ca")
-        # check_sg_group_name_exists_and_return_sg_id(
-        #     ec2_client= ec2_client,
-        #     group_name='SSH-ONLY',
-        # )
+ 
         logging.info("-------------------")
         logging.info(f"upload config folder")
         logging.info("-------------------")
@@ -144,7 +166,7 @@ class HandleEC2Bastion(object):
             pem_location=self._pem_full_path_name,
             local_folder= "./config",
             remote_folder=f"{remote_base_path}",
-            ec2_client=ec2_client,
+            ec2_client=self._ec2_client,
 
         )
 
@@ -155,29 +177,40 @@ class HandleEC2Bastion(object):
 
         return 
 
+    def get_user_id(self) -> str:
+        host_name = (socket.gethostname())
+        self._user_id = re.sub('[^a-zA-Z0-9]', '', self._host_name).lower()
+
+
+
     def handle_import_configfile(self):
-        logging.info("Handle import ec2 files")
+        logging.info("Handle import config files")
         
         # step 1 get config input
         self._base_path = os.getcwd()
         while True:
-            config_file = str(input(f"Enter the ec2 config file name (enter for default:{self._ec2_config_file}): ") or self._ec2_config_file)
+            config_file = str(input(f"Enter the config file name (Hit `Enter` button to use default:{self._config_file} file): ") or self._config_file)
             name, extenstion = config_file.split(".")
-            logging.info(f"EC2 config file:{config_file}")
+            logging.info(f"Config file:{config_file}")
 
             if extenstion != "yaml":
                 logging.error("file extension is not yaml")
             # if not exists(fullpath):
             #     logging.error(f"{fullpath} does not exist")
+            if not exists(config_file):
+                logging.error(f"file: {config_file} does not exist!!")
             else:
                 break
   
-        fullpath = self._base_path +f"/config/ec2/{config_file}"
+        fullpath = self._base_path +f"/config/{config_file}"
         if not exists(fullpath):
             logging.error(f"{fullpath} does not exists!!")
             return 
-        self._ec2_config_file = fullpath
-        
+        self._config_file = fullpath
+        # step 2 
+        if self._ec2_action == EC2Action.create_new.name:
+            logging.info()
+
 
         # step 2 log import file
         ec2_config_dict = convert_yaml_to_json(yaml_file=self._ec2_config_file)
@@ -208,9 +241,9 @@ class HandleEC2Bastion(object):
 
  
         # ec2_resource = connect_aws_resource('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
-        ec2_client = connect_aws_client('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
+        # ec2_client = connect_aws_client('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
         # check ec2 status
-        response = ec2_client.describe_instance_status(
+        response = self._ec2_client.describe_instance_status(
             InstanceIds=[self._ec2_instance_id],
             IncludeAllInstances=True
         )
@@ -238,10 +271,9 @@ class HandleEC2Bastion(object):
             logging.error(f"Pem file:{self._pem_full_path_name} does not exist")
             return
 
-        ec2_resource = connect_aws_resource('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
         try:
 
-            res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for start an ec2 instance
+            res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for start an ec2 instance
             logging.info(res)
         except Exception as e:
             raise Exception (f" start instacne error :{e}")
@@ -297,13 +329,10 @@ class HandleEC2Bastion(object):
                 inquirer.List('action',
                                 message="Select action type ?",
                                 choices=[
-                                    EC2Action.create.name,
-                                    EC2Action.running.name, 
-                                    EC2Action.stop.name, 
-                                    EC2Action.terminate.name,
-                                    EC2Action.ssh.name, 
-                                    EC2Action.ssh_create_eks.name,
-                                    EC2Action.ssh_delete_eks.name],
+                                    EC2Action.create_new.name,
+                                    EC2Action.start_from_existing.name, 
+                                    EC2Action.cleanup_resources.name, 
+                                    EC2Action.ssh.name],
                             ),
             ]
  
@@ -313,7 +342,7 @@ class HandleEC2Bastion(object):
             inst_question = [
                 inquirer.List('action',
                                 message="Select action type ?",
-                                choices=[EC2Action.ssh.name, EC2Action.running.name,EC2Action.stop.name, EC2Action.terminate.name],
+                                choices=[EC2Action.create_new.name, EC2Action.start_from_existing.name,EC2Action.cleanup_resources.name, EC2Action.ssh.name],
                             ),
             ]
 
@@ -326,57 +355,50 @@ class HandleEC2Bastion(object):
     def get_ec2_action(self):
         return  self._ec2_action
 
-    def handle_ec2_action(self):
-        ec2_resource = connect_aws_resource(
-                resource_name='ec2',
-                key_id=self.aws_access_key,
-                secret=self.aws_secret_access_key,
-                region=self.aws_region
-        )
-        if self._ec2_instance_id is None: 
-            self.handle_import_configfile(self)
+
+        
+
+    # def handle_ec2_action(self):
+
+    #     if self._ec2_instance_id is None: 
+    #         self.handle_import_configfile(self)
           
 
-        if self._ec2_action == EC2Action.running.name:
-            logging.info("Start ec2 ")
-            try:
-                res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for start an ec2 instance
-                instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=60, delay=5, pem_location=self._pem_full_path_name,user_name=self._login_user)
-                ec2_client = connect_aws_client(
-                    client_name='ec2',
-                    key_id=self.aws_access_key,
-                    secret= self.aws_secret_access_key,
-                    region=self.aws_region
-                )
-                public_ip = get_public_ip(
-                    ec2_client=ec2_client,
-                    instance_id=self._ec2_instance_id
-                )
-                logging.info("------------------")
-                logging.info(f"public_ip :{public_ip}")
-                logging.info("------------------")
+    #     if self._ec2_action == EC2Action.running.name:
+    #         logging.info("Start ec2 ")
+    #         try:
+    #             res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for start an ec2 instance
+    #             instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=60, delay=5, pem_location=self._pem_full_path_name,user_name=self._login_user)
 
-            except Exception as e:
-                raise Exception(f"Start ec2 failed: {e}")
-            logging.info("Start instance success")
-        elif self._ec2_action == EC2Action.stop.name:
-            logging.info("Stop ec2")
-            try:
-                res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for start an ec2 instance
-                logging.info("Stop instance success")
-            except Exception as e:
-                raise Exception(f"Terminate ec2 failed: {e}")
-        elif self._ec2_action == EC2Action.terminate.name:
-            logging.info("Terminate ec2")
-            try:
-                res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).terminate() #for start an ec2 instance
-                logging.info("Terminate instance success")
-            except Exception as e:
-                raise Exception(f"Terminate ec2 failed: {e}")
-        else:
-            logging.error("Unknow action")
+    #             public_ip = get_public_ip(
+    #                 ec2_client=self._ec2_client,
+    #                 instance_id=self._ec2_instance_id
+    #             )
+    #             logging.info("------------------")
+    #             logging.info(f"public_ip :{public_ip}")
+    #             logging.info("------------------")
 
-        return 
+    #         except Exception as e:
+    #             raise Exception(f"Start ec2 failed: {e}")
+    #         logging.info("Start instance success")
+    #     elif self._ec2_action == EC2Action.stop.name:
+    #         logging.info("Stop ec2")
+    #         try:
+    #             res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for start an ec2 instance
+    #             logging.info("Stop instance success")
+    #         except Exception as e:
+    #             raise Exception(f"Terminate ec2 failed: {e}")
+    #     elif self._ec2_action == EC2Action.terminate.name:
+    #         logging.info("Terminate ec2")
+    #         try:
+    #             res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).terminate() #for start an ec2 instance
+    #             logging.info("Terminate instance success")
+    #         except Exception as e:
+    #             raise Exception(f"Terminate ec2 failed: {e}")
+    #     else:
+    #         logging.error("Unknow action")
+
+    #     return 
     def set_vpc_info(self):
         logging.info("Set VPC")
          # VPC input
@@ -593,19 +615,14 @@ class HandleEC2Bastion(object):
 
     def handle_verify_input(self, event):
         logging.info("Handle cloud resources input")
-        ec2_client = connect_aws_client(
-            client_name= 'ec2',
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region
-        )
+
         # VPC ID 
         if self._use_deafualt_vpc == "yes":
                 logging.info("Use default vpc")
-                self._vpc_id = get_default_vpc_id(ec2_client=ec2_client)
+                self._vpc_id = get_default_vpc_id(ec2_client=self._ec2_client)
         else:     
             logging.info(f"Checking VPC : {self._vpc_id}")
-            if not check_vpc_id_exists(ec2_client=ec2_client, vpc_id= self._vpc_id):
+            if not check_vpc_id_exists(ec2_client=self._ec2_client, vpc_id= self._vpc_id):
                 logging.error(f"Cannot find vpc id {self._vpc_id}")
                 return 
 
@@ -614,7 +631,7 @@ class HandleEC2Bastion(object):
         if self._is_creating_sg == "yes":
             logging.info(f"Checking security group  : {self._sg_ids}")
             sg_id = check_sg_group_name_exists_and_return_sg_id(
-                ec2_client= ec2_client,
+                ec2_client= self._ec2_client,
                 group_name=self._sg_name,
             )
             if sg_id is not None:
@@ -629,7 +646,7 @@ class HandleEC2Bastion(object):
         if self._is_creating_keypair == "no":
             logging.info(f"Checking key pair  : {self._keypair_name}")
             if not check_keypair_name_exists(
-                ec2_client=ec2_client,
+                ec2_client=self._ec2_client,
                 keypair_name=self._keypair_name):
                 logging.error(f"Cannot find keypair: {self._keypair_name}")
                 return 
@@ -637,6 +654,7 @@ class HandleEC2Bastion(object):
         
         cloud_resource = [
 			["Parameters","Details"],
+            ['code_block_folder', ]
 			["Use default VPC", self._use_deafualt_vpc, self._vpc_id ],
 			["Create security group",self._is_creating_sg, self._sg_ids],
 			["Create a new keypair",self._is_creating_keypair, self._keypair_name],
@@ -644,7 +662,8 @@ class HandleEC2Bastion(object):
             ["Image id",self._image_id],
             ["Instance type",self._instancetype],
             ["volume",self._volume],
-            ["tags",self._tags],
+            ["Name",self._ec2_name],
+            ["Project",self._project],
             ['EKS cluster file', self._eks_configfile],
             ['Config file', self._config_file],
             ["Export file name",self._ec2_config_file],
@@ -673,18 +692,13 @@ class HandleEC2Bastion(object):
     
     def hanlde_create_cloud_resources(self, event):
         logging.info("Handle create resources")
-        ec2_client = connect_aws_client(
-            client_name="ec2",
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region,
-        )
+
         # Create security group
         if self._is_creating_sg == "yes":
             logging.info("Create security group")
             try:
                 security_info_dict = create_security_group(
-                    ec2_client=ec2_client,
+                    ec2_client=self._ec2_client,
                     vpc_id=self._vpc_id,
                     tags=self._tags,
                     group_name=self._sg_name
@@ -699,7 +713,7 @@ class HandleEC2Bastion(object):
         # Create Key pair
         if self._is_creating_keypair == "yes":
             try:
-                create_key_pair(ec2_client=ec2_client, keyname=self._keypair_name, file_location=self._keypair_download_path)
+                create_key_pair(ec2_client=self._ec2_client, keyname=self._keypair_name, file_location=self._keypair_download_path)
             except Exception as e:
                 logging.error(f"Create key pair error :{e}")
                 raise e
@@ -707,18 +721,13 @@ class HandleEC2Bastion(object):
 
     def handle_create_ec2(self, event):
         logging.info("Handle create ec2")
-        ec2_client = connect_aws_client(
-            client_name="ec2",
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region,
-        )
+
         try:
             ec2_instance_id = create_instance(     
                 ImageId=self._image_id,
                 InstanceType = self._instancetype,
                 key_piar_name = self._keypair_name,
-                ec2_client=ec2_client,
+                ec2_client=self._ec2_client,
                 tags= self._tags,
                 SecurityGroupIds = self._sg_ids,
                 volume=self._volume
@@ -752,14 +761,8 @@ class HandleEC2Bastion(object):
 
         logging.info(f"instance ready :{instance}")
 
-        ec2_client = connect_aws_client(
-            client_name="ec2",
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region,
-        )
         self._ec2_public_ip = get_public_ip(
-            ec2_client=ec2_client,
+            ec2_client=self._ec2_client,
             instance_id=self._ec2_instance_id
         )
         logging.info("---------------------")
@@ -776,7 +779,7 @@ class HandleEC2Bastion(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=pem_file,
-            ec2_client=ec2_client,
+            ec2_client=self._ec2_client,
             local_file=local_env,
             remote_file=remote_env,
         )
@@ -790,7 +793,7 @@ class HandleEC2Bastion(object):
             instance_id=self._ec2_instance_id,
             command=command,
             pem_location=pem_file,
-            ec2_client=ec2_client
+            ec2_client=self._ec2_client
         )
 
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
@@ -806,7 +809,7 @@ class HandleEC2Bastion(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=pem_file,
-            ec2_client=ec2_client,
+            ec2_client=self._ec2_client,
             local_file=local_env,
             remote_file=remote_env,
         )
@@ -820,7 +823,7 @@ class HandleEC2Bastion(object):
             pem_location=pem_file,
             local_folder="./config",
             remote_folder=f"{remote_base_path}",
-            ec2_client=ec2_client,
+            ec2_client=self._ec2_client,
 
         )
         # # upload solver
@@ -912,14 +915,13 @@ class HandleEC2Bastion(object):
             return 
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
     
-        ec2_client = connect_aws_client('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
         ssh_upload_folder_to_ec2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=self._pem_full_path_name,
             local_folder= "./config",
             remote_folder=f"{remote_base_path}",
-            ec2_client=ec2_client,
+            ec2_client=self._ec2_client,
 
         )
         logging.info("update config folder completed")
@@ -930,12 +932,12 @@ class HandleEC2Bastion(object):
         logging.info(f"command : {self._ssh_command}")
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
         ssh_command = f"cd {remote_base_path} \n source ./venv/bin/activate\n export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env )  \n{self._ssh_command} "
-        ec2_client = connect_aws_client('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
+       
         run_command_in_ec2_ssh(
             user_name= self._login_user,
             instance_id= self._ec2_instance_id,
             pem_location=self._pem_full_path_name,
-            ec2_client=ec2_client,
+            ec2_client=self._ec2_client,
             command=ssh_command
         )
 
@@ -961,24 +963,14 @@ class HandleEC2Bastion(object):
 
     
     def start_ec2(self):
-        ec2_resource = connect_aws_resource(
-            resource_name='ec2',
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region
-        )
-        ec2_client = connect_aws_client(
-            client_name="ec2",
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region,
-        )
+
+
         pem_file=self._keypair_download_path  +"/"+self._keypair_name+".pem"
         if self._ec2_instance_id is not None:
-            res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for stopping an ec2 instance
+            res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for stopping an ec2 instance
             instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=self._ssh_total_wait_time, delay=self._ssh_wait_time_interval, pem_location=pem_file,user_name=self._login_user)
             self._ec2_public_ip = get_public_ip(
-                ec2_client=ec2_client,
+                ec2_client=self._ec2_client,
                 instance_id=self._ec2_instance_id
             )
             logging.info("---------------------")
@@ -990,14 +982,9 @@ class HandleEC2Bastion(object):
             return
     
     def stop_ec2(self):
-        ec2_resource = connect_aws_resource(
-            resource_name='ec2',
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region
-        )
+
         if self._ec2_instance_id is not None:
-            res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for stopping an ec2 instance
+            res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for stopping an ec2 instance
             logging.info(f"Stop {self._ec2_instance_id} success")
             return
         else:
@@ -1006,15 +993,10 @@ class HandleEC2Bastion(object):
     def terminate_ec2(self):
         
         logging.info("terminate ec2")
-        ec2_resource = connect_aws_resource(
-            resource_name='ec2',
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region
-        )
+
         if self._ec2_instance_id is not None:
-            res = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for stopping an ec2 instance
-            res_term  = ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).terminate() #for terminate an ec2 insta
+            res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for stopping an ec2 instance
+            res_term  = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).terminate() #for terminate an ec2 insta
             
         else:
             logging.error("ec2_resource id is empty")
@@ -1026,12 +1008,7 @@ class HandleEC2Bastion(object):
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
         path, file  = os.path.split(self._eks_configfile)
         remote_cluster_file=f"{remote_base_path}/config/eks/{file}"
-        ec2_client = connect_aws_client(
-            client_name="ec2",
-            key_id=self.aws_access_key,
-            secret=self.aws_secret_access_key,
-            region=self.aws_region,
-        )
+
         ssh_command_list = {}
         if self._ec2_action == EC2Action.ssh_create_eks.name:
             logging.info("set create eks culster command")
@@ -1062,51 +1039,11 @@ class HandleEC2Bastion(object):
                     instance_id=self._ec2_instance_id,
                     command=command,
                     pem_location=self._pem_full_path_name,
-                    ec2_client=ec2_client
+                    ec2_client=self._ec2_client
              )
         return 
 
-        # command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl create cluster -f {remote_cluster_file}"
-        # ec2_client = connect_aws_client(
-        #     client_name="ec2",
-        #     key_id=self.aws_access_key,
-        #     secret=self.aws_secret_access_key,
-        #     region=self.aws_region,
-        # )
-        # if self._eks_action == EKSAction.create.name:
-        #     logging.info("Create cluster through SSH from local")
-        #     command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl create cluster -f {remote_cluster_file}"
-            
-        # elif self._eks_action == EKSAction.delete.name:
-        #     logging.info("Delete cluster throuth SSH from local")
-        #     command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
-
-        # elif self._eks_action == EKSAction.list.name:
-        #     logging.info("List all eks cluster")
-        #     command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl get cluster"
-
-        # elif self._eks_action == EKSAction.scaledownzero.name:
-        #     logging.info("Scale to zero")
-        #     cluster_dict = convert_yaml_to_json(yaml_file=self._eks_configfile)
-        #     cluster_name = cluster_dict['metadata']['name']
-            # if len (cluster_dict['nodeGroups']) == 0 :
-            #     logging.error("nodeGroup does not defined")
-            #     return 
-        #     group_name = cluster_dict['nodeGroups'][0]['name']
-        #     command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
-        # else:
-        #     logging.error(f"unknow action: {self._eks_action} ")
-        #     return 
-
-
-        # pem_file=self._keypair_download_path +"/"+self._keypair_name+".pem"
-        # run_command_in_ec2_ssh(
-        #             user_name=self._login_user,
-        #             instance_id=self._ec2_instance_id,
-        #             command=command,
-        #             pem_location=pem_file,
-        #             ec2_client=ec2_client
-        #      )
+    
         
 
     def handle_export_to_file(self, event):

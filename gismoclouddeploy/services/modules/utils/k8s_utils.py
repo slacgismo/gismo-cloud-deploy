@@ -261,8 +261,8 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
         if podname == pod_name_prefix:
             # status = i.status.conditions
             name = i.metadata.name
-
             ready = i.status.container_statuses[-1].ready
+            
             if ready is True:
                 # if it's ready
                 started_at = i.status.container_statuses[-1].state.running.started_at
@@ -275,7 +275,24 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
         res = [ sub['name'] for sub in sort_orders ][0]
         print(f"----------- get first k8s_pod_name :{ res}")
         return res
+
     return None
+
+# def log_k8s_pod_name_from_namespace(pod_name_prefix:str = None, namespace:str = "default") -> str:
+#     config.load_kube_config()
+#     v1 = client.CoreV1Api()
+#     ret = v1.list_namespaced_pod(namespace)
+#     pods = []
+#     for i in ret.items:    
+#         status = i.status.conditions[-1].status
+#         podname = i.metadata.name.split("-")[0]
+#         if podname == pod_name_prefix:
+#             # status = i.status.conditions
+#             name = i.metadata.name
+    
+    
+
+
 
 
 def k8s_create_namespace(namespace:str = None):

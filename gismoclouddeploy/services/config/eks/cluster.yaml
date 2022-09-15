@@ -2,7 +2,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: solarTest3  # eks cluster name
+  name: solar-2  # eks cluster name
   region: us-east-2 # region 
   tags:
     project: pvinsight 
@@ -10,7 +10,7 @@ metadata:
 
 
 nodeGroups:
-  - name: solarTest3 # nodegroup name
+  - name: solar-2 # nodegroup name
     instanceType: t2.large
     desiredCapacity: 0
     minSize: 0
