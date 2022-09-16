@@ -19,6 +19,7 @@ import time
 import threading
 from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
 import json
+from .command_utils import verify_keys_in_configfile
 from .invoke_function import (
     invoke_docker_compose_build,
     invoke_tag_image,
@@ -195,24 +196,24 @@ class GismoCloudDeploy(object):
             return True
         return False
 
-    def _assert_keys_in_configfile(self):
-        try:
-            assert 'worker_config' in self._config
-            # assert 'services_config_list' in self._config
-            # assert 'aws_config' in self._config
+    # def _assert_keys_in_configfile(self):
+    #     try:
+    #         assert 'worker_config' in self._config
+    #         # assert 'services_config_list' in self._config
+    #         # assert 'aws_config' in self._config
 
 
-            # worker_config
-            worker_config_dict = self._config['worker_config']
-            assert 'data_bucket' in worker_config_dict
-            assert 'default_process_files'in  worker_config_dict
-            assert 'data_file_type' in worker_config_dict
-            assert 'process_column_keywords' in worker_config_dict
-            assert 'saved_bucket' in worker_config_dict
+    #         # worker_config
+    #         worker_config_dict = self._config['worker_config']
+    #         assert 'data_bucket' in worker_config_dict
+    #         assert 'default_process_files'in  worker_config_dict
+    #         assert 'data_file_type' in worker_config_dict
+    #         assert 'process_column_keywords' in worker_config_dict
+    #         assert 'saved_bucket' in worker_config_dict
   
 
-        except AssertionError as e:
-            raise AssertionError(f"Assert error {e}")
+    #     except AssertionError as e:
+    #         raise AssertionError(f"Assert error {e}")
 
     # state function
     
@@ -231,7 +232,7 @@ class GismoCloudDeploy(object):
             self._config = convert_yaml_to_json(yaml_file=config_yaml)
   
             # assert keys  in configfile
-            self._assert_keys_in_configfile()
+            verify_keys_in_configfile(self._config)
             logging.info("=== Pass assert key test ======")
             # services list
             k8s_configfile =  f"{self._base_path}/config/k8s/config-k8s.yaml"

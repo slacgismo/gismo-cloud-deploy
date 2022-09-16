@@ -1,11 +1,21 @@
 
+import readline
+from os.path import relpath
+from os.path import normpath, basename
+from pathlib import Path
+from os.path import exists
 
-
-
-from email.mime import base
-from genericpath import exists
+from .command_utils import verify_keys_in_configfile
 import re
 import socket
+
+from .handle_inputs import (
+    handle_yes_or_no_question,
+    handle_input_s3_bucket_question,
+    handle_input_number_of_process_files_question,
+    handle_input_number_of_scale_instances_question,
+    hanlde_input_project_name_in_tag,
+)
 
 from transitions import Machine
 import os
@@ -13,11 +23,18 @@ import coloredlogs, logging
 from terminaltables import AsciiTable
 import inquirer
 from .EC2Action import EC2Action
+from .EKSAction import EKSAction
 from .modiy_config_parameters import convert_yaml_to_json
 from .check_aws import (
     connect_aws_client,
     check_environment_is_aws,
     connect_aws_resource,
+    check_bucket_exists_on_s3,
+    get_security_group_id_with_name,
+    check_keypair_exist,
+    get_default_vpc_id,
+    get_ec2_instance_id_and_keypair_with_tags,
+    
 )
 from .create_ec2 import (
     create_security_group,
@@ -29,6 +46,8 @@ from .create_ec2 import (
     run_command_in_ec2_ssh,
     write_aws_setting_to_yaml,
     ssh_upload_folder_to_ec2,
+    get_all_files_in_local_dir,
+    
 )
 from .EKSAction import EKSAction
 coloredlogs.install()
@@ -57,7 +76,7 @@ class HandleEC2Bastion(object):
         self.aws_access_key =aws_access_key
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_region = aws_region
-        self._project_path = None
+        self._project_full_path = None
 
 
         self._use_deafualt_vpc = 'yes'
@@ -68,7 +87,8 @@ class HandleEC2Bastion(object):
         self._vpc_id = None
         self._sg_ids = []
         self._keypair_name = None
-        self._keypair_download_path = None
+    
+        self._pem_path = None
         self._pem_full_path_name = None
 
 
@@ -87,9 +107,12 @@ class HandleEC2Bastion(object):
         self._run_process_files = "yes"
         self._delete_eks_cluster = "yes"
         self._ec2_action = None
-        self._basepath = os.getcwd()
+        self._base_path = os.getcwd()
+        self._config_dict = {}
+        self._eks_config_dict = {}
+        self._ec2_config_dict = {}
 
-        self._is_remove_all_created_resources = "no"
+        self._is_remove_all_created_resources = "yes"
 
 
         self._is_confirmed = "no"
@@ -106,6 +129,8 @@ class HandleEC2Bastion(object):
         self._eks_action = EKSAction.create.name
         self._instancetState = None
         self._is_update_config_folder = "yes"
+        self._max_nodes = None
+        self._project_folder = None
 
 
         # gcd parameters
@@ -118,12 +143,25 @@ class HandleEC2Bastion(object):
         self._process_column_keywords =[]
         self._use_default_ec2_bastion = "yes"
         self._use_default_eks_cluster = "yes"
+        # solver 
+        self._solver_name = None
+        self._solver_lic_local_path = None
+        self._solver_lic_target_path = None
+        self._solver_lic_file_name = None
+        self._project_in_tags= None
 
-        self._user_id = self.get_user_id()
+        self._user_id = None
 
+        self._cluster_name = None
+
+        self._nodegroup_name = None        
 
         self._is_breaking_ssh = "no"
-        self._base_path = os.getcwd()
+        self._export_ec2_config_file = None
+        self._export_eks_config_file = None
+        self._export_eks_config_file = None
+
+        
         self._ec2_client = connect_aws_client(
                     client_name='ec2',
                     key_id=self.aws_access_key,
@@ -153,22 +191,67 @@ class HandleEC2Bastion(object):
  
 
     def testing_fun(self):
+
+
+        # code_template_folder = config_json['worker_config']['code_template_folder']
+        # local_dir = f"./config/{code_template_folder}"
+        # localpath , file = os.path.split(cluster_file)
+        # remote_dir=f"{remote_base_path}"
+
+        # ssh_upload_folder_to_ec2(
+        #     ec2_client=ec2_client,
+        #     user_name=user_name,
+        #     instance_id=ec2_instance_id,
+        #     pem_location=pem_file,
+        #     local_folder=local_dir,
+        #     remote_folder=remote_base_path
+        # )
+        # ic = get_ec2_instance_id_and_keypair_with_tags(
+        #     ec2_client=self._ec2_client,
+        #     tag_key_f="Name",
+        #     tag_val_f="hellow"
+        # )
+        # print(ic)
+        # ic2 = get_ec2_instance_id_and_keypair_with_tags(
+        #     ec2_client=self._ec2_client,
+        #     tag_key_f="Name",
+        #     tag_val_f="gcd-solar"
+        # )
+        # print(ic2)
         # testing
- 
+        # vpci_id =get_default_vpc_id(ec2_client=self._ec2_client)
+        # print(vpci_id)
+        # self._keypair_name = "JL-2"
+        # check_keypair_exist(ec2_client=self._ec2_client, keypair_anme=self._keypair_name)
         logging.info("-------------------")
         logging.info(f"upload config folder")
         logging.info("-------------------")
-        self._pem_full_path_name = self._base_path + "/config/keypair/JL-2.pem"
-        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
-        self._ec2_instance_id = "i-09a8c786d3a594b32"
-        print()
+        self._pem_full_path_name = '/Users/jimmyleu/.ssh/gcd-key-jimmysmacbookpro2local.pem'
+        
+        self._ec2_instance_id = "i-057574d54500e5631"
+        local_folder= '/Users/jimmyleu/Development/gismo/gismo-cloud-deploy/gismoclouddeploy/services/projects/solardatatools'
+        project_folder = basename(local_folder)
+ 
+        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services/projects"
+        local_files_list = get_all_files_in_local_dir(local_dir=local_folder)
+        # parent = Path(r'/a/b')
+        # son = Path(r'/a/b/c/d')  
+        # print(son.relative_to(parent)) # returns Path object equivalent to 'c/d'
+        
+        # for file in local_files_list:
+        #     path, filename = os.path.split(file)
+        #     relative = Path(path).relative_to(Path(local_folder))
+        #     print(relative)
+        #      print(file,local_folder)
+        #      print(relative_path)
+        #      print("------------")
         ssh_upload_folder_to_ec2(
             user_name="ec2-user",
             instance_id=self._ec2_instance_id,
             pem_location=self._pem_full_path_name,
-            local_folder= "./config",
+            local_folder= local_folder,
             remote_folder=f"{remote_base_path}",
-            ec2_client=self._ec2_client,
+            ec2_resource=self._ec2_resource,
 
         )
 
@@ -181,89 +264,293 @@ class HandleEC2Bastion(object):
 
     def get_user_id(self) -> str:
         host_name = (socket.gethostname())
-        self._user_id = re.sub('[^a-zA-Z0-9]', '', self._host_name).lower()
+        user_id  = re.sub('[^a-zA-Z0-9]', '', host_name).lower()
+        return user_id
 
 
 
     def handle_import_configfile(self):
         logging.info("Handle import config files")
-        
+        if self._user_id is None:
+            self._user_id = self.get_user_id()
         # step 1 enter project folder
-        self._base_path = os.getcwd()
-        self._project_path = self._base_path +"/projects/solardatatools"
+        # -------------------
+        # File structure
+        #---------------------
+        self._project_full_path = self._base_path +"/projects/solardatatools"
         while True:
-            project_path = str(input(f"Enter project folder (Hit `Enter` button to use default path:{self._project_path} file): ") or self._project_path)
+            project_path = str(input(f"Enter project folder (Hit `Enter` button to use default path:{self._project_full_path} path): ") or self._project_full_path)
 
             if not os.path.exists(project_path):
                 raise Exception(f"project path: {project_path} does not exist!!")
             else:
                 break
   
-        self._project_path = project_path
+        self._project_full_path = project_path
 
         # check if config file exists
-        self._config_file = self._project_path + "/config.yaml"
 
+        self._config_file = self._project_full_path + "/config.yaml"
         if not exists(self._config_file):
             raise Exception(f"config.yaml: {self._config_file} does not exist!!")
+        try:
+            self._config_dict= convert_yaml_to_json(yaml_file=self._config_file)
+        except Exception as e:
+            raise Exception(f"convert config yaml failed")
+        verify_keys_in_configfile(self._config_dict)
+        logging.info("config.yaml exists, verify input success")
         # check entrypoint folder and entrypoint.py exists
-        entrypoint_path = self._project_path +"/entrypoint"
+        entrypoint_path = self._project_full_path +"/entrypoint"
         if not os.path.exists(entrypoint_path):
             raise Exception(f"Entrypoint driecrory: {entrypoint_path} does not exist!!")
         entrypoint_file = entrypoint_path +"/entrypoint.py"
         if not exists(entrypoint_file):
             raise Exception(f"entrypoint.py: {entrypoint_file} does not exist!!")
+        logging.info("entrypoint.py exists")
 
-        # step 2 log import file
-        ec2_config_dict = convert_yaml_to_json(yaml_file=self._ec2_config_file)
+        docker_file = self._project_full_path + "/Dockerfile"
+        if not os.path.exists(docker_file):
+            raise Exception(f"Dockerfile: {docker_file} does not exist!!")
+        logging.info("Dockerfile exists")
 
+        requirements = self._project_full_path + "/requirements.txt"
+        if not os.path.exists(requirements):
+            raise Exception(f"requirements.txt: {requirements} does not exist!!")
+        logging.info("requirements.txt exists")
+        # -------------------
+        # EC2
+        #---------------------
+
+
+        # step 2 ec2 config file
+        ec2_config_file = None
+        if self._ec2_action == EC2Action.start.name:
+            ec2_config_file = self._base_path +"/config/ec2/config-ec2.yaml"
+            # create ec2 path 
+            ec2_path = self._project_full_path + "/ec2"
+            if not os.path.exists(ec2_path):
+                os.makedirs(ec2_path)
+        else:
+            ec2_config_file = self._project_full_path +"/ec2/config-ec2.yaml"
+        if not exists(ec2_config_file):
+            raise Exception(f"EC2 config file : {ec2_config_file} does not exist!!")
+        self._ec2_config_file = ec2_config_file
+        self._ec2_config_dict = convert_yaml_to_json(yaml_file=self._ec2_config_file)
+
+        home_path = str(Path.home())
+        self._pem_path = home_path +"/.ssh"
+      
+        # ec2 prarmeters
+        self._login_user = self._ec2_config_dict['login_user']
+        if self._ec2_action != EC2Action.start.name:
         # chcek ec2 status  
-        self._login_user = ec2_config_dict['login_user']
-
-        self._ec2_instance_id = ec2_config_dict['ec2_instance_id']
-        self._keypair_name = ec2_config_dict['key_pair_name']
-        if self._pem_full_path_name is None:
-            self._pem_full_path_name = self._base_path + "/config/keypair"
-        while True:
-            pem_file_path = str(input(f"Enter the pem path (hit enter to use default path: {self._pem_full_path_name }): ") or self._pem_full_path_name )
-            if not os.path.exists(pem_file_path):
-                logging.debug(f"{pem_file_path} does not exist")
-
-            else:
-                break
-        self._keypair_download_path = pem_file_path
+            self._ec2_instance_id = self._ec2_config_dict['ec2_instance_id']
+            self._keypair_name = self._ec2_config_dict['key_pair_name']
+            # check if pem file exist
+            self._pem_full_path_name = self._pem_path +f"/{self._keypair_name}.pem"
+            print(f"self._pem_full_path_name {self._pem_full_path_name}")
+            if not exists(self._pem_full_path_name):
+                raise Exception (f"Key file {self._pem_full_path_name} does not exist")
+        else:
+            self._keypair_name = f"gcd-key-{self._user_id}"
+            self._ec2_name = f"gcd-{self._user_id}"
+            self._tags.append({'Key':'Name','Value':self._ec2_name })
+            if not os.path.exists(self._pem_path):
+                os.makedirs(self._pem_path)
+       
         
-        logging.info(f"pem file : {self._keypair_download_path}")
-        full_pem =  self._keypair_download_path + f'/{self._keypair_name}.pem'
-        logging.info(f"pem file and path : {full_pem}")
-        self._pem_full_path_name = full_pem
         
-        logging.info(f"ec2 config file :{self._ec2_config_file}")
+        # while True:
+        #     pem_file_path = str(input(f"Enter the pem path (hit enter to use default path: {self._pem_full_path_name }): ") or self._pem_full_path_name )
+        #     if not os.path.exists(pem_file_path):
+        #         logging.debug(f"{pem_file_path} does not exist")
+
+        #     else:
+        #         break
+
+
+        # self._keypair_download_path = pem_file_path
+        
+        # logging.info(f"pem file : {self._keypair_download_path}")
+        # full_pem =  self._keypair_download_path + f'/{self._keypair_name}.pem'
+        # logging.info(f"pem file and path : {full_pem}")
+        # self._pem_full_path_name = full_pem
+        
+        # logging.info(f"ec2 config file :{self._ec2_config_file}")
 
 
  
         # ec2_resource = connect_aws_resource('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
         # ec2_client = connect_aws_client('ec2', key_id=self.aws_access_key, secret=self.aws_secret_access_key, region=self.aws_region)
         # check ec2 status
-        response = self._ec2_client.describe_instance_status(
-            InstanceIds=[self._ec2_instance_id],
-            IncludeAllInstances=True
-        )
-        print(f"response : {response}")
-        for instance in response['InstanceStatuses']:
-            instance_id = instance['InstanceId']
-            if instance_id == self._ec2_instance_id:
+        # response = self._ec2_client.describe_instance_status(
+        #     InstanceIds=[self._ec2_instance_id],
+        #     IncludeAllInstances=True
+        # )
+        # print(f"response : {response}")
+        # for instance in response['InstanceStatuses']:
+        #     instance_id = instance['InstanceId']
+        #     if instance_id == self._ec2_instance_id:
             
-                system_status = instance['SystemStatus']
-                instance_status = instance['InstanceStatus']
-                self._instancetState = instance['InstanceState']
-                # logging.info(f"system_status :{system_status}, instance_status:{instance_status},")
-        if  self._instancetState is not None:
-            logging.info(f"instance state : { self._instancetState}")
-        else:
-            raise Exception(f"Cannot find instance state from {self._ec2_instance_id}")
+        #         system_status = instance['SystemStatus']
+        #         instance_status = instance['InstanceStatus']
+        #         self._instancetState = instance['InstanceState']
+        #         # logging.info(f"system_status :{system_status}, instance_status:{instance_status},")
+        # if  self._instancetState is not None:
+        #     logging.info(f"instance state : { self._instancetState}")
+        # else:
+        #     raise Exception(f"Cannot find instance state from {self._ec2_instance_id}")
 
-    def handle_ssh_coonection(self, event):
+        # -------------------
+        # EKS
+        #---------------------
+        # step3 eks config file
+        eks_config_file = None
+        if self._ec2_action == EC2Action.start.name:
+            eks_config_file = self._base_path +"/config/eks/cluster.yaml"
+            # create ec2 path 
+            self._cluster_name = f"gcd-{self._user_id}"
+            self._nodegroup_name = f"gcd-{self._user_id}" 
+            eks_path = self._project_full_path + "/eks"
+            if not os.path.exists(eks_path):
+                os.makedirs(eks_path)
+                
+        else:
+            eks_config_file = self._project_full_path +"/eks/cluster.yaml"
+        if not exists(eks_config_file):
+            raise Exception(f"EKS config file : {eks_config_file} does not exist!!")
+
+        self._eks_configfile = eks_config_file
+        self._eks_config_dict = convert_yaml_to_json(yaml_file=self._eks_configfile)
+        print(f"self._user_id :{self._user_id}")
+        print(f"self._keypair_name : {self._keypair_name}")
+        print(f"self._cluster_name : {self._cluster_name}")
+
+    def change_config_parameters_from_input(self):
+        logging.info("change_config_parameters_from_input")
+        # step 1 
+        if self._ec2_action == EC2Action.cleanup_resources.name:
+            logging.info("Clean up resource. No input needed")
+            return
+
+
+        # question 1 destroy resources after completion?
+        logging.info("question. clean up cloud resources after completion")
+        # return boolean
+        self._is_remove_all_created_resources = handle_yes_or_no_question(
+            input_question="Is clean all created cloud resources after completioon? ",
+            default_answer="yes"
+        )
+        logging.info(f"Clean up created cloud resources : {self._is_remove_all_created_resources}")
+
+        # question 2 change config parametes ?
+        logging.info("Project name")
+        self._project_in_tags = hanlde_input_project_name_in_tag(
+            input_question="Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path)"
+        )
+        # update tag 
+        self._tags.append({'Key':'project', 'Value':self._project_in_tags})
+
+        if self._ec2_action == EC2Action.ssh.name:
+            logging.info("Running ssh command. No input questions")
+            return 
+
+
+       
+        
+
+
+        # is_changing_default_config_file = handle_yes_or_no_question(
+        #     input_question="Do you want to change parameters of default config.yaml file? ",
+        #     default_answer="no"
+        # )
+       
+        # logging.info(f"Change parameters of default config.yaml : {is_changing_default_config_file}")
+        
+        # if is_changing_default_config_file is True:
+            # self._data_bucket = self._config_dict['worker_config']['data_bucket']
+            # self._saved_bucket = self._config_dict['worker_config']['save_bucket']
+        self._handle_config_inputs()
+        
+
+    def _handle_config_inputs(self):
+        logging.info("handle config inputs")
+
+
+        # question 4 use default file 
+        is_process_default_file  = handle_yes_or_no_question(
+            input_question=f"Do you want to process the defined files in config.yaml?",
+            default_answer="no"
+        )
+        if is_process_default_file is False:
+                
+            handle_input_number_of_process_files_question(
+                input_question="How many files you would like process? \n Input an postive integer number. \n Input '0' to process all files in the data bucket \n Otherwise, It processes first 'n'(as input) number files.",
+                default_answer=1,
+            )
+        else:
+            self._process_first_n_files = None
+            logging.info("Process default files")
+        
+        logging.info("question 3. input the number of instances ")
+        if len(self._eks_config_dict['nodeGroups'])>0 :
+
+            self._max_nodes = self._eks_config_dict['nodeGroups'][0]['maxSize']
+            self._num_of_nodes = handle_input_number_of_scale_instances_question(
+                input_question="How many instances you would like to generate to run this application in parallel? \n Input an postive integer: ",
+                default_answer=1,
+                max_node= self._max_nodes
+            )
+        else:
+            raise ValueError(f"Parse eks clust.yaml failed. No nodegroup")
+        logging.info(f"Number of generated instances:{self._num_of_nodes}")
+    
+       
+
+    def prepare_ec2(self):
+        logging.info("Prepare ec2 action")
+        if self._ec2_action == EC2Action.start.name:
+            logging.info("Start a new process. create ec2.")
+        else:
+            logging.info(f"Import from existing .yaml file action: {self._ec2_action}")
+        
+        self._project_folder =  basename(normpath(self._project_full_path))
+        logging.info("Ask for confirmation")
+        number_process_files = str(self._process_first_n_files)
+        if self._process_first_n_files is None:
+            number_process_files = "Default files"
+            self._ssh_command = f"python3 main.py run-files -s {self._num_of_nodes} -p {self._project_folder}"
+        # separate project folder 
+       
+
+        self._ssh_command = f"python3 main.py run-files -n {self._process_first_n_files} -s {self._num_of_nodes} -p {self._project_folder}"
+
+        cloud_resource = [
+			["Parameters","Details"],
+            ['project full path', self._project_full_path],
+            ['project folder', self._project_folder],
+            ['number of process files', number_process_files],
+            ['number of  generated instances', self._num_of_nodes],
+            ['max nodes size',self._max_nodes],
+            ["cleanup cloud resources after completion",self._is_remove_all_created_resources],
+            ["EC2 bastion name",self._ec2_name],
+            ["SSH command", self._ssh_command],
+            ["EKS cluster name",self._cluster_name],
+            ['poject in tags',self._project_in_tags],
+	    ] 
+
+        table1 = AsciiTable(cloud_resource)
+        print(table1.table)
+
+        self._is_confirmed = handle_yes_or_no_question(
+            input_question="Comfim to process (must be yes/no)",
+            default_answer="yes"
+        )
+        
+         
+
+
+    def handle_ssh_coonection(self):
         logging.info("Handle ssh connection")
         if self._ec2_instance_id is None or self._instancetState is None: 
             logging.error("Something wrong , no ec2 id or instance state")
@@ -318,10 +605,8 @@ class HandleEC2Bastion(object):
         raise ValueError(f"Oh no {event.error}") 
         
     
-    def is_confirm_creation(self):
-        if self._is_confirmed == "yes":
-            return True
-        return False
+    def is_confirm_creation(self) -> bool:
+        return self._is_confirmed
 
     def set_ec2_action(self):
         inst_question =[]
@@ -331,8 +616,8 @@ class HandleEC2Bastion(object):
                 inquirer.List('action',
                                 message="Select action type ?",
                                 choices=[
-                                    EC2Action.create_new.name,
-                                    EC2Action.start_from_existing.name, 
+                                    EC2Action.start.name,
+                                    EC2Action.activate_from_existing.name, 
                                     EC2Action.cleanup_resources.name, 
                                     EC2Action.ssh.name],
                             ),
@@ -344,7 +629,7 @@ class HandleEC2Bastion(object):
             inst_question = [
                 inquirer.List('action',
                                 message="Select action type ?",
-                                choices=[EC2Action.create_new.name, EC2Action.start_from_existing.name,EC2Action.cleanup_resources.name, EC2Action.ssh.name],
+                                choices=[EC2Action.start.name, EC2Action.activate_from_existing.name,EC2Action.cleanup_resources.name, EC2Action.ssh.name],
                             ),
             ]
 
@@ -401,131 +686,131 @@ class HandleEC2Bastion(object):
     #         logging.error("Unknow action")
 
     #     return 
-    def set_vpc_info(self):
-        logging.info("Set VPC")
-         # VPC input
-        while True:
-            self._use_deafualt_vpc = str(input(f"Use default VPC ?(default:{self._use_deafualt_vpc}) (must be yes/no):") or self._use_deafualt_vpc)
-            if self._use_deafualt_vpc.lower() not in ('yes', 'no'):
-                print("Not an appropriate choice. please type 'yes' or 'no' !!!")
-            else:
-                break
-        if self._use_deafualt_vpc == "no":
-            self._vpc_id = input("Enter existing vpc id: ")
-            logging.info(f"Input VPC id: {self._vpc_id}")
-            logging.info(f"Checking VPC id:{self._vpc_id}")
-        else:
-            print(f"Use default vpc")
+    # def set_vpc_info(self):
+    #     logging.info("Set VPC")
+    #      # VPC input
+    #     while True:
+    #         self._use_deafualt_vpc = str(input(f"Use default VPC ?(default:{self._use_deafualt_vpc}) (must be yes/no):") or self._use_deafualt_vpc)
+    #         if self._use_deafualt_vpc.lower() not in ('yes', 'no'):
+    #             print("Not an appropriate choice. please type 'yes' or 'no' !!!")
+    #         else:
+    #             break
+    #     if self._use_deafualt_vpc == "no":
+    #         self._vpc_id = input("Enter existing vpc id: ")
+    #         logging.info(f"Input VPC id: {self._vpc_id}")
+    #         logging.info(f"Checking VPC id:{self._vpc_id}")
+    #     else:
+    #         print(f"Use default vpc")
     
 
     
-    def set_security_group_info(self):
-        logging.info("Set security group info")
-        # security group input 
-        while True:
-            self._is_creating_sg = str(input(f"Create a new security group allow SSH connection only ?(default:{self._is_creating_sg}) (must be yes/no):") or self._is_creating_sg)
-            if self._is_creating_sg.lower() not in ('yes', 'no'):
-                print("Not an appropriate choice. please type 'yes' or 'no' !!!")
-            else:
-                break
+    # def set_security_group_info(self):
+    #     logging.info("Set security group info")
+    #     # security group input 
+    #     while True:
+    #         self._is_creating_sg = str(input(f"Create a new security group allow SSH connection only ?(default:{self._is_creating_sg}) (must be yes/no):") or self._is_creating_sg)
+    #         if self._is_creating_sg.lower() not in ('yes', 'no'):
+    #             print("Not an appropriate choice. please type 'yes' or 'no' !!!")
+    #         else:
+    #             break
     
-        if self._is_creating_sg == "no":
-            sg_id = input("Enter existing security group id: ")
-            logging.info(f"security group id: {self._sg_ids.append(sg_id)}")
-            logging.info(f"Checking security group id:{self._sg_ids}")
+    #     if self._is_creating_sg == "no":
+    #         sg_id = input("Enter existing security group id: ")
+    #         logging.info(f"security group id: {self._sg_ids.append(sg_id)}")
+    #         logging.info(f"Checking security group id:{self._sg_ids}")
 
-        else:
-            print(f"Create a new security group")
+    #     else:
+    #         print(f"Create a new security group")
 
        
         
-    def set_keypair_info(self):
-        logging.info("Set keypair info")
-        while True:
-            self._is_creating_keypair =  str(input(f"Create a new keypair ?(default:{self._is_creating_keypair}) (must be yes/no):") or self._is_creating_keypair)
-            if self._is_creating_keypair.lower() not in ('yes', 'no'):
-                print("Not an appropriate choice. please type 'yes' or 'no' !!!")
-            else:
-                break
-         # Key pair input
-        if self._is_creating_keypair == "no":
-            while True:
-                self._keypair_name = input("Enter existing keypair name: ")
-                if len(self._keypair_name) < 2:
-                    logging.error(f"Keypair name is too short: {self._keypair_name}")
-                else:
-                    break
-            print(f"key pair name: {self._keypair_name }")
-        else:
-            while True:
-                self._keypair_name  = input("Enter a new keypair name: ")
-                if len(self._keypair_name) < 2:
-                    logging.error(f"Keypair name is too short: {self._keypair_name}")
-                else:
-                    break
-            print(f"Creating keypair: {self._keypair_name }")
-        self._keypair_download_path = os.getcwd() + "/config/keypair"
+    # def set_keypair_info(self):
+    #     logging.info("Set keypair info")
+    #     while True:
+    #         self._is_creating_keypair =  str(input(f"Create a new keypair ?(default:{self._is_creating_keypair}) (must be yes/no):") or self._is_creating_keypair)
+    #         if self._is_creating_keypair.lower() not in ('yes', 'no'):
+    #             print("Not an appropriate choice. please type 'yes' or 'no' !!!")
+    #         else:
+    #             break
+    #      # Key pair input
+    #     if self._is_creating_keypair == "no":
+    #         while True:
+    #             self._keypair_name = input("Enter existing keypair name: ")
+    #             if len(self._keypair_name) < 2:
+    #                 logging.error(f"Keypair name is too short: {self._keypair_name}")
+    #             else:
+    #                 break
+    #         print(f"key pair name: {self._keypair_name }")
+    #     else:
+    #         while True:
+    #             self._keypair_name  = input("Enter a new keypair name: ")
+    #             if len(self._keypair_name) < 2:
+    #                 logging.error(f"Keypair name is too short: {self._keypair_name}")
+    #             else:
+    #                 break
+    #         print(f"Creating keypair: {self._keypair_name }")
+    #     self._keypair_download_path = os.getcwd() + "/config/keypair"
 
-        while True:
-            download_path = str(input(f"Enter the pem path (hit enter to use default path: {self._keypair_download_path }): ") or self._keypair_download_path )
-            if not os.path.exists(download_path):
-                logging.debug(f"{download_path} does not exist")
+    #     while True:
+    #         download_path = str(input(f"Enter the pem path (hit enter to use default path: {self._keypair_download_path }): ") or self._keypair_download_path )
+    #         if not os.path.exists(download_path):
+    #             logging.debug(f"{download_path} does not exist")
 
-            else:
-                break
-        self._keypair_download_path = download_path
+    #         else:
+    #             break
+    #     self._keypair_download_path = download_path
 
 
        
-    def set_ec2_info(self):
-        logging.info("Set ec2 info")
-        while True:
-            self._ec2_name = input("Creat a EC2 name  :") 
-            if len(self._ec2_name) < 2:
-                logging.error(f"ec2 name is too short: {self._ec2_name}")
-            else:
-                break
-        print(f"EC2 name : {self._ec2_name }")
-        self._tags.append({'Key': 'Name', 'Value': self._ec2_name})
-        while True:
-            self._project = input("Creat a project name in tag:") 
-            if len(self._project) < 2:
-                logging.error(f"project name is too short: {self._project}")
-            else:
-                break
-        print(f"Project name : {self._project }")
-        self._tags.append({'Key': 'project', 'Value': self._project})
-        # instance type
-        inst_question = [
-            inquirer.List('instance_type',
-                            message="Select instance type (suggest 't2.large')?",
-                            choices=['t2.large','t2.medium','t2.xlarge'],
-                        ),
-        ]
-        inst_answer = inquirer.prompt(inst_question)
-        logging.info (inst_answer["instance_type"])
-        self._instancetype= inst_answer["instance_type"]
+    # def set_ec2_info(self):
+    #     logging.info("Set ec2 info")
+    #     while True:
+    #         self._ec2_name = input("Creat a EC2 name  :") 
+    #         if len(self._ec2_name) < 2:
+    #             logging.error(f"ec2 name is too short: {self._ec2_name}")
+    #         else:
+    #             break
+    #     print(f"EC2 name : {self._ec2_name }")
+    #     self._tags.append({'Key': 'Name', 'Value': self._ec2_name})
+    #     while True:
+    #         self._project = input("Creat a project name in tag:") 
+    #         if len(self._project) < 2:
+    #             logging.error(f"project name is too short: {self._project}")
+    #         else:
+    #             break
+    #     print(f"Project name : {self._project }")
+    #     self._tags.append({'Key': 'project', 'Value': self._project})
+    #     # instance type
+    #     inst_question = [
+    #         inquirer.List('instance_type',
+    #                         message="Select instance type (suggest 't2.large')?",
+    #                         choices=['t2.large','t2.medium','t2.xlarge'],
+    #                     ),
+    #     ]
+    #     inst_answer = inquirer.prompt(inst_question)
+    #     logging.info (inst_answer["instance_type"])
+    #     self._instancetype= inst_answer["instance_type"]
 
-        ec2_volume = str(input(f"Enter the ec2 volume (enter for default: {self._volume}): ") or self._volume)
-        self._volume = ec2_volume
-        logging.info(f"Input volume: { self._volume}")
-        basepath = os.getcwd()
-        while True:
-            export_file = str(input(f"Enter the export file name (enter for default:{self._ec2_config_file}): ") or self._ec2_config_file)
-            name, extenstion = export_file.split(".")
-            logging.info(f"Export file:{export_file}")
+    #     ec2_volume = str(input(f"Enter the ec2 volume (enter for default: {self._volume}): ") or self._volume)
+    #     self._volume = ec2_volume
+    #     logging.info(f"Input volume: { self._volume}")
+    #     basepath = os.getcwd()
+    #     while True:
+    #         export_file = str(input(f"Enter the export file name (enter for default:{self._ec2_config_file}): ") or self._ec2_config_file)
+    #         name, extenstion = export_file.split(".")
+    #         logging.info(f"Export file:{export_file}")
             
-            if extenstion != "yaml":
-                logging.error("file extension is not yaml")
-            # if not exists(fullpath):
-            #     logging.error(f"{fullpath} does not exist")
-            else:
-                break
+    #         if extenstion != "yaml":
+    #             logging.error("file extension is not yaml")
+    #         # if not exists(fullpath):
+    #         #     logging.error(f"{fullpath} does not exist")
+    #         else:
+    #             break
         
-        fullpath = self._base_path +f"/config/ec2/{export_file}"
-        self._ec2_config_file = fullpath
+    #     fullpath = self._base_path +f"/config/ec2/{export_file}"
+    #     self._ec2_config_file = fullpath
         
-        print(f"self._ec2_config_file :{self._ec2_config_file}")
+    #     print(f"self._ec2_config_file :{self._ec2_config_file}")
 
         # running, stopped,or terminate after completion.
         # action_questions = [
@@ -547,38 +832,38 @@ class HandleEC2Bastion(object):
         #     print(f"Remove all created resources : {self._is_remove_all_created_resources}")
             
 
-    def set_eks_cluster_info(self):
-        logging.info("Set eks cluster info")
-        # create eks cluster
-        while True:
-            self._is_creating_eks =  str(input(f"Create a new eks cluster ?(default:{self._is_creating_eks}) (must be yes/no):") or self._is_creating_eks)
-            if self._is_creating_eks.lower() not in ('yes', 'no'):
-                print("Not an appropriate choice. please type 'yes' or 'no' !!!")
-            else:
-                break
+    # def set_eks_cluster_info(self):
+    #     logging.info("Set eks cluster info")
+    #     # create eks cluster
+    #     while True:
+    #         self._is_creating_eks =  str(input(f"Create a new eks cluster ?(default:{self._is_creating_eks}) (must be yes/no):") or self._is_creating_eks)
+    #         if self._is_creating_eks.lower() not in ('yes', 'no'):
+    #             print("Not an appropriate choice. please type 'yes' or 'no' !!!")
+    #         else:
+    #             break
 
-        # import clustr config
-        if  self._is_creating_eks == "yes":
-            while True:
-                eks_configfile = str(input(f"Enter the eks cluster file name (default:{self._eks_configfile}): ") or self._eks_configfile)
-                name, extension = eks_configfile.split(".")
-                logging.info(f"Create eks cluster from file:{eks_configfile}")
-                if extension != "yaml":
-                    logging.error(f"{name}.{extension} is not a yaml file!!")
+    #     # import clustr config
+    #     if  self._is_creating_eks == "yes":
+    #         while True:
+    #             eks_configfile = str(input(f"Enter the eks cluster file name (default:{self._eks_configfile}): ") or self._eks_configfile)
+    #             name, extension = eks_configfile.split(".")
+    #             logging.info(f"Create eks cluster from file:{eks_configfile}")
+    #             if extension != "yaml":
+    #                 logging.error(f"{name}.{extension} is not a yaml file!!")
                
-                eksfullpath = self._base_path +f"/config/eks/{eks_configfile}"
-                if not os.path.exists(eksfullpath):
-                    logging.error(f"{eksfullpath} does not exist. Please try again!! (under path: {self._base_path}/config/eks/ )")
-                else:
-                    break
-            self._eks_configfile = eksfullpath
-            # delete cluter at end 
-            while True:
-                self._delete_eks_cluster = str(input(f"Delete EKS after completion?(default:{self._delete_eks_cluster}) (must be yes/no):") or self._delete_eks_cluster)
-                if self._delete_eks_cluster.lower() not in ('yes', 'no'):
-                    print("Not an appropriate choice. please type 'yes' or 'no' !!!")
-                else:
-                    break
+    #             eksfullpath = self._base_path +f"/config/eks/{eks_configfile}"
+    #             if not os.path.exists(eksfullpath):
+    #                 logging.error(f"{eksfullpath} does not exist. Please try again!! (under path: {self._base_path}/config/eks/ )")
+    #             else:
+    #                 break
+    #         self._eks_configfile = eksfullpath
+    #         # delete cluter at end 
+    #         while True:
+    #             self._delete_eks_cluster = str(input(f"Delete EKS after completion?(default:{self._delete_eks_cluster}) (must be yes/no):") or self._delete_eks_cluster)
+    #             if self._delete_eks_cluster.lower() not in ('yes', 'no'):
+    #                 print("Not an appropriate choice. please type 'yes' or 'no' !!!")
+    #             else:
+    #                 break
 
     def set_runfiles_command(self):
         logging.info("Set runfile command after eks cluster ready")
@@ -656,11 +941,11 @@ class HandleEC2Bastion(object):
         
         cloud_resource = [
 			["Parameters","Details"],
-            ['code_block_folder', ]
+            ['project', self._project],
 			["Use default VPC", self._use_deafualt_vpc, self._vpc_id ],
 			["Create security group",self._is_creating_sg, self._sg_ids],
 			["Create a new keypair",self._is_creating_keypair, self._keypair_name],
-            ["Keypair download path",self._keypair_download_path],
+            ["Keypair download path",self._pem_path],
             ["Image id",self._image_id],
             ["Instance type",self._instancetype],
             ["volume",self._volume],
@@ -692,36 +977,100 @@ class HandleEC2Bastion(object):
 
 
     
-    def hanlde_create_cloud_resources(self, event):
+    def hanlde_create_cloud_resources(self):
         logging.info("Handle create resources")
 
-        # Create security group
-        if self._is_creating_sg == "yes":
-            logging.info("Create security group")
-            try:
+        if self._ec2_action == EC2Action.start.name:
+            # get default vpc id
+            vpc_id = get_default_vpc_id(ec2_client=self._ec2_client)
+            if vpc_id is not None:
+                self._vpc_id = vpc_id
+            else:
+                raise Exception("No default vpc id found")
+            # check security group name 
+            sg_id = get_security_group_id_with_name(ec2_client=self._ec2_client, group_name=self._sg_name)
+
+            if sg_id is None:
                 security_info_dict = create_security_group(
-                    ec2_client=self._ec2_client,
-                    vpc_id=self._vpc_id,
-                    tags=self._tags,
-                    group_name=self._sg_name
-                )
-            except Exception as e:
-                logging.error(f"Create Security group failed :{e}")
-                raise e
-            self._sg_id = security_info_dict['security_group_id']
-            self._vpc_id = security_info_dict['vpc_id']
-            print(f"Create SecurityGroupIds : {self._sg_id} in vpc_id:{self._vpc_id} success")
+                        ec2_client=self._ec2_client,
+                        vpc_id=self._vpc_id,
+                        tags=self._tags,
+                        group_name=self._sg_name
+                    )
+                self._sg_ids = [security_info_dict['security_group_id']]
+                logging.info(f"Create SecurityGroupIds : {self._sg_id} in vpc_id:{self._vpc_id} success")
+            else:
+                logging.info(f"Found security groupd with name: {self._sg_name}  id: {sg_id}")
+                self._sg_ids = [sg_id]
+            
+
 
         # Create Key pair
-        if self._is_creating_keypair == "yes":
-            try:
-                create_key_pair(ec2_client=self._ec2_client, keyname=self._keypair_name, file_location=self._keypair_download_path)
-            except Exception as e:
-                logging.error(f"Create key pair error :{e}")
-                raise e
-        return 
+        if not check_keypair_exist(ec2_client=self._ec2_client, keypair_anme=self._keypair_name):
+            logging.info(f"keypair:{self._keypair_name} does not exist create a new keypair")
+            create_key_pair(ec2_client=self._ec2_client, keyname=self._keypair_name, file_location=self._pem_path)
+        else:
+            logging.info(f"keypair:{self._keypair_name} exist")
+        # if self._is_creating_keypair == "yes":
+        #     try:
+                
+        #     except Exception as e:
+        #         logging.error(f"Create key pair error :{e}")
+        #         raise e
+        self._export_ec2_config_file = self._project_full_path +"/config-ec2.yaml"
+        self._export_eks_config_file = self._project_full_path +"/cluster.yaml"
 
-    def handle_create_ec2(self, event):
+        cloud_resource = [
+			["Parameters","Details"],
+            ['project', self._project_in_tags],
+            ['project path', self._project_full_path],
+			["Use default VPC", self._vpc_id ],
+			["Create security group", self._sg_ids],
+			["Create a new keypair", self._keypair_name],
+            ["Keypair path",self._pem_path],
+            ["EC2 Image id",self._image_id],
+            ["EC2 name",self._ec2_name],
+            ["Instance type",self._instancetype],
+            ["volume",self._volume],
+            ["Name",self._ec2_name],
+            ['EKS cluster file', self._eks_configfile],
+            ['Config file', self._config_file],
+            ["Export ec2 file",self._export_ec2_config_file],
+            ["Export eks file",self._export_eks_config_file],
+            ["SSH Command",self._ssh_command],
+            ["EC2 status after completion",self._ec2_action],
+            ['Tags',self._tags],
+            ["Remove created resources",self._is_remove_all_created_resources]
+
+	    ] 
+        table1 = AsciiTable(cloud_resource)
+        print(table1.table)
+        # print(f"self._image_id: {self._image_id}")
+        # print(f"self._keypair_name,: {self._keypair_name,}")
+        # print(f"self._sg_ids: {self._sg_ids}")
+        # print(f"elf._volume: {self._volume}")
+        # print(f"self._project_in_tags: {self._project_in_tags}")
+
+        # check if ec2 already exist
+        instance_info = get_ec2_instance_id_and_keypair_with_tags(
+            ec2_client=self._ec2_client,
+            tag_key_f="Name",
+            tag_val_f=self._ec2_name
+        )
+        if instance_info is not None:
+            id = instance_info['InstanceId']
+            keyname = instance_info['KeyName']
+            logging.warning(f"EC2 {self._ec2_name} exists, {instance_info}")
+            if keyname != self._keypair_name:
+                # logging.error(f"{instance_info} has different keypair from {self._keypair_name} ")
+                raise Exception (f"{instance_info} has different keypair from {self._keypair_name} ")
+            else:
+                logging.warning ("Use existing ec2 instance")
+                raise Exception(f"Please change action to use start from existing")
+            
+        return
+
+    def handle_create_ec2(self):
         logging.info("Handle create ec2")
 
         try:
@@ -744,16 +1093,14 @@ class HandleEC2Bastion(object):
         except Exception as e:
             raise Exception(f"Create ec2 instance failed {e}")
 
-        logging.info("-------------------")
-        logging.info(f"Export ec2 bastion setting to {self._ec2_config_file}")
-        logging.info("-------------------")
+
 
        
     
 
-    def handle_install_dependencies(self, event):
+    def handle_install_dependencies(self):
         logging.info("Handle install dependencies")
-        pem_file=self._keypair_download_path +"/"+self._keypair_name+".pem"
+        pem_file=self._pem_path +"/"+self._keypair_name+".pem"
         instance = check_if_ec2_ready_for_ssh(
             instance_id=self._ec2_instance_id , 
             wait_time=self._ssh_total_wait_time, 
@@ -815,17 +1162,23 @@ class HandleEC2Bastion(object):
             local_file=local_env,
             remote_file=remote_env,
         )
+
+
+        remote_folder = remote_base_path + f"/projects/{self._project_folder}"
         logging.info("-------------------")
-        logging.info(f"upload config folder")
+        logging.info(f"upload local project folder to ec2 projects")
+        logging.info(f"local folder:{self._project_full_path}")
+        logging.info(f"remote folder:{remote_folder}")
         logging.info("-------------------")
+        
 
         ssh_upload_folder_to_ec2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=pem_file,
-            local_folder="./config",
-            remote_folder=f"{remote_base_path}",
-            ec2_client=self._ec2_client,
+            local_folder=self._project_full_path,
+            remote_folder=remote_folder,
+            ec2_resource=self._ec2_resource,
 
         )
         # # upload solver
@@ -875,24 +1228,28 @@ class HandleEC2Bastion(object):
         ec2_json['login_user'] = self._login_user
         # ec2_json['pem_location'] = self._keypair_download_path
 
-
+        logging.info("-------------------")
+        logging.info(f"Export ec2 bastion setting to {self._export_ec2_config_file}")
+        logging.info("-------------------")
+        
         write_aws_setting_to_yaml(
-            file=self._ec2_config_file, 
+            file=self._export_ec2_config_file, 
             setting=ec2_json
         )
 
 
-    def set_eks_action(self):
-        logging.info("Set EKS action")
-        inst_question = [
-            inquirer.List('action',
-                            message="Select eks action type ?",
-                            choices=[EKSAction.create.name,EKSAction.delete.name, EKSAction.list.name, EKSAction.scaledownzero.name],
-                        ),
-        ]
-        inst_answer = inquirer.prompt(inst_question)
+    def set_eks_action(self, action):
+        self._eks_action = action
+        # logging.info("Set EKS action")
+        # inst_question = [
+        #     inquirer.List('action',
+        #                     message="Select eks action type ?",
+        #                     choices=[EKSAction.create.name,EKSAction.delete.name, EKSAction.list.name, EKSAction.scaledownzero.name],
+        #                 ),
+        # ]
+        # inst_answer = inquirer.prompt(inst_question)
 
-        self._eks_action = inst_answer["action"]
+        # self._eks_action = inst_answer["action"]
 
     def get_eks_action(self):
         return self._eks_action
@@ -953,9 +1310,9 @@ class HandleEC2Bastion(object):
         
         self._keypair_name = ec2_json['key_pair_name']
         self._tags = ec2_json['tags']
-        self._keypair_download_path = ec2_json['pem_location']
+        self._pem_path = ec2_json['pem_location']
         self._ec2_instance_id = ec2_json['ec2_instance_id']
-        pem_file=self._keypair_download_path  +"/"+self._keypair_name+".pem"
+        pem_file=self._pem_path  +"/"+self._keypair_name+".pem"
         self._login_user = ec2_json['user_name']
 
         # check instance id status
@@ -967,7 +1324,7 @@ class HandleEC2Bastion(object):
     def start_ec2(self):
 
 
-        pem_file=self._keypair_download_path  +"/"+self._keypair_name+".pem"
+        pem_file=self._pem_path  +"/"+self._keypair_name+".pem"
         if self._ec2_instance_id is not None:
             res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for stopping an ec2 instance
             instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=self._ssh_total_wait_time, delay=self._ssh_wait_time_interval, pem_location=pem_file,user_name=self._login_user)
@@ -1007,22 +1364,23 @@ class HandleEC2Bastion(object):
 
     def handle_eks_action(self):
         logging.info("Handle create eks cluster")
-        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
-        path, file  = os.path.split(self._eks_configfile)
-        remote_cluster_file=f"{remote_base_path}/config/eks/{file}"
+        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services/projects"
+        # path, file  = os.path.split(self._eks_configfile)
+        # remote_cluster_file=f"{remote_base_path}/config/eks/{file}"
+        # loca_eks_file = self._base_path + f"/config/eks/{self._eks_configfile}"
+        # cluster_dict = convert_yaml_to_json(yaml_file=loca_eks_file)
+        # cluster_name = cluster_dict['metadata']['name']
 
         ssh_command_list = {}
-        if self._ec2_action == EC2Action.ssh_create_eks.name:
+        if self._ec2_action == EKSAction.create.name:
             logging.info("set create eks culster command")
             command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl create cluster -f {remote_cluster_file}"
             ssh_command_list['Create EKS cluster'] = command
 
-        elif self._ec2_action == EC2Action.ssh_delete_eks.name:
+        elif self._ec2_action == EKSAction.delete.name:
             logging.info("set delete eks culster command ")
             # delete all nodes 
-            loca_eks_file = self._base_path + f"/config/eks/{self._eks_configfile}"
-            cluster_dict = convert_yaml_to_json(yaml_file=loca_eks_file)
-            cluster_name = cluster_dict['metadata']['name']
+           
             if len (cluster_dict['nodeGroups']) == 0 :
                 logging.error("nodeGroup does not defined")
                 return 
@@ -1032,7 +1390,9 @@ class HandleEC2Bastion(object):
             ssh_command_list['Scale down nodes to 0'] = scale_down_command
             delete_eks_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
             ssh_command_list['Delete EKS cluster'] = delete_eks_command
-            
+        elif self._ec2_action == EKSAction.scaledownzero.name:
+            scale_down_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
+            ssh_command_list['Scale down nodes to 0'] = scale_down_command
         
         for description, command in ssh_command_list.items():
             logging.info(description)
@@ -1051,62 +1411,6 @@ class HandleEC2Bastion(object):
     def handle_export_to_file(self, event):
         logging.info("Handle create eks cluster")
 
-    def handle_cleanup(self, event):
+    def handle_cleanup(self):
         logging.info("Handle clean up")
-
-
-
-
-def get_default_vpc_id(ec2_client) -> str:
-    logging.info("get default VPC id ")
-    try:
-        response = ec2_client.describe_vpcs()
-        if len(response) > 0 :
-            vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
-            return vpc_id
-        else:
-            return None
-    except Exception as e:
-        raise Exception(f"Get default vpc id failed")
-
-def check_vpc_id_exists(ec2_client,vpc_id:str) -> bool:
-    try:
-        response = ec2_client.describe_vpcs(
-        Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
-        )
-        resp = response['Vpcs']
-        if resp:
-            return True
-    except Exception as e:
-        logging.error("FInd VPC id error")
-    return False
-
-def check_sg_group_name_exists_and_return_sg_id(ec2_client , group_name:str) -> str:
-    logging.info("Check security group id ")
-    try:
-        response = ec2_client.describe_security_groups(
-            GroupNames=[group_name],
-        )
-       
-        if len(response['SecurityGroups']) > 0 :
-             return (response['SecurityGroups'][0]['GroupId'])
-
-    except Exception as e:
-        logging.error(f"FInd security group error :{e}")
-    return None
-
-
-
-def check_keypair_name_exists(ec2_client ,keypair_name:str) -> bool:
-    logging.info("Check key pairname ")
-    try:
-        response = ec2_client.describe_key_pairs(
-            KeyNames=[keypair_name]
-        )
-        if len(response)> 0:
-            logging.info(f" {keypair_name} exists")
-            return True
-    except Exception as e:
-        logging.error(f"{keypair_name} does not exist")
-        return False
 

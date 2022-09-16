@@ -1,7 +1,9 @@
 from genericpath import exists
+from logging import Filter
 import boto3
 import os
-
+import botocore
+import logging
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
     try:
@@ -59,3 +61,134 @@ def connect_aws_resource(resource_name: str, key_id: str, secret: str, region: s
         return resource
     except Exception:
         raise Exception("AWS Validation Error")
+
+
+def check_bucket_exists_on_s3(s3_client, bucket_name:str) -> bool:
+    try:
+        buckets_list = s3_client.list_buckets()
+        print(buckets_list)
+        for bucket in buckets_list:
+            if bucket_name == bucket:
+                return True
+            return False
+
+    except Exception as e:
+        raise Exception (f"List S3 bucket error: {e}")
+
+
+    
+def get_security_group_id_with_name(group_name:str, ec2_client) -> str:
+    try:
+        response= ec2_client.describe_security_groups(
+            Filters=[
+                dict(Name='group-name', Values=[group_name])
+            ]
+        )
+        if len(response['SecurityGroups']) > 0:
+            group_id = response['SecurityGroups'][0]['GroupId']
+            return group_id
+        else:
+            return None
+    except Exception as e:
+        raise Exception(f"fn")
+
+
+def get_default_vpc_id(ec2_client) -> str:
+    try:
+        response = ec2_client.describe_vpcs()
+        if len(response.get('Vpcs', [{}])) > 0:
+            vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
+            return vpc_id
+        else:
+            return None
+    except botocore.exceptions.ClientError as err:
+        raise Exception(err)
+
+def check_keypair_exist(ec2_client, keypair_anme) ->bool:
+    try:
+        keypairs = ec2_client.describe_key_pairs(
+          KeyNames=[keypair_anme]
+        )
+        if len(keypairs) > 0 :
+            return True
+        else:
+            return False
+    except botocore.exceptions.ClientError as err:
+        print(f"{keypair_anme} does not exist")
+        return False
+
+
+def get_ec2_instance_id_and_keypair_with_tags(ec2_client, tag_key_f,  tag_val_f) -> dict:
+    try:
+        # response = ec2_client.describe_instance_status(
+        #     Filter =[
+        #         [{'Name': 'tag:'+tag_key_f, 'Values': [tag_val_f]}]
+        #     ]
+        # )
+        response = ec2_client.describe_instances(Filters=[{'Name': 'tag:'+tag_key_f, 'Values': [tag_val_f]}])
+
+        print("---------------")
+        Reservations = response['Reservations']
+        # print(response['Reservations'])
+        if len(Reservations)> 0:
+            if 'Instances' in Reservations[0] and len(Reservations[0]['Instances']) > 0 :
+                instance_id = Reservations[0]['Instances'][0]['InstanceId']
+                KeyName =  Reservations[0]['Instances'][0]['KeyName']
+                return {'InstanceId':instance_id,'KeyName':KeyName}
+
+        return None
+    except botocore.exceptions.ClientError as err:
+        raise Exception(err)
+
+def get_default_vpc_id(ec2_client) -> str:
+    logging.info("get default VPC id ")
+    try:
+        response = ec2_client.describe_vpcs()
+        if len(response) > 0 :
+            vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
+            return vpc_id
+        else:
+            return None
+    except Exception as e:
+        raise Exception(f"Get default vpc id failed")
+
+def check_vpc_id_exists(ec2_client,vpc_id:str) -> bool:
+    try:
+        response = ec2_client.describe_vpcs(
+        Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
+        )
+        resp = response['Vpcs']
+        if resp:
+            return True
+    except Exception as e:
+        logging.error("FInd VPC id error")
+    return False
+
+def check_sg_group_name_exists_and_return_sg_id(ec2_client , group_name:str) -> str:
+    logging.info("Check security group id ")
+    try:
+        response = ec2_client.describe_security_groups(
+            GroupNames=[group_name],
+        )
+       
+        if len(response['SecurityGroups']) > 0 :
+             return (response['SecurityGroups'][0]['GroupId'])
+
+    except Exception as e:
+        logging.error(f"FInd security group error :{e}")
+    return None
+
+
+
+def check_keypair_name_exists(ec2_client ,keypair_name:str) -> bool:
+    logging.info("Check key pairname ")
+    try:
+        response = ec2_client.describe_key_pairs(
+            KeyNames=[keypair_name]
+        )
+        if len(response)> 0:
+            logging.info(f" {keypair_name} exists")
+            return True
+    except Exception as e:
+        logging.error(f"{keypair_name} does not exist")
+        return False

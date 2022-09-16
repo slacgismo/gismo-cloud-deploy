@@ -3,8 +3,8 @@ import enum
 
 
 class EC2Action(enum.Enum):
-    create_new = "create_new"
-    start_from_existing = "start_from_existing"
+    start = "start"
+    activate_from_existing = "activate_from_existing"
     cleanup_resources = "cleanup_resource"
     ssh = "ssh"
     # running = "running"

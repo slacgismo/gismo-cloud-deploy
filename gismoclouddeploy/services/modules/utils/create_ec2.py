@@ -11,7 +11,8 @@ import os
 import json
 import paramiko
 import yaml
-
+from pathlib import Path
+from os.path import normpath, basename
 from .check_aws import (
     connect_aws_client,
     check_environment_is_aws,
@@ -315,9 +316,7 @@ def create_aws_vpc(ec2_client, tags:list) -> str:
 
 def create_security_group(ec2_client, vpc_id:str = None, tags:list = None, group_name:str = 'SSH-ONLY') -> dict:
      #Create a security group and allow SSH inbound rule through the VPC
-    response = ec2_client.describe_vpcs()
-    if vpc_id is None or vpc_id == "None":
-        vpc_id = response.get('Vpcs', [{}])[0].get('VpcId', '')
+   
     try:
         response = ec2_client.create_security_group(
             GroupName=group_name, 
@@ -474,20 +473,23 @@ def ssh_upload_folder_to_ec2(
     user_name:str,
     instance_id:str,
     pem_location:str,
-    ec2_client,
+    ec2_resource,
     local_folder:str,
     remote_folder:str,
 ):
 
-    ec2 = boto3.resource('ec2')
-    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    # ec2 = boto3.resource('ec2')
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
     print(instances)
-
+    p2_instance = None
     for instance in instances:
         if (instance.id==instance_id):
             p2_instance=instance
-            break;
-    
+            break
+
+    if p2_instance is None:
+        raise Exception(f"{instance_id} does not exist")
+        
     # check if directory exist
     local_files_list = get_all_files_in_local_dir(local_dir=local_folder)
     # print(local_files_list)
@@ -516,27 +518,51 @@ def ssh_upload_folder_to_ec2(
     #         ec2_client=ec2_client
     #     )
     # check if remote dir exist, if it does not exist. Create a new directory.
+    # step 1. get relative folder
+    project_folder = basename(local_folder)
+    relative_path = []
     upload_local_to_remote_dict = {}
     for file in local_files_list:
-        relative_path, filename = os.path.split(file)
-        
-        # remove ".""
-        relative_path = relative_path.replace(".","") 
-        print(f"relative_path :{relative_path} filename :{filename}")
-        # print(f"relative_path: {relative_path}")
-        # remote_file = remote_folder + "/" + relative_path  +"/" + filename
-        remote_dir = remote_folder  + relative_path
-        upload_local_to_remote_dict[file] = remote_dir  +"/" + filename
-        # print("----------------------------")
-        # print(upload_local_to_remote_dict[file] )
-        # print("------------------------------")
-        # print(f"upload {file} to {remote_file}")
-        # print(f"remote_dir: {remote_dir}")
+        path, filename = os.path.split(file)
+        relative = Path(path).relative_to(Path(local_folder))
 
+        if str(relative) == ".":
+            continue
+        new_path = project_folder +"/" + str(relative)
+        relative_path.append(new_path)
+    #     if relative ==".":
+    #         continue
+    #     relative_path.append(relative)
+
+    print(relative_path)
+
+    for folder in relative_path:
+        remote_dir = remote_folder + "/"+ folder
+        print(f"remote_dir: {remote_dir}")
         command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir} \n fi"
         (stdin, stdout, stderr) = ssh.exec_command(command)
         for line in stdout.readlines():
             print (line)
+    # for file in local_files_list:
+    #     path, filename = os.path.split(file)
+        
+    #     # remove ".""
+    #     relative_path = relative_path.replace(".","") 
+    #     print(f"relative_path :{relative_path} filename :{filename}")
+    #     # print(f"relative_path: {relative_path}")
+    #     # remote_file = remote_folder + "/" + relative_path  +"/" + filename
+    #     remote_dir = remote_folder  + relative_path
+    #     upload_local_to_remote_dict[file] = remote_dir  +"/" + filename
+    #     # print("----------------------------")
+    #     # print(upload_local_to_remote_dict[file] )
+    #     # print("------------------------------")
+    #     # print(f"upload {file} to {remote_file}")
+    #     # print(f"remote_dir: {remote_dir}")
+
+    #     command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir} \n fi"
+    #     (stdin, stdout, stderr) = ssh.exec_command(command)
+        # for line in stdout.readlines():
+        #     print (line)
         # print("----------------------------")
 
     ftp_client=ssh.open_sftp()
@@ -1021,3 +1047,5 @@ def CreateInstanceProfileRole():
 #     while output['Status'] == "InProgress":   
 #         output = ssm_client.get_command_invocation( CommandId=command_id, InstanceId=InstanceId) 
 #     print(output['StandardOutputContent'])
+
+

@@ -42,7 +42,7 @@ spec:
           #   limits:
           #     cpu: 2
           #   requests:
-          #     cpu: 1
+          #     cpu: 1000m
           #   args:
           #     - -cpus
           #     - "2"

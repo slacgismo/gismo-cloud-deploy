@@ -1,6 +1,6 @@
 from email.policy import default
 from multiprocessing.dummy import Process
-
+from modules.utils.EKSAction import EKSAction
 
 import click
 import logging
@@ -114,13 +114,49 @@ def handle_ec2():
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region= AWS_DEFAULT_REGION
     )
-
-
+    handle_ec2_bastion.testing_fun()
+    return
     handle_ec2_bastion.set_ec2_action()
     # get action put
     action = handle_ec2_bastion.get_ec2_action()
-
     handle_ec2_bastion.handle_import_configfile()
+    handle_ec2_bastion.change_config_parameters_from_input()
+    handle_ec2_bastion.prepare_ec2()
+
+    if action == EC2Action.start.name:
+        is_confirm = handle_ec2_bastion.is_confirm_creation()
+        if not is_confirm:
+            return 
+        handle_ec2_bastion.hanlde_create_cloud_resources()
+         
+        handle_ec2_bastion.handle_create_ec2()  
+        handle_ec2_bastion.handle_install_dependencies()  
+        # create eks
+        handle_ec2_bastion.set_eks_action(action=EKSAction.create.name)
+        handle_ec2_bastion.handle_eks_action()
+        # run ssh command process file
+        handle_ec2_bastion.set_and_run_ssh_command()
+
+    elif action == EC2Action.activate_from_existing.name:
+        handle_ec2_bastion.handle_ssh_coonection()
+        # check eks cluster if not exist, create a new cluster
+        # run ssh command process file
+
+    
+    elif action == EC2Action.ssh.name:
+        handle_ec2_bastion.handle_ssh_coonection()
+        # run ssh command process file
+        
+
+    # if clean up , clean up resource
+    handle_ec2_bastion.handle_cleanup()
+
+    
+    logging.info("EC2 is ready, verify eks cluster")
+
+
+
+    return 
     if action == EC2Action.create_new.name:
         logging.info("Create a new project !!!")
     elif action == EC2Action.start_from_existing.name:
