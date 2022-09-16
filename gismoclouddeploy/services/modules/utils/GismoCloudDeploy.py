@@ -301,7 +301,7 @@ class GismoCloudDeploy(object):
 
             # aws config
             aws_config = self._config["aws_config"]
-            self._cluster_file  = f"{self._base_path}/projects/{self.project}/eks/cluster.yaml"
+            self._cluster_file  = f"{self._base_path}/projects/{self.project}/cluster.yaml"
             self._scale_eks_nodes_wait_time  = aws_config['scale_eks_nodes_wait_time']
             self._interval_of_wait_pod_ready  = aws_config['interval_of_wait_pod_ready']
           

@@ -194,3 +194,28 @@ def check_keypair_name_exists(ec2_client ,keypair_name:str) -> bool:
     except Exception as e:
         logging.error(f"{keypair_name} does not exist")
         return False
+
+
+def get_ec2_state_from_id(ec2_client, id) -> str:
+    
+    #check ec2 status
+    response = ec2_client.describe_instance_status(
+        InstanceIds=[id],
+        IncludeAllInstances=True
+    )
+    print(f"response : {response}")
+    state = None
+    for instance in response['InstanceStatuses']:
+        instance_id = instance['InstanceId']
+        if instance_id == id:
+        
+            system_status = instance['SystemStatus']
+            instance_status = instance['InstanceStatus']
+            state = instance['InstanceState']
+            return state
+            # logging.info(f"system_status :{system_status}, instance_status:{instance_status},")
+    return None
+    # if  state is not None:
+    #     logging.info(f"instance state : { state}")
+    # else:
+    #     raise Exception(f"Cannot find instance state from {self._ec2_instance_id}")

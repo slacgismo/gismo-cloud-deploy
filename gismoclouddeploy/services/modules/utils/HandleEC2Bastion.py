@@ -34,6 +34,7 @@ from .check_aws import (
     check_keypair_exist,
     get_default_vpc_id,
     get_ec2_instance_id_and_keypair_with_tags,
+    get_ec2_state_from_id,
     
 )
 from .create_ec2 import (
@@ -277,16 +278,18 @@ class HandleEC2Bastion(object):
         # -------------------
         # File structure
         #---------------------
-        self._project_full_path = self._base_path +"/projects/solardatatools"
+        default_project = self._base_path +"/projects/solardatatools"
         while True:
-            project_path = str(input(f"Enter project folder (Hit `Enter` button to use default path:{self._project_full_path} path): ") or self._project_full_path)
-
+            project_path = str(input(f"Enter project folder (Hit `Enter` button to use default path:{default_project} path): ") or default_project)
+            
             if not os.path.exists(project_path):
                 raise Exception(f"project path: {project_path} does not exist!!")
             else:
                 break
   
         self._project_full_path = project_path
+        self._project_folder = basename(project_path)
+        print(self._project_folder)
 
         # check if config file exists
 
@@ -331,7 +334,7 @@ class HandleEC2Bastion(object):
             if not os.path.exists(ec2_path):
                 os.makedirs(ec2_path)
         else:
-            ec2_config_file = self._project_full_path +"/ec2/config-ec2.yaml"
+            ec2_config_file = self._project_full_path +"/config-ec2.yaml"
         if not exists(ec2_config_file):
             raise Exception(f"EC2 config file : {ec2_config_file} does not exist!!")
         self._ec2_config_file = ec2_config_file
@@ -409,19 +412,22 @@ class HandleEC2Bastion(object):
         if self._ec2_action == EC2Action.start.name:
             eks_config_file = self._base_path +"/config/eks/cluster.yaml"
             # create ec2 path 
-            self._cluster_name = f"gcd-{self._user_id}"
-            self._nodegroup_name = f"gcd-{self._user_id}" 
+            curr = str(int(time.time()))
+            self._cluster_name = f"gcd-{self._user_id}-{curr}"
+            self._nodegroup_name = f"gcd-{self._user_id}-{curr}" 
             eks_path = self._project_full_path + "/eks"
             if not os.path.exists(eks_path):
                 os.makedirs(eks_path)
                 
         else:
-            eks_config_file = self._project_full_path +"/eks/cluster.yaml"
+            eks_config_file = self._project_full_path +"/cluster.yaml"
+
         if not exists(eks_config_file):
             raise Exception(f"EKS config file : {eks_config_file} does not exist!!")
 
         self._eks_configfile = eks_config_file
         self._eks_config_dict = convert_yaml_to_json(yaml_file=self._eks_configfile)
+        self._cluster_name = self._eks_config_dict['metadata']['name']
         print(f"self._user_id :{self._user_id}")
         print(f"self._keypair_name : {self._keypair_name}")
         print(f"self._cluster_name : {self._cluster_name}")
@@ -442,6 +448,8 @@ class HandleEC2Bastion(object):
             default_answer="yes"
         )
         logging.info(f"Clean up created cloud resources : {self._is_remove_all_created_resources}")
+
+
 
         # question 2 change config parametes ?
         logging.info("Project name")
@@ -525,19 +533,41 @@ class HandleEC2Bastion(object):
 
         self._ssh_command = f"python3 main.py run-files -n {self._process_first_n_files} -s {self._num_of_nodes} -p {self._project_folder}"
 
-        cloud_resource = [
-			["Parameters","Details"],
-            ['project full path', self._project_full_path],
-            ['project folder', self._project_folder],
-            ['number of process files', number_process_files],
-            ['number of  generated instances', self._num_of_nodes],
-            ['max nodes size',self._max_nodes],
-            ["cleanup cloud resources after completion",self._is_remove_all_created_resources],
-            ["EC2 bastion name",self._ec2_name],
-            ["SSH command", self._ssh_command],
-            ["EKS cluster name",self._cluster_name],
-            ['poject in tags',self._project_in_tags],
-	    ] 
+        if self._ec2_action == EC2Action.start.name:
+
+            cloud_resource = [
+                ["Parameters","Details"],
+                ['project full path', self._project_full_path],
+                ['project folder', self._project_folder],
+                ['number of process files', number_process_files],
+                ['number of  generated instances', self._num_of_nodes],
+                ['max nodes size',self._max_nodes],
+                ["cleanup cloud resources after completion",self._is_remove_all_created_resources],
+                ["EC2 bastion name",self._ec2_name],
+                ["SSH command", self._ssh_command],
+                ["EKS cluster name",self._cluster_name],
+                ['poject in tags',self._project_in_tags],
+            ]
+        else:
+            self._instancetState = get_ec2_state_from_id(
+                ec2_client=self._ec2_client,
+                id = self._ec2_instance_id
+            )
+            cloud_resource = [
+                ["Parameters","Details"],
+                ['project full path', self._project_full_path],
+                ['project folder', self._project_folder],
+                ['number of process files', number_process_files],
+                ['number of  generated instances', self._num_of_nodes],
+                ['max nodes size',self._max_nodes],
+                ["cleanup cloud resources after completion",self._is_remove_all_created_resources],
+                ["EC2 bastion name",self._ec2_name],
+                ["EC2 id",self._ec2_instance_id],
+                ["EC2 state",self._instancetState],
+                ["SSH command", self._ssh_command],
+                ["EKS cluster name",self._cluster_name],
+                ['poject in tags',self._project_in_tags],
+            ]
 
         table1 = AsciiTable(cloud_resource)
         print(table1.table)
@@ -579,6 +609,31 @@ class HandleEC2Bastion(object):
 
         return 
 
+    def handle_ssh_update(self):
+        
+        is_update = handle_yes_or_no_question(
+            input_question="Do you want to update cloud project folder from local project folder?",
+            default_answer="yes"
+        )
+        if is_update is True:
+            remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
+            remote_projects_folder = remote_base_path + f"/projects"
+            logging.info("-------------------")
+            logging.info(f"upload local project folder to ec2 projects")
+            logging.info(f"local folder:{self._project_full_path}")
+            logging.info(f"remote folder:{remote_projects_folder}")
+            logging.info("-------------------")
+        
+
+        ssh_upload_folder_to_ec2(
+            user_name=self._login_user,
+            instance_id=self._ec2_instance_id,
+            pem_location=self._pem_full_path_name,
+            local_folder=self._project_full_path,
+            remote_folder=remote_projects_folder,
+            ec2_resource=self._ec2_resource,
+
+        )
 
 
     def set_breaking_ssh(self):
@@ -1047,15 +1102,14 @@ class HandleEC2Bastion(object):
                     self._ec2_instance_id = id
                     self._ec2_action = EC2Action.activate_from_existing.name
               
-
+        self._pem_full_path_name = self._pem_path +f"/{self._pem_path}.pem"
         cloud_resource = [
 			["Parameters","Details"],
             ['project', self._project_in_tags],
             ['project path', self._project_full_path],
 			["Use default VPC", self._vpc_id ],
 			["Create security group", self._sg_ids],
-			["keypair", self._keypair_name],
-            ["Keypair path",self._pem_path],
+			["keypair", self._pem_full_path_name],
             ["EC2 Image id",self._image_id],
             ["EC2 name",self._ec2_name],
             ["Instance type",self._instancetype],
@@ -1073,6 +1127,31 @@ class HandleEC2Bastion(object):
 	    ] 
         table1 = AsciiTable(cloud_resource)
         print(table1.table)
+        # export eks file
+        update_and_export_eks_yaml(
+            config_dict=self._eks_config_dict,
+            export_file=self._export_eks_config_file,
+            tags=self._tags,
+            cluster_name=self._cluster_name,
+            aws_region=self.aws_region,
+            nodegroup_name=self._nodegroup_name,
+            max_nodes=self._max_nodes
+        )
+        # logging.info("export eks config")
+        # self._eks_config_dict['tags'] = self._tags
+        # self._eks_config_dict['metadata']['name'] = self._cluster_name
+        # self._eks_config_dict['metadata']['region'] = self.aws_region
+
+        # self._eks_config_dict['nodeGroups'[0]]['name'] = self._nodegroup_name
+        # self._eks_config_dict['nodeGroups'[0]]['tags'] = self._tags
+        # self._eks_config_dict['nodeGroups'[0]]['maxSize'] = self._max_nodes
+        
+        # write_aws_setting_to_yaml(
+        #     file=self._export_eks_config_file, 
+        #     setting=self._eks_config_dict
+        # )
+    
+        # export 
         # print(f"self._image_id: {self._image_id}")
         # print(f"self._keypair_name,: {self._keypair_name,}")
         # print(f"self._sg_ids: {self._sg_ids}")
@@ -1081,7 +1160,7 @@ class HandleEC2Bastion(object):
 
         # check if ec2 already exist
         
-
+        self._eks_config_dict
                 
             
         return
@@ -1256,6 +1335,9 @@ class HandleEC2Bastion(object):
 
     def set_eks_action(self, action):
         self._eks_action = action
+        logging.info("-----------------------------")
+        logging.info(f"ESK action: {self._eks_action}")
+        logging.info("-----------------------------")
         # logging.info("Set EKS action")
         # inst_question = [
         #     inquirer.List('action',
@@ -1380,20 +1462,22 @@ class HandleEC2Bastion(object):
 
     def handle_eks_action(self):
         logging.info("Handle create eks cluster")
-        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services/projects"
+        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
+        remote_projects_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services/projects/{self._project_folder}"
+        remote_cluster_file = remote_projects_path +"/cluster.yaml"
         # path, file  = os.path.split(self._eks_configfile)
         # remote_cluster_file=f"{remote_base_path}/config/eks/{file}"
-        # loca_eks_file = self._base_path + f"/config/eks/{self._eks_configfile}"
-        # cluster_dict = convert_yaml_to_json(yaml_file=loca_eks_file)
-        # cluster_name = cluster_dict['metadata']['name']
+        loca_eks_file = self._project_full_path + "/cluster.yaml"
+        cluster_dict = convert_yaml_to_json(yaml_file=loca_eks_file)
+        cluster_name = cluster_dict['metadata']['name']
 
         ssh_command_list = {}
-        if self._ec2_action == EKSAction.create.name:
+        if self._eks_action == EKSAction.create.name:
             logging.info("set create eks culster command")
             command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl create cluster -f {remote_cluster_file}"
             ssh_command_list['Create EKS cluster'] = command
 
-        elif self._ec2_action == EKSAction.delete.name:
+        elif self._eks_action == EKSAction.delete.name:
             logging.info("set delete eks culster command ")
             # delete all nodes 
            
@@ -1406,7 +1490,7 @@ class HandleEC2Bastion(object):
             ssh_command_list['Scale down nodes to 0'] = scale_down_command
             delete_eks_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
             ssh_command_list['Delete EKS cluster'] = delete_eks_command
-        elif self._ec2_action == EKSAction.scaledownzero.name:
+        elif self._eks_action == EKSAction.scaledownzero.name:
             scale_down_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
             ssh_command_list['Scale down nodes to 0'] = scale_down_command
         
@@ -1430,3 +1514,30 @@ class HandleEC2Bastion(object):
     def handle_cleanup(self):
         logging.info("Handle clean up")
 
+
+
+def update_and_export_eks_yaml(
+    config_dict: dict,
+    export_file: str,
+    tags:dict,
+    cluster_name:str,
+    aws_region:str,
+    nodegroup_name:str,
+    max_nodes:int
+
+) -> None:
+    logging.info("export eks config")
+    
+    config_dict['metadata']['tags'] = tags
+    config_dict['metadata']['name'] = cluster_name
+    config_dict['metadata']['region'] = aws_region
+
+    config_dict['nodeGroups'[0]]['name'] = nodegroup_name
+    config_dict['nodeGroups'[0]]['tags'] = tags
+    config_dict['nodeGroups'[0]]['maxSize'] = max_nodes
+    
+    write_aws_setting_to_yaml(
+        file=export_file, 
+        setting=config_dict
+    )
+    logging.info("Export eks config")

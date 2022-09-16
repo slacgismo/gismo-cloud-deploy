@@ -7,7 +7,7 @@ aws_config:
 worker_config: 
   solver: 
     solver_name: "MOSEK"
-    solver_lic_local_path: "/root/mosek"
+    solver_lic_local_path: "license"
     solver_lic_target_path: "/root/mosek"
     solver_lic_file_name: "mosek.lic"
 
