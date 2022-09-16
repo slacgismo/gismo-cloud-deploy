@@ -4,7 +4,7 @@ from os.path import relpath
 from os.path import normpath, basename
 from pathlib import Path
 from os.path import exists
-
+import time
 from .command_utils import verify_keys_in_configfile
 import re
 import socket
@@ -1020,13 +1020,41 @@ class HandleEC2Bastion(object):
         self._export_ec2_config_file = self._project_full_path +"/config-ec2.yaml"
         self._export_eks_config_file = self._project_full_path +"/cluster.yaml"
 
+        instance_info = get_ec2_instance_id_and_keypair_with_tags(
+            ec2_client=self._ec2_client,
+            tag_key_f="Name",
+            tag_val_f=self._ec2_name
+        )
+        if instance_info is not None:
+            id = instance_info['InstanceId']
+            keyname = instance_info['KeyName']
+            state = instance_info['State']['Name']
+            logging.warning(f"EC2 {self._ec2_name} exists, {instance_info}")
+            if keyname != self._keypair_name:
+                # logging.error(f"{instance_info} has different keypair from {self._keypair_name} ")
+                raise Exception (f"{instance_info} has different keypair from {self._keypair_name} ")
+            else:
+                logging.warning ("Existing ec2 instance")
+                if state == 'terminated':
+                    logging.warning ("Previous ec2 instance in terminated state, rename ec2 Name")
+                    curr = str(int(time.time()))
+                    self._ec2_name = f"{self._ec2_name}-{curr}"
+                    for tags in self._tags:
+                        if tags['Key'] =='Name':
+                            tags['Value'] = self._ec2_name
+                else:
+                    logging.warning (f"Previous ec2 instance in {state} state, start {id}")
+                    self._ec2_instance_id = id
+                    self._ec2_action = EC2Action.activate_from_existing.name
+              
+
         cloud_resource = [
 			["Parameters","Details"],
             ['project', self._project_in_tags],
             ['project path', self._project_full_path],
 			["Use default VPC", self._vpc_id ],
 			["Create security group", self._sg_ids],
-			["Create a new keypair", self._keypair_name],
+			["keypair", self._keypair_name],
             ["Keypair path",self._pem_path],
             ["EC2 Image id",self._image_id],
             ["EC2 name",self._ec2_name],
@@ -1052,21 +1080,9 @@ class HandleEC2Bastion(object):
         # print(f"self._project_in_tags: {self._project_in_tags}")
 
         # check if ec2 already exist
-        instance_info = get_ec2_instance_id_and_keypair_with_tags(
-            ec2_client=self._ec2_client,
-            tag_key_f="Name",
-            tag_val_f=self._ec2_name
-        )
-        if instance_info is not None:
-            id = instance_info['InstanceId']
-            keyname = instance_info['KeyName']
-            logging.warning(f"EC2 {self._ec2_name} exists, {instance_info}")
-            if keyname != self._keypair_name:
-                # logging.error(f"{instance_info} has different keypair from {self._keypair_name} ")
-                raise Exception (f"{instance_info} has different keypair from {self._keypair_name} ")
-            else:
-                logging.warning ("Use existing ec2 instance")
-                raise Exception(f"Please change action to use start from existing")
+        
+
+                
             
         return
 
@@ -1164,11 +1180,11 @@ class HandleEC2Bastion(object):
         )
 
 
-        remote_folder = remote_base_path + f"/projects/{self._project_folder}"
+        remote_projects_folder = remote_base_path + f"/projects"
         logging.info("-------------------")
         logging.info(f"upload local project folder to ec2 projects")
         logging.info(f"local folder:{self._project_full_path}")
-        logging.info(f"remote folder:{remote_folder}")
+        logging.info(f"remote folder:{remote_projects_folder}")
         logging.info("-------------------")
         
 
@@ -1177,7 +1193,7 @@ class HandleEC2Bastion(object):
             instance_id=self._ec2_instance_id,
             pem_location=pem_file,
             local_folder=self._project_full_path,
-            remote_folder=remote_folder,
+            remote_folder=remote_projects_folder,
             ec2_resource=self._ec2_resource,
 
         )

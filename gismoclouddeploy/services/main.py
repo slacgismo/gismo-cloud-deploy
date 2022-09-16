@@ -114,8 +114,8 @@ def handle_ec2():
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region= AWS_DEFAULT_REGION
     )
-    handle_ec2_bastion.testing_fun()
-    return
+    # handle_ec2_bastion.testing_fun()
+    # return
     handle_ec2_bastion.set_ec2_action()
     # get action put
     action = handle_ec2_bastion.get_ec2_action()

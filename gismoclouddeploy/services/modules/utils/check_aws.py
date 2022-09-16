@@ -134,7 +134,9 @@ def get_ec2_instance_id_and_keypair_with_tags(ec2_client, tag_key_f,  tag_val_f)
             if 'Instances' in Reservations[0] and len(Reservations[0]['Instances']) > 0 :
                 instance_id = Reservations[0]['Instances'][0]['InstanceId']
                 KeyName =  Reservations[0]['Instances'][0]['KeyName']
-                return {'InstanceId':instance_id,'KeyName':KeyName}
+                State = Reservations[0]['Instances'][0]['State']
+                # print(Reservations[0]['Instances'][0])
+                return {'InstanceId':instance_id,'KeyName':KeyName,'State':State}
 
         return None
     except botocore.exceptions.ClientError as err:

@@ -55,7 +55,7 @@ git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gis
 echo 'git clone gismo-cloud-deploy' >> /home/ec2-user/installation.txt
 cd /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/
 git fetch 
-git switch feature/sshAndFSM
+git switch features/projects
 
 sudo chmod +rwx /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config
 # create virtual environment 
