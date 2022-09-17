@@ -128,7 +128,6 @@ def handle_ec2():
         if not is_confirm:
             return 
         handle_ec2_bastion.hanlde_create_cloud_resources()
-         
         handle_ec2_bastion.handle_create_ec2()  
         handle_ec2_bastion.handle_install_dependencies()  
         # create eks
@@ -140,7 +139,8 @@ def handle_ec2():
     elif action == EC2Action.activate_from_existing.name:
         handle_ec2_bastion.handle_ssh_coonection()
         handle_ec2_bastion.handle_ssh_update()
-        handle_ec2_bastion.set_eks_action(action=EKSAction.create.name)
+        # handle_ec2_bastion.set_and_run_ssh_command()
+        handle_ec2_bastion.set_eks_action(action=EKSAction.scaledownzero.name)
         handle_ec2_bastion.handle_eks_action()
         # check eks cluster if not exist, create a new cluster
         # run ssh command process file
@@ -150,7 +150,7 @@ def handle_ec2():
         handle_ec2_bastion.handle_ssh_coonection()
         # run ssh command process file
         
-
+    return
     # if clean up , clean up resource
     handle_ec2_bastion.handle_cleanup()
 

@@ -3,7 +3,7 @@ from asyncio import streams
 from .EKSAction import EKSAction
 import coloredlogs, logging
 from .check_aws import connect_aws_client,check_bucket_exists_on_s3
-
+import os
 def convert_yes_no_to_bool(input:str) -> bool:
     if input.lower() == "yes":
         return True
@@ -101,12 +101,31 @@ def handle_input_number_of_scale_instances_question(
 
 def hanlde_input_project_name_in_tag(
     input_question:str,
+    default_answer:str
 ) -> str:
     project_name = ""
     while True:
-        project_name = str(input(f"{input_question}:"))
+        if default_answer is not None:
+            project_name = str(input(f"{input_question}: default: {default_answer}") or default_answer)
+        else:
+            project_name = str(input(f"{input_question}: "))
         if len(project_name) < 3:
             logging.error(f"Project name : {project_name} is too short")
         else:
             break
     return project_name
+
+def handle_input_project_path_question(
+    input_question:str,
+    default_answer:int,
+) -> str:
+    while True:
+        project_path = str(input(f"{input_question}: {default_answer} path): ") or default_answer)
+        project_path = project_path.replace("\'","")
+        print(f"project_path :{project_path}")
+        if not os.path.exists(project_path):
+            raise Exception(f"project path: {project_path} does not exist!!")
+        else:
+            break
+
+    return project_path

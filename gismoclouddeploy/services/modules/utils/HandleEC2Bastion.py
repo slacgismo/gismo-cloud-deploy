@@ -15,6 +15,7 @@ from .handle_inputs import (
     handle_input_number_of_process_files_question,
     handle_input_number_of_scale_instances_question,
     hanlde_input_project_name_in_tag,
+    handle_input_project_path_question
 )
 
 from transitions import Machine
@@ -35,6 +36,10 @@ from .check_aws import (
     get_default_vpc_id,
     get_ec2_instance_id_and_keypair_with_tags,
     get_ec2_state_from_id,
+    check_vpc_id_exists,
+    check_sg_group_name_exists_and_return_sg_id,
+    get_iam_user_name,
+    check_keypair_name_exists
     
 )
 from .create_ec2 import (
@@ -48,6 +53,7 @@ from .create_ec2 import (
     write_aws_setting_to_yaml,
     ssh_upload_folder_to_ec2,
     get_all_files_in_local_dir,
+    
     
 )
 from .EKSAction import EKSAction
@@ -132,6 +138,7 @@ class HandleEC2Bastion(object):
         self._is_update_config_folder = "yes"
         self._max_nodes = None
         self._project_folder = None
+        self._starttime = str(int(time.time()))
 
 
         # gcd parameters
@@ -264,9 +271,19 @@ class HandleEC2Bastion(object):
         return 
 
     def get_user_id(self) -> str:
-        host_name = (socket.gethostname())
-        user_id  = re.sub('[^a-zA-Z0-9]', '', host_name).lower()
+        sts_client = connect_aws_client(
+            client_name='sts',
+            key_id= self.aws_access_key,
+            secret= self.aws_secret_access_key,
+            region=self.aws_region
+        )
+        user_id = get_iam_user_name(
+            sts_client=sts_client
+        )
         return user_id
+        # host_name = (socket.gethostname())
+        # user_id  = re.sub('[^a-zA-Z0-9]', '', host_name).lower()
+        # return user_id
 
 
 
@@ -279,13 +296,18 @@ class HandleEC2Bastion(object):
         # File structure
         #---------------------
         default_project = self._base_path +"/projects/solardatatools"
-        while True:
-            project_path = str(input(f"Enter project folder (Hit `Enter` button to use default path:{default_project} path): ") or default_project)
-            
-            if not os.path.exists(project_path):
-                raise Exception(f"project path: {project_path} does not exist!!")
-            else:
-                break
+        project_path = handle_input_project_path_question(
+            input_question="Enter project folder (Hit `Enter` button to use default path",
+            default_answer=default_project
+        )
+        # while True:
+        #     project_path = str(input(f"Enter project folder (Hit `Enter` button to use default path:{default_project} path): ") or default_project)
+        #     test = re.findall("\'(.*?)\'",project_path)
+         
+        #     if not os.path.exists(project_path):
+        #         raise Exception(f"project path: {project_path} does not exist!!")
+        #     else:
+        #         break
   
         self._project_full_path = project_path
         self._project_folder = basename(project_path)
@@ -303,10 +325,11 @@ class HandleEC2Bastion(object):
         verify_keys_in_configfile(self._config_dict)
         logging.info("config.yaml exists, verify input success")
         # check entrypoint folder and entrypoint.py exists
-        entrypoint_path = self._project_full_path +"/entrypoint"
-        if not os.path.exists(entrypoint_path):
-            raise Exception(f"Entrypoint driecrory: {entrypoint_path} does not exist!!")
-        entrypoint_file = entrypoint_path +"/entrypoint.py"
+        # entrypoint_path = self._project_full_path +"/entrypoint"
+        # if not os.path.exists(entrypoint_path):
+        #     raise Exception(f"Entrypoint driecrory: {entrypoint_path} does not exist!!")
+        # entrypoint_file = entrypoint_path +"/entrypoint.py"
+        entrypoint_file = self._project_full_path + "/entrypoint.py"
         if not exists(entrypoint_file):
             raise Exception(f"entrypoint.py: {entrypoint_file} does not exist!!")
         logging.info("entrypoint.py exists")
@@ -356,7 +379,7 @@ class HandleEC2Bastion(object):
                 raise Exception (f"Key file {self._pem_full_path_name} does not exist")
         else:
             self._keypair_name = f"gcd-key-{self._user_id}"
-            self._ec2_name = f"gcd-{self._user_id}"
+            self._ec2_name = f"gcd-{self._user_id}-{self._starttime}"
             self._tags.append({'Key':'Name','Value':self._ec2_name })
             if not os.path.exists(self._pem_path):
                 os.makedirs(self._pem_path)
@@ -412,22 +435,24 @@ class HandleEC2Bastion(object):
         if self._ec2_action == EC2Action.start.name:
             eks_config_file = self._base_path +"/config/eks/cluster.yaml"
             # create ec2 path 
-            curr = str(int(time.time()))
-            self._cluster_name = f"gcd-{self._user_id}-{curr}"
-            self._nodegroup_name = f"gcd-{self._user_id}-{curr}" 
+           
             eks_path = self._project_full_path + "/eks"
             if not os.path.exists(eks_path):
                 os.makedirs(eks_path)
-                
         else:
-            eks_config_file = self._project_full_path +"/cluster.yaml"
-
+             eks_config_file = self._project_full_path +"/cluster.yaml"
         if not exists(eks_config_file):
             raise Exception(f"EKS config file : {eks_config_file} does not exist!!")
 
         self._eks_configfile = eks_config_file
         self._eks_config_dict = convert_yaml_to_json(yaml_file=self._eks_configfile)
-        self._cluster_name = self._eks_config_dict['metadata']['name']
+        if self._ec2_action == EC2Action.start.name:
+            self._cluster_name = f"gcd-{self._user_id}-{self._starttime}"
+            self._nodegroup_name = f"gcd-{self._user_id}-{self._starttime}" 
+        else:
+            self._cluster_name = self._eks_config_dict['metadata']['name']
+            self._nodegroup_name = self._eks_config_dict['nodeGroups'][0]['name']
+            self._project_in_tags = self._eks_config_dict['metadata']['tags']['project']
         print(f"self._user_id :{self._user_id}")
         print(f"self._keypair_name : {self._keypair_name}")
         print(f"self._cluster_name : {self._cluster_name}")
@@ -454,7 +479,9 @@ class HandleEC2Bastion(object):
         # question 2 change config parametes ?
         logging.info("Project name")
         self._project_in_tags = hanlde_input_project_name_in_tag(
-            input_question="Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path)"
+            input_question="Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path)",
+            default_answer = self._project_in_tags
+    
         )
         # update tag 
         self._tags.append({'Key':'project', 'Value':self._project_in_tags})
@@ -566,6 +593,7 @@ class HandleEC2Bastion(object):
                 ["EC2 state",self._instancetState],
                 ["SSH command", self._ssh_command],
                 ["EKS cluster name",self._cluster_name],
+                ["EKS group name",self._nodegroup_name],
                 ['poject in tags',self._project_in_tags],
             ]
 
@@ -615,9 +643,10 @@ class HandleEC2Bastion(object):
             input_question="Do you want to update cloud project folder from local project folder?",
             default_answer="yes"
         )
+        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
+        remote_projects_folder = remote_base_path + f"/projects"
         if is_update is True:
-            remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
-            remote_projects_folder = remote_base_path + f"/projects"
+
             logging.info("-------------------")
             logging.info(f"upload local project folder to ec2 projects")
             logging.info(f"local folder:{self._project_full_path}")
@@ -625,16 +654,18 @@ class HandleEC2Bastion(object):
             logging.info("-------------------")
         
 
-        ssh_upload_folder_to_ec2(
-            user_name=self._login_user,
-            instance_id=self._ec2_instance_id,
-            pem_location=self._pem_full_path_name,
-            local_folder=self._project_full_path,
-            remote_folder=remote_projects_folder,
-            ec2_resource=self._ec2_resource,
+            ssh_upload_folder_to_ec2(
+                user_name=self._login_user,
+                instance_id=self._ec2_instance_id,
+                pem_location=self._pem_full_path_name,
+                local_folder=self._project_full_path,
+                remote_folder=remote_projects_folder,
+                ec2_resource=self._ec2_resource,
 
-        )
-
+            )
+        else:
+            logging.info("Skip update")
+        return 
 
     def set_breaking_ssh(self):
 
@@ -700,62 +731,62 @@ class HandleEC2Bastion(object):
 
         
 
-    # def handle_ec2_action(self):
+    def handle_ec2_action(self):
 
-    #     if self._ec2_instance_id is None: 
-    #         self.handle_import_configfile(self)
+        if self._ec2_instance_id is None: 
+            self.handle_import_configfile(self)
           
 
-    #     if self._ec2_action == EC2Action.running.name:
-    #         logging.info("Start ec2 ")
-    #         try:
-    #             res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for start an ec2 instance
-    #             instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=60, delay=5, pem_location=self._pem_full_path_name,user_name=self._login_user)
+        if self._ec2_action == EC2Action.running.name:
+            logging.info("Start ec2 ")
+            try:
+                res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for start an ec2 instance
+                instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=60, delay=5, pem_location=self._pem_full_path_name,user_name=self._login_user)
 
-    #             public_ip = get_public_ip(
-    #                 ec2_client=self._ec2_client,
-    #                 instance_id=self._ec2_instance_id
-    #             )
-    #             logging.info("------------------")
-    #             logging.info(f"public_ip :{public_ip}")
-    #             logging.info("------------------")
+                public_ip = get_public_ip(
+                    ec2_client=self._ec2_client,
+                    instance_id=self._ec2_instance_id
+                )
+                logging.info("------------------")
+                logging.info(f"public_ip :{public_ip}")
+                logging.info("------------------")
 
-    #         except Exception as e:
-    #             raise Exception(f"Start ec2 failed: {e}")
-    #         logging.info("Start instance success")
-    #     elif self._ec2_action == EC2Action.stop.name:
-    #         logging.info("Stop ec2")
-    #         try:
-    #             res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for start an ec2 instance
-    #             logging.info("Stop instance success")
-    #         except Exception as e:
-    #             raise Exception(f"Terminate ec2 failed: {e}")
-    #     elif self._ec2_action == EC2Action.terminate.name:
-    #         logging.info("Terminate ec2")
-    #         try:
-    #             res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).terminate() #for start an ec2 instance
-    #             logging.info("Terminate instance success")
-    #         except Exception as e:
-    #             raise Exception(f"Terminate ec2 failed: {e}")
-    #     else:
-    #         logging.error("Unknow action")
+            except Exception as e:
+                raise Exception(f"Start ec2 failed: {e}")
+            logging.info("Start instance success")
+        elif self._ec2_action == EC2Action.stop.name:
+            logging.info("Stop ec2")
+            try:
+                res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for start an ec2 instance
+                logging.info("Stop instance success")
+            except Exception as e:
+                raise Exception(f"Terminate ec2 failed: {e}")
+        elif self._ec2_action == EC2Action.terminate.name:
+            logging.info("Terminate ec2")
+            try:
+                res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).terminate() #for start an ec2 instance
+                logging.info("Terminate instance success")
+            except Exception as e:
+                raise Exception(f"Terminate ec2 failed: {e}")
+        else:
+            logging.error("Unknow action")
 
-    #     return 
-    # def set_vpc_info(self):
-    #     logging.info("Set VPC")
-    #      # VPC input
-    #     while True:
-    #         self._use_deafualt_vpc = str(input(f"Use default VPC ?(default:{self._use_deafualt_vpc}) (must be yes/no):") or self._use_deafualt_vpc)
-    #         if self._use_deafualt_vpc.lower() not in ('yes', 'no'):
-    #             print("Not an appropriate choice. please type 'yes' or 'no' !!!")
-    #         else:
-    #             break
-    #     if self._use_deafualt_vpc == "no":
-    #         self._vpc_id = input("Enter existing vpc id: ")
-    #         logging.info(f"Input VPC id: {self._vpc_id}")
-    #         logging.info(f"Checking VPC id:{self._vpc_id}")
-    #     else:
-    #         print(f"Use default vpc")
+        return 
+    def set_vpc_info(self):
+        logging.info("Set VPC")
+         # VPC input
+        while True:
+            self._use_deafualt_vpc = str(input(f"Use default VPC ?(default:{self._use_deafualt_vpc}) (must be yes/no):") or self._use_deafualt_vpc)
+            if self._use_deafualt_vpc.lower() not in ('yes', 'no'):
+                print("Not an appropriate choice. please type 'yes' or 'no' !!!")
+            else:
+                break
+        if self._use_deafualt_vpc == "no":
+            self._vpc_id = input("Enter existing vpc id: ")
+            logging.info(f"Input VPC id: {self._vpc_id}")
+            logging.info(f"Checking VPC id:{self._vpc_id}")
+        else:
+            print(f"Use default vpc")
     
 
     
@@ -1092,8 +1123,7 @@ class HandleEC2Bastion(object):
                 logging.warning ("Existing ec2 instance")
                 if state == 'terminated':
                     logging.warning ("Previous ec2 instance in terminated state, rename ec2 Name")
-                    curr = str(int(time.time()))
-                    self._ec2_name = f"{self._ec2_name}-{curr}"
+                    self._ec2_name = f"{self._ec2_name}-{self._starttime}"
                     for tags in self._tags:
                         if tags['Key'] =='Name':
                             tags['Value'] = self._ec2_name
@@ -1102,7 +1132,7 @@ class HandleEC2Bastion(object):
                     self._ec2_instance_id = id
                     self._ec2_action = EC2Action.activate_from_existing.name
               
-        self._pem_full_path_name = self._pem_path +f"/{self._pem_path}.pem"
+        self._pem_full_path_name = self._pem_path +f"/{self._keypair_name}.pem"
         cloud_resource = [
 			["Parameters","Details"],
             ['project', self._project_in_tags],
@@ -1131,7 +1161,7 @@ class HandleEC2Bastion(object):
         update_and_export_eks_yaml(
             config_dict=self._eks_config_dict,
             export_file=self._export_eks_config_file,
-            tags=self._tags,
+            project=self._project_in_tags,
             cluster_name=self._cluster_name,
             aws_region=self.aws_region,
             nodegroup_name=self._nodegroup_name,
@@ -1461,7 +1491,7 @@ class HandleEC2Bastion(object):
 
 
     def handle_eks_action(self):
-        logging.info("Handle create eks cluster")
+        logging.info("Handle eks action")
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
         remote_projects_path = f"/home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services/projects/{self._project_folder}"
         remote_cluster_file = remote_projects_path +"/cluster.yaml"
@@ -1479,21 +1509,31 @@ class HandleEC2Bastion(object):
 
         elif self._eks_action == EKSAction.delete.name:
             logging.info("set delete eks culster command ")
+            # scale down if cluster exist
+            scaledown_command =  f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n rec=\"$(eksctl get cluster | grep {self._cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl scale nodegroup --cluster {self._cluster_name} --name {self._nodegroup_name} --nodes 0; fi"
+            ssh_command_list['scaledonw cluster'] = scaledown_command
             # delete all nodes 
            
-            if len (cluster_dict['nodeGroups']) == 0 :
-                logging.error("nodeGroup does not defined")
-                return 
-            group_name = cluster_dict['nodeGroups'][0]['name']
+            # if len (cluster_dict['nodeGroups']) == 0 :
+            #     logging.error("nodeGroup does not defined")
+            #     return 
+            # group_name = cluster_dict['nodeGroups'][0]['name']
             
-            scale_down_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
-            ssh_command_list['Scale down nodes to 0'] = scale_down_command
-            delete_eks_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
+            # scale_down_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
+            # ssh_command_list['Scale down nodes to 0'] = scale_down_command
+            delete_eks_command =  f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n rec=\"$(eksctl get cluster | grep {self._cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl delete cluster -f {remote_cluster_file}; fi"
+            # delete_eks_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
             ssh_command_list['Delete EKS cluster'] = delete_eks_command
         elif self._eks_action == EKSAction.scaledownzero.name:
-            scale_down_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
+            #gcd-jimmy-cli-1663394353
+            scale_down_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n rec=\"$(eksctl get cluster | grep {self._cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl scale nodegroup --cluster {self._cluster_name} --name {self._nodegroup_name} --nodes 0; fi"
+
             ssh_command_list['Scale down nodes to 0'] = scale_down_command
-        
+        elif self._eks_action == EKSAction.list.name:
+            logging.info("Run list command")
+            command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl get cluster"
+            ssh_command_list['List EKS cluster'] = command
+
         for description, command in ssh_command_list.items():
             logging.info(description)
             run_command_in_ec2_ssh(
@@ -1513,13 +1553,35 @@ class HandleEC2Bastion(object):
 
     def handle_cleanup(self):
         logging.info("Handle clean up")
+        # step 1. delete eks
+        # check eks exist
+
+
+        self._eks_action = EKSAction.delete.name
+        self.handle_eks_action()
+        # step 2 . terminate ece
+        self._ec2_action = EC2Action.terminate.name
+        self.handle_ec2_action()
+        # delte config-ec2, delete eks cluster
+        if self._export_ec2_config_file is not None:
+            try:
+                os.remove(self._export_ec2_config_file)
+                logging.info(f"Delete {self._export_ec2_config_file} success")
+            except Exception as e:
+                raise Exception(e)
+        if self._export_eks_config_file is not None:
+            try:
+                os.remove(self._export_eks_config_file)
+                logging.info(f"Delete {self._export_eks_config_file} success")
+            except Exception as e:
+                raise Exception(e)
 
 
 
 def update_and_export_eks_yaml(
     config_dict: dict,
     export_file: str,
-    tags:dict,
+    project:dict,
     cluster_name:str,
     aws_region:str,
     nodegroup_name:str,
@@ -1528,14 +1590,14 @@ def update_and_export_eks_yaml(
 ) -> None:
     logging.info("export eks config")
     
-    config_dict['metadata']['tags'] = tags
+    config_dict['metadata']['tags'] = {'project':project, 'managedBy':'eksctl'}
     config_dict['metadata']['name'] = cluster_name
     config_dict['metadata']['region'] = aws_region
 
-    config_dict['nodeGroups'[0]]['name'] = nodegroup_name
-    config_dict['nodeGroups'[0]]['tags'] = tags
-    config_dict['nodeGroups'[0]]['maxSize'] = max_nodes
-    
+    config_dict['nodeGroups'][0]['name'] = nodegroup_name
+    config_dict['nodeGroups'][0]['tags'] = {'project':project, 'managedBy':'eksctl'}
+    config_dict['nodeGroups'][0]['maxSize'] = max_nodes
+    print(config_dict)
     write_aws_setting_to_yaml(
         file=export_file, 
         setting=config_dict

@@ -219,3 +219,15 @@ def get_ec2_state_from_id(ec2_client, id) -> str:
     #     logging.info(f"instance state : { state}")
     # else:
     #     raise Exception(f"Cannot find instance state from {self._ec2_instance_id}")
+
+def get_iam_user_name(sts_client) -> str:
+    try:
+        response = sts_client.get_caller_identity()
+        if 'Arn' in response:
+            # print('Arn:', response['Arn'])
+            arn = response['Arn']
+            base , user_name = arn.split("/")
+            return user_name
+        return None
+    except botocore.exceptions.ClientError as err:
+        raise Exception(err)
