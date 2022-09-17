@@ -140,7 +140,7 @@ def handle_ec2():
         handle_ec2_bastion.handle_ssh_coonection()
         handle_ec2_bastion.handle_ssh_update()
         # handle_ec2_bastion.set_and_run_ssh_command()
-        handle_ec2_bastion.set_eks_action(action=EKSAction.scaledownzero.name)
+        handle_ec2_bastion.set_eks_action(action=EKSAction.runfiles.name)
         handle_ec2_bastion.handle_eks_action()
         # check eks cluster if not exist, create a new cluster
         # run ssh command process file

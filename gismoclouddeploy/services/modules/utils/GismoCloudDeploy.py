@@ -309,7 +309,7 @@ class GismoCloudDeploy(object):
             raise Exception(f"parse config file error :{e}")
         # convert cluster file
         if self._is_aws():
-            cluster_file = f"{self._base_path}/projects/{self.project}/eks/cluster.yaml"
+            cluster_file = f"{self._base_path}/projects/{self.project}/cluster.yaml"
             if exists(cluster_file) is False:
                 raise ValueError (f"{cluster_file} does not exist")
             cluster_file_dict = convert_yaml_to_json(yaml_file=cluster_file)

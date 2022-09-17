@@ -1512,15 +1512,7 @@ class HandleEC2Bastion(object):
             # scale down if cluster exist
             scaledown_command =  f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n rec=\"$(eksctl get cluster | grep {self._cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl scale nodegroup --cluster {self._cluster_name} --name {self._nodegroup_name} --nodes 0; fi"
             ssh_command_list['scaledonw cluster'] = scaledown_command
-            # delete all nodes 
-           
-            # if len (cluster_dict['nodeGroups']) == 0 :
-            #     logging.error("nodeGroup does not defined")
-            #     return 
-            # group_name = cluster_dict['nodeGroups'][0]['name']
-            
-            # scale_down_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl scale nodegroup --cluster {cluster_name} --name {group_name} --nodes 0"
-            # ssh_command_list['Scale down nodes to 0'] = scale_down_command
+            # delete cluster if cluster exist
             delete_eks_command =  f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n rec=\"$(eksctl get cluster | grep {self._cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl delete cluster -f {remote_cluster_file}; fi"
             # delete_eks_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
             ssh_command_list['Delete EKS cluster'] = delete_eks_command
@@ -1533,7 +1525,10 @@ class HandleEC2Bastion(object):
             logging.info("Run list command")
             command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl get cluster"
             ssh_command_list['List EKS cluster'] = command
-
+        elif self._eks_action == EKSAction.runfiles.name:
+            logging.info("Run files command")
+            command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n cd /home/{self._login_user}/gismo-cloud-deploy/gismoclouddeploy/services/\n source ./venv/bin/activate \n python3 main.py run-files -s 1 -p {self._project_folder}"
+            ssh_command_list['List EKS cluster'] = command
         for description, command in ssh_command_list.items():
             logging.info(description)
             run_command_in_ec2_ssh(
