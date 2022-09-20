@@ -299,7 +299,7 @@ def menus():
             project_folder_anme= relative_project_folder
 
         )
-        
+        # Run any command 
         is_breaking = False
         while not is_breaking:
             custom_ssh_command = handle_ec2.handle_input_ssh_custom_command()
@@ -310,46 +310,11 @@ def menus():
             is_breaking = handle_ec2.input_is_breaking_ssh()
         logging.info("Break ssh")
 
-        # update cluster file
-        # logging.info("Update cluster file")
-        # handle_ec2.ssh_update_eks_cluster_file(
-        #     local_cluster=saved_eks_cluster_file,
-        #     saved_config_folder_name=relative_saved_config_files_folder_name
-        # )
-
-        # upload project folder
-        # handle_ec2.ssh_upload_folder(
-        #     local_project_path=local_project_path,
-        #     relative_project_folder_name=relative_project_folder_name
-        # )
-        # logging.info("ESK cluster")
-        # print(saved_eks_cluster_file, relative_project_folder_name)
-        # handle_ec2.handle_ssh_eks_action(
-        #     eks_action=EKSAction.create.name,
-        #     cluster_file =saved_eks_cluster_file,
-        #     relative_saved_config_folder_name=relative_saved_config_files_folder_name
-        # )
-        # handle_ec2.handle_ssh_eks_action(
-        #     eks_action=EKSAction.delete.name,
-        #     cluster_file =saved_eks_cluster_file,
-        #     relative_saved_config_folder_name=relative_saved_config_files_folder_name
-        # )
-        # logging.info("ESK cluster")
-        # print(saved_eks_cluster_file, relative_project_folder_name)
-
-
-        # handle_ec2.handle_ssh_eks_action(
-        #     eks_action=EKSAction.create.name,
-        #     cluster_file=saved_eks_cluster_file,
-        #     relative_project_folder_name=relative_project_folder_name
-        # )
-        # return 
-        # logging.info("SSH Installation")
-        # handle_ec2.handle_ssh_action_and_command(
-        #     ec2_action=SSHAction.installation.name, 
-        #     local_project_path=local_project_path)
-
-        logging.info("Resume EC2")
+        is_clean_up = handle_ec2.hande_input_is_cleanup()
+        if is_clean_up is True:
+            logging.info("Clean up resources")
+        else:
+            logging.info("Stop ec2")
 
         logging.info("SSH: project folder ")
     elif menus_action == MenuAction.cleanup_cloud_resources.name:

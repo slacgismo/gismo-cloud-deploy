@@ -448,6 +448,13 @@ class HandleEC2(object):
                     pem_location=self.get_pem_file_full_path_name(),
                     ec2_client=self._ec2_client
              )
+    def hande_input_is_cleanup(self):
+        is_clean_up = handle_yes_or_no_question(
+            input_question="Do you want to delete all created resources?\n If you type 'no', there will be an operation cost from generated eks cluster. The ec2 bastion will be stopped (no operation cost).\n However, if you type 'yes', the generated ec2 bastions and eks cluster will be deleted (No operation costs from ec2 and eks cluster).\n It takes about 10~20 mins to generated a new eks cluster.\n ",
+            default_answer="no"
+        )
+
+        return is_clean_up
         
     # def handle_ssh_action_and_command(self, 
     #     ssh_action:str = None, 
