@@ -436,6 +436,7 @@ class GismoCloudDeploy(object):
                         ecr_repo=self.ecr_repo,
                     )
                     self._services_config_list[service_name]['image_name'] = updated_name
+                    self._services_config_list[service_name]['image_tag'] = self._user_id
                 logging.info(f"{service_name} : {updated_name}")
 
 
