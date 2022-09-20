@@ -7,4 +7,3 @@ class EKSAction(enum.Enum):
     delete = "delete"
     list = "list"
     scaledownzero = "scaledownzero"
-    runfiles = "runfiles"

@@ -5,6 +5,8 @@ import os
 import botocore
 import logging
 
+from asyncio import exceptions
+
 def check_aws_validity(key_id: str, secret: str) -> bool:
     try:
         client = boto3.client(
@@ -229,5 +231,19 @@ def get_iam_user_name(sts_client) -> str:
             base , user_name = arn.split("/")
             return user_name
         return None
+    except botocore.exceptions.ClientError as err:
+        raise Exception(err)
+
+def delete_security_group(ec2_client, group_id):
+    try:
+        delete_sg = ec2_client.delete_security_group(GroupId=group_id)
+        logging.info("SG Deleted")
+    except botocore.exceptions.ClientError as err:
+        raise Exception(err)
+
+def delete_key_pair(ec2_client, key_name):
+    try:
+        delete_key_pair = ec2_client.delete_key_pair(KeyName=key_name)
+        logging.info("Key pair deleted")
     except botocore.exceptions.ClientError as err:
         raise Exception(err)

@@ -501,6 +501,7 @@ def ssh_upload_folder_to_ec2(
     
     # step 1. get relative folder
     project_folder = basename(local_folder)
+    print(f"project_folder: {project_folder}, local_folder :{local_folder}")
     relative_path = []
     upload_local_to_remote_dict = {}
     
@@ -513,19 +514,23 @@ def ssh_upload_folder_to_ec2(
             new_path = project_folder +"/" + str(relative)
         relative_path.append(new_path)
         upload_local_to_remote_dict[file] = remote_folder +f"/{new_path}/{filename}"
-        
-
+    
+    for key, value in upload_local_to_remote_dict.items():
+        print(key, value)
+        print("-----------")
+    for folder in relative_path:
+        remote_dir = remote_folder + "/"+ folder
+        print(f"remote_folder :{remote_folder}, folder:{folder}")
 
     # Upload files
     for folder in relative_path:
         remote_dir = remote_folder + "/"+ folder
         print(f"remote_dir: {remote_dir}")
-        command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir} \n fi"
+        command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir}  \n fi"
         (stdin, stdout, stderr) = ssh.exec_command(command)
         for line in stdout.readlines():
             print (line)
-        logging.info(f"Create folder :{remote_dir} success")
-
+    logging.info(f"Create folder :{remote_dir} success")
 
     ftp_client=ssh.open_sftp()
     for key,value in upload_local_to_remote_dict.items():   
@@ -555,7 +560,7 @@ def get_all_files_in_local_dir( local_dir:str) -> list:
             else:
                 all_files.append(filename)
         else:
-            print ('-- {}does not exist'.format(local_dir))
+            print ('{} does not exist'.format(local_dir))
     else:
         print(f"{local_dir} doese not exist")
     return all_files
@@ -1008,5 +1013,8 @@ def CreateInstanceProfileRole():
 #     while output['Status'] == "InProgress":   
 #         output = ssm_client.get_command_invocation( CommandId=command_id, InstanceId=InstanceId) 
 #     print(output['StandardOutputContent'])
+
+
+
 
 

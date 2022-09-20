@@ -1,16 +1,16 @@
 SecurityGroupIds:
 - sg-00c487a2d59a5fa6e
 ec2_image_id: ami-0568773882d492fc8
-ec2_instance_id: i-0882731b7488bba23
+ec2_instance_id: i-0eb7002cdf4309b23
 ec2_instance_type: t2.large
-ec2_volume: 20
-key_pair_name: gcd-key-jimmysmacbookpro2local
+ec2_volume: '20'
+key_pair_name: gcd-jimmy-cli
 login_user: ec2-user
 tags:
 - Key: managedBy
   Value: boto3
 - Key: Name
-  Value: gcd-jimmysmacbookpro2local-1663357869
+  Value: gcd-jimmy-cli-1663661102
 - Key: project
-  Value: pvinsight
+  Value: pvinisght
 vpc_id: vpc-a27c77ca

@@ -1,4 +1,4 @@
-
+import inquirer
 from asyncio import streams
 from .EKSAction import EKSAction
 import coloredlogs, logging
@@ -129,3 +129,15 @@ def handle_input_project_path_question(
             break
 
     return project_path
+
+def select_is_breaking_ssh():
+    inst_question = [
+        inquirer.List('is_breaking',
+                            message="breaking ssh ?",
+                            choices=['yes','no'],
+                        ),
+        ]
+    inst_answer = inquirer.prompt(inst_question)
+
+    is_breaking_ssh = inst_answer["is_breaking"]
+    return convert_yes_no_to_bool(input=is_breaking_ssh)
