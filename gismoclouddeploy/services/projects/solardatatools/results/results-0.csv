@@ -1,0 +1,12 @@
+,bucket,file,column,solver,length,capacity_estimate,power_units,data_sampling,data_quality_score,data_clearness_score,time_shifts,num_clip_points,tz_correction,inverter_clipping,normal_quality_scores,capacity_changes
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_Pressure(Pascal),MOSEK,196.0,102.81,W,5,0.0,0.0,False,0,0,False,False,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_Humidity,MOSEK,196.0,82.0,kW,5,0.0,0.0,False,0,0,False,False,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_DHI,MOSEK,196.0,0.54,W,5,94.9,16.8,False,0,0,False,True,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,Power(W),MOSEK,5.03,4.71,W,5,96.4,17.3,False,0,0,False,True,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_DNI,MOSEK,196.0,129.68,kW,5,39.3,7.1,False,0,0,False,True,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_Wind(m/s),MOSEK,196.0,1.39,kW,5,19.9,0.0,False,0,0,False,True,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_Irradiance(W/m^2),MOSEK,196.0,0.55,W,5,95.4,4.6,False,0,0,False,True,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_POA,MOSEK,196.0,0.54,W,5,95.4,21.9,False,0,0,False,True,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_Temp(C),MOSEK,196.0,30.89,kW,5,0.0,0.0,False,0,0,False,False,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_Solar_Azimuth,MOSEK,196.0,285.0,kW,5,0.0,0.0,False,0,0,False,False,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,WS_5_Solar_Zenith,MOSEK,196.0,87.2,kW,5,3.1,1.5,False,0,0,False,False,False

@@ -81,13 +81,37 @@ def main():
     default=1,
 )
 
+@click.option(
+    "--cluster",
+    "-c",
+    help="eks cluster name, if run in local, just use defaul 'local'",
+    default="local",
+)
+
+
+@click.option(
+    "--nodegroup_name",
+    "-nd",
+    help="eks cluster nodegroup name, default is 'gcd'. It's hardcode in config/eks/cluster.yaml ",
+    default="gcd",
+)
+
+
+@click.option(
+    "--instance_type",
+    "-in",
+    help="eks node instance type , default is 't2.large'. It's hardcode in config/eks/cluster.yaml ",
+    default="t2.large",
+)
 
 def run_files(
     number: int = 1,
     scalenodes:int = 1,
     project: str = "solardatatools",
-    repeat: int = 1
-
+    repeat: int = 1,
+    cluster: str = 'local',
+    nodegroup_name: str = 'gcd',
+    instance_type:str = 't2.large'
 ):
     """
     Proccess files in defined bucket
@@ -99,6 +123,7 @@ def run_files(
     :param configfile:  Define config file name. Default value is "./config/config.yaml"
 
     """
+
     run_process_files(
         number=number,
         project = project,
@@ -108,6 +133,9 @@ def run_files(
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
         ecr_repo=ECR_REPO,
+        cluster = cluster,
+        nodegroup_name = nodegroup_name,
+        instance_type= instance_type
     )
 
 

@@ -814,4 +814,4 @@ def verify_keys_in_configfile(config_dict:dict):
 
 
     except AssertionError as e:
-        raise AssertionError(f"Assert error {e}")
+        raise AssertionError(f"Assert configfile error {e}")

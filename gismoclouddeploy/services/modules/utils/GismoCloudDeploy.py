@@ -82,7 +82,10 @@ class GismoCloudDeploy(object):
             aws_access_key: str = None,
             aws_secret_access_key: str = None,
             aws_region: str = None,
-            ecr_repo: str = None
+            ecr_repo: str = None,
+            instance_type :str = None,
+            nodegroup_name:str = None,
+            cluster:str = None
             
         ) -> None:
         self.project = project
@@ -98,14 +101,13 @@ class GismoCloudDeploy(object):
         self._cluster_file = ""
         self._scale_eks_nodes_wait_time  = 1
         self._interval_of_wait_pod_ready  = 1
-        self._cluster_name = ""
-        self._cluster_region = ""
-        self._nodes_maxSize = 1
+        self._cluster_name = cluster
+        self._nodes_maxSize = 100 # this is the limit from AWS
         
-        self._nodegroup_name = ""   
-        self._instanceType = ""    
+        self._nodegroup_name = nodegroup_name
+        self._instanceType = instance_type
         self._total_num_nodes = scale_nodes
-        self._ec2_bastion_saved_config_file = ""
+        # self._ec2_bastion_saved_config_file = ""
 
         # private variables
         self._k8s_namespace_set = set()
@@ -308,20 +310,20 @@ class GismoCloudDeploy(object):
         except Exception as e:
             raise Exception(f"parse config file error :{e}")
         # convert cluster file
-        if self._is_aws():
-            cluster_file = f"{self._base_path}/projects/{self.project}/cluster.yaml"
-            if exists(cluster_file) is False:
-                raise ValueError (f"{cluster_file} does not exist")
-            cluster_file_dict = convert_yaml_to_json(yaml_file=cluster_file)
-            # import cluster file parameters
-            self._cluster_name = cluster_file_dict['metadata']['name']
-            self._cluster_region = cluster_file_dict['metadata']['region']
-            if len(cluster_file_dict['nodeGroups']):
-                self._nodegroup_name = cluster_file_dict['nodeGroups'][0]['name']
-                self._nodes_maxSize = cluster_file_dict['nodeGroups'][0]['maxSize']
-                self._instanceType = cluster_file_dict['nodeGroups'][0]['instanceType']
-            else:
-                raise ValueError(f"nodeGroups does not exist")
+        # if self._is_aws():
+        #     cluster_file = f"{self._base_path}/projects/{self.project}/cluster.yaml"
+        #     if exists(cluster_file) is False:
+        #         raise ValueError (f"{cluster_file} does not exist")
+        #     cluster_file_dict = convert_yaml_to_json(yaml_file=cluster_file)
+        #     # import cluster file parameters
+        #     self._cluster_name = cluster_file_dict['metadata']['name']
+        #     self._cluster_region = cluster_file_dict['metadata']['region']
+        #     if len(cluster_file_dict['nodeGroups']):
+        #         self._nodegroup_name = cluster_file_dict['nodeGroups'][0]['name']
+        #         self._nodes_maxSize = cluster_file_dict['nodeGroups'][0]['maxSize']
+        #         self._instanceType = cluster_file_dict['nodeGroups'][0]['instanceType']
+        #     else:
+        #         raise ValueError(f"nodeGroups does not exist")
 
         
         try:

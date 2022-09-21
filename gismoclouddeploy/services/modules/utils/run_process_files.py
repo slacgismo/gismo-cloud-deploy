@@ -36,6 +36,9 @@ def run_process_files(
     aws_secret_access_key: str = None,
     aws_region: str = None,
     ecr_repo: str = None,
+    cluster:str = None,
+    nodegroup_name :str = None,
+    instance_type: str = None
 ) -> None:
     """
     Proccess files in defined bucket
@@ -65,7 +68,10 @@ def run_process_files(
         aws_access_key=aws_access_key,
         aws_secret_access_key = aws_secret_access_key,
         aws_region = aws_region,
-        ecr_repo=ecr_repo
+        ecr_repo=ecr_repo,
+        instance_type = instance_type,
+        nodegroup_name = nodegroup_name,
+        cluster = cluster
         
     )
 
