@@ -8,7 +8,7 @@ ARG TARGET_PATH_OF_UPLOAD_FILE
 ARG SOURCE_PATH_OF_UPLOAD_FILE
 
 # code template path
-ENV code_path  "../projects/$CODES_FOLDER/entrypoint"
+ENV code_path  "../projects/$CODES_FOLDER"
 ENV project_path "../projects/$CODES_FOLDER"
 # license path
 ENV source_path_of_upload_file "../projects/$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 

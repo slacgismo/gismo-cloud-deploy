@@ -460,7 +460,8 @@ class GismoCloudDeploy(object):
             self._solver_lic_target_path = "/root/dummy"
             # check if license exist
   
-            dummy_full_path = self._base_path +f"/config/{self._solver_lic_local_path}"
+            dummy_full_path = self._base_path +f"/projects/{self.project}/{self._solver_lic_local_path}"
+            print(f"Create dummy path {dummy_full_path}")
             if not os.path.exists(dummy_full_path):
                 access_rights = 0o755 
                 os.mkdir(dummy_full_path, access_rights)

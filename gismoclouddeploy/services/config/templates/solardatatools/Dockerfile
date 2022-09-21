@@ -7,8 +7,11 @@ ARG CODES_FOLDER
 ARG TARGET_PATH_OF_UPLOAD_FILE
 ARG SOURCE_PATH_OF_UPLOAD_FILE
 
-ENV code_path  "../config/$CODES_FOLDER"
-ENV source_path_of_upload_file "../config/$SOURCE_PATH_OF_UPLOAD_FILE"
+# code template path
+ENV code_path  "../projects/$CODES_FOLDER"
+ENV project_path "../projects/$CODES_FOLDER"
+# license path
+ENV source_path_of_upload_file "../projects/$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
 
 
 
@@ -26,9 +29,9 @@ RUN apt update && apt install libblas3 liblapack3 liblapack-dev libblas-dev cmak
 RUN apt install libhdf5-dev -y
 
 # Requirements are installed here to ensure they will be cached.
-# COPY ./server/requirements.txt /requirements.txt
-# COPY ../config/code-templates/requirements.txt /requirements.txt
-COPY $code_path/requirements.txt /requirements.txt
+
+# copey requirements
+COPY $project_path/requirements.txt /requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt
 
@@ -52,8 +55,9 @@ COPY ./server/compose/local/flask/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 
-# COPY if [ -d $source_path_of_upload_file ] ; then COPY $source_path_of_upload_file/  $TARGET_PATH_OF_UPLOAD_FILE
 
+
+# copy license
 COPY $source_path_of_upload_file/  $TARGET_PATH_OF_UPLOAD_FILE
 
 

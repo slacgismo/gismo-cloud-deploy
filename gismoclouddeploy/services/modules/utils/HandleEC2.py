@@ -171,12 +171,13 @@ class HandleEC2(object):
 
 
     def get_ec2_status(self):
-        if self._ec2_instance_id is None:
+        if self.ec2_instance_id is None:
             raise Exception("EC2 id does not exist")
         self._ec2_status = get_ec2_state_from_id(
             ec2_client=self._ec2_client,
-            id=self._ec2_instance_id
+            id=self.ec2_instance_id
         )
+
         return self._ec2_status
 
     def ssh_update_eks_cluster_file(self, local_cluster,saved_config_folder_name ):
@@ -450,7 +451,7 @@ class HandleEC2(object):
              )
     def hande_input_is_cleanup(self):
         is_clean_up = handle_yes_or_no_question(
-            input_question="Do you want to delete all created resources?\n If you type 'no', there will be an operation cost from generated eks cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create.Sept,2022). The ec2 bastion will be stopped (no operation cost).\n However, if you type 'yes', the generated ec2 bastions and eks cluster will be deleted (No operation costs from ec2 and eks cluster).\n It takes about 10~20 mins to generated a new eks cluster.\n ",
+            input_question="Do you want to delete all created resources?\nIf you type 'no', there will be an operating cost from generated eks cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create.Sept,2022). The ec2 bastion will be stopped (no operating cost).\nHowever, if you type 'yes', the generated ec2 bastions and eks cluster will be deleted (No operating cost from ec2 and eks cluster).\n It takes about 10~20 mins to generated a new eks cluster.\n ",
             default_answer="no"
         )
 

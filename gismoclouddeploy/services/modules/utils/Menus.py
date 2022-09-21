@@ -344,6 +344,14 @@ class Menus(object):
         ]
         table1 = AsciiTable(cloud_resource)
         print(table1.table)
+        if self._menus_action == MenuAction.resume_from_existing.name:
+            ec2_config_dict = convert_yaml_to_json(yaml_file=self._saved_ec2_config_file)
+            self._ec2_tages = ec2_config_dict['tags']
+            self._ec2_image_id = ec2_config_dict['ec2_image_id']
+            self._ec2_instance_type = ec2_config_dict['ec2_instance_type']
+            self._ec2_volume = ec2_config_dict['ec2_volume']
+            self.key_pair_name = ec2_config_dict['key_pair_name']
+            self._ec2_instance_id = ec2_config_dict['ec2_instance_id']
         ec2_resources = [
             ["Parameters","Details"],
             ['ec2_tags', self._ec2_tages],
@@ -352,6 +360,7 @@ class Menus(object):
             ['ec2 volume', self._ec2_volume],
             ['ec2 keypair', self._keypair],
             ['pem location', self._local_pem_path],
+            ['ec2 instance id', self._ec2_instance_id],
 
         ]
         table2 = AsciiTable(ec2_resources)

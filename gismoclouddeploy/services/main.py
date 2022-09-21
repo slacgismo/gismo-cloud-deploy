@@ -1,7 +1,10 @@
 from email.policy import default
+from multiprocessing.connection import wait
 from multiprocessing.dummy import Process
+from time import time
 from modules.utils.SSHAction import SSHAction
 from modules.utils.AWSActions import AWSActions
+from modules.utils.EC2Status import EC2Status
 from modules.utils.HandleEC2 import HandleEC2, create_ec2_object_from_dict
 from modules.utils.EKSAction import EKSAction
 from modules.utils.Menus import Menus
@@ -16,8 +19,9 @@ from modules.utils.MenuAction import MenuAction
 from modules.utils.run_process_files import run_process_files
 from modules.utils.HandleAWS import HandleAWS
 from dotenv import load_dotenv
-
+import time
 load_dotenv()
+
 
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -260,13 +264,13 @@ def menus():
 
         # Clean up
         if is_cleanup_after_completion is False:
-           handle_ec2.set_ec2_action(ec2_action=EC2Action.stop.name)
+           handle_ec2.set_ec2_action(action=EC2Action.stop.name)
            handle_ec2.handle_ec2_action()
         else:
             handle_ec2.handle_ssh_eks_action(eks_action=EKSAction.delete.name, cluster_file=cluster_file)
-            handle_ec2.set_ec2_action(ec2_action=EC2Action.stop.name)
+            handle_ec2.set_ec2_action(action=EC2Action.stop.name)
             handle_ec2.handle_ec2_action()
-            handle_ec2.set_ec2_action(ec2_action=EC2Action.terminate.name)
+            handle_ec2.set_ec2_action(action=EC2Action.terminate.name)
             handle_ec2.handle_ec2_action()
             
         logging.info("=======================")
@@ -282,6 +286,11 @@ def menus():
         saved_eks_cluster_file = menus.get_saved_eks_config_file()
         relative_project_folder = menus.get_relative_project_folder()
         relative_saved_config_files_folder_name = menus.get_relative_saved_config_files_folder_name()
+
+       
+        
+
+        
         
         print(f"saved_eks_cluster_file : {saved_eks_cluster_file}")
         # pem_file = menus.get_pem_full_path_name()
@@ -294,11 +303,50 @@ def menus():
             pem_file_path = pem_file_path
         )
 
+       
+
+        
+        # check ec2 status 
+        waittime = 60
+        delay = 1
+        is_ec2_state_ready = False
+        while waittime > 0 or not is_ec2_state_ready:
+                waittime -= delay
+                ec2_state =  handle_ec2.get_ec2_status()
+                logging.info(f"ec2_state :{ec2_state} waitng:{waittime}")
+                if ec2_state == EC2Status.stopped.name or ec2_state == EC2Status.running.name:
+                    logging.info(f"In stopped or running {ec2_state}")
+                    is_ec2_state_ready = True
+                    break
+                time.sleep(delay)
+        if is_ec2_state_ready is False:
+            logging.info("Wait ec2 state ready over time")
+            return 
+                
+
+         # check ec2 status 
+        if ec2_state == EC2Status.stopped.name:
+            logging.info("EC2 in stop state, wake up ec2")
+            handle_ec2.set_ec2_action(action=EC2Action.start.name)
+            handle_ec2.handle_ec2_action()
+        
+        if ec2_state == EC2Status.running.name:
+            logging.info("EC2 in running state")
+            pass
+            
+        logging.info(f"Update project folder: {relative_project_folder}")
+        handle_ec2.ssh_upload_folder(
+            local_project_path=local_project_path,
+            relative_project_folder_name=relative_project_folder
+        )
+        
+        logging.info(f"Update eks file: {relative_project_folder}")
         handle_ec2.ssh_update_eks_cluster_file_to_project_folder(
             local_cluster=saved_eks_cluster_file,
             project_folder_anme= relative_project_folder
 
         )
+
         # Run any command 
         is_breaking = False
         while not is_breaking:
@@ -315,8 +363,12 @@ def menus():
             logging.info("Clean up resources")
         else:
             logging.info("Stop ec2")
-
-        logging.info("SSH: project folder ")
+            handle_ec2.set_ec2_action(action=EC2Action.stop.name)
+            handle_ec2.handle_ec2_action()
+        
+        logging.info("delete project folder")
+        menus.delete_project_folder()
+    
     elif menus_action == MenuAction.cleanup_cloud_resources.name:
         logging.info("Clean from existing")
         saved_ec2_config_file = menus.get_saved_ec2_config_file()
@@ -372,7 +424,7 @@ def menus():
 
     elif menus_action == MenuAction.run_in_local_machine.name:
         logging.info("Run in local machine")
-
+        logging.info("Please read  `run-files --help` to process run-files command in your local machine!!")
 
 
 # ***************************

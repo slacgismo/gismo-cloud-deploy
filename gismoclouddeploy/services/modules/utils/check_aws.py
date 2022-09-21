@@ -205,7 +205,7 @@ def get_ec2_state_from_id(ec2_client, id) -> str:
         InstanceIds=[id],
         IncludeAllInstances=True
     )
-    print(f"response : {response}")
+    # print(f"response : {response}")
     state = None
     for instance in response['InstanceStatuses']:
         instance_id = instance['InstanceId']
@@ -213,7 +213,7 @@ def get_ec2_state_from_id(ec2_client, id) -> str:
         
             system_status = instance['SystemStatus']
             instance_status = instance['InstanceStatus']
-            state = instance['InstanceState']
+            state = instance['InstanceState']['Name']
             return state
             # logging.info(f"system_status :{system_status}, instance_status:{instance_status},")
     return None
