@@ -94,6 +94,7 @@ def run_process_files(
             gcd.trigger_ready()
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
             # deploy state, deploy k8s , scale eks nodes
+
             gcd.trigger_deploy()
             logging.info(f" ===== State: {gcd.state} ; repeat index {repeat_index} =======")
             # processing state, send coammd to server, long pulling sqs

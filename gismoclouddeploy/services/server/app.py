@@ -2,7 +2,7 @@ from email.policy import default
 import json
 import logging
 from telnetlib import STATUS
-
+import glob
 from project import create_app, ext_celery
 from utils.aws_utils import connect_aws_client
 from utils.find_matched_column_name_set import find_matched_column_name_set
@@ -91,13 +91,13 @@ def process_files(worker_config_str: str):
         logger.error(f"AWS validation failed {e}")
         return "AWS validation fail"
 
-    print(default_files)
+    # print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
     repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])
     for i in range(repeat_number_per_round):
         for index_file, file in enumerate(default_files):
-            if worker_config_json["data_file_type"] == ".csv":
+            if len(worker_config_json["process_column_keywords"]) != 0 :
                 matched_column_set = find_matched_column_name_set(
                     bucket_name=worker_config_json["data_bucket"],
                     columns_key=worker_config_json["process_column_keywords"],

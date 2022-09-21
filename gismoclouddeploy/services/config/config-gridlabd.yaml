@@ -53,7 +53,7 @@ worker_config:
     saved_temp_path_in_bucket: None     # Temporaty file location on S3 lic_temp/<user_id>.it grenerated in run-time and deleted after program completed.
     solver_lic_file_name: None
   data_bucket: "gcd.hipas.models"                      # Bucket contains origin data files. "gcd.hipas.ny"
-  data_file_type: ".glm"
+  file_pattern: ".glm"
   default_process_files: ["IEEE/8500.glm"] #"NY/glm/feeder_NY_01/NY_01_12471.glm"   # Default process files. If users do not use option -n command.
   process_column_keywords: []                   # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
   saved_bucket: "pv.insight.test"                         # Bucket of saved files.

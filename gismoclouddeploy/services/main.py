@@ -133,12 +133,16 @@ def run_files(
     :param configfile:  Define config file name. Default value is "./config/config.yaml"
 
     """
-    if file is not None and number is not None:
+    if (len(file) < 1) and number is None:
+        click.echo("No number input nor file input. Please enter number or file input")
+        return  
+
+    if (len(file) >= 1) and (number is not None):
         click.echo("Both file input and number input have been given. You can only choice one.")
         return 
 
     default_fileslist = []
-    if file is not None:
+    if len(file)>= 1:
         # convert input file tuple to a list
         files = list(file)
         default_fileslist = files

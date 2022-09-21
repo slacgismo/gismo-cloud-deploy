@@ -1,7 +1,9 @@
 
 from distutils import log
 from enum import Enum
-import imp
+
+import fnmatch
+import re
 from transitions import Machine
 from .modiy_config_parameters import convert_yaml_to_json
 from .check_aws import check_aws_validity
@@ -130,7 +132,7 @@ class GismoCloudDeploy(object):
         self._default_files  = default_fileslist
         
         self._process_column_keywords = []
-        self._file_type = ".csv"
+        self._file_pattern = "*.csv"
         self._num_namesapces = 1
         self._num_worker_pods_per_namespace = 8
         self._total_number_files = 0
@@ -229,7 +231,7 @@ class GismoCloudDeploy(object):
             # worker config
             worker_config = self._config["worker_config"]
             self._data_bucket = worker_config["data_bucket"]
-            self._file_type = worker_config["data_file_type"]
+            self._file_type = worker_config["file_pattern"]
 
             if 'solver' in worker_config:
                 self._solver = worker_config['solver']
@@ -317,9 +319,10 @@ class GismoCloudDeploy(object):
             bucket=self._data_bucket,
             default_files=self._default_files ,
             s3_client=s3_client,
-            file_type=self._file_type,
+            file_pattern=self._file_pattern,
             )
-        print(f"-------{self._default_files}")
+        print(f"self._default_files -------{self._default_files}")
+        print(f"self._default_files -------{self._default_files}")
         self._total_number_files = len(n_files)
         self._num_namesapces = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
         num_files_per_namespace =  math.ceil(self._total_number_files/self._num_namesapces)
@@ -631,7 +634,7 @@ class GismoCloudDeploy(object):
             aws_secret_access_key= self.aws_secret_access_key,
             aws_region=self.aws_region,
             repeat_number_per_round=self._repeat_number_per_round,
-            data_file_type=self._file_type,
+            file_pattern=self._file_pattern,
             data_bucket=self._data_bucket,
             process_column_keywords=self._process_column_keywords,
             solver=self._solver,
@@ -775,21 +778,27 @@ def genereate_report():
 
 # ):
 
-def list_files_in_bucket(bucket_name: str, s3_client, file_format: str):
-    """Get filename and size from S3 , remove non csv file"""
+def list_files_in_bucket(bucket_name: str, s3_client, file_pattern: str):
+    """Get filename and size from S3 , fillter file format file"""
     try:
+
         response = s3_client.list_objects_v2(Bucket=bucket_name)
         files = response["Contents"]
         filterFiles = []
+        tet= []
         for file in files:
-            split_tup = os.path.splitext(file["Key"])
-            file_extension = split_tup[1]
-            if file_extension == file_format:
+            filename = file["Key"]
+ 
+            matches = fnmatch.fnmatch(filename, file_pattern)
+            
+            if matches:
                 obj = {
                     "Key": file["Key"],
                     "Size": file["Size"],
                 }
                 filterFiles.append(obj)
+
+        tet
         return filterFiles
     except Exception as e:
         raise Exception(f"list files in bucket error: {e}")
@@ -805,7 +814,7 @@ def return_process_filename_base_on_command_and_sort_filesize(
     bucket: str,
     default_files: list,
     s3_client: "botocore.client.S3",
-    file_type: str,
+    file_pattern: str,
 
 ) -> list:
 
@@ -813,9 +822,10 @@ def return_process_filename_base_on_command_and_sort_filesize(
  
 
     files_dict = list_files_in_bucket(
-        bucket_name=bucket, s3_client=s3_client, file_format=file_type
+        bucket_name=bucket, s3_client=s3_client, file_pattern=file_pattern
     )
- 
+    
+    print(f"--------------dict: {files_dict}")
 
     if first_n_files is None:
         # n_files = default_files
@@ -827,6 +837,7 @@ def return_process_filename_base_on_command_and_sort_filesize(
         # return n_files
     else:
         try:
+
             if int(first_n_files) == 0:
                 logging.info(f"Process all files in {bucket}")
                 for file in files_dict:
@@ -834,11 +845,14 @@ def return_process_filename_base_on_command_and_sort_filesize(
             else:
                 logging.info(f"Process first {first_n_files} files")
                 for file in files_dict[0 : int(first_n_files)]:
-                    file_name = file['Key']
-                    split_tup = os.path.splitext(file_name)
-                    file_extension = split_tup[1]
-                    if file_extension == file_type:
-                        n_files.append(file)
+                    n_files.append(file)
+                    # file_name = file['Key']
+                    # match_file = glob.glob(file_globbing_key)
+                    # print(f"---match_file :{match_file}")
+                    # split_tup = os.path.splitext(file_name)
+                    # file_extension = split_tup[1]
+                    # if file_extension == file_type:
+                    #     n_files.append(file)
         except Exception as e:
             logging.error(f"Input {first_n_files} is not an integer")
             raise e
@@ -875,7 +889,7 @@ def send_command_to_server(
     aws_secret_access_key:str = None,
     aws_region:str = None,
     repeat_number_per_round: int = 1,
-    data_file_type:str = None,
+    file_pattern:str = None,
     data_bucket:str = None,
     process_column_keywords: list = [],
     solver: dict = {},
@@ -904,7 +918,7 @@ def send_command_to_server(
             aws_secret_access_key = aws_secret_access_key,
             aws_region = aws_region,
             repeat_number_per_round = repeat_number_per_round,
-            data_file_type = data_file_type,
+            file_pattern = file_pattern,
             data_bucket = data_bucket,
             process_column_keywords = process_column_keywords,
             solver = solver,
@@ -929,7 +943,7 @@ def create_config_parameters_to_app(
     aws_secret_access_key :str = None,
     aws_region :str = None,
     repeat_number_per_round :int = 1,
-    data_file_type:str = None,
+    file_pattern:str = None,
     data_bucket:str = None,
     process_column_keywords: str = None,
     solver: dict = {},
@@ -946,7 +960,7 @@ def create_config_parameters_to_app(
         config_dict['aws_secret_access_key'] = aws_secret_access_key
         config_dict['aws_region'] = aws_region
         config_dict['repeat_number_per_round'] = repeat_number_per_round
-        config_dict['data_file_type'] = data_file_type
+        config_dict['file_pattern'] = file_pattern
         config_dict['data_bucket'] = data_bucket
         config_dict['process_column_keywords'] = process_column_keywords
         config_dict['solver'] = solver

@@ -118,8 +118,8 @@ def modiy_config_parameters(
         bucket=config_json["worker_config"]["data_bucket"],
         default_files=config_json["worker_config"]["default_files"],
         s3_client=s3_client,
-        file_format=config_json["worker_config"]["data_file_type"],
-        file_type=config_json["worker_config"]['data_file_type']
+        file_format=config_json["worker_config"]["file_pattern"],
+        file_type=config_json["worker_config"]['file_pattern']
     )
     total_number_files = len(n_files)
 

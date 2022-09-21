@@ -808,7 +808,7 @@ def verify_keys_in_configfile(config_dict:dict):
         worker_config_dict = config_dict['worker_config']
         assert 'data_bucket' in worker_config_dict
         # assert 'default_process_files'in  worker_config_dict
-        assert 'data_file_type' in worker_config_dict
+        assert 'file_pattern' in worker_config_dict
         assert 'process_column_keywords' in worker_config_dict
         assert 'saved_bucket' in worker_config_dict
 

@@ -12,7 +12,7 @@ worker_config:
   #   solver_lic_file_name: "mosek.lic"
 
   data_bucket: "pv.insight.nrel"
-  data_file_type: ".csv"                 # Bucket contains origin data files.
+  file_pattern: ".csv"                 # Bucket contains origin data files.
   default_process_files: ["PVO/PVOutput/46851.csv","PVO/PVOutput/11106.csv","PVO/PVOutput/10010.csv"]   # Default process files. If users do not use option -n command.
   process_column_keywords: ["Power(W)"]                   # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
   saved_bucket: "pv.insight.test"                         # Bucket of saved files.
