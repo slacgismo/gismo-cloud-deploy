@@ -14,7 +14,7 @@ worker_config:
   data_bucket: "pv.insight.nrel"
   file_pattern: "*.csv"      #  globbibg format  regular expression
   # default_process_files: ["PVO/PVOutput/46851.csv","PVO/PVOutput/11106.csv","PVO/PVOutput/10010.csv"]   # Default process files. If users do not use option -n command.
-  process_column_keywords: ["Power(W)"]                   # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
+  process_column_keywords: "^Pow"  # regex format # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
   saved_bucket: "pv.insight.test"                         # Bucket of saved files.
   saved_path_cloud: "results"                               # Path of saved files in bucket
   saved_path_local: "results"

@@ -4,7 +4,7 @@ from .aws_utils import (
 )
 from typing import List, Set
 import logging
-
+import re
 # logger config
 logger = logging.getLogger()
 logging.basicConfig(
@@ -32,7 +32,7 @@ def find_matched_column_name_set(
         raise e
     matched_column_set = set()
     for column in total_columns:
-        for key in columns_key:
-            if key in column:
-                matched_column_set.add(column)
+        match = re.search(columns_key, column)
+        if (match):
+            matched_column_set.add(column)
     return matched_column_set

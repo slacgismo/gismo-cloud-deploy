@@ -131,7 +131,7 @@ class GismoCloudDeploy(object):
         self._saved_bucket = ""
         self._default_files  = default_fileslist
         
-        self._process_column_keywords = []
+        self._process_column_keywords = ""
         self._file_pattern = "*.csv"
         self._num_namesapces = 1
         self._num_worker_pods_per_namespace = 8
@@ -825,7 +825,7 @@ def return_process_filename_base_on_command_and_sort_filesize(
         bucket_name=bucket, s3_client=s3_client, file_pattern=file_pattern
     )
     
-    print(f"--------------dict: {files_dict}")
+
 
     if first_n_files is None:
         # n_files = default_files
@@ -837,6 +837,8 @@ def return_process_filename_base_on_command_and_sort_filesize(
         # return n_files
     else:
         try:
+            if len(files_dict) == 0:
+                raise Exception(f"No files matches in {bucket} bucket")
 
             if int(first_n_files) == 0:
                 logging.info(f"Process all files in {bucket}")
