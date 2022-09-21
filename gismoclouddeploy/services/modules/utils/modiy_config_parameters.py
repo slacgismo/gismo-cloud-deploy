@@ -27,6 +27,7 @@ def modiy_config_parameters(
     first_n_files:int = 0 
 ) -> str:
 
+
     try:
         check_aws_validity(key_id=aws_access_key, secret=aws_secret_access_key)
     except Exception as e:
@@ -112,11 +113,10 @@ def modiy_config_parameters(
     config_json["aws_config"]["ecr_repo"] = ecr_repo
 
 
-
     n_files = return_process_filename_base_on_command_and_sort_filesize(
         first_n_files=first_n_files,
         bucket=config_json["worker_config"]["data_bucket"],
-        default_files=config_json["worker_config"]["default_process_files"],
+        default_files=config_json["worker_config"]["default_files"],
         s3_client=s3_client,
         file_format=config_json["worker_config"]["data_file_type"],
         file_type=config_json["worker_config"]['data_file_type']

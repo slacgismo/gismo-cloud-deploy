@@ -1,3 +1,4 @@
+from curses import echo
 from email.policy import default
 from multiprocessing.connection import wait
 from multiprocessing.dummy import Process
@@ -104,6 +105,14 @@ def main():
     default="t2.large",
 )
 
+@click.option(
+    "--file",
+    "-f",
+    help="run specific file)",
+    multiple=True
+)
+
+
 def run_files(
     number: int = 1,
     scalenodes:int = 1,
@@ -111,7 +120,8 @@ def run_files(
     repeat: int = 1,
     cluster: str = 'local',
     nodegroup_name: str = 'gcd',
-    instance_type:str = 't2.large'
+    instance_type:str = 't2.large',
+    file:str = None
 ):
     """
     Proccess files in defined bucket
@@ -123,6 +133,15 @@ def run_files(
     :param configfile:  Define config file name. Default value is "./config/config.yaml"
 
     """
+    if file is not None and number is not None:
+        click.echo("Both file input and number input have been given. You can only choice one.")
+        return 
+
+    default_fileslist = []
+    if file is not None:
+        # convert input file tuple to a list
+        files = list(file)
+        default_fileslist = files
 
     run_process_files(
         number=number,
@@ -135,7 +154,8 @@ def run_files(
         ecr_repo=ECR_REPO,
         cluster = cluster,
         nodegroup_name = nodegroup_name,
-        instance_type= instance_type
+        instance_type= instance_type,
+        default_fileslist = default_fileslist
     )
 
 

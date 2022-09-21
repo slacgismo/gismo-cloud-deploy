@@ -85,7 +85,8 @@ class GismoCloudDeploy(object):
             ecr_repo: str = None,
             instance_type :str = None,
             nodegroup_name:str = None,
-            cluster:str = None
+            cluster:str = None,
+            default_fileslist :list = []
             
         ) -> None:
         self.project = project
@@ -126,7 +127,8 @@ class GismoCloudDeploy(object):
 
         self._data_bucket = ""
         self._saved_bucket = ""
-        self._default_files  =[]
+        self._default_files  = default_fileslist
+        
         self._process_column_keywords = []
         self._file_type = ".csv"
         self._num_namesapces = 1
@@ -198,26 +200,7 @@ class GismoCloudDeploy(object):
             return True
         return False
 
-    # def _assert_keys_in_configfile(self):
-    #     try:
-    #         assert 'worker_config' in self._config
-    #         # assert 'services_config_list' in self._config
-    #         # assert 'aws_config' in self._config
 
-
-    #         # worker_config
-    #         worker_config_dict = self._config['worker_config']
-    #         assert 'data_bucket' in worker_config_dict
-    #         assert 'default_process_files'in  worker_config_dict
-    #         assert 'data_file_type' in worker_config_dict
-    #         assert 'process_column_keywords' in worker_config_dict
-    #         assert 'saved_bucket' in worker_config_dict
-  
-
-    #     except AssertionError as e:
-    #         raise AssertionError(f"Assert error {e}")
-
-    # state function
     
 
     def handle_read_config_yaml(self,event):
@@ -246,7 +229,6 @@ class GismoCloudDeploy(object):
             # worker config
             worker_config = self._config["worker_config"]
             self._data_bucket = worker_config["data_bucket"]
-            self._default_files = worker_config["default_process_files"]
             self._file_type = worker_config["data_file_type"]
 
             if 'solver' in worker_config:
@@ -309,21 +291,7 @@ class GismoCloudDeploy(object):
           
         except Exception as e:
             raise Exception(f"parse config file error :{e}")
-        # convert cluster file
-        # if self._is_aws():
-        #     cluster_file = f"{self._base_path}/projects/{self.project}/cluster.yaml"
-        #     if exists(cluster_file) is False:
-        #         raise ValueError (f"{cluster_file} does not exist")
-        #     cluster_file_dict = convert_yaml_to_json(yaml_file=cluster_file)
-        #     # import cluster file parameters
-        #     self._cluster_name = cluster_file_dict['metadata']['name']
-        #     self._cluster_region = cluster_file_dict['metadata']['region']
-        #     if len(cluster_file_dict['nodeGroups']):
-        #         self._nodegroup_name = cluster_file_dict['nodeGroups'][0]['name']
-        #         self._nodes_maxSize = cluster_file_dict['nodeGroups'][0]['maxSize']
-        #         self._instanceType = cluster_file_dict['nodeGroups'][0]['instanceType']
-        #     else:
-        #         raise ValueError(f"nodeGroups does not exist")
+
 
         
         try:
@@ -342,6 +310,7 @@ class GismoCloudDeploy(object):
             aws_secret_access_key=self.aws_secret_access_key,
         )
 
+        print(f"======={self._default_files}")
         # define total process files accourding to input command
         n_files = return_process_filename_base_on_command_and_sort_filesize(
             first_n_files=self.num_inputfile,
@@ -350,7 +319,7 @@ class GismoCloudDeploy(object):
             s3_client=s3_client,
             file_type=self._file_type,
             )
-
+        print(f"-------{self._default_files}")
         self._total_number_files = len(n_files)
         self._num_namesapces = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
         num_files_per_namespace =  math.ceil(self._total_number_files/self._num_namesapces)
@@ -602,7 +571,7 @@ class GismoCloudDeploy(object):
         
         # threads = list()
         # try:
-        #     for service, value in self._services_config_list.items():
+        #     for service, value in self._services_con string indices must be integersfig_list.items():
         #         desired_replicas = value["desired_replicas"]
         #         logging.info(f"{service}: desired_replicas: {desired_replicas}")
         #         wait_pod_ready(
@@ -846,10 +815,16 @@ def return_process_filename_base_on_command_and_sort_filesize(
     files_dict = list_files_in_bucket(
         bucket_name=bucket, s3_client=s3_client, file_format=file_type
     )
+ 
 
     if first_n_files is None:
-        n_files = default_files
-        return n_files
+        # n_files = default_files
+        if len(default_files) < 1:
+            raise Exception ("first_n_files is None and  default files list is empty")
+        else:
+            n_files = default_files
+            return n_files
+        # return n_files
     else:
         try:
             if int(first_n_files) == 0:
@@ -868,13 +843,13 @@ def return_process_filename_base_on_command_and_sort_filesize(
             logging.error(f"Input {first_n_files} is not an integer")
             raise e
 
-    logging.info(f"len :{len(n_files)}")
-    # print("------------")
-    _temp_sorted_file_list = sorted(n_files, key=lambda k: k['Size'],reverse=True)
+        logging.info(f"len :{len(n_files)}")
+        # print("------------")
+        _temp_sorted_file_list = sorted(n_files, key=lambda k: k['Size'],reverse=True)
 
-    sorted_files = [d['Key'] for d in _temp_sorted_file_list]
+        sorted_files = [d['Key'] for d in _temp_sorted_file_list]
 
-    return sorted_files
+        return sorted_files
 
 
 def update_image_tags_for_ecr(

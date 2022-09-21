@@ -38,7 +38,8 @@ def run_process_files(
     ecr_repo: str = None,
     cluster:str = None,
     nodegroup_name :str = None,
-    instance_type: str = None
+    instance_type: str = None,
+    default_fileslist :list = [],
 ) -> None:
     """
     Proccess files in defined bucket
@@ -71,7 +72,8 @@ def run_process_files(
         ecr_repo=ecr_repo,
         instance_type = instance_type,
         nodegroup_name = nodegroup_name,
-        cluster = cluster
+        cluster = cluster,
+        default_fileslist = default_fileslist
         
     )
 
