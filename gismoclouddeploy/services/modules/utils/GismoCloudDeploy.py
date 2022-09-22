@@ -338,10 +338,14 @@ class GismoCloudDeploy(object):
         num_files_per_namespace =  math.ceil(self._total_number_files/self._num_namesapces)
         # print(f"self._total_num_nodes :{self._total_num_nodes}, self._num_worker_pods_per_namespace :{self._num_worker_pods_per_namespace}, self._num_namesapces: {self._num_namesapces}")
         # define how many worker pods replcas in each namespaces. 
-
-        self._worker_desired_replicas_per_namespaces =  self._num_worker_pods_per_namespace - 1
+        math.ceil(self._total_num_nodes/self._num_namesapces) - 1
+        # self._worker_desired_replicas_per_namespaces =  self._num_worker_pods_per_namespace - 1
+        self._worker_desired_replicas_per_namespaces =  int(math.ceil(self._total_num_nodes/self._num_namesapces) - 1)
+       
         if self._worker_desired_replicas_per_namespaces < 1 :
             self._worker_desired_replicas_per_namespaces = 1
+        # print("------------------------------")
+        # print(f"self._worker_desired_replicas_per_namespaces : {self._worker_desired_replicas_per_namespaces}------------------------")
         delay = 2
         for i in range(self._num_namesapces ):
             curr_time = int(time.time())

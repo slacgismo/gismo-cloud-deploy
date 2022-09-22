@@ -56,6 +56,7 @@ from .create_ec2 import (
     write_aws_setting_to_yaml,
     ssh_upload_folder_to_ec2,
     get_all_files_in_local_dir,
+    ssh_download_folder_from_ec2,
     
     
 )
@@ -457,39 +458,15 @@ class HandleEC2(object):
 
         return is_clean_up
         
-    # def handle_ssh_action_and_command(self, 
-    #     ssh_action:str = None, 
-    #     ssh_command:str = None, 
-    #     local_project_path:str = None,
-    #     # relative_project_folder: str = None
-    # ):
-
-    #     remote_base_path = f"/home/{self.login_user}/gismo-cloud-deploy/gismoclouddeploy/services"
-    #     # remote_projects_path = f"/home/{self.login_user}/gismo-cloud-deploy/gismoclouddeploy/services/projects/{relative_project_folder}"
-
-    #     if ssh_action == SSHAction.installation.name:
-    #         logging.info("SSH install dependcies")
-    #         self.ec2_ssh_installation(local_project_path=local_project_path)
-    #         return 
-    #     elif ssh_action == SSHAction.upload_file.name:
-    #         logging.info("SSH upload file")
-    #         return 
-    #     elif ssh_action == SSHAction.upload_foder.name:
-    #         logging.info("SSH upload folder")
-    #         return 
-    #     elif ssh_action == SSHAction.ssh.name:
-    #         logging.info("SSH custom ssh command")
-    #         command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n cd /home/{self.login_user}/gismo-cloud-deploy/gismoclouddeploy/services/\n source ./venv/bin/activate \n {ssh_command}"
-    #         run_command_in_ec2_ssh(
-    #                 user_name=self.login_user,
-    #                 instance_id=self._ec2_instance_id,
-    #                 command=command,
-    #                 pem_location=self.get_pem_file_full_path_name(),
-    #                 ec2_client=self._ec2_client
-    #          )
-    #         return 
-
-            
+    def ssh_download_results(self, local_project_path, remote_results_path):
+        ssh_download_folder_from_ec2(
+            user_name=self.login_user,
+            instance_id=self.ec2_instance_id,
+            pem_location=self.get_pem_file_full_path_name(),
+            ec2_client=self.ec2_instance_id,
+            local_file=local_project_path,
+            remote_file=remote_results_path,
+        )
 
 def create_ec2_object_from_dict(
     saved_ec2_config_file:str,

@@ -314,18 +314,18 @@ def menus():
        
     elif menus_action == MenuAction.resume_from_existing.name:
 
-        logging.info("Resume from existing")
+        logging.info("Resume from existing ----------")
         saved_ec2_config_file = menus.get_saved_ec2_config_file()
-       
+   
         pem_file_path = menus.get_local_pem_path()
         saved_eks_cluster_file = menus.get_saved_eks_config_file()
         relative_project_folder = menus.get_relative_project_folder()
         relative_saved_config_files_folder_name = menus.get_relative_saved_config_files_folder_name()
+        ssh_run_file_command = menus.get_run_files_command()
 
-       
-        
-        
+
         print(f"saved_eks_cluster_file : {saved_eks_cluster_file}")
+        return 
         # pem_file = menus.get_pem_full_path_name()
         local_project_path = menus.get_project_path()
         handle_ec2 = create_ec2_object_from_dict(
@@ -336,10 +336,6 @@ def menus():
             pem_file_path = pem_file_path
         )
 
-        
-       
-
-        
         # check ec2 status 
         waittime = 60
         delay = 1
@@ -353,6 +349,9 @@ def menus():
                     is_ec2_state_ready = True
                     break
                 time.sleep(delay)
+       
+
+        
         if is_ec2_state_ready is False:
             logging.info("Wait ec2 state ready over time")
             return 
@@ -374,17 +373,26 @@ def menus():
             relative_project_folder_name=relative_project_folder
         )
         
+        is_run_custom_ssh_command = menus.get_is_run_custom_ssh_command()
+        if is_run_custom_ssh_command is True:
+    
 
-        # Run any command 
-        is_breaking = False
-        while not is_breaking:
-            custom_ssh_command = handle_ec2.handle_input_ssh_custom_command()
+            # Run any command 
+            is_breaking = False
+            while not is_breaking:
+                custom_ssh_command = handle_ec2.handle_input_ssh_custom_command()
+                handle_ec2.run_ssh_command(
+                    ssh_command=custom_ssh_command
+                )
+                logging.info("SSH command completed")
+                is_breaking = handle_ec2.input_is_breaking_ssh()
+            logging.info("Break ssh")
+           
+        else:
             handle_ec2.run_ssh_command(
-                ssh_command=custom_ssh_command
+                ssh_command=ssh_run_file_command
             )
-            logging.info("SSH command completed")
-            is_breaking = handle_ec2.input_is_breaking_ssh()
-        logging.info("Break ssh")
+        
 
         is_clean_up = handle_ec2.hande_input_is_cleanup()
         if is_clean_up is True:

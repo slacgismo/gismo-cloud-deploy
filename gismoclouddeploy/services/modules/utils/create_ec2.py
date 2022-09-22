@@ -10,6 +10,7 @@ import time
 import os
 import json
 import paramiko
+from stat import S_ISDIR, S_ISREG 
 import yaml
 from pathlib import Path
 from os.path import normpath, basename
@@ -543,6 +544,70 @@ def ssh_upload_folder_to_ec2(
         # print(f"value :{value}")
     ftp_client.close()
     logging.info(f"Uplodate {local_folder} to {remote_folder} success!!!")
+    return 
+
+
+def sftp_get_recursive(path, dest, sftp):
+    item_list = sftp.listdir_attr(path)
+    dest = str(dest)
+    if not os.path.isdir(dest):
+        os.makedirs(dest, exist_ok=True)
+    for item in item_list:
+        mode = item.st_mode
+        if S_ISDIR(mode):
+            sftp_get_recursive(path + "/" + item.filename, dest + "/" + item.filename, sftp)
+        else:
+            sftp.get(path + "/" + item.filename, dest + "/" + item.filename)
+
+def ssh_download_folder_from_ec2(
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    ec2_resource,
+    local_folder:str,
+    remote_folder:str,
+):
+
+    # ec2 = boto3.resource('ec2')
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+    p2_instance = None
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break
+
+    if p2_instance is None:
+        raise Exception(f"{instance_id} does not exist")
+        
+    # check if directory exist
+    local_files_list = get_all_files_in_local_dir(local_dir=local_folder)
+    # print(local_files_list)
+    # conver local files path to remote path 
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    
+    # transport = paramiko.Transport((host, port))
+    # transport.connect(username=username, password=password)
+    # sftp = paramiko.SFTPClient.from_transport(transport)
+    # sftp_get_recursive(remote_path, local_path, sftp)
+    # sftp.close()
+
+    ftp_client=ssh.open_sftp()
+    sftp_get_recursive(remote_folder, local_folder, ftp_client)
+    ftp_client.close()
+    # for key,value in upload_local_to_remote_dict.items():   
+    #     try:
+    #         ftp_client.put(key,value)
+    #         logger.info(f"upload :{key} to {value} success")
+    #     except Exception as e :
+    #         logger.error(f"upload :{key} to {value} failed: {e}")
+    #     # print(f"local :{key}")
+    #     # print(f"value :{value}")
+    # ftp_client.close()
+    logging.info(f"Download {remote_folder} to {local_folder} success!!!")
     return 
 
 

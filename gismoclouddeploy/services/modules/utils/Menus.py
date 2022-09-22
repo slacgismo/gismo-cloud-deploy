@@ -118,9 +118,13 @@ class Menus(object):
         self._cleanup_resources_after_completion = None
         self._project_in_tags  = None
 
-        self._cluster_name =f"gcd-{self._user_id}-{self._start_time}"
-        self._ec2_name = f"gcd-{self._user_id}-{self._start_time}"
-        self._keypair = f"gcd-{self._user_id}"
+        # self._cluster_name = f"gcd-{self._user_id}-{self._start_time}"
+        self._cluster_name = None
+        self._ec2_name = None
+        self._keypair = None
+        # self._ec2_name = f"gcd-{self._user_id}-{self._start_time}"
+        # self._keypair = f"gcd-{self._user_id}"
+        
         self._local_pem_path = local_pem_path 
 
         # default project 
@@ -266,6 +270,31 @@ class Menus(object):
     def get_relative_saved_config_files_folder_name(self):
         return self._relative_saved_config_files_folder_name
 
+    def generate_ec2_name(self):
+        if self._ec2_name is None:
+            self._ec2_name = f"gcd-{self._user_id}-{self._start_time}"
+            return 
+        else:
+            raise ValueError("Something wring, ec2 name should be None is this state")
+    def generate_eks_cluster_name(self):
+        if self._cluster_name is None:
+            self._cluster_name = f"gcd-{self._user_id}-{self._start_time}"
+            return 
+        else:
+            raise ValueError("Something wring, ec2 name should be None is this state")
+    def generate_eks_cluster_name(self):
+        if self._cluster_name is None:
+            self._cluster_name = f"gcd-{self._user_id}-{self._start_time}"
+            return 
+        else:
+            raise ValueError("Something wring, eks cluster name should be None is this state")
+    def generate_keypair_name(self):
+        if self._keypair is None:
+            self._keypair = f"gcd-{self._user_id}"
+            return 
+        else:
+            raise ValueError("Something wring, keypair name should be None is this state")
+
     #handle mensu action
     def handle_prepare_actions(self):
         if self._menus_action is None:
@@ -274,6 +303,9 @@ class Menus(object):
         if self._menus_action == MenuAction.create_cloud_resources_and_start.name:
             logging.info("crete cloud resources and start")
             logging.info("Step 1 , input project folder")
+            self.generate_ec2_name()
+            self.generate_eks_cluster_name()
+            self.generate_keypair_name()
             self.handle_enter_input_project_path()
             logging.info("Step 2 , check file structur corrects")
             self.handle_verify_project_folder()
@@ -296,10 +328,13 @@ class Menus(object):
             logging.info("Step 2 , check file structur corrects")
             self.handle_verify_project_folder()
             self.import_from_ec2_config()
+     
             self.import_from_eks_config()
+
             logging.info("Step 3 , handle ask question")
             self.handle_proecess_files_inputs_questions()
             self.print_variables_and_request_confirmation()
+ 
             
 
 
@@ -432,6 +467,10 @@ class Menus(object):
         if not exists(self._saved_eks_config_file):
             raise Exception("saved_eks_config_file does not exist")
         self._eks_config_yaml_dcit = convert_yaml_to_json(yaml_file=self._saved_eks_config_file)
+        if self._cluster_name is None:
+            self._cluster_name = self._eks_config_yaml_dcit['metadata']['name']
+        else:
+            raise ValueError("cluster name should be None in this state, Please check your code.")
         verify_keys_in_eks_configfile(config_dict=self._eks_config_yaml_dcit)
 
 
