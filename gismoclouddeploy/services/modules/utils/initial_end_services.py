@@ -5,7 +5,7 @@ import time
 
 from typing import List
 
-from .Environments import Environments
+from .DevEnvironments import DevEnvironments
 from .check_aws import connect_aws_client, check_environment_is_aws
 import logging
 from .process_log import (
@@ -164,7 +164,7 @@ def initial_end_services(
         print(f"Delete namespace :{namespace}")
         print(_delete_resource)
         print(f"========================== {env}")
-    if env == Environments.AWS.name:
+    if env == DevEnvironments.AWS.name:
         logger.info("Scale down EKS nodes ")
         scale_eks_nodes_and_wait(
             scale_node_num=0,

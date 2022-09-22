@@ -2,10 +2,10 @@
 import time
 
 from transitions import Machine
-from .Environments import Environments
+from .DevEnvironments import DevEnvironments
 
 
-from .GismoCloudDeploy import Environments, GismoCloudDeploy
+from .GismoCloudDeploy import  GismoCloudDeploy
 
 from .check_aws import (
 
@@ -56,9 +56,9 @@ def run_process_files(
     # list all files in results folder
     # check config exist
 
-    env = Environments.LOCAL.name
+    env = DevEnvironments.LOCAL.name
     if check_environment_is_aws():
-         env = Environments.AWS.name
+         env = DevEnvironments.AWS.name
 
     gcd = GismoCloudDeploy(
         project=project,

@@ -42,7 +42,7 @@ from .k8s_utils import (
     get_k8s_pod_name_from_namespace,
     k8s_create_namespace,
 )
-from .Environments import Environments
+from .DevEnvironments import DevEnvironments
 
 from typing import List
 from .check_aws import (
@@ -191,12 +191,12 @@ class GismoCloudDeploy(object):
 
 
     def _is_aws(self) -> bool:
-        if self.env == Environments.AWS.name:
+        if self.env == DevEnvironments.AWS.name:
             return True
         return False
 
     def _is_local(self) -> bool:
-        if self.env == Environments.LOCAL.name:
+        if self.env == DevEnvironments.LOCAL.name:
             return True
         return False
 
