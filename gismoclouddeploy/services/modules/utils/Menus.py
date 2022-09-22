@@ -100,7 +100,7 @@ class Menus(object):
 
         # path 
         self._base_path = os.getcwd()
-
+        self._process_first_n_files = 1
         # config
 
         self._config_yaml_dcit = {}
@@ -278,9 +278,10 @@ class Menus(object):
             logging.info("Step 2 , check file structur corrects")
             self.handle_verify_project_folder()
             logging.info("Step 3 , input questions")
-            self.hande_proecess_files_inputs_questions()
+            self.handle_proecess_files_inputs_questions()
             logging.info("Step 4 , generate cluster.yaml from tempaltes")
             self.generate_config_history_path_and_export_eks_config()
+            self.handle_input_projet_tags()
             self.import_ec2_variables_from_templates()
             self.print_variables_and_request_confirmation()
 
@@ -297,7 +298,7 @@ class Menus(object):
             self.import_from_ec2_config()
             self.import_from_eks_config()
             logging.info("Step 3 , handle ask question")
-            self.hande_proecess_files_inputs_questions()
+            self.handle_proecess_files_inputs_questions()
             self.print_variables_and_request_confirmation()
             
 
@@ -322,7 +323,7 @@ class Menus(object):
             logging.info("Step 3 , handle ask question")
 
             self.handle_verify_project_folder()
-            self.hande_proecess_files_inputs_questions()
+            self.handle_proecess_files_inputs_questions()
             self.print_variables_and_request_confirmation()
             print(f"self._project_path_name,:{self._project_path_name,}")
             run_process_files(
@@ -434,34 +435,40 @@ class Menus(object):
         verify_keys_in_eks_configfile(config_dict=self._eks_config_yaml_dcit)
 
 
-
-    def hande_proecess_files_inputs_questions(self):
-
-        self._is_ssh  = handle_yes_or_no_question(
-            input_question=f"Run any ssh debug command? If `no`, there will be instructions show how to use run-files command",
-            default_answer="no"
-        )
-        logging.info("Project name")
+    def handle_input_projet_tags(self):
+        logging.info("Project tags")
         self._project_in_tags = hanlde_input_project_name_in_tag(
             input_question="Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path)",
             default_answer = self._project_in_tags
     
         )
-        # if self._is_ssh is False:
-        #     is_process_default_file  = handle_yes_or_no_question(
-        #         input_question=f"Do you want to process the defined files in config.yaml?",
-        #         default_answer="no"
-        #     )
+        return 
 
-            # if is_process_default_file is False:
-        self._process_first_n_files = handle_input_number_of_process_files_question(
-            input_question="How many files you would like process? \n Input an postive integer number. \n Input '0' to process all files in the data bucket \n Otherwise, It processes first 'n'( n as input) number files.",
-            default_answer=1,
+    def handle_proecess_files_inputs_questions(self):
+        if self._menus_action == MenuAction.create_cloud_resources_and_start.name or self._menus_action == MenuAction.resume_from_existing.name:
+            self._is_ssh  = handle_yes_or_no_question(
+                input_question=f"Run any ssh debug mode? If `no`, there will be instructions to help you create run-files command",
+                default_answer="no"
+            )
+
+        logging.info("Process all files in buckets?")
+
+        is_process_all_file = handle_yes_or_no_question(
+            input_question=f"Process all files in the databucket that defined in config.yaml?",
+            default_answer="no"
         )
+        if is_process_all_file is False:
+            self._process_first_n_files = handle_input_number_of_process_files_question(
+                input_question="How many files you would like process? \n Input an postive integer number. \n Input '0' to process all files in the data bucket \n Otherwise, It processes first 'n'( n as input) number files.",
+                default_answer=1,
+            )
+        else:
+            
+            self._process_first_n_files = 0
+            logging.info(f"Process all files: -n {self._process_first_n_files}")
+
         logging.info(f"Process first {self._process_first_n_files} files")
-            # else:
-            #     self._process_first_n_files = None
-            #     logging.info("Process default files")
+
         if self._menus_action == MenuAction.create_cloud_resources_and_start.name or self._menus_action == MenuAction.resume_from_existing.name:
             logging.info("Input the number of instances ")
             self._num_of_nodes = handle_input_number_of_scale_instances_question(
@@ -470,11 +477,6 @@ class Menus(object):
                 max_node= self._max_nodes
             )
             logging.info(f"Number of generated instances:{self._num_of_nodes}")
-
-            # self._cleanup_resources_after_completion = handle_yes_or_no_question(
-            #     input_question="Do you want to clean up cloud resources after completion?",
-            #     default_answer="yes"
-            # )
         if self._menus_action == MenuAction.create_cloud_resources_and_start.name or self._menus_action == MenuAction.resume_from_existing.name:
             self._runfiles_command = f"python3 main.py run-files -n {self._process_first_n_files} -s {self._num_of_nodes} -p {self._project_path_name} -c {self._cluster_name}"
         elif self._menus_action == MenuAction.run_in_local_machine.name:
