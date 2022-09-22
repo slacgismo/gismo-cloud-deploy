@@ -1,7 +1,7 @@
 
 from distutils import log
 from enum import Enum
-
+from terminaltables import AsciiTable
 import fnmatch
 import re
 from transitions import Machine
@@ -336,16 +336,14 @@ class GismoCloudDeploy(object):
         
         self._num_namesapces = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
         num_files_per_namespace =  math.ceil(self._total_number_files/self._num_namesapces)
-        # print(f"self._total_num_nodes :{self._total_num_nodes}, self._num_worker_pods_per_namespace :{self._num_worker_pods_per_namespace}, self._num_namesapces: {self._num_namesapces}")
-        # define how many worker pods replcas in each namespaces. 
-        math.ceil(self._total_num_nodes/self._num_namesapces) - 1
-        # self._worker_desired_replicas_per_namespaces =  self._num_worker_pods_per_namespace - 1
+        # ------------------------------------------
+        # calcuate how many worker in each namespaces
+        # ------------------------------------------
         self._worker_desired_replicas_per_namespaces =  int(math.ceil(self._total_num_nodes/self._num_namesapces) - 1)
        
         if self._worker_desired_replicas_per_namespaces < 1 :
             self._worker_desired_replicas_per_namespaces = 1
-        # print("------------------------------")
-        # print(f"self._worker_desired_replicas_per_namespaces : {self._worker_desired_replicas_per_namespaces}------------------------")
+ 
         delay = 2
         for i in range(self._num_namesapces ):
             curr_time = int(time.time())
@@ -429,8 +427,23 @@ class GismoCloudDeploy(object):
                 logging.info(f"{service_name} : {updated_name}")
 
 
-    
+        ec2_resources = [
+            ["parameters","values"],
+            ['environments', self.env],
+            ['project folder', self.project],
+            ['worker replicas', self._worker_desired_replicas],
+            ['number of namespaces', self._num_namesapces],
+            ['number of files per namespace', num_files_per_namespace],
+            ['image_tag', self._user_id],
+            ['total process files', self._total_number_files],
+            ['databucket', self._data_bucket],
+            ['column key', self._process_column_keywords],
+            ['file match pattern', self._file_pattern],
+            ['generated sqe', self._sqs_url]
 
+        ]
+        table2 = AsciiTable(ec2_resources)
+        print(table2.table)
         return 
 
 
