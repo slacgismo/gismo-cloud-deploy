@@ -799,18 +799,18 @@ def convert_yaml_to_json(yaml_file: str = None):
 
 def verify_keys_in_configfile(config_dict:dict):
     try:
-        assert 'worker_config' in config_dict
+        # assert 'worker_config' in config_dict
         # assert 'services_config_list' in self._config
         # assert 'aws_config' in self._config
 
 
         # worker_config
-        worker_config_dict = config_dict['worker_config']
-        assert 'data_bucket' in worker_config_dict
+        # worker_config_dict = config_dict['worker_config']
+        assert 'data_bucket' in config_dict
         # assert 'default_process_files'in  worker_config_dict
-        assert 'file_pattern' in worker_config_dict
-        assert 'process_column_keywords' in worker_config_dict
-        assert 'saved_bucket' in worker_config_dict
+        assert 'file_pattern' in config_dict
+        assert 'process_column_keywords' in config_dict
+        assert 'saved_bucket' in config_dict
 
 
     except AssertionError as e:

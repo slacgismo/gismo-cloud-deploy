@@ -229,30 +229,30 @@ class GismoCloudDeploy(object):
             k8s_config =  convert_yaml_to_json(yaml_file=k8s_configfile)
             self._services_config_list = k8s_config["services_config_list"]
             # worker config
-            worker_config = self._config["worker_config"]
-            self._data_bucket = worker_config["data_bucket"]
-            self._file_type = worker_config["file_pattern"]
+            # worker_config = self._config
+            self._data_bucket = self._config["data_bucket"]
+            self._file_type = self._config["file_pattern"]
 
-            if 'solver' in worker_config:
-                self._solver = worker_config['solver']
+            if 'solver' in self._config:
+                self._solver = self._config['solver']
             if self._solver is not None:
                 self._solver_name = self._solver['solver_name']
                 self._solver_lic_local_path = self._solver['solver_lic_local_path']
                 self._solver_lic_target_path = self._solver['solver_lic_target_path']
                 self._solver_lic_file_name = self._solver['solver_lic_file_name']
 
-            self._code_template_folder  =  worker_config["code_template_folder"]
-            self._saved_path_cloud = worker_config["saved_path_cloud"]
-            self._saved_path_local = worker_config["saved_path_local"]
+            self._code_template_folder  =  self._config["code_template_folder"]
+            self._saved_path_cloud = self._config["saved_path_cloud"]
+            self._saved_path_local = self._config["saved_path_local"]
             
-            self._repeat_number_per_round = worker_config["repeat_number_per_round"]
-            self._is_celeryflower_on = worker_config["is_celeryflower_on"]
-            self._num_worker_pods_per_namespace = worker_config["num_worker_pods_per_namespace"]
-            self._filename = worker_config["filename"]
-            self._acccepted_idle_time = worker_config["acccepted_idle_time"]
-            self._interval_of_checking_sqs = worker_config["interval_of_checking_sqs"]
-            self._process_column_keywords = worker_config['process_column_keywords']
-            self._saved_bucket = worker_config['saved_bucket']
+            self._repeat_number_per_round = self._config["repeat_number_per_round"]
+            self._is_celeryflower_on = self._config["is_celeryflower_on"]
+            self._num_worker_pods_per_namespace = self._config["num_worker_pods_per_namespace"]
+            self._filename = self._config["filename"]
+            self._acccepted_idle_time = self._config["acccepted_idle_time"]
+            self._interval_of_checking_sqs = self._config["interval_of_checking_sqs"]
+            self._process_column_keywords = self._config['process_column_keywords']
+            self._saved_bucket = self._config['saved_bucket']
 
 
             # for key in self._filename.keys():
@@ -285,11 +285,10 @@ class GismoCloudDeploy(object):
             
 
 
-            # aws config
-            aws_config = self._config["aws_config"]
+        
             self._cluster_file  = f"{self._base_path}/projects/{self.project}/cluster.yaml"
-            self._scale_eks_nodes_wait_time  = aws_config['scale_eks_nodes_wait_time']
-            self._interval_of_wait_pod_ready  = aws_config['interval_of_wait_pod_ready']
+            self._scale_eks_nodes_wait_time  = self._config['scale_eks_nodes_wait_time']
+            self._interval_of_wait_pod_ready  = self._config['interval_of_wait_pod_ready']
           
         except Exception as e:
             raise Exception(f"parse config file error :{e}")
@@ -321,8 +320,8 @@ class GismoCloudDeploy(object):
             s3_client=s3_client,
             file_pattern=self._file_pattern,
             )
-        print(f"self._default_files -------{self._default_files}")
-        print(f"self._default_files -------{self._default_files}")
+        
+
         self._total_number_files = len(n_files)
         self._num_namesapces = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
         num_files_per_namespace =  math.ceil(self._total_number_files/self._num_namesapces)
@@ -973,6 +972,11 @@ def create_config_parameters_to_app(
         raise ValueError(f"pase config parametes failed {e}")
     return config_str
 
+
+# def check_file_extension(
+#     files_list:list,
+#     extension:
+# )
 
 # def get_file_path_based_on_env(file_name, env, file_path_local, file_path_cloud, repeat_index, user_id):
 #     """ return full saved file name and path based on env"""

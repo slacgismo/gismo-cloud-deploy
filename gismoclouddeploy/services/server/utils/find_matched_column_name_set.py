@@ -13,16 +13,21 @@ logging.basicConfig(
 
 
 def find_matched_column_name_set(
-    columns_key: str,
-    bucket_name: str,
-    file_path_name: str,
-    s3_client: "botocore.client.S3",
+    columns_key: str = None,
+    bucket_name: str = None,
+    file_path_name: str = None,
+    s3_client: "botocore.client.S3" = None,
+    file_extension: str = ".csv"
 ) -> Set[set]:
     """
     Find the match column name from key word. if matched column has no value inside, it will be skipped.
     If this function find exactly match with key and column name , it return the the match column name in set.
     If no exactly match key was found, it return the partial match key with longest data set.
     """
+    # check if file has .csv type , if not return "None"
+    is_csv = re.search(file_extension, file_path_name)
+    if not is_csv:
+        return set()
     try:
         total_columns = read_column_from_csv_from_s3(
             bucket_name=bucket_name, file_path_name=file_path_name, s3_client=s3_client

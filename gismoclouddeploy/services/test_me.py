@@ -91,17 +91,24 @@ def find_matched_column_name_set(
 
 
 
-s3_clinet = connect_aws_client(
-    's3',
-    key_id= AWS_ACCESS_KEY_ID,
-    secret=AWS_SECRET_ACCESS_KEY,
-    region=AWS_DEFAULT_REGION
-)
-match_set= find_matched_column_name_set(
-    columns_key="^Pow",
-    bucket_name='pv.insight.nrel',
-    file_path_name='PVO/PVOutput/46851.csv',
-    s3_client=s3_clinet
-)
+# s3_clinet = connect_aws_client(
+#     's3',
+#     key_id= AWS_ACCESS_KEY_ID,
+#     secret=AWS_SECRET_ACCESS_KEY,
+#     region=AWS_DEFAULT_REGION
+# )
+# match_set= find_matched_column_name_set(
+#     columns_key="^Pow",
+#     bucket_name='pv.insight.nrel',
+#     file_path_name='PVO/PVOutput/46851.csv',
+#     s3_client=s3_clinet
+# )
 
-print(match_set)
+# print(match_set)
+
+is_csv = re.search('.csv', 'PVO/PVOutput/46851.csv')
+if not is_csv:
+    print("not match")
+else:
+    print("match")
+print(is_csv)

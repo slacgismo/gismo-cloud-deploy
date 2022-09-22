@@ -62,9 +62,7 @@ def check_task_status(task_id: str = None):
 
 @cli.command("process_files")
 @click.argument("worker_config_str", nargs=1)
-
 def process_files(worker_config_str: str):
-    print("this is app process files")
     try:
         worker_config_json = json.loads(worker_config_str)
     except Exception as e:
@@ -97,17 +95,19 @@ def process_files(worker_config_str: str):
     repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])
     for i in range(repeat_number_per_round):
         for index_file, file in enumerate(default_files):
-            if len(worker_config_json["process_column_keywords"]) != 0 :
-                matched_column_set = find_matched_column_name_set(
+            columns_key=worker_config_json["process_column_keywords"] 
+            matched_column_set = find_matched_column_name_set(
                     bucket_name=worker_config_json["data_bucket"],
-                    columns_key=worker_config_json["process_column_keywords"],
+                    columns_key=columns_key,
                     file_path_name=file,
                     s3_client=s3_client,
+                    file_extension = ".csv"
                 )
-            else:
+            
+            if len(matched_column_set) < 1:
+                # if no match return no Column set
                 matched_column_set = {"None"}
 
-            # print(f"matched_column_set {matched_column_set}")
             for index_colium,  column in enumerate(matched_column_set):
                 task_input_json = worker_config_json
                 task_input_json["curr_process_file"] = file
@@ -120,11 +120,6 @@ def process_files(worker_config_str: str):
                     "user_id": {"DataType": "String", "StringValue": user_id},
                 }
                 send_time = time.time()
-                # # num_total_tasks = len(default_files)*len(matched_column_set)*repeat_number_per_round
-                # if i == repeat_number_per_round-1 and index_colium == len(matched_column_set) -1 and index_file == len(default_files) - 1:
-                #     num_total_tasks = len(task_ids)
-                # else:
-                #     num_total_tasks = 0 
                 msg_body = {
                     "data": None,
                     "error": None,
