@@ -209,8 +209,7 @@ def menus():
         relative_project_folder = menus.get_relative_project_folder()
         ssh_run_file_command = menus.get_run_files_command()
         is_cleanup_after_completion  = menus.get_cleanup_after_completion()
-        # print(f"is_confirm :{is_confirm}, menus_action {menus_action} project_in_tags: {project_in_tags}\n local_pem_path: {local_pem_path}\n ec2_export_full_path_name:{ec2_export_full_path_name}, \n eks_export_full_path_name: {eks_export_full_path_name},\n relative_project_folder:{relative_project_folder} \n ssh_command:{ssh_run_file_command}")
-        # print("----------------")
+
         
         handle_aws = HandleAWS(
             securitygroup_name = 'SSH-ONLY',

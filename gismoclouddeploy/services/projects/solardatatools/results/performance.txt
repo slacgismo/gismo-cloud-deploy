@@ -2,22 +2,22 @@
 | Performance                      | Repeat 0                        |  |
 +----------------------------------+---------------------------------+--+
 | Project                          | solardatatools                  |  |
-| Total number of nodes            | 1                               |  |
-| Number of namespaces             | 1                               |  |
+| Total number of nodes            | 2                               |  |
+| Number of namespaces             | 2                               |  |
 | Number of workers per namesapces | 1                               |  |
 | Instance type                    | t2.large                        |  |
 | File name                        | logs-0.csv                      |  |
-| total_tasks                      | 1                               |  |
-| average_task_duration            | 14.06                           |  |
-| min_duration                     | 14.06                           |  |
-| shortest_task                    | PVO/PVOutput/10010.csv/Power(W) |  |
-| max_duration                     | 14.06                           |  |
+| total_tasks                      | 2                               |  |
+| average_task_duration            | 14.64                           |  |
+| min_duration                     | 14.56                           |  |
+| shortest_task                    | PVO/PVOutput/10059.csv/Power(W) |  |
+| max_duration                     | 14.72                           |  |
 | longest_task                     | PVO/PVOutput/10010.csv/Power(W) |  |
 | num_error_task                   | 0                               |  |
 | num_unfinished_tasks             | 0                               |  |
-| task_duration_in_parallelism     | 14.06                           |  |
-| tasks_durtaion_sum               | 14.06                           |  |
-| initial_process_time             | 32.833608865737915              |  |
-| total_process_time               | 57.10870909690857               |  |
-| effeciencyFactor                 | 1.0                             |  |
+| task_duration_in_parallelism     | 14.76                           |  |
+| tasks_durtaion_sum               | 29.27                           |  |
+| initial_process_time             | 271.45306396484375              |  |
+| total_process_time               | 301.96464586257935              |  |
+| effeciencyFactor                 | 0.99                            |  |
 +----------------------------------+---------------------------------+--+

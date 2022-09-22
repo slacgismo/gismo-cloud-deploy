@@ -333,20 +333,22 @@ class GismoCloudDeploy(object):
         
 
         self._total_number_files = len(n_files)
+        
         self._num_namesapces = math.ceil( self._total_num_nodes / self._num_worker_pods_per_namespace )
         num_files_per_namespace =  math.ceil(self._total_number_files/self._num_namesapces)
-
+        # print(f"self._total_num_nodes :{self._total_num_nodes}, self._num_worker_pods_per_namespace :{self._num_worker_pods_per_namespace}, self._num_namesapces: {self._num_namesapces}")
         # define how many worker pods replcas in each namespaces. 
 
         self._worker_desired_replicas_per_namespaces =  self._num_worker_pods_per_namespace - 1
         if self._worker_desired_replicas_per_namespaces < 1 :
             self._worker_desired_replicas_per_namespaces = 1
-        
+        delay = 2
         for i in range(self._num_namesapces ):
             curr_time = int(time.time())
         
             namespace = f"{curr_time}-"+ self._user_id  
             self._k8s_namespace_set.add(namespace)
+            time.sleep(delay)
 
 
         # assign process file into each namespace.
@@ -580,60 +582,14 @@ class GismoCloudDeploy(object):
 
     def handle_verify_k8s_services(self, event):
         logging.info("handle_verify_k8s_services")
+    
         
-        # threads = list()
-        # try:
-        #     for service, value in self._services_con string indices must be integersfig_list.items():
-        #         desired_replicas = value["desired_replicas"]
-        #         logging.info(f"{service}: desired_replicas: {desired_replicas}")
-        #         wait_pod_ready(
-        #             num_container=desired_replicas,
-        #             container_prefix=service,
-        #             counter=self._interval_of_wait_pod_ready,
-        #             delay= 1
-        #         )
-        #         # x = threading.Thread(
-        #         #     target=wait_pod_ready,
-        #         #     args=(
-        #         #         desired_replicas,
-        #         #         service,
-        #         #         self._interval_of_wait_pod_ready,
-        #         #         1,
-        #         #     ),
-        #         # )
-        #         # x.name = service
-        #         # threads.append(x)
-        #         # x.start()
-        # except Exception as e:
-        #     raise Exception(f"Verify k8 services failed")
-
-        # logging.info("get server's pod name in each namespace")
-
-        # ready_server_list = []
-        # wait_time = 25
-        # delay = 5
-        # while wait_time > 0:
-        #     logging.info(f"K8s reboot Wait {wait_time} sec")
-        #     time.sleep(delay)
-        #     wait_time -= delay
-
-        # for namespace in self._k8s_namespace_set:
-        #     server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
-        #     if server_name is None:
-        #         continue
-        #     _server_info = {'name': server_name, 'namespace':namespace}
-        #     ready_server_list.append(_server_info)
-
-        # if len(ready_server_list) != len(self._k8s_namespace_set):
-        #     raise Exception(f"one of the namespace has no server ready")
-        # self._ready_server_list = ready_server_list
-        # logging.info(f"ready server list {ready_server_list}")
-        # return
-        ready_server_list = []
         wait_time = 120
         delay = 5
-        
+        ready_server_list =[]
+        logging.info(f"self._k8s_namespace_set :{self._k8s_namespace_set}")
         while wait_time > 0 and len(ready_server_list) < len(self._k8s_namespace_set):
+            ready_server_list = []
             for namespace in self._k8s_namespace_set:
                 server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
                 if server_name is None:
@@ -966,8 +922,8 @@ def send_command_to_server(
             pod_name=server_name,
             namespace = namespace,
         )
-        logging.info(f"invoke k8s resp:{resp}")
-        print(f"namespace:{namespace} server_name:{server_name} resp: {resp} ")
+        # logging.info(f"invoke k8s resp:{resp}")
+        # print(f"namespace:{namespace} server_name:{server_name} resp: {resp} ")
     return None
 
 def create_config_parameters_to_app(
