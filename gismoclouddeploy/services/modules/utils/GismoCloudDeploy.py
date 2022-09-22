@@ -551,12 +551,14 @@ class GismoCloudDeploy(object):
                     continue
                 
                 deployment_file = self._base_path +"/"+ value["deployment_file"]
-                
-                desired_replicas = value["desired_replicas"]
+                if service_name == "worker":
+                    desired_replicas = self._worker_desired_replicas_per_namespaces
+                else:
+                    desired_replicas = value["desired_replicas"]
                 image_base_url = value["image_name"]
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
-                print(f"service_name {service_name} image_base_url: {image_base_url}:{image_tag}")
+                print(f"service_name {service_name} image_base_url: {image_base_url}:{image_tag}, desired_replicas {desired_replicas}")
                 # create deployment 
                 create_or_update_k8s_deployment(
                             service_name=service_name,

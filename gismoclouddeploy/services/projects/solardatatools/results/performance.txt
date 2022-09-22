@@ -8,16 +8,16 @@
 | Instance type                    | t2.large                        |  |
 | File name                        | logs-0.csv                      |  |
 | total_tasks                      | 2                               |  |
-| average_task_duration            | 14.64                           |  |
-| min_duration                     | 14.56                           |  |
+| average_task_duration            | 12.58                           |  |
+| min_duration                     | 12.47                           |  |
 | shortest_task                    | PVO/PVOutput/10059.csv/Power(W) |  |
-| max_duration                     | 14.72                           |  |
+| max_duration                     | 12.69                           |  |
 | longest_task                     | PVO/PVOutput/10010.csv/Power(W) |  |
 | num_error_task                   | 0                               |  |
 | num_unfinished_tasks             | 0                               |  |
-| task_duration_in_parallelism     | 14.76                           |  |
-| tasks_durtaion_sum               | 29.27                           |  |
-| initial_process_time             | 271.45306396484375              |  |
-| total_process_time               | 301.96464586257935              |  |
+| task_duration_in_parallelism     | 12.69                           |  |
+| tasks_durtaion_sum               | 25.16                           |  |
+| initial_process_time             | 38.0653121471405                |  |
+| total_process_time               | 64.00354790687561               |  |
 | effeciencyFactor                 | 0.99                            |  |
 +----------------------------------+---------------------------------+--+

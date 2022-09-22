@@ -1,3 +1,3 @@
 ,bucket,file,column,solver,length,capacity_estimate,power_units,data_sampling,data_quality_score,data_clearness_score,time_shifts,num_clip_points,tz_correction,inverter_clipping,normal_quality_scores,capacity_changes
-0,pv.insight.nrel,PVO/PVOutput/10010.csv,Power(W),MOSEK,5.03,4.71,W,5,96.4,17.3,False,0,0,False,True,False
 0,pv.insight.nrel,PVO/PVOutput/10059.csv,Power(W),MOSEK,4.41,5.28,W,5,98.4,31.8,False,0,0,False,True,False
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,Power(W),MOSEK,5.03,4.71,W,5,96.4,17.3,False,0,0,False,True,False
