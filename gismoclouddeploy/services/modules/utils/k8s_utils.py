@@ -261,6 +261,12 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
         if podname == pod_name_prefix:
             # status = i.status.conditions
             name = i.metadata.name
+            ready = False
+            container_statuses = i.status.container_statuses
+            if container_statuses is None:
+                continue
+            if len(container_statuses) >= 1:
+                ready = i.status.container_statuses[-1].ready
             ready = i.status.container_statuses[-1].ready
             
             if ready is True:
@@ -270,6 +276,7 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
                 timestamp =  started_at.timestamp()
                 pod_info = {"name": name, "timestamp": timestamp}
                 pods.append(pod_info)
+                
     sort_orders = sorted(pods, key=lambda d: d['timestamp'], reverse=True) 
     if len(sort_orders) > 0 :
         res = [ sub['name'] for sub in sort_orders ][0]

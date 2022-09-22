@@ -646,6 +646,12 @@ class GismoCloudDeploy(object):
             wait_time -= delay
 
         self._ready_server_list = ready_server_list
+        wait_time = 16
+        delay = 2
+        while wait_time > 0:
+            time.sleep(delay)
+            wait_time -= delay
+            logging.info(f"Waiting ..{wait_time} sec")
         logging.info("Server is ready")
         return 
 
