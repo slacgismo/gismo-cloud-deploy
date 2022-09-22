@@ -1,5 +1,6 @@
 
 from http import client
+from .InputQuestions import InputQuestions
 import imp
 import glob
 import shutil
@@ -17,7 +18,6 @@ import socket
 
 from .handle_inputs import (
     handle_yes_or_no_question,
-    handle_input_s3_bucket_question,
     handle_input_number_of_process_files_question,
     handle_input_number_of_scale_instances_question,
     hanlde_input_project_name_in_tag,
@@ -477,7 +477,7 @@ class Menus(object):
     def handle_input_projet_tags(self):
         logging.info("Project tags")
         self._project_in_tags = hanlde_input_project_name_in_tag(
-            input_question="Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path)",
+            input_question= InputQuestions.input_project_name_in_tags.value,
             default_answer = self._project_in_tags
     
         )
@@ -486,19 +486,23 @@ class Menus(object):
     def handle_proecess_files_inputs_questions(self):
         if self._menus_action == MenuAction.create_cloud_resources_and_start.name or self._menus_action == MenuAction.resume_from_existing.name:
             self._is_ssh  = handle_yes_or_no_question(
-                input_question=f"Run any ssh debug mode? If `no`, there will be instructions to help you create run-files command",
+                input_question=InputQuestions.is_debug_mode_questions.value,
                 default_answer="no"
             )
 
         logging.info("Process all files in buckets?")
+        if self._is_ssh is True:
+            return 
+
+        # if not debug mode
 
         is_process_all_file = handle_yes_or_no_question(
-            input_question=f"Process all files in the databucket that defined in config.yaml?",
+            input_question=InputQuestions.is_process_all_files_questions.value,
             default_answer="no"
         )
         if is_process_all_file is False:
             self._process_first_n_files = handle_input_number_of_process_files_question(
-                input_question="How many files you would like process? \n Input an postive integer number. \n Input '0' to process all files in the data bucket \n Otherwise, It processes first 'n'( n as input) number files.",
+                input_question=InputQuestions.input_the_first_n_files_questions.value,
                 default_answer=1,
             )
         else:
@@ -511,22 +515,25 @@ class Menus(object):
         if self._menus_action == MenuAction.create_cloud_resources_and_start.name or self._menus_action == MenuAction.resume_from_existing.name:
             logging.info("Input the number of instances ")
             self._num_of_nodes = handle_input_number_of_scale_instances_question(
-                input_question="How many instances you would like to generate to run this application in parallel? \n Input an postive integer: ",
+                input_question=InputQuestions.input_number_of_generated_instances_questions.value,
                 default_answer=1,
                 max_node= self._max_nodes
             )
             logging.info(f"Number of generated instances:{self._num_of_nodes}")
+        
+        # generate run files command 
         if self._menus_action == MenuAction.create_cloud_resources_and_start.name or self._menus_action == MenuAction.resume_from_existing.name:
             self._runfiles_command = f"python3 main.py run-files -n {self._process_first_n_files} -s {self._num_of_nodes} -p {self._project_path_name} -c {self._cluster_name}"
         elif self._menus_action == MenuAction.run_in_local_machine.name:
             self._runfiles_command = f"python3 main.py run-files -n {self._process_first_n_files} -p {self._project_path_name}"
 
+        return 
 
 
     def handle_enter_input_project_path(self):
         default_project = self._template_project
         input_project_path = handle_input_project_path_question(
-            input_question="Enter project folder (Hit `Enter` button to use default path",
+            input_question=InputQuestions.input_project_folder_questions.value,
             default_answer=default_project
         )
         self._project_path_name = basename(input_project_path)

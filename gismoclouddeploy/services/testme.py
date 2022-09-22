@@ -106,9 +106,13 @@ def find_matched_column_name_set(
 
 # print(match_set)
 
-is_csv = re.search('.csv', 'PVO/PVOutput/46851.csv')
-if not is_csv:
-    print("not match")
-else:
-    print("match")
-print(is_csv)
+# is_csv = re.search('.csv', 'PVO/PVOutput/46851.csv')
+# if not is_csv:
+#     print("not match")
+# else:
+#     print("match")
+# print(is_csv)
+
+# from modules.utils.InputQuestions import InputQuestions
+
+# print(InputQuestions.is_debug_mode_questions.value)

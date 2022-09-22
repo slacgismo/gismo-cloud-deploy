@@ -322,10 +322,6 @@ def menus():
         relative_project_folder = menus.get_relative_project_folder()
         relative_saved_config_files_folder_name = menus.get_relative_saved_config_files_folder_name()
         ssh_run_file_command = menus.get_run_files_command()
-
-
-        print(f"saved_eks_cluster_file : {saved_eks_cluster_file}")
-        return 
         # pem_file = menus.get_pem_full_path_name()
         local_project_path = menus.get_project_path()
         handle_ec2 = create_ec2_object_from_dict(
@@ -375,8 +371,6 @@ def menus():
         
         is_run_custom_ssh_command = menus.get_is_run_custom_ssh_command()
         if is_run_custom_ssh_command is True:
-    
-
             # Run any command 
             is_breaking = False
             while not is_breaking:
