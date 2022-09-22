@@ -42,6 +42,7 @@ from .k8s_utils import (
     get_k8s_pod_name_from_namespace,
     k8s_create_namespace,
 )
+from .Environments import Environments
 
 from typing import List
 from .check_aws import (
@@ -60,9 +61,6 @@ from .command_utils import (
 import coloredlogs, logging
 coloredlogs.install()
 
-class Environments(enum.Enum):
-    LOCAL = 0
-    AWS = 1
 
 class GismoCloudDeploy(object):
     states=[
@@ -735,7 +733,8 @@ class GismoCloudDeploy(object):
             cluster_name=self._cluster_name,
             nodegroup_name=self._nodegroup_name,
             sqs_url=self._sqs_url,
-            initial_process_time= self._initial_process_time
+            initial_process_time= self._initial_process_time,
+            env=self.env
         )
 
     def generate_report(self, event):

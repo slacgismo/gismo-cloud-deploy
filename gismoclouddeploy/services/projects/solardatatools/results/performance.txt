@@ -1,0 +1,23 @@
++----------------------------------+---------------------------------+--+
+| Performance                      | Repeat 0                        |  |
++----------------------------------+---------------------------------+--+
+| Project                          | solardatatools                  |  |
+| Total number of nodes            | 1                               |  |
+| Number of namespaces             | 1                               |  |
+| Number of workers per namesapces | 1                               |  |
+| Instance type                    | t2.large                        |  |
+| File name                        | logs-0.csv                      |  |
+| total_tasks                      | 1                               |  |
+| average_task_duration            | 17.1                            |  |
+| min_duration                     | 17.1                            |  |
+| shortest_task                    | PVO/PVOutput/10010.csv/Power(W) |  |
+| max_duration                     | 17.1                            |  |
+| longest_task                     | PVO/PVOutput/10010.csv/Power(W) |  |
+| num_error_task                   | 0                               |  |
+| num_unfinished_tasks             | 0                               |  |
+| task_duration_in_parallelism     | 17.1                            |  |
+| tasks_durtaion_sum               | 17.1                            |  |
+| initial_process_time             | 40.46753001213074               |  |
+| total_process_time               | 61.70595717430115               |  |
+| effeciencyFactor                 | 1.0                             |  |
++----------------------------------+---------------------------------+--+

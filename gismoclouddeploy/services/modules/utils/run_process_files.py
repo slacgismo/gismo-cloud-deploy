@@ -2,7 +2,7 @@
 import time
 
 from transitions import Machine
-
+from .Environments import Environments
 
 
 from .GismoCloudDeploy import Environments, GismoCloudDeploy
