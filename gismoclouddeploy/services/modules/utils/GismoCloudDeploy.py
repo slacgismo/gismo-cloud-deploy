@@ -558,7 +558,7 @@ class GismoCloudDeploy(object):
                 image_base_url = value["image_name"]
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
-                print(f"service_name {service_name} image_base_url: {image_base_url}:{image_tag}, desired_replicas {desired_replicas}")
+                # print(f"service_name {service_name} image_base_url: {image_base_url}:{image_tag}, desired_replicas {desired_replicas}")
                 # create deployment 
                 create_or_update_k8s_deployment(
                             service_name=service_name,
@@ -839,13 +839,6 @@ def return_process_filename_base_on_command_and_sort_filesize(
                 logging.info(f"Process first {first_n_files} files")
                 for file in files_dict[0 : int(first_n_files)]:
                     n_files.append(file)
-                    # file_name = file['Key']
-                    # match_file = glob.glob(file_globbing_key)
-                    # print(f"---match_file :{match_file}")
-                    # split_tup = os.path.splitext(file_name)
-                    # file_extension = split_tup[1]
-                    # if file_extension == file_type:
-                    #     n_files.append(file)
         except Exception as e:
             logging.error(f"Input {first_n_files} is not an integer")
             raise e
@@ -891,7 +884,7 @@ def send_command_to_server(
 ) -> List[str]:
 
     for index, server_dict in enumerate(read_server_list):
-        print(f"index :{index}")
+        # print(f"index :{index}")
         if not 'name' in server_dict or not 'namespace' in server_dict:
             raise ValueError("name or namespace key does not exists")
         
@@ -959,7 +952,7 @@ def create_config_parameters_to_app(
         config_dict['solver'] = solver
         config_dict['user_id'] = user_id
         config_str = json.dumps(config_dict)
-        logging.info(config_str)
+
     except ValueError as e:
         raise ValueError(f"pase config parametes failed {e}")
     return config_str

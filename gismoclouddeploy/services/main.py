@@ -249,10 +249,6 @@ def menus():
             login_user = ec2_login_user,
             tags = ec2_tags,
         )
-        # pem_file_path = menus.get_pem_full_path_name()
-        # pem2 = handle_ec2.get_pem_file_full_path_name()
-        # print(pem_file_path, pem2)
-
         handle_ec2.set_ec2_action(action=EC2Action.create.name)
         handle_ec2.handle_ec2_action()
         handle_ec2.export_parameters_to_file()
@@ -270,21 +266,12 @@ def menus():
             local_cluster=saved_eks_cluster_file,
             saved_config_folder_name=relative_saved_config_files_folder_name
         )
-        handle_ec2.ssh_update_eks_cluster_file_to_project_folder(
-            local_cluster=saved_eks_cluster_file,
-            project_folder_anme= relative_project_folder
-
-        )
-
         logging.info("Create KES")
-
         handle_ec2.handle_ssh_eks_action(
             eks_action=EKSAction.create.name,
             cluster_file=cluster_file,
             relative_saved_config_folder_name=relative_saved_config_files_folder_name
         )
-
-
         is_run_custom_ssh_command = menus.get_is_run_custom_ssh_command()
         if is_run_custom_ssh_command is True:
             logging.info("run process file")
@@ -337,8 +324,6 @@ def menus():
 
        
         
-
-        
         
         print(f"saved_eks_cluster_file : {saved_eks_cluster_file}")
         # pem_file = menus.get_pem_full_path_name()
@@ -351,6 +336,7 @@ def menus():
             pem_file_path = pem_file_path
         )
 
+        
        
 
         
@@ -388,12 +374,6 @@ def menus():
             relative_project_folder_name=relative_project_folder
         )
         
-        logging.info(f"Update eks file: {relative_project_folder}")
-        handle_ec2.ssh_update_eks_cluster_file_to_project_folder(
-            local_cluster=saved_eks_cluster_file,
-            project_folder_anme= relative_project_folder
-
-        )
 
         # Run any command 
         is_breaking = False
@@ -437,7 +417,7 @@ def menus():
             aws_region=AWS_DEFAULT_REGION,
             pem_file_path = pem_file_path
         )
- # check ec2 status 
+        # check ec2 status 
         waittime = 60
         delay = 1
         is_ec2_state_ready = False
@@ -492,122 +472,6 @@ def menus():
         logging.info("Run in local machine")
         logging.info("Please read  `run-files --help` to process run-files command in your local machine!!")
 
-
-# # ***************************
-# #  Handle EC2 Bastion
-# # ***************************
-# @main.command()
-
-# def handle_ec2():
-#     handle_ec2_bastion = HandleEC2Bastion(
-#         aws_access_key=AWS_ACCESS_KEY_ID,
-#         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-#         aws_region= AWS_DEFAULT_REGION
-#     )
-#     # handle_ec2_bastion.testing_fun()
-#     # return
-#     handle_ec2_bastion.set_ec2_action()
-#     # get action put
-#     action = handle_ec2_bastion.get_ec2_action()
-#     handle_ec2_bastion.handle_import_configfile()
-#     handle_ec2_bastion.change_config_parameters_from_input()
-#     handle_ec2_bastion.prepare_ec2()
-
-#     if action == EC2Action.start.name:
-#         is_confirm = handle_ec2_bastion.is_confirm_creation()
-#         if not is_confirm:
-#             return 
-#         handle_ec2_bastion.hanlde_create_cloud_resources()
-#         handle_ec2_bastion.handle_create_ec2()  
-#         handle_ec2_bastion.handle_install_dependencies()  
-#         # create eks
-#         handle_ec2_bastion.set_eks_action(action=EKSAction.create.name)
-#         handle_ec2_bastion.handle_eks_action()
-#         # run ssh command process file
-#         # handle_ec2_bastion.set_and_run_ssh_command()
-
-#     elif action == EC2Action.activate_from_existing.name:
-#         handle_ec2_bastion.handle_ssh_coonection()
-#         handle_ec2_bastion.handle_ssh_update()
-#         # handle_ec2_bastion.set_and_run_ssh_command()
-#         handle_ec2_bastion.set_eks_action(action=EKSAction.runfiles.name)
-#         handle_ec2_bastion.handle_eks_action()
-#         # check eks cluster if not exist, create a new cluster
-#         # run ssh command process file
-
-    
-#     elif action == EC2Action.ssh.name:
-#         handle_ec2_bastion.handle_ssh_coonection()
-#         # run ssh command process file
-        
-#     return
-#     # if clean up , clean up resource
-#     handle_ec2_bastion.handle_cleanup()
-
-    
-#     logging.info("EC2 is ready, verify eks cluster")
-
-
-
-#     return 
-#     if action == EC2Action.create_new.name:
-#         logging.info("Create a new project !!!")
-#     elif action == EC2Action.start_from_existing.name:
-#         logging.info("Start from existing project !!!")
-#     elif action == EC2Action.ssh.name:
-#         logging.info("Estibalish ssh connection from config file !!!")
-#     elif action == EC2Action.cleanup_resources.name:
-#          logging.info("Estibalish ssh connection from config file !!!")
-#     else:
-#         logging.error("Unknow action")
-
-#     return 
-#     if action == EC2Action.create.name:
-#         logger.info("Create instance and start from scratch !!!")
-#         handle_ec2_bastion.set_vpc_info()
-#         handle_ec2_bastion.set_security_group_info()
-#         handle_ec2_bastion.set_keypair_info()
-#         handle_ec2_bastion.set_ec2_info()
-#         handle_ec2_bastion.trigger_initial() 
-#         logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
-    
-#         is_confirm = handle_ec2_bastion.is_confirm_creation()
-#         if not is_confirm:
-#             return 
-#         logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
-#         handle_ec2_bastion.trigger_resources_ready()
-#         logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
-#         handle_ec2_bastion.trigger_create_ec2()
-#         logging.info(f" ===== State: {handle_ec2_bastion.state} =======")
-#         return 
-        
-#     elif action == EC2Action.running.name or action == EC2Action.stop.name or action == EC2Action.terminate.name:
-#         logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
-#         handle_ec2_bastion.handle_import_configfile()
-#         handle_ec2_bastion.handle_ec2_action()
-#         return 
-#     elif action == EC2Action.ssh.name or action == EC2Action.ssh_create_eks.name or action == EC2Action.ssh_delete_eks.name:
-#         logging.info("Import ec2 parameters and connect to ec2 throug ssh!!")
-#         handle_ec2_bastion.handle_import_configfile()
-#         handle_ec2_bastion.trigger_ssh()
-#         handle_ec2_bastion.ssh_update_config_folder()
-#         is_breaking_ssh = handle_ec2_bastion.get_breaking_ssh()
-#         print(f"is_breaking_ssh :{is_breaking_ssh}" )
-#         if action == EC2Action.ssh.name:
-#             while not is_breaking_ssh:
-#                 handle_ec2_bastion.set_and_run_ssh_command()
-#                 handle_ec2_bastion.set_breaking_ssh()
-            
-#                 is_breaking_ssh = handle_ec2_bastion.get_breaking_ssh()
-#                 logging.info(f"is_breaking_ssh: {is_breaking_ssh}")
-#             # step 5 , ssh upload files
-#         elif action == EC2Action.ssh_create_eks.name or action == EC2Action.ssh_delete_eks.name:
-#             handle_ec2_bastion.handle_eks_action()
-
-#         handle_ec2_bastion.set_ec2_action()
-#         handle_ec2_bastion.handle_ec2_action()
-
-#         # step 6 , set action stop or terminate
 
 # ***************************
 #  Main
