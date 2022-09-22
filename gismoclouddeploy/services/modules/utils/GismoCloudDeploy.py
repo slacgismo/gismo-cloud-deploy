@@ -241,7 +241,7 @@ class GismoCloudDeploy(object):
                 self._solver_lic_target_path = self._solver['solver_lic_target_path']
                 self._solver_lic_file_name = self._solver['solver_lic_file_name']
 
-            self._code_template_folder  =  self._config["code_template_folder"]
+            self._code_template_folder  =  None
             self._saved_path_cloud = self._config["saved_path_cloud"]
             self._saved_path_local = self._config["saved_path_local"]
             

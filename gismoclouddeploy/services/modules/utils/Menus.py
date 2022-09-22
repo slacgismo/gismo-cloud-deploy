@@ -449,10 +449,11 @@ class Menus(object):
                 input_question="Do you want to clean up cloud resources after completion?",
                 default_answer="yes"
             )
-            if is_process_default_file is True:
-                self._runfiles_command = f"python3 main.py run-files -s {self._num_of_nodes} -p {self._project_path_name}"
-            else: 
+            if self._menus_action == MenuAction.create_cloud_resources_and_start.name or self._menus_action == MenuAction.resume_from_existing.name:
+                self._runfiles_command = f"python3 main.py run-files -n {self._process_first_n_files} -s {self._num_of_nodes} -p {self._project_path_name} -c {self._cluster_name}"
+            elif self._menus_action == MenuAction.run_in_local_machine.name:
                 self._runfiles_command = f"python3 main.py run-files -n {self._process_first_n_files} -s {self._num_of_nodes} -p {self._project_path_name}"
+
 
 
     def handle_enter_input_project_path(self):
@@ -561,18 +562,16 @@ def remove_partent_path_from_absolute_path(parent_path, absolut_path) -> str:
 
 def verify_keys_in_configfile(config_dict:dict):
     try:
-        assert 'worker_config' in config_dict
         # assert 'services_config_list' in self._config
         # assert 'aws_config' in self._config
 
 
         # worker_config
-        worker_config_dict = config_dict['worker_config']
-        assert 'data_bucket' in worker_config_dict
-        assert 'default_process_files'in  worker_config_dict
-        assert 'file_pattern' in worker_config_dict
-        assert 'process_column_keywords' in worker_config_dict
-        assert 'saved_bucket' in worker_config_dict
+
+        assert 'data_bucket' in config_dict
+        assert 'file_pattern' in config_dict
+        assert 'process_column_keywords' in config_dict
+        assert 'saved_bucket' in config_dict
 
         logging.info("Verify config key success")
     except AssertionError as e:
