@@ -53,7 +53,7 @@ def checck_server_ready_and_get_name(
         server_name = sever_name
         
     else:
-        wait_time = 25
+        wait_time = 40
         delay = 5
         # number_server = sever_name
         # print(f"number_server : {number_server}")

@@ -48,6 +48,7 @@ from typing import List
 from .check_aws import (
     connect_aws_client,
     connect_aws_resource,
+    get_iam_user_name
 )
 
 from .sqs import (
@@ -258,6 +259,7 @@ class GismoCloudDeploy(object):
 
             self._host_name = (socket.gethostname())
             self._user_id = re.sub('[^a-zA-Z0-9]', '', self._host_name).lower()
+            # self._user_id = self.get_user_id_from_iam()
             self._saved_file_local = {}
 
             for key, value in self._filename.items():
@@ -298,7 +300,17 @@ class GismoCloudDeploy(object):
         except Exception as e:
             logging.error(f"AWS credential failed: {e}")
         return
-
+    def get_user_id_from_iam(self):
+        sts_client = connect_aws_client(
+            client_name='sts',
+            key_id=self.aws_access_key,
+            secret= self.aws_secret_access_key,
+            region=self.aws_region
+        )
+        iam_user_name = get_iam_user_name(
+            sts_client=sts_client,
+        )
+        return iam_user_name
     def handle_prepare_system(self, event):
 
 
@@ -597,28 +609,45 @@ class GismoCloudDeploy(object):
 
         # logging.info("get server's pod name in each namespace")
 
+        # ready_server_list = []
+        # wait_time = 25
+        # delay = 5
+        # while wait_time > 0:
+        #     logging.info(f"K8s reboot Wait {wait_time} sec")
+        #     time.sleep(delay)
+        #     wait_time -= delay
+
+        # for namespace in self._k8s_namespace_set:
+        #     server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
+        #     if server_name is None:
+        #         continue
+        #     _server_info = {'name': server_name, 'namespace':namespace}
+        #     ready_server_list.append(_server_info)
+
+        # if len(ready_server_list) != len(self._k8s_namespace_set):
+        #     raise Exception(f"one of the namespace has no server ready")
+        # self._ready_server_list = ready_server_list
+        # logging.info(f"ready server list {ready_server_list}")
+        # return
         ready_server_list = []
-        wait_time = 25
+        wait_time = 120
         delay = 5
-        while wait_time > 0:
-            logging.info(f"K8s reboot Wait {wait_time} sec")
+        
+        while wait_time > 0 and len(ready_server_list) < len(self._k8s_namespace_set):
+            for namespace in self._k8s_namespace_set:
+                server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
+                if server_name is None:
+                    continue
+                _server_info = {'name': server_name, 'namespace':namespace}
+                ready_server_list.append(_server_info)
+
+            logging.info(f"K8s reboot Wait {wait_time} sec len(ready_server_list): {len(ready_server_list)},len(self._k8s_namespace_set)  {len(self._k8s_namespace_set)}")
             time.sleep(delay)
             wait_time -= delay
 
-        for namespace in self._k8s_namespace_set:
-            server_name = get_k8s_pod_name_from_namespace(pod_name_prefix="server", namespace= namespace)
-            if server_name is None:
-                continue
-            _server_info = {'name': server_name, 'namespace':namespace}
-            ready_server_list.append(_server_info)
-
-        if len(ready_server_list) != len(self._k8s_namespace_set):
-            raise Exception(f"one of the namespace has no server ready")
         self._ready_server_list = ready_server_list
-        logging.info(f"ready server list {ready_server_list}")
-        return
-    
-
+        logging.info("Server is ready")
+        return 
 
     def handle_send_command_and_long_polling_sqs(self, event):
         logging.info("handle_send_command_to_server and long_pulling_sqs")
