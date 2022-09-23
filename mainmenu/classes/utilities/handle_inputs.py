@@ -1,8 +1,8 @@
 import inquirer
 from asyncio import streams
-from .EKSAction import EKSAction
+
 import coloredlogs, logging
-from .check_aws import connect_aws_client,check_bucket_exists_on_s3
+from .aws_utitlties import connect_aws_client,check_bucket_exists_on_s3
 import os
 def convert_yes_no_to_bool(input:str) -> bool:
     if input.lower() == "yes":

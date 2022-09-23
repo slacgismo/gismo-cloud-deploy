@@ -42,7 +42,8 @@ def entrypoint(
         f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
     )
 
-    # check solver file exist: The download function is inside `check_and_download_solver` function ""
+
+    # check solver file exist: 
     if solver_name is not None and (exists(solver_file) is False):
         raise Exception(f"solver_file:{solver_file} dose not exist")
     

@@ -41,10 +41,12 @@ def entrypoint(
     logger.info(
         f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
     )
+    if solver_name is None or solver_name is "None":
+        print("Sover is None")
 
     # check solver file exist: The download function is inside `check_and_download_solver` function ""
-    if solver_name is not None and (exists(solver_file) is False):
-        raise Exception(f"solver_file:{solver_file} dose not exist")
+    # if solver_name is not None and (exists(solver_file) is False):
+    #     raise Exception(f"solver_file:{solver_file} dose not exist")
     
     # read csv file from s3
     try:

@@ -155,7 +155,7 @@ class HandleEC2Bastion(object):
         self._solver_name = None
         self._solver_lic_local_path = None
         self._solver_lic_target_path = None
-        self._solver_lic_file_name = None
+        self.solver_lic_file_local_source = None
         self._project_in_tags= None
 
         self._user_id = None

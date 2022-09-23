@@ -58,7 +58,7 @@ RUN chmod +x /start-flower
 
 
 # copy license
-COPY $source_path_of_upload_file/  $TARGET_PATH_OF_UPLOAD_FILE
+COPY $source_path_of_upload_file  $TARGET_PATH_OF_UPLOAD_FILE
 
 
 # WORKDIR /app

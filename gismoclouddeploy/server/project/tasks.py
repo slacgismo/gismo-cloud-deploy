@@ -58,21 +58,6 @@ def process_data_task(
         raise Exception(f"parse {kwargs} key error:{e}")
 
 
-    # try:
-    #     if "solver" in kwargs:
-    #         if "solver_name" in kwargs["solver"] \
-    #             and "solver_lic_target_path" in kwargs["solver"]  \
-    #                 and "solver_lic_file_name" in kwargs["solver"]:
-    #             solver_name = kwargs["solver"]["solver_name"]
-                # solver_file = (
-                #     kwargs["solver"]["solver_lic_target_path"]
-                #     + "/"
-                #     + kwargs["solver"]["solver_lic_file_name"]
-                # )
-    #     user_id = kwargs["user_id"]
-    # except Exception as e:
-    #     raise Exception(f"Input key error:{e}")
-
     response = entrypoint(
         data_bucket=data_bucket,
         curr_process_file=curr_process_file,

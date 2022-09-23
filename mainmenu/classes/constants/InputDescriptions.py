@@ -2,7 +2,7 @@ import enum
 
 
 
-class InputQuestions(enum.Enum):
+class InputDescriptions(enum.Enum):
     is_cleanup_resources_after_completion = "create"
     input_project_name_in_tags="Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path)"
 
@@ -15,3 +15,7 @@ class InputQuestions(enum.Enum):
     input_number_of_generated_instances_questions = "How many instances you would like to generate to run this application in parallel? \n Input an postive integer: "
 
     input_project_folder_questions = "Enter project folder (Hit `Enter` button to use default path",
+
+    select_an_action = "Select an actio!!"
+
+    select_an_created_resources = "Select created resources config path ?"

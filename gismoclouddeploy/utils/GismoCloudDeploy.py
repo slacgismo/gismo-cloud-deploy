@@ -1,6 +1,7 @@
 
 from distutils import log
 from enum import Enum
+
 from terminaltables import AsciiTable
 import fnmatch
 import re
@@ -155,9 +156,10 @@ class GismoCloudDeploy(object):
         self._upload_file_dict = dict()
         self._upload_file_name = None
         self._upload_files_local_path = None
-        self._upload_files_target_path = None
-        self._solver_lic_file_name = None
-        self._solver = None
+
+        self._solver_lic_target_path_in_images_dest = None
+        self._solver_lic_file_local_source = None
+
 
         self._base_path = os.getcwd() 
   
@@ -232,14 +234,6 @@ class GismoCloudDeploy(object):
             self._data_bucket = self._config["data_bucket"]
             self._file_type = self._config["file_pattern"]
 
-            if 'solver' in self._config:
-                self._solver = self._config['solver']
-            if self._solver is not None:
-                self._solver_name = self._solver['solver_name']
-                self._solver_lic_local_path = self._solver['solver_lic_local_path']
-                self._solver_lic_target_path = self._solver['solver_lic_target_path']
-                self._solver_lic_file_name = self._solver['solver_lic_file_name']
-
             self._code_template_folder  =  None
             self._saved_path_cloud = self._config["saved_path_cloud"]
             self._saved_path_local = self._config["saved_path_local"]
@@ -252,6 +246,13 @@ class GismoCloudDeploy(object):
             self._interval_of_checking_sqs = self._config["interval_of_checking_sqs"]
             self._process_column_keywords = self._config['process_column_keywords']
             self._saved_bucket = self._config['saved_bucket']
+
+
+            # solver
+                        
+            self._solver_name = self._config['solver_name']
+            self._solver_lic_target_path_in_images_dest = self._config['solver_lic_target_path_in_images_dest']
+            self._solver_lic_file_local_source = self._config['solver_lic_file_local_source']
 
 
             # for key in self._filename.keys():
@@ -269,7 +270,7 @@ class GismoCloudDeploy(object):
             #     os.makedirs(self._saved_path_local)
             logging.info(f"Remove previous files in {self._saved_path_local} folder")
       
-            absolute_saved_file_path = self._base_path +f"/projects/{self.project}/"+self._saved_path_local
+            absolute_saved_file_path = self._base_path +f"/{self.project}/"+self._saved_path_local
             if not exists(absolute_saved_file_path):
                 logging.info(f"Make dir {absolute_saved_file_path} ")
                 os.makedirs(absolute_saved_file_path)
@@ -456,28 +457,35 @@ class GismoCloudDeploy(object):
         #     raise Exception("Docker is not running")
         # docker build image
 
-        if self._solver is None:
-            logging.info("No upload file, create a dummy path")
-            self._solver_lic_local_path = "dummy"
-            self._solver_lic_target_path = "/root/dummy"
-            # check if license exist
-  
-            dummy_full_path = self._base_path +f"/examples/{self.project}/{self._solver_lic_local_path}"
-            print(f"Create dummy path {dummy_full_path}")
-            if not os.path.exists(dummy_full_path):
-                access_rights = 0o755 
-                os.mkdir(dummy_full_path, access_rights)
-
+        project_path = f"{self._base_path}/{self.project}"
+        _solver_absolute_file = os.path.join(project_path,self._solver_lic_file_local_source )
+        # _solver_absolute_path= f"{self._base_path}/{self.project}/{self._solver_lic_file_local_source}"
+        if len(self._solver_lic_file_local_source) != 0 and not exists(_solver_absolute_file):
+            raise Exception(f"license file: {_solver_absolute_file} does not eixst")
+        
+        if not exists(_solver_absolute_file) or len(self._solver_lic_file_local_source) == 0:
+        # if not exists(self._solver_lic_file_local_source):
+            logging.warning("No solver license file, create a dummy file")
+            self._solver_lic_file_local_source = "dummy.txt"
+            _solver_absolute_file = os.path.join(project_path,self._solver_lic_file_local_source )
+            try:
+                with open(_solver_absolute_file, 'w+') as fp:
+                    pass
+            except Exception as e:
+                raise f"Create {_solver_absolute_file} failed"
+            self._solver_name = None
+            self._solver_lic_target_path_in_images_dest = "/root/dummy"
 
         try:
             invoke_docker_compose_build(
                         project= self.project ,
-                        target_path_of_upload_file = self._solver_lic_target_path,
-                        source_path_of_upload_file = self._solver_lic_local_path
+                        target_path_of_upload_file = self._solver_lic_target_path_in_images_dest,
+                        source_path_of_upload_file = self._solver_lic_file_local_source
                     )
-            if self._solver_lic_local_path == "dummy":
-                logging.info("Remove the dummy path")
-                os.rmdir(dummy_full_path)
+            if self._solver_lic_file_local_source == "dummy.txt":
+                logging.info("Remove the dummy txt")
+                _solver_absolute_file = os.path.join(project_path,self._solver_lic_file_local_source )
+                os.remove(_solver_absolute_file)
         except Exception as e:
             
             raise Exception(f"Build Image Failed {e}")
@@ -632,6 +640,15 @@ class GismoCloudDeploy(object):
 
     def handle_send_command_and_long_polling_sqs(self, event):
         logging.info("handle_send_command_to_server and long_pulling_sqs")
+
+        # create solver dict 
+
+        _path, _sovler_file = os.path.split(self._solver_lic_file_local_source)
+        solver_dict = {
+            'solver_name': self._solver_name,
+            'solver_lic_file_name':_sovler_file,
+            'solver_lic_target_path':self._solver_lic_target_path_in_images_dest
+        }
         
         send_command_to_server(
             read_server_list=self._ready_server_list,
@@ -644,7 +661,7 @@ class GismoCloudDeploy(object):
             file_pattern=self._file_pattern,
             data_bucket=self._data_bucket,
             process_column_keywords=self._process_column_keywords,
-            solver=self._solver,
+            solver=solver_dict,
             user_id=self._user_id
         )
 

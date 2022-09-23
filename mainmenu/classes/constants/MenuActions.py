@@ -2,7 +2,7 @@ import enum
 
 
 
-class MenuAction(enum.Enum):
+class MenuActions(enum.Enum):
     
     create_cloud_resources_and_start = "create_cloud_resources_and_start"
     resume_from_existing = "resume_from_existing"

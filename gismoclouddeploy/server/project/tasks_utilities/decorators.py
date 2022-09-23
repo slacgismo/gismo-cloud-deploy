@@ -32,11 +32,9 @@ def tracklog_decorator(func):
             task_id = args[0].request.id
             curr_process_file = kwargs["curr_process_file"]
             curr_process_column = kwargs["curr_process_column"]
-            solver = kwargs["solver"]
             aws_access_key = kwargs["aws_access_key"]
             aws_secret_access_key = kwargs["aws_secret_access_key"]
             aws_region = kwargs["aws_region"]
-            # sns_topic = kwargs["sns_topic"]
             sqs_url = kwargs["sqs_url"]
             user_id = kwargs["user_id"]
             po_server_name = kwargs["po_server_name"]
@@ -48,20 +46,6 @@ def tracklog_decorator(func):
         response = dict()
         # print("Start-------->")
         try:
-            # solver_name = solver["solver_name"]
-            # if solver_name != "None":
-            #     check_and_download_solver(
-            #         solver_name=solver_name,
-            #         slover_lic_file_name=solver["solver_lic_file_name"],
-            #         solver_lic_target_path=solver["solver_lic_target_path"],
-            #         saved_solver_bucket=solver["saved_solver_bucket"],
-            #         saved_temp_path_in_bucket=solver["saved_temp_path_in_bucket"],
-            #         aws_access_key=aws_access_key,
-            #         aws_secret_access_key=aws_secret_access_key,
-            #         aws_region=aws_region,
-            #     )
-
-            # calls original function
 
             response = func(*args, **kwargs)
             worker_state = WorkerState.SUCCESS.name

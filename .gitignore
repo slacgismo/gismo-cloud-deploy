@@ -74,5 +74,5 @@ runtime.png
 ./gismoclouddeploy/services/results/
 ./gismoclouddeploy/notebooks/datasets/
 *.pem
-gismoclouddeploy/services/config/keypair/
-gismoclouddeploy/services/config/projects/
+
+

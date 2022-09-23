@@ -3,13 +3,10 @@
 scale_eks_nodes_wait_time : 90          # in second
 interval_of_wait_pod_ready: 90          # in second
 
-# Parameters pass to woker container.
-
-solver: 
-  solver_name: "MOSEK"
-  solver_lic_local_path: "license"
-  solver_lic_target_path: "/root/mosek"
-  solver_lic_file_name: "mosek.lic"
+# solver: 
+solver_name: "MOSEK"             
+solver_lic_target_path_in_images_dest: "/root/mosek"
+solver_lic_file_local_source: "license/mosek.lic"    
 
 data_bucket: "pv.insight.nrel"
 file_pattern: "*.csv"      #   ".glm"        # Bucket contains origin data files. user regulare expression
