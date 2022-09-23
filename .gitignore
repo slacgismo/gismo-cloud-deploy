@@ -72,7 +72,7 @@ override.tf.json
 secret.yaml
 runtime.png
 ./gismoclouddeploy/services/results/
-./gismoclouddeploy/services/projects/
 ./gismoclouddeploy/notebooks/datasets/
 *.pem
 gismoclouddeploy/services/config/keypair/
+gismoclouddeploy/services/config/projects/

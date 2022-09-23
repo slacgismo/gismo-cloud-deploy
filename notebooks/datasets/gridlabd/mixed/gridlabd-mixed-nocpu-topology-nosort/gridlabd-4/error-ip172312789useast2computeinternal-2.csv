@@ -1,0 +1,49 @@
+,file_name,column_name,task_id,start_time,end_time,hostname,host_ip,pid,error
+0,IEEE-1/37.glm,None,d6e32a1b-d6b9-406f-8485-df9bba877e24,1660282852.4859052,1660282852.9444902,worker-958c7bb4d-cpmc9,192.168.89.49,11,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+1,IEEE/37.glm,None,61dc5795-49f0-4b01-911d-bc8e42c24b67,1660282853.741678,1660282854.0892973,worker-958c7bb4d-6r8dc,192.168.27.196,12,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-4/IEEE-1/37.glm,None,5c5f8ff3-1a92-4861-9967-325de5742160,1660282976.0380855,1660282976.3925693,worker-958c7bb4d-wxn4m,192.168.20.12,10,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-4/IEEE/37.glm,None,2cda6bb5-ee88-4761-b22d-ff27638ab163,1660282976.4580011,1660282976.8157763,worker-958c7bb4d-wxn4m,192.168.20.12,10,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-5/IEEE/37.glm,None,2f433b37-1c58-47bb-8835-c0844a057505,1660282987.8338473,1660282988.1924005,worker-958c7bb4d-cpmc9,192.168.89.49,10,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"

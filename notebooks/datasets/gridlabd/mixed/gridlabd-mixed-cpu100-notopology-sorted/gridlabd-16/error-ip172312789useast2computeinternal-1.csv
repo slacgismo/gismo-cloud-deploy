@@ -1,0 +1,65 @@
+,file_name,column_name,task_id,start_time,end_time,hostname,host_ip,pid,error
+0,PG&E/MC0006.glm,None,8fd8b625-30c3-4f12-b918-bb1310947475,1660171944.3053825,1660172010.190932,worker-ccb94d85c-hftng,192.168.8.233,10,"Error run the Alarm clock
+"
+0,gridlabd-4/PG&E-1/MC0006.glm,None,8d539832-9055-48f8-a900-8049552c8bc5,1660171944.3568728,1660172010.7433772,worker-ccb94d85c-n5bdm,192.168.64.227,10,"Error run the Alarm clock
+"
+1,gridlabd-4/PG&E/MC0006.glm,None,228db7cc-eee4-4503-a142-a38eecfa1b1d,1660171944.4189048,1660172010.7032442,worker-ccb94d85c-6zfqr,192.168.88.89,10,"Error run the Alarm clock
+"
+0,gridlabd-5/PG&E/MC0006.glm,None,766916e7-a102-45a3-9af6-cc7556653bb6,1660171944.4456267,1660172010.732772,worker-ccb94d85c-95dx8,192.168.66.89,10,"Error run the Alarm clock
+"
+0,PG&E-1/HL0004.glm,None,81dda54d-d968-438b-8a49-ceef686b3ed0,1660171944.1326976,1660172010.7695932,worker-ccb94d85c-spz4t,192.168.6.41,10,"Error run the Alarm clock
+"
+0,gridlabd-5/PG&E/HL0004.glm,None,d16c1b72-6a9e-45ca-b6a8-b8e0037a65d9,1660171944.2509654,1660172011.2188113,worker-ccb94d85c-spms5,192.168.58.100,10,"Error run the WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+"
+0,gridlabd-4/PG&E/HL0004.glm,None,d9027d4e-e0cd-4269-9079-808dbbed0edd,1660171944.2214074,1660172011.1896384,worker-ccb94d85c-6cchx,192.168.11.208,10,"Error run the WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+"
+0,PG&E-1/MC0006.glm,None,68fde036-50b3-4b79-b744-29da92ebbd0c,1660171944.2776816,1660172010.5692036,worker-ccb94d85c-skb89,192.168.9.99,10,"Error run the WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+"
+0,gridlabd-4/PG&E-1/HL0004.glm,None,fc27f909-5eeb-4b15-9cd4-21a26511107f,1660171944.1929505,1660172011.0503378,worker-ccb94d85c-chm7d,192.168.31.141,10,"Error run the Alarm clock
+"
+0,PG&E/HL0004.glm,None,07c038c4-7701-4a66-847a-59f6d4a2c27b,1660171944.1660333,1660172011.5172672,worker-ccb94d85c-gfmpn,192.168.33.144,11,"Error run the Alarm clock
+"
+0,gridlabd-4/IEEE-1/37.glm,None,15239afb-ffe3-4263-b797-d9e641236e7b,1660172017.7610557,1660172018.2499208,worker-ccb94d85c-spms5,192.168.58.100,10,"Error run the WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-4/IEEE/37.glm,None,6542ec0c-2cfa-46e3-a145-7015e87db241,1660172018.3098888,1660172018.8734944,worker-ccb94d85c-skb89,192.168.9.99,10,"Error run the WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,IEEE-1/37.glm,None,265d2195-0f79-435b-8867-ebe4377fcb03,1660172019.0830235,1660172019.4878023,worker-ccb94d85c-6tkss,192.168.80.90,11,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,IEEE/37.glm,None,3a2e0065-6c47-418c-b455-27776b218001,1660172028.684154,1660172029.1670277,worker-ccb94d85c-545f5,192.168.19.75,11,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-5/IEEE/37.glm,None,ffaac835-ba44-44c3-8c9c-cb446f1f4877,1660172037.78965,1660172038.2642827,worker-ccb94d85c-chm7d,192.168.31.141,10,"Error run the Alarm clock
+WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"

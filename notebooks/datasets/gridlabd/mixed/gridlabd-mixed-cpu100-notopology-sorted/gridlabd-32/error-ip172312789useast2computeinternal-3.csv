@@ -1,0 +1,44 @@
+,file_name,column_name,task_id,start_time,end_time,hostname,host_ip,pid,error
+0,IEEE/37.glm,None,d43091cd-19c2-41c2-9483-693823c13ba7,1660170013.904896,1660170014.320081,worker-ccb94d85c-dvrbj,192.168.76.12,10,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,IEEE-1/37.glm,None,860bd978-70b7-415a-948d-2fd3bc7fe2bb,1660170014.3626103,1660170014.9365957,worker-ccb94d85c-pjdpr,192.168.29.176,11,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-5/IEEE/37.glm,None,ecd00f1f-fe7b-4ded-a0b2-160deac91977,1660170036.7179525,1660170037.162979,worker-ccb94d85c-xq7sz,192.168.39.108,10,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-4/IEEE/37.glm,None,7af2447f-bedd-46f4-a62b-3d05f8ab82ef,1660170037.995196,1660170038.4711552,worker-ccb94d85c-m99qk,192.168.46.131,11,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-4/IEEE-1/37.glm,None,064a97e4-5cb0-43f6-84c5-6e84aab576c0,1660170038.2936738,1660170038.8643856,worker-ccb94d85c-j4x6w,192.168.2.191,10,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,PG&E-1/HL0004.glm,None,a1710880-5fe9-47ea-be6b-fc2cec9922a3,1660170000.9903524,1660170066.90383,worker-ccb94d85c-9mfqq,192.168.8.168,12,"Error run the Alarm clock
+"
+0,PG&E/HL0004.glm,None,0ce77906-c8c6-4251-a9ce-bbc9906ea079,1660170001.0201886,1660170066.9441116,worker-ccb94d85c-22g8x,192.168.85.165,11,"Error run the WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+"
+0,gridlabd-4/PG&E-1/HL0004.glm,None,6ba163d7-dae5-4dc8-85ec-1d43ad636f5a,1660170001.048987,1660170067.2359996,worker-ccb94d85c-ksmzp,192.168.39.64,11,"Error run the WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+"

@@ -1,0 +1,80 @@
+,file_name,column_name,task_id,start_time,end_time,hostname,host_ip,pid,error
+0,PG&E/HL0004.glm,None,16bebdbc-973c-4024-b434-b3f3431e980c,1660115747.403498,1660115820.6810687,worker-59b9fdc984-w7thf,192.168.36.43,10,"Error run the Alarm clock
+"
+0,gridlabd-4/PG&E/HL0004.glm,None,45cf2c3b-5c52-44a1-babc-7720d53c538e,1660115747.4666784,1660115821.1237679,worker-59b9fdc984-rcwck,192.168.83.45,10,"Error run the Alarm clock
+"
+1,PG&E-1/HL0004.glm,None,290863ff-706e-4e35-a578-4129298b1ed7,1660115747.3833456,1660115821.2197685,worker-59b9fdc984-m8r4c,192.168.5.200,10,"Error run the Alarm clock
+"
+0,gridlabd-4/PG&E-1/HL0004.glm,None,ba9adb2a-6be8-46a4-8c82-c05b77ba3867,1660115747.432546,1660115820.8897583,worker-59b9fdc984-dw9h4,192.168.54.30,11,"Error run the Alarm clock
+"
+0,gridlabd-4/PG&E-1/MC0006.glm,None,57eca43e-48fc-4747-9925-5513b365f37d,1660115785.1390982,1660115856.4312513,worker-59b9fdc984-mldvm,192.168.7.206,10,"Error run the Alarm clock
+"
+1,gridlabd-5/PG&E/MC0006.glm,None,2dab6057-18dd-4a85-8a70-f6ca5f3d3174,1660115785.2517352,1660115856.8467185,worker-59b9fdc984-gtcsf,192.168.1.236,10,"Error run the Alarm clock
+"
+0,gridlabd-4/PG&E/MC0006.glm,None,472b0142-56b7-4ac1-9aeb-3cfab60051a5,1660115787.0217779,1660115858.807836,worker-59b9fdc984-sp9bn,192.168.7.75,10,"Error run the Alarm clock
+"
+0,gridlabd-5/PG&E/MC0001.glm,None,47da7ac1-7bdd-4730-9629-a72b9541ce42,1660115813.579696,1660115880.364491,worker-59b9fdc984-ngbhf,192.168.50.10,10,"Error run the Alarm clock
+"
+0,PG&E/MC0006.glm,None,720b483d-44de-4dcf-bc20-5e8beee37dd0,1660115809.3123548,1660115881.0950758,worker-59b9fdc984-t6wvx,192.168.79.137,10,"Error run the Alarm clock
+"
+0,PG&E-1/MC0006.glm,None,145bada2-315e-4746-a182-a9b5090cc91f,1660115809.3836482,1660115881.1950977,worker-59b9fdc984-zkqxs,192.168.92.150,10,"Error run the Alarm clock
+"
+0,gridlabd-5/PG&E/HL0004.glm,None,6fe9d0b0-dd39-40b7-8df7-3815a716d8ba,1660115808.2559943,1660115882.1226153,worker-59b9fdc984-249rl,192.168.74.136,10,"Error run the Alarm clock
+"
+0,gridlabd-4/IEEE-1/37.glm,None,e6848cdd-60c6-4b53-9c09-aefe6e08d68f,1660115900.803125,1660115901.798346,worker-59b9fdc984-dw9h4,192.168.54.30,11,"Error run the Alarm clock
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,IEEE-1/37.glm,None,4eefb4fb-199c-4442-a150-385de0286bbd,1660115902.5550687,1660115903.5253525,worker-59b9fdc984-rcwck,192.168.83.45,11,"Error run the Alarm clock
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-4/PG&E-1/MC0001.glm,None,84089656-727c-4b36-bff8-8d8b6ec57c36,1660115844.2639847,1660115911.143948,worker-59b9fdc984-sp9bn,192.168.7.75,11,"Error run the Alarm clock
+Alarm clock
+"
+0,gridlabd-4/PG&E/MC0001.glm,None,5e8da752-c706-44be-a36f-930bf27e6938,1660115844.9587862,1660115912.2404993,worker-59b9fdc984-gtcsf,192.168.1.236,11,"Error run the Alarm clock
+Alarm clock
+"
+0,PG&E/MC0001.glm,None,db403e9e-d19b-4408-85dd-9593fc9653bd,1660115846.5460968,1660115913.8218498,worker-59b9fdc984-mldvm,192.168.7.206,11,"Error run the Alarm clock
+Alarm clock
+"
+0,PG&E-1/MC0001.glm,None,5d89344a-ccca-4b1d-8f67-29b3c0258020,1660115847.9709096,1660115915.286381,worker-59b9fdc984-t6wvx,192.168.79.137,11,"Error run the Alarm clock
+WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+"
+0,gridlabd-5/IEEE/37.glm,None,138a92e1-df68-4c01-a7b3-13cb76e3c689,1660115918.5640259,1660115919.5934741,worker-59b9fdc984-w7thf,192.168.36.43,11,"Error run the Alarm clock
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,IEEE/37.glm,None,da9c7821-98d6-4bb1-8b7f-0e448a58efab,1660115921.3847418,1660115922.3711865,worker-59b9fdc984-tcdlf,192.168.46.91,11,"Error run the WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,gridlabd-4/IEEE/37.glm,None,61c8ccde-11d5-4530-8811-65b57659cde9,1660115929.4324653,1660115930.4265914,worker-59b9fdc984-249rl,192.168.74.136,10,"Error run the Alarm clock
+WARNING  [INIT] : object name  701-702  does not follow strict naming rules and may not link correctly during load time
+ERROR    [INIT] : init_regulator_configuration(obj=84;unnamed): Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.
+ERROR    [INIT] : init_by_deferral(): object regulator_configuration:84 initialization failed
+ERROR    [INIT] : model initialization failed
+FATAL    [INIT] : shutdown after simulation stopped prematurely
+FATAL    [INIT] : environment startup failed: No such file or directory
+"
+0,PG&E/AL0001.glm,None,395e56ba-31ce-40a0-9b63-22971149d3b8,1660115871.6455996,1660115938.8116229,worker-59b9fdc984-sp9bn,192.168.7.75,10,"Error run the Alarm clock
+Alarm clock
+WARNING  [INIT] : object name  1  does not follow strict naming rules and may not link correctly during load time
+Alarm clock
+"

@@ -1,0 +1,921 @@
+,file,data
+0,/app/project/123.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+"
+0,/app/project/13.glm,"/app/project/13.glm,0 kW,16,14,10,0.526
+"
+1,/app/project/123.glm,"/app/project/123.glm,0 kW,139,135,85,0.604
+"
+0,/app/project/13.glm,"/app/project/37.glm,0 kW,38,37,25,0.045
+/app/project/13.glm,0 kW,16,14,10,0.51
+"
+0,/app/project/123.glm,"/app/project/123.glm,0 kW,139,135,85,0.651
+"
+0,/app/project/13.glm,"/app/project/13.glm,0 kW,16,14,10,0.518
+"
+1,/app/project/13.glm,"/app/project/37.glm,0 kW,38,37,25,0.047
+/app/project/13.glm,0 kW,16,14,10,0.522
+"
+0,/app/project/123.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+"
+0,/app/project/R1-12470-3.glm,"/app/project/13.glm,0 kW,16,14,10,0.518
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.591
+"
+1,/app/project/R1-25000-5.glm,"/app/project/37.glm,0 kW,38,37,25,0.047
+/app/project/13.glm,0 kW,16,14,10,0.522
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.819
+"
+2,/app/project/R2-12470-2.glm,"/app/project/37.glm,0 kW,38,37,25,0.044
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.025
+"
+0,/app/project/D0001.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.433
+"
+0,/app/project/D0001.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.472
+"
+1,/app/project/BU0001.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+"
+0,/app/project/R3-12470-2.glm,"/app/project/13.glm,0 kW,16,14,10,0.518
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.591
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.731
+"
+0,/app/project/342.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/342.glm,0 kW,1420,2345,104,2.838
+"
+1,/app/project/MO0001.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.11
+"
+2,/app/project/R1-12470-4.glm,"/app/project/123.glm,0 kW,139,135,85,0.651
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.916
+/app/project/342.glm,0 kW,1420,2345,104,2.921
+"
+0,/app/project/D0001.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.484
+"
+0,/app/project/MO0001.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.234
+"
+1,/app/project/R1-12470-2.glm,"/app/project/123.glm,0 kW,139,135,85,0.604
+/app/project/37.glm,0 kW,38,37,25,0.054
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.182
+"
+2,/app/project/342.glm,"/app/project/123.glm,0 kW,139,135,85,0.651
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.916
+/app/project/342.glm,0 kW,1420,2345,104,2.921
+"
+3,/app/project/BU0001.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+"
+4,/app/project/D0001.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.475
+"
+0,/app/project/BU0001.glm,"/app/project/BU0001.glm,0 kW,159,159,73,3.02
+"
+1,/app/project/R1-12470-4.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.11
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.902
+"
+0,/app/project/R4-25000-3.glm,"/app/project/37.glm,0 kW,38,37,25,0.044
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.025
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.857
+"
+1,/app/project/R4-12470-2.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.234
+/app/project/R4-12470-2.glm,0 kW,316,645,21,1.065
+"
+0,/app/project/BU0001.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.915
+"
+1,/app/project/342.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.888
+"
+2,/app/project/R1-12470-3.glm,"/app/project/123.glm,0 kW,139,135,85,0.604
+/app/project/37.glm,0 kW,38,37,25,0.054
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.182
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.606
+"
+0,/app/project/R1-12470-4.glm,"/app/project/13.glm,0 kW,16,14,10,0.518
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.591
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.731
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.869
+"
+0,/app/project/MO0001.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.164
+"
+1,/app/project/342.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.887
+"
+2,/app/project/MO0001.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.158
+"
+0,/app/project/R2-12470-1.glm,"/app/project/37.glm,0 kW,38,37,25,0.047
+/app/project/13.glm,0 kW,16,14,10,0.522
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.819
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.116
+"
+1,/app/project/R3-12470-2.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.915
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.732
+"
+2,/app/project/R2-12470-1.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.158
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.149
+"
+0,/app/project/R2-12470-1.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.888
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.138
+"
+0,/app/project/BR0015.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.831
+"
+0,/app/project/R1-25000-5.glm,"/app/project/123.glm,0 kW,139,135,85,0.651
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.916
+/app/project/342.glm,0 kW,1420,2345,104,2.921
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.872
+"
+1,/app/project/R3-12470-1.glm,"/app/project/123.glm,0 kW,139,135,85,0.604
+/app/project/37.glm,0 kW,38,37,25,0.054
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.182
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.606
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.736
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.297
+"
+0,/app/project/BR0015.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.785
+"
+0,/app/project/R2-25000-4.glm,"/app/project/37.glm,0 kW,38,37,25,0.045
+/app/project/13.glm,0 kW,16,14,10,0.51
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.237
+"
+1,/app/project/R5-35000-7.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.472
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.2
+"
+2,/app/project/R5-12470-1.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.164
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.124
+"
+3,/app/project/R1-12470-2.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.484
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.366
+"
+4,/app/project/R3-12470-1.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.433
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.438
+"
+0,/app/project/123.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.234
+/app/project/R4-12470-2.glm,0 kW,316,645,21,1.065
+/app/project/123.glm,0 kW,139,135,85,0.869
+"
+0,/app/project/R3-12470-2.glm,"/app/project/123.glm,0 kW,139,135,85,0.604
+/app/project/37.glm,0 kW,38,37,25,0.054
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.182
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.606
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.736
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.297
+"
+1,/app/project/R4-12470-1.glm,"/app/project/37.glm,0 kW,38,37,25,0.047
+/app/project/13.glm,0 kW,16,14,10,0.522
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.819
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.116
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.31
+"
+0,/app/project/R2-12470-3.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/342.glm,0 kW,1420,2345,104,2.838
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.537
+"
+1,/app/project/R4-12470-2.glm,"/app/project/37.glm,0 kW,38,37,25,0.047
+/app/project/13.glm,0 kW,16,14,10,0.522
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.819
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.116
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.31
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.951
+"
+0,/app/project/PL0001.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.158
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.149
+/app/project/PL0001.glm,0 kW,326,324,114,6.119
+"
+1,/app/project/BR0015.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.433
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.438
+/app/project/BR0015.glm,0 kW,251,251,49,5.811
+"
+0,/app/project/R5-25000-6.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.262
+"
+1,/app/project/R2-35000-5.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.835
+"
+0,/app/project/PL0001.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.164
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.124
+/app/project/PL0001.glm,0 kW,326,324,114,6.199
+"
+0,/app/project/R4-12470-2.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.888
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.138
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.977
+"
+0,/app/project/PL0001.glm,"/app/project/PL0001.glm,0 kW,326,324,114,6.209
+"
+0,/app/project/R2-25000-4.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.831
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.264
+"
+0,/app/project/PL0001.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/342.glm,0 kW,1420,2345,104,2.838
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.537
+/app/project/PL0001.glm,0 kW,326,324,114,6.162
+"
+0,/app/project/R1-12470-1.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.887
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.795
+"
+1,/app/project/R5-12470-2.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.164
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.124
+/app/project/PL0001.glm,0 kW,326,324,114,6.199
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.021
+"
+0,/app/project/BR0015.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.472
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.2
+/app/project/BR0015.glm,0 kW,251,251,49,5.771
+"
+1,/app/project/R4-25000-3.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.234
+/app/project/R4-12470-2.glm,0 kW,316,645,21,1.065
+/app/project/123.glm,0 kW,139,135,85,0.869
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.894
+"
+2,/app/project/R3-12470-2.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.433
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.438
+/app/project/BR0015.glm,0 kW,251,251,49,5.811
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.726
+"
+0,/app/project/R2-12470-2.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.158
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.149
+/app/project/PL0001.glm,0 kW,326,324,114,6.119
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.07
+"
+1,/app/project/R5-12470-4.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.433
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.438
+/app/project/BR0015.glm,0 kW,251,251,49,5.811
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.726
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.442
+"
+0,/app/project/BU0001.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.472
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.2
+/app/project/BR0015.glm,0 kW,251,251,49,5.771
+/app/project/BU0001.glm,0 kW,159,159,73,3.01
+"
+0,/app/project/R2-12470-3.glm,"/app/project/37.glm,0 kW,38,37,25,0.044
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.025
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.857
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.45
+"
+0,/app/project/R1-12470-1.glm,"/app/project/37.glm,0 kW,38,37,25,0.045
+/app/project/13.glm,0 kW,16,14,10,0.51
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.237
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.796
+"
+0,/app/project/8500.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.888
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.138
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.977
+/app/project/8500.glm,0 kW,2526,4876,0,6.004
+"
+0,/app/project/R4-12470-1.glm,"/app/project/123.glm,0 kW,139,135,85,0.651
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.916
+/app/project/342.glm,0 kW,1420,2345,104,2.921
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.872
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.433
+"
+1,/app/project/8500.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.887
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.795
+/app/project/8500.glm,0 kW,2526,4876,0,5.891
+"
+0,/app/project/342.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.164
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.124
+/app/project/PL0001.glm,0 kW,326,324,114,6.199
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.021
+/app/project/342.glm,0 kW,1420,2345,104,2.805
+"
+0,/app/project/8500.glm,"/app/project/13.glm,0 kW,16,14,10,0.518
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.591
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.731
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.869
+/app/project/8500.glm,0 kW,2526,4876,0,5.829
+"
+0,/app/project/R5-12470-2.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.831
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.264
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.017
+"
+0,/app/project/R1-12470-1.glm,"/app/project/BU0001.glm,0 kW,159,159,73,3.02
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.743
+"
+1,/app/project/R2-12470-2.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.888
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.138
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.977
+/app/project/8500.glm,0 kW,2526,4876,0,6.004
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.047
+"
+0,/app/project/R5-12470-5.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.915
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.732
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.675
+"
+1,/app/project/R1-12470-4.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.164
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.124
+/app/project/PL0001.glm,0 kW,326,324,114,6.199
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.021
+/app/project/342.glm,0 kW,1420,2345,104,2.805
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.872
+"
+0,/app/project/R2-25000-4.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/342.glm,0 kW,1420,2345,104,2.838
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.537
+/app/project/PL0001.glm,0 kW,326,324,114,6.162
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.224
+"
+0,/app/project/R5-12470-5.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.785
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.618
+"
+1,/app/project/R5-12470-1.glm,"/app/project/37.glm,0 kW,38,37,25,0.044
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.025
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.857
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.45
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.071
+"
+0,/app/project/R1-12470-2.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.234
+/app/project/R4-12470-2.glm,0 kW,316,645,21,1.065
+/app/project/123.glm,0 kW,139,135,85,0.869
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.894
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.206
+"
+1,/app/project/R4-25000-3.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.158
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.149
+/app/project/PL0001.glm,0 kW,326,324,114,6.119
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.07
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.86
+"
+2,/app/project/OC0001.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.864
+"
+0,/app/project/8500.glm,"/app/project/8500.glm,0 kW,2526,4876,0,5.925
+"
+1,/app/project/R5-12470-5.glm,"/app/project/123.glm,0 kW,139,135,85,0.604
+/app/project/37.glm,0 kW,38,37,25,0.054
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.182
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.606
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.736
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.297
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.624
+"
+2,/app/project/OC0001.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.688
+"
+0,/app/project/R1-12470-2.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.887
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.795
+/app/project/8500.glm,0 kW,2526,4876,0,5.891
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.183
+"
+0,/app/project/R4-25000-3.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.888
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.138
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.977
+/app/project/8500.glm,0 kW,2526,4876,0,6.004
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.047
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.839
+"
+0,/app/project/R5-35000-7.glm,"/app/project/123.glm,0 kW,139,135,85,0.651
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.916
+/app/project/342.glm,0 kW,1420,2345,104,2.921
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.872
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.433
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.228
+"
+0,/app/project/OC0001.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.677
+"
+0,/app/project/R1-12470-1.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.472
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.2
+/app/project/BR0015.glm,0 kW,251,251,49,5.771
+/app/project/BU0001.glm,0 kW,159,159,73,3.01
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.732
+"
+1,/app/project/OC0001.glm,"/app/project/13.glm,0 kW,16,14,10,0.526
+/app/project/OC0001.glm,0 kW,1104,1100,586,9.657
+"
+0,/app/project/AT0001.glm,"/app/project/8500.glm,0 kW,2526,4876,0,5.925
+/app/project/AT0001.glm,0 kW,666,664,316,11.634
+"
+0,/app/project/R5-12470-2.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/342.glm,0 kW,1420,2345,104,2.838
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.537
+/app/project/PL0001.glm,0 kW,326,324,114,6.162
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.224
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.005
+"
+0,/app/project/R4-25000-3.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.864
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.865
+"
+0,/app/project/R1-25000-5.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.688
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.848
+"
+0,/app/project/D0001.glm,"/app/project/BU0001.glm,0 kW,159,159,73,3.02
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.743
+/app/project/D0001.glm,0 kW,685,680,221,2.514
+"
+0,/app/project/AT0001.glm,"/app/project/AT0001.glm,0 kW,666,664,316,11.743
+"
+0,/app/project/R5-12470-5.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.433
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.438
+/app/project/BR0015.glm,0 kW,251,251,49,5.811
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.726
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.442
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.572
+"
+1,/app/project/AT0001.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.835
+/app/project/AT0001.glm,0 kW,666,664,316,11.314
+"
+0,/app/project/R2-35000-5.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.887
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.795
+/app/project/8500.glm,0 kW,2526,4876,0,5.891
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.183
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,3.016
+"
+0,/app/project/AT0001.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.262
+/app/project/AT0001.glm,0 kW,666,664,316,11.498
+"
+1,/app/project/R5-12470-2.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.677
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.008
+"
+0,/app/project/R2-35000-5.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.472
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.2
+/app/project/BR0015.glm,0 kW,251,251,49,5.771
+/app/project/BU0001.glm,0 kW,159,159,73,3.01
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.732
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.922
+"
+0,/app/project/R5-25000-6.glm,"/app/project/13.glm,0 kW,16,14,10,0.518
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.591
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.731
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.869
+/app/project/8500.glm,0 kW,2526,4876,0,5.829
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.347
+"
+0,/app/project/13.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.864
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.865
+/app/project/13.glm,0 kW,16,14,10,0.529
+"
+1,/app/project/R2-12470-2.glm,"/app/project/13.glm,0 kW,16,14,10,0.526
+/app/project/OC0001.glm,0 kW,1104,1100,586,9.657
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.028
+"
+2,/app/project/R2-35000-5.glm,"/app/project/37.glm,0 kW,38,37,25,0.045
+/app/project/13.glm,0 kW,16,14,10,0.51
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.237
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.796
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.998
+"
+0,/app/project/BR0015.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.262
+/app/project/AT0001.glm,0 kW,666,664,316,11.498
+/app/project/BR0015.glm,0 kW,251,251,49,5.859
+"
+1,/app/project/R5-12470-1.glm,"/app/project/8500.glm,0 kW,2526,4876,0,5.925
+/app/project/AT0001.glm,0 kW,666,664,316,11.634
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.117
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.507
+"
+2,/app/project/R2-12470-3.glm,"/app/project/8500.glm,0 kW,2526,4876,0,5.925
+/app/project/AT0001.glm,0 kW,666,664,316,11.634
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.117
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.507
+"
+0,/app/project/R1-12470-2.glm,"/app/project/BU0001.glm,0 kW,159,159,73,3.02
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.743
+/app/project/D0001.glm,0 kW,685,680,221,2.514
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.221
+"
+0,/app/project/R3-12470-1.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.887
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.795
+/app/project/8500.glm,0 kW,2526,4876,0,5.891
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.183
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,3.016
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.311
+"
+0,/app/project/R2-35000-5.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.831
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.264
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.017
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,3.015
+"
+0,/app/project/R5-12470-4.glm,"/app/project/AT0001.glm,0 kW,666,664,316,11.743
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.448
+"
+0,/app/project/R5-35000-7.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.262
+/app/project/AT0001.glm,0 kW,666,664,316,11.498
+/app/project/BR0015.glm,0 kW,251,251,49,5.859
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.154
+"
+1,/app/project/R5-12470-1.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.864
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.865
+/app/project/13.glm,0 kW,16,14,10,0.529
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.115
+"
+0,/app/project/MO0001.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.688
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.848
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.15
+"
+0,/app/project/R5-12470-4.glm,"/app/project/342.glm,0 kW,1420,2345,104,2.887
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.795
+/app/project/8500.glm,0 kW,2526,4876,0,5.891
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.183
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,3.016
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.311
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.488
+"
+0,/app/project/R5-12470-2.glm,"/app/project/8500.glm,0 kW,2526,4876,0,5.925
+/app/project/AT0001.glm,0 kW,666,664,316,11.634
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.117
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.507
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.002
+"
+0,/app/project/R2-25000-4.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.262
+/app/project/AT0001.glm,0 kW,666,664,316,11.498
+/app/project/BR0015.glm,0 kW,251,251,49,5.859
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.154
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.22
+"
+0,/app/project/R2-25000-4.glm,"/app/project/8500.glm,0 kW,2526,4876,0,5.925
+/app/project/AT0001.glm,0 kW,666,664,316,11.634
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.117
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.507
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.002
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.259
+"
+0,/app/project/R3-12470-1.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.835
+/app/project/AT0001.glm,0 kW,666,664,316,11.314
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.16
+"
+0,/app/project/R1-12470-3.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.864
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.865
+/app/project/13.glm,0 kW,16,14,10,0.529
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.115
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.623
+"
+0,/app/project/OC0001.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.158
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.149
+/app/project/PL0001.glm,0 kW,326,324,114,6.119
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.07
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.86
+/app/project/OC0001.glm,0 kW,1104,1100,586,9.581
+"
+0,/app/project/AL0001.glm,"/app/project/37.glm,0 kW,38,37,25,0.044
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.025
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.857
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.45
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.071
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.026
+"
+0,/app/project/R2-12470-1.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.688
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.848
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.15
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.102
+"
+0,/app/project/R3-12470-1.glm,"/app/project/BU0001.glm,0 kW,159,159,73,3.02
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.743
+/app/project/D0001.glm,0 kW,685,680,221,2.514
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.221
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.355
+"
+0,/app/project/AL0001.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.831
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.264
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.017
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,3.015
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.539
+"
+0,/app/project/AL0001.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.785
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.618
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.321
+"
+0,/app/project/AL0001.glm,"/app/project/PL0001.glm,0 kW,326,324,114,6.209
+/app/project/AL0001.glm,0 kW,1160,1157,527,17.078
+"
+0,/app/project/R5-12470-4.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.835
+/app/project/AT0001.glm,0 kW,666,664,316,11.314
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.16
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.366
+"
+0,/app/project/R4-12470-2.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.688
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.848
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.15
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.102
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.983
+"
+1,/app/project/TMP0009.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.677
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.008
+/app/project/37.glm,0 kW,38,37,25,0.049
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,14.485
+"
+0,/app/project/TMP0009.glm,"/app/project/13.glm,0 kW,16,14,10,0.526
+/app/project/OC0001.glm,0 kW,1104,1100,586,9.657
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.028
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.052
+/app/project/PL0001.glm,0 kW,326,324,114,6.057
+"
+0,/app/project/PL0001.glm,"/app/project/13.glm,0 kW,16,14,10,0.526
+/app/project/OC0001.glm,0 kW,1104,1100,586,9.657
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.028
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.052
+/app/project/PL0001.glm,0 kW,326,324,114,6.057
+"
+0,/app/project/R1-25000-5.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.677
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.008
+/app/project/37.glm,0 kW,38,37,25,0.049
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,14.485
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.849
+"
+0,/app/project/TMP0009.glm,"/app/project/AT0001.glm,0 kW,666,664,316,11.743
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.448
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.4
+"
+0,/app/project/R5-12470-3.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.962
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.835
+/app/project/AT0001.glm,0 kW,666,664,316,11.314
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.16
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.366
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,9.387
+"
+0,/app/project/TMP0009.glm,"/app/project/37.glm,0 kW,38,37,25,0.045
+/app/project/13.glm,0 kW,16,14,10,0.51
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.237
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.796
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.998
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.525
+"
+0,/app/project/R5-25000-6.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.785
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.618
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.321
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.267
+"
+0,/app/project/R5-12470-1.glm,"/app/project/13.glm,0 kW,16,14,10,0.526
+/app/project/OC0001.glm,0 kW,1104,1100,586,9.657
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.028
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.052
+/app/project/PL0001.glm,0 kW,326,324,114,6.057
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.077
+"
+0,/app/project/AT0001.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.785
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.618
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.321
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.267
+/app/project/AT0001.glm,0 kW,666,664,316,11.683
+"
+0,/app/project/R5-12470-3.glm,"/app/project/PL0001.glm,0 kW,326,324,114,6.209
+/app/project/AL0001.glm,0 kW,1160,1157,527,17.078
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,10.688
+"
+0,/app/project/R2-12470-3.glm,"/app/project/13.glm,0 kW,16,14,10,0.526
+/app/project/OC0001.glm,0 kW,1104,1100,586,9.657
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.028
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.052
+/app/project/PL0001.glm,0 kW,326,324,114,6.057
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.077
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.479
+"
+0,/app/project/R3-12470-3.glm,"/app/project/123.glm,0 kW,139,135,85,0.651
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.916
+/app/project/342.glm,0 kW,1420,2345,104,2.921
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.872
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.433
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.228
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.106
+"
+0,/app/project/R3-12470-3.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.475
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.389
+"
+0,/app/project/R5-12470-5.glm,"/app/project/AT0001.glm,0 kW,666,664,316,11.743
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.448
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.4
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.601
+"
+0,/app/project/R3-12470-3.glm,"/app/project/13.glm,0 kW,16,14,10,0.518
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.591
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.731
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.869
+/app/project/8500.glm,0 kW,2526,4876,0,5.829
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.347
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,12.682
+"
+0,/app/project/R5-12470-4.glm,"/app/project/PL0001.glm,0 kW,326,324,114,6.209
+/app/project/AL0001.glm,0 kW,1160,1157,527,17.078
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,10.688
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.487
+"
+0,/app/project/R2-12470-3.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.785
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.618
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.321
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.267
+/app/project/AT0001.glm,0 kW,666,664,316,11.683
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.492
+"
+0,/app/project/MC0001.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.475
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.389
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.744
+"
+0,/app/project/MC0001.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.484
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.366
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.81
+"
+1,/app/project/R2-12470-2.glm,"/app/project/AT0001.glm,0 kW,666,664,316,11.743
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.448
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.4
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.601
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.064
+"
+2,/app/project/TMP0009.glm,"/app/project/123.glm,0 kW,139,135,85,0.625
+/app/project/342.glm,0 kW,1420,2345,104,2.838
+/app/project/R2-12470-3.glm,0 kW,855,1812,11,2.537
+/app/project/PL0001.glm,0 kW,326,324,114,6.162
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.224
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.005
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.26
+"
+0,/app/project/R5-12470-3.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.677
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.008
+/app/project/37.glm,0 kW,38,37,25,0.049
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,14.485
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.849
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,9.308
+"
+0,/app/project/MC0001.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.234
+/app/project/R4-12470-2.glm,0 kW,316,645,21,1.065
+/app/project/123.glm,0 kW,139,135,85,0.869
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.894
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.206
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.598
+"
+0,/app/project/R2-12470-1.glm,"/app/project/PL0001.glm,0 kW,326,324,114,6.209
+/app/project/AL0001.glm,0 kW,1160,1157,527,17.078
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,10.688
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.487
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.131
+"
+0,/app/project/MC0001.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.11
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.902
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.844
+"
+1,/app/project/8500.glm,"/app/project/PL0001.glm,0 kW,326,324,114,6.209
+/app/project/AL0001.glm,0 kW,1160,1157,527,17.078
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,10.688
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.487
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.131
+/app/project/8500.glm,0 kW,2526,4876,0,6.104
+"
+0,/app/project/R1-12470-3.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.484
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.366
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.81
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.593
+"
+0,/app/project/R5-25000-6.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.475
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.389
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.744
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.332
+"
+0,/app/project/R5-12470-3.glm,"/app/project/37.glm,0 kW,38,37,25,0.045
+/app/project/13.glm,0 kW,16,14,10,0.51
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.237
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.796
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,2.998
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.525
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,10.296
+"
+0,/app/project/R5-12470-3.glm,"/app/project/BR0015.glm,0 kW,251,251,49,5.831
+/app/project/R2-25000-4.glm,0 kW,474,800,72,1.264
+/app/project/R5-12470-2.glm,0 kW,411,638,46,1.017
+/app/project/R2-35000-5.glm,0 kW,1942,1811,447,3.015
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.539
+/app/project/R5-12470-3.glm,0 kW,1839,4042,182,10.345
+"
+1,/app/project/R1-25000-5.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.11
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.902
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.844
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.825
+"
+2,/app/project/R3-12470-2.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.484
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.366
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.81
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.593
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.754
+"
+0,/app/project/R4-12470-1.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.475
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.389
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.744
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.332
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.363
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.173
+"
+0,/app/project/R5-35000-7.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.475
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.389
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.744
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.332
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.363
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.173
+"
+1,/app/project/R3-12470-3.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.915
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.732
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.675
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.077
+"
+0,/app/project/AL0001.glm,"/app/project/AT0001.glm,0 kW,666,664,316,11.743
+/app/project/R5-12470-4.glm,0 kW,743,1056,32,1.448
+/app/project/TMP0009.glm,0 kW,4584,5158,2558,15.4
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.601
+/app/project/R2-12470-2.glm,0 kW,274,644,8,1.064
+/app/project/AL0001.glm,0 kW,1160,1157,527,16.404
+"
+0,/app/project/R4-12470-1.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.11
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.902
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.844
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.825
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.314
+"
+0,/app/project/R5-25000-6.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.915
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.732
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.675
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.077
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.22
+"
+0,/app/project/HL0004.glm,"/app/project/BU0001.glm,0 kW,159,159,73,3.02
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.743
+/app/project/D0001.glm,0 kW,685,680,221,2.514
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.221
+/app/project/R3-12470-1.glm,0 kW,764,1513,64,2.355
+/app/project/HL0004.glm,0 kW,2092,2089,1042,38.611
+"
+0,/app/project/HL0004.glm,"/app/project/BU0001.glm,0 kW,159,159,73,2.915
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.732
+/app/project/R5-12470-5.glm,0 kW,1160,1831,28,2.675
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.077
+/app/project/R5-25000-6.glm,0 kW,986,1706,14,2.22
+/app/project/HL0004.glm,0 kW,2092,2089,1042,39.056
+"
+0,/app/project/HL0004.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.812
+"
+0,/app/project/HL0004.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.859
+"
+0,/app/project/R1-12470-3.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.859
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.57
+"
+0,/app/project/R4-12470-1.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.812
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.464
+"
+0,/app/project/HL0004.glm,"/app/project/D0001.glm,0 kW,685,680,221,2.484
+/app/project/R1-12470-2.glm,0 kW,366,852,13,1.366
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.81
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.593
+/app/project/R3-12470-2.glm,0 kW,392,328,62,0.754
+/app/project/HL0004.glm,0 kW,2092,2089,1042,38.532
+"
+0,/app/project/R5-35000-7.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.812
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.464
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.14
+"
+0,/app/project/R4-12470-2.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.812
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.464
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.14
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.987
+"
+0,/app/project/R1-12470-1.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.812
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.464
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.14
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.987
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.7
+"
+0,/app/project/MC0001.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.859
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.57
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.48
+"
+0,/app/project/R1-12470-4.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.859
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.57
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.48
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.898
+"
+0,/app/project/R3-12470-3.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.859
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.57
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.48
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.898
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.022
+"
+0,/app/project/MC0006.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.812
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.464
+/app/project/R5-35000-7.glm,0 kW,434,769,47,1.14
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.987
+/app/project/R1-12470-1.glm,0 kW,660,1832,20,2.7
+/app/project/MC0006.glm,0 kW,1759,1753,1095,96.008
+"
+0,/app/project/MC0006.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.688
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.848
+/app/project/MO0001.glm,0 kW,1354,1350,442,2.15
+/app/project/R2-12470-1.glm,0 kW,654,751,82,1.102
+/app/project/R4-12470-2.glm,0 kW,316,645,21,0.983
+/app/project/MC0006.glm,0 kW,1759,1753,1095,93.929
+"
+1,/app/project/MC0006.glm,"/app/project/OC0001.glm,0 kW,1104,1100,586,9.864
+/app/project/R4-25000-3.glm,0 kW,234,511,1,0.865
+/app/project/13.glm,0 kW,16,14,10,0.529
+/app/project/R5-12470-1.glm,0 kW,366,684,48,1.115
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.623
+/app/project/MC0006.glm,0 kW,1759,1753,1095,94.681
+"
+0,/app/project/MC0006.glm,"/app/project/HL0004.glm,0 kW,2092,2089,1042,38.859
+/app/project/R1-12470-3.glm,0 kW,96,75,21,0.57
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.48
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.898
+/app/project/R3-12470-3.glm,0 kW,2220,5358,108,13.022
+/app/project/MC0006.glm,0 kW,1759,1753,1095,96.424
+"
+0,/app/project/MC0006.glm,"/app/project/MO0001.glm,0 kW,1354,1350,442,2.11
+/app/project/R1-12470-4.glm,0 kW,331,392,12,0.902
+/app/project/MC0001.glm,0 kW,1119,1116,715,25.844
+/app/project/R1-25000-5.glm,0 kW,506,463,90,0.825
+/app/project/R4-12470-1.glm,0 kW,725,1599,75,2.314
+/app/project/MC0006.glm,0 kW,1759,1753,1095,95.13
+"

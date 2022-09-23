@@ -1,0 +1,48 @@
+- ModuleName: myTestModule
+- Version: 1.0
+- ModuleNumbers: [96,97,98,99]
+
+
+- !Message
+  Name: AO3_
+  DLC: 8
+  Signal1:
+    Name: Temperature
+    Length: 16
+  Signal2:
+    Name: AnalogOut3
+    Length: 16
+    SignalGroup1:  #Comment
+       Name: app_fcex
+       Type: Bitfield
+       Signal1:
+           Name: drive_ready
+           Length: 1
+       Signal2:
+           Name: error_active
+           Length: 1
+       Signal3:
+           Name: warning_active
+           Length: 1
+  Signal3:
+    Name: Temperatur 2
+    Length: 8
+    ValueTable:
+       Name: TempStates
+       items:
+       - !Item
+         Name: INIT
+         Value: 1
+       - !Item
+         Name: RUN
+         Value: 2
+       - !Item
+         Name: DONE
+         Value: 3
+       - !Item
+         Name: ERROR
+         Value: 4
+- !Message
+  name: AO2_
+  object: RX2
+  DLC: 8
