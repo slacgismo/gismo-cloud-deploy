@@ -8,4 +8,5 @@ class MenuActions(enum.Enum):
     resume_from_existing = "resume_from_existing"
     cleanup_cloud_resources = "cleanup_cloud_resources"
     run_in_local_machine = "run_in_local_machine"
+    stop_resources = "stop_resources"
 

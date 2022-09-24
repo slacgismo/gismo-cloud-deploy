@@ -2,7 +2,7 @@ import enum
 
 
 
-class EKSAction(enum.Enum):
+class EKSActions(enum.Enum):
     create = "create"
     delete = "delete"
     list = "list"

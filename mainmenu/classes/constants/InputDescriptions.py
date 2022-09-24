@@ -19,3 +19,5 @@ class InputDescriptions(enum.Enum):
     select_an_action = "Select an actio!!"
 
     select_an_created_resources = "Select created resources config path ?"
+
+    is_upload_folder_question = "Do you want to update(upload) project folder?"

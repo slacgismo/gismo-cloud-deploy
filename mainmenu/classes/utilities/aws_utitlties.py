@@ -1,9 +1,14 @@
 from genericpath import exists
+from os.path import basename
 from logging import Filter
 import boto3
 import os
 import botocore
 import logging
+import paramiko
+import time
+from pathlib import Path
+from .convert_yaml import check_if_path_exist_and_create,write_aws_setting_to_yaml
 
 from asyncio import exceptions
 
@@ -234,3 +239,341 @@ def delete_key_pair(ec2_client, key_name):
         logging.info("Key pair deleted")
     except botocore.exceptions.ClientError as err:
         raise Exception(err)
+
+def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user_name)  -> bool:
+    ec2 = boto3.resource('ec2')
+    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+    
+    p2_instance = None
+    while wait_time > 0:
+        for instance in instances:
+            print(instance, instance_id)
+            if (instance.id==instance_id):
+                p2_instance=instance
+                logging.info(f"{instance_id} is running")
+                ssh = paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+                try:
+                    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+                except Exception as e:
+                    logger.warning(f"SSH to {instance_id} failed, try again")
+                    continue
+
+                logging.info(f"{instance_id} is ready to connect SSH")
+                return True
+        wait_time -= delay
+        time.sleep(delay)
+        logging.info(f"Wait: {wait_time}...")
+
+
+
+
+def create_instance(
+    ec2_client,
+    ImageId :str,
+    InstanceType:str,
+    key_piar_name: str,
+    tags:dict,
+    volume:int,
+    SecurityGroupIds,
+    ) -> str:
+    # ec2_client = boto3.client("ec2", region_name="us-user-2")
+    instances = ec2_client.run_instances(
+        ImageId=ImageId,
+        MinCount=1,
+        MaxCount=1,
+        InstanceType=InstanceType,
+        KeyName=key_piar_name,
+        UserData = '''
+            #!/bin/bash
+            sudo yum update -y
+            sudo yum install git -y
+            ''',
+        TagSpecifications=[
+                {
+                    'ResourceType': 'instance',
+                    'Tags':tags 
+                }
+        ],
+        SecurityGroupIds=SecurityGroupIds,
+        BlockDeviceMappings=[
+        {
+            'DeviceName': '/dev/xvda',
+            'Ebs': {
+
+                'DeleteOnTermination': True,
+                'VolumeSize': int(volume),
+                'VolumeType': 'gp2'
+            },
+        },
+        ],
+    )
+    instancesID = instances["Instances"][0]["InstanceId"]
+    print(instances["Instances"][0]["InstanceId"])
+    
+    return instancesID
+
+def get_public_ip(
+    ec2_client,
+    instance_id:str):
+    reservations = ec2_client.describe_instances(InstanceIds=[instance_id]).get("Reservations")
+
+    for reservation in reservations:
+        for instance in reservation['Instances']:
+            return (instance.get("PublicIpAddress"))
+
+
+
+def run_command_in_ec2_ssh(
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    ec2_client,
+    command:str,
+    ):
+
+    ec2 = boto3.resource('ec2')
+    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+  
+    p2_instance = None
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break;
+    if p2_instance is None:
+        print(f"{instance_id} is not ready")
+        return 
+
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    print('started...')
+    stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
+
+    for line in iter(stdout.readline, ""):
+        print(line, end="")
+    print('finished.')
+    ssh.close()
+
+
+
+def create_security_group(ec2_client, vpc_id:str = None, tags:list = None, group_name:str = 'SSH-ONLY') -> dict:
+     #Create a security group and allow SSH inbound rule through the VPC
+   
+    try:
+        response = ec2_client.create_security_group(
+            GroupName=group_name, 
+            Description='only allow SSH traffic', 
+            VpcId=vpc_id,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'security-group',
+                    'Tags':tags 
+                }
+            ],
+        )
+        security_group_id = response['GroupId']
+        print('Security Group Created %s in vpc %s.' % (security_group_id, vpc_id))
+        data = ec2_client.authorize_security_group_ingress(
+            GroupId=security_group_id,
+            IpPermissions=[
+                {'IpProtocol': 'tcp',
+                'FromPort': 22,
+                'ToPort': 22,
+                'IpRanges': [{'CidrIp': '0.0.0.0/0'}]}
+            ]
+        )
+        print('Ingress Successfully Set %s' % data)
+        # tag = security_group.create_tags(Tags=tags)
+        return {
+            'security_group_id':[security_group_id],
+            'vpc_id':vpc_id
+
+        }
+    except botocore.exceptions.ClientError as err:
+        print(err)
+
+
+def create_key_pair(ec2_client,keyname:str, file_location:str):
+ 
+    try:
+        key_pair = ec2_client.create_key_pair(KeyName=keyname)
+    except Exception as e:
+        logging.error(e)
+        raise f"Create key pair: {keyname} Failed"
+
+    private_key = key_pair["KeyMaterial"]
+    check_if_path_exist_and_create(file_location)
+    ## write private key to file with 400 permissions
+    with os.fdopen(os.open(f"{file_location}/{keyname}.pem", os.O_WRONLY | os.O_CREAT, 0o400), "w+") as handle: handle.write(private_key)
+    logging.info(f"Create {keyname} success, file location: {file_location}")
+    return 
+
+
+def export_ec2_parameters_to_yaml(
+    export_file:str, 
+    securitygroup_ids:list,
+    ec2_image_id:str,
+    ec2_instance_id:str,
+    ec2_instance_type:str,
+    ec2_volume:str,
+    key_pair_name:str,
+    login_user:str,
+    tags:dict,
+    vpc_id:str,
+    ):
+    config_dict  = {}
+    config_dict['SecurityGroupIds'] = securitygroup_ids
+    config_dict['ec2_image_id'] = ec2_image_id
+    config_dict['ec2_instance_id'] = ec2_instance_id
+    config_dict['ec2_instance_type'] = ec2_instance_type
+    config_dict['ec2_volume'] = ec2_volume
+    config_dict['key_pair_name'] = key_pair_name
+    config_dict['login_user'] = login_user
+    config_dict['tags'] = tags
+    config_dict['vpc_id'] = vpc_id
+    
+    write_aws_setting_to_yaml(
+            file=export_file, 
+            setting=config_dict
+        )
+    logging.info("Export eks config")
+
+
+def ssh_upload_folder_to_ec2(
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    ec2_resource,
+    local_folder:str,
+    remote_folder:str,
+):
+
+    # ec2 = boto3.resource('ec2')
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+    p2_instance = None
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break
+
+    if p2_instance is None:
+        raise Exception(f"{instance_id} does not exist")
+        
+    # check if directory exist
+    local_files_list = get_all_files_in_local_dir(local_dir=local_folder)
+    # print(local_files_list)
+    # conver local files path to remote path 
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    
+    # step 1. get relative folder
+    project_folder = basename(local_folder)
+    print(f"project_folder: {project_folder}, local_folder :{local_folder}")
+    relative_path = []
+    upload_local_to_remote_dict = {}
+    
+    for file in local_files_list:
+        path, filename = os.path.split(file)
+        relative = Path(path).relative_to(Path(local_folder))
+        if str(relative) == ".":
+            new_path = project_folder
+        else:
+            new_path = project_folder +"/" + str(relative)
+        relative_path.append(new_path)
+        upload_local_to_remote_dict[file] = remote_folder +f"/{new_path}/{filename}"
+    
+    for key, value in upload_local_to_remote_dict.items():
+        print(key, value)
+        print("-----------")
+    for folder in relative_path:
+        remote_dir = remote_folder + "/"+ folder
+        print(f"remote_folder :{remote_folder}, folder:{folder}")
+
+    # Upload files
+    for folder in relative_path:
+        remote_dir = remote_folder + "/"+ folder
+        print(f"remote_dir: {remote_dir}")
+        command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir}  \n fi"
+        (stdin, stdout, stderr) = ssh.exec_command(command)
+        for line in stdout.readlines():
+            print (line)
+    logging.info(f"Create folder :{remote_dir} success")
+
+    ftp_client=ssh.open_sftp()
+    for key,value in upload_local_to_remote_dict.items():   
+        try:
+            ftp_client.put(key,value)
+            logging.info(f"upload :{key} to {value} success")
+        except Exception as e :
+            logging.error(f"upload :{key} to {value} failed: {e}")
+        # print(f"local :{key}")
+        # print(f"value :{value}")
+    ftp_client.close()
+    logging.info(f"Uplodate {local_folder} to {remote_folder} success!!!")
+    return 
+
+
+def get_all_files_in_local_dir( local_dir:str) -> list:
+    all_files = list()
+
+    if os.path.exists(local_dir):
+        files = os.listdir(local_dir)
+        for x in files:
+            filename = os.path.join(local_dir, x)
+            print ("filename:" + filename)
+            # isdir
+            if os.path.isdir(filename):
+                all_files.extend(get_all_files_in_local_dir(filename))
+            else:
+                all_files.append(filename)
+        else:
+            print ('{} does not exist'.format(local_dir))
+    else:
+        print(f"{local_dir} doese not exist")
+    return all_files
+
+def upload_file_to_sc2(    
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    local_file:str,
+    remote_file:str,
+    ec2_client,):
+
+    ec2 = boto3.resource('ec2')
+    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break
+
+    # check if directory exist
+    path, tail = os.path.split(remote_file)
+    print(f"path :{path}")
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+
+    command = f"if [ ! -d \"{path}\" ]; then \n echo {path} does not exist \n mkdir {path} \n echo create {path} \n fi"
+    (stdin, stdout, stderr) = ssh.exec_command(command)
+    for line in stdout.readlines():
+        print (line)
+
+    # upload file
+    ftp_client=ssh.open_sftp()
+    ftp_client.put(local_file,remote_file)
+    ftp_client.close()
+    print(f"Uplodate {local_file} to {remote_file} success")
+    return 
