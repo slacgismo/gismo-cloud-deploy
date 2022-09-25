@@ -412,12 +412,13 @@ class HandleEC2(object):
         nodegroup_name = cluster_config_dict['nodeGroups'][0]['name']
 # 
         ssh_command_list = {}
-        if eks_action == EKSAction.create.name:
+        if eks_action == EKSActions.create.name:
+            
             logging.info("SSH create eks")
             command = f"eksctl create cluster -f {remote_cluster_file}"
             ssh_command_list['Create EKS cluster'] = command
 
-        elif eks_action == EKSAction.delete.name:
+        elif eks_action == EKSActions.delete.name:
             logging.info("set delete eks culster command ")
             # scale down if cluster exist
             scaledown_command =  f"rec=\"$(eksctl get cluster | grep {cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl scale nodegroup --cluster {cluster_name} --name {nodegroup_name} --nodes 0; fi"
@@ -427,24 +428,27 @@ class HandleEC2(object):
             # delete_eks_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
             ssh_command_list['Delete EKS cluster'] = delete_eks_command
 
-        elif eks_action == EKSAction.list.name:
+        elif eks_action == EKSActions.list.name:
             logging.info("Run list eks")
             command = f"eksctl get cluster"
             ssh_command_list['List EKS cluster'] = command
 
-        elif eks_action == EKSAction.scaledownzero.name:
+        elif eks_action == EKSActions.scaledownzero.name:
             logging.info("SSH scale down zero eks")
             scale_down_command = f"rec=\"$(eksctl get cluster | grep {cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl scale nodegroup --cluster {cluster_name} --name {nodegroup_name} --nodes 0; fi"
 
         for description, command in ssh_command_list.items():
             logging.info(description)
-            run_command_in_ec2_ssh(
-                    user_name=self.login_user,
-                    instance_id=self.ec2_instance_id,
-                    command=command,
-                    pem_location=self.get_pem_file_full_path_name(),
-                    ec2_client=self._ec2_client
-             )
+            try:
+                run_command_in_ec2_ssh(
+                        user_name=self.login_user,
+                        instance_id=self.ec2_instance_id,
+                        command=command,
+                        pem_location=self.get_pem_file_full_path_name(),
+                        ec2_client=self._ec2_client
+                )
+            except Exception as e:
+                raise Exception(f"run eks command file failed {e}")
 
 
     def hande_input_is_cleanup(self):

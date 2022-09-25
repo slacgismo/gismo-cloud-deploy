@@ -38,8 +38,7 @@ def verify_keys_in_ec2_configfile(config_dict:dict):
         verify_a_key_in_dict(dict_format=config_dict, key="key_pair_name")
         verify_a_key_in_dict(dict_format=config_dict, key="login_user")
         verify_a_key_in_dict(dict_format=config_dict, key="tags")
-        verify_a_key_in_dict(dict_format=config_dict, key="SecurityGroupIds")
-        verify_a_key_in_dict(dict_format=config_dict, key="vpc_id")
+        verify_a_key_in_dict(dict_format=config_dict, key="securitygroup_name")
 
         logging.info("Verify ec2 config key success")
     except AssertionError as e:

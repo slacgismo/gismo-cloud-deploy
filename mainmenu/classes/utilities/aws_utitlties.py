@@ -72,6 +72,8 @@ def check_bucket_exists_on_s3(s3_client, bucket_name:str) -> bool:
 
     
 def get_security_group_id_with_name(group_name:str, ec2_client) -> str:
+    if group_name is None:
+        raise ValueError("group_name is None")
     try:
         response= ec2_client.describe_security_groups(
             Filters=[
@@ -84,7 +86,7 @@ def get_security_group_id_with_name(group_name:str, ec2_client) -> str:
         else:
             return None
     except Exception as e:
-        raise Exception(f"fn")
+        raise Exception(f"{e}")
 
 
 def get_default_vpc_id(ec2_client) -> str:
@@ -99,6 +101,8 @@ def get_default_vpc_id(ec2_client) -> str:
         raise Exception(err)
 
 def check_keypair_exist(ec2_client, keypair_anme) ->bool:
+    print("0--=-------")
+    logging.info("Check keypair exist")
     try:
         keypairs = ec2_client.describe_key_pairs(
           KeyNames=[keypair_anme]
@@ -258,7 +262,7 @@ def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user
                 try:
                     ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
                 except Exception as e:
-                    logger.warning(f"SSH to {instance_id} failed, try again")
+                    logging.warning(f"SSH to {instance_id} failed, try again")
                     continue
 
                 logging.info(f"{instance_id} is ready to connect SSH")
@@ -577,3 +581,4 @@ def upload_file_to_sc2(
     ftp_client.close()
     print(f"Uplodate {local_file} to {remote_file} success")
     return 
+

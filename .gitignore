@@ -76,3 +76,5 @@ runtime.png
 *.pem
 
 
+created_resources_history/
+temp/

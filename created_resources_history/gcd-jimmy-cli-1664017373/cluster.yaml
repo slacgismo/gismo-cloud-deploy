@@ -1,11 +1,11 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: gcd-jimmy-cli-1663816036
+  name: gcd-jimmy-cli-1664017373
   region: us-east-2
   tags:
-    manage: eksctl
-    project: pvinsight
+    managedBy: eksctl
+    project: pvinisght
 nodeGroups:
 - desiredCapacity: 0
   instanceType: t2.large
@@ -13,5 +13,5 @@ nodeGroups:
   minSize: 0
   name: gcd
   tags:
-    manage: eksctl
-    project: pvinsight
+    managedBy: eksctl
+    project: pvinisght

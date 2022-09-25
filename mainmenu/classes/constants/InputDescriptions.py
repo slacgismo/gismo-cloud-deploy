@@ -3,7 +3,6 @@ import enum
 
 
 class InputDescriptions(enum.Enum):
-    is_cleanup_resources_after_completion = "create"
     input_project_name_in_tags="Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path)"
 
     is_debug_mode_questions = "Run debug mode through SSH? If `no`, an following instructions will help you to create a run-files command and execute it."
@@ -15,6 +14,8 @@ class InputDescriptions(enum.Enum):
     input_number_of_generated_instances_questions = "How many instances you would like to generate to run this application in parallel? \n Input an postive integer: "
 
     input_project_folder_questions = "Enter project folder (Hit `Enter` button to use default path",
+
+    is_cleanup_resources_after_completion = "Do you want to delete all created resources?\nIf you type 'no', there will be an operating cost from generated eks cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create.Sept,2022). The ec2 bastion will be stopped (no operating cost).\nHowever, if you type 'yes', the generated ec2 bastions and eks cluster will be deleted (No operating cost from ec2 and eks cluster).\n It takes about 10~20 mins to generated a new eks cluster.\n",
 
     select_an_action = "Select an actio!!"
 

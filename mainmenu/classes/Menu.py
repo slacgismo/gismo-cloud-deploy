@@ -67,12 +67,12 @@ class Menu(object):
         self._config_yaml_dcit = {}
         self._eks_config_yaml_dcit = {}
         self._ec2_config_yaml_dcit = {}
-        self._ec2_image_id = None,
-        self._ec2_instance_id = None,
-        self._ec2_instance_type = None,
-        self._ec2_volume = None,
-        self._login_user = None,
-        self._ec2_tages = None,
+        self._ec2_image_id = None
+        self._ec2_instance_id = None
+        self._ec2_instance_type = None
+        self._ec2_volume = None
+        self._login_user = None
+        self._ec2_tages = []
 
         self._max_nodes = 100
         self._num_of_nodes = 1
@@ -81,6 +81,7 @@ class Menu(object):
 
         # self._cluster_name = f"gcd-{self._user_id}-{self._start_time}"
         self._cluster_name = None
+        self._nodegroup_name = None
         self._ec2_name = None
         self._keypair = None
         # self._ec2_name = f"gcd-{self._user_id}-{self._start_time}"
@@ -104,9 +105,20 @@ class Menu(object):
 
     def set_menus_action(self, action):
         self._menus_action = action
+    
+    def append_ec2_tags(self, append_dict):
+        if not isinstance(append_dict, dict):
+            raise ValueError(f"{append_dict} is not dictionary")
+        self._ec2_tages.append(append_dict)
 
     def get_relative_project_folder(self):
         return self._project_name
+
+    def get_eks_template_file(self):
+        return self.eks_config_templates
+
+    def get_ec2_template_file(self):
+        return self.ec2_config_templates
 
     def get_cluster_file(self):
         return self._saved_eks_config_file
@@ -134,6 +146,11 @@ class Menu(object):
     def get_ec2_volume(self):
         return self._ec2_volume
 
+    def generate_saved_ec2_config_file_from_id(self,save_base_path, id):
+        file_path_name = f"{save_base_path}/{id}/config-ec2.yaml"
+        return file_path_name
+
+        
     def get_saved_ec2_config_file(self):
         return self._saved_ec2_config_file 
     def get_saved_eks_config_file(self):
@@ -281,30 +298,34 @@ class Menu(object):
 
         # step 1 . ask for project
         self.handle_enter_input_project_path()
-
+        
         # step 2. verify file structures
         if action != MenuActions.cleanup_cloud_resources.name:
             self.handle_verify_project_folder()
 
         # step 3. select from saved resources 
         if action == MenuActions.resume_from_existing.name \
-            or action == MenuActions.cleanup_cloud_resources:
+            or action == MenuActions.cleanup_cloud_resources.name:
             self.select_created_cloud_config_files()
             self.import_from_ec2_config()
             self.import_from_eks_config()
         elif action == MenuActions.create_cloud_resources_and_start.name:
             logging.info("Create new resources")
             self.generate_ec2_name()
+            self.append_ec2_tags(append_dict={"Key":"Name","Value":self._ec2_name})
             self.generate_eks_cluster_name()
             self.generate_keypair_name()
+            self.import_from_ec2_template()
+
+            
 
         #step 4. input questions:
         self.handle_proecess_files_inputs_questions()
 
         #step 5 print out variable and ask for confirmed:
         self.print_variables_and_request_confirmation()
-        if self._is_confirm_to_process:
-            self.generate_config_history_path_and_export_cluster()
+        # if self._is_confirm_to_process:
+        #     self.generate_config_history_path_and_export_cluster()
 
         logging.info("=================")
         logging.info("Initializatin end")
@@ -449,29 +470,21 @@ class Menu(object):
                 ['ec2 instance id', self._ec2_instance_id],
             ]
         elif action == MenuActions.resume_from_existing.name \
-            or action == MenuActions.create_cloud_resources_and_start.name:
-
-            ec2_config_dict = convert_yaml_to_json(yaml_file=self._saved_ec2_config_file)
-            self._ec2_tages = ec2_config_dict['tags']
-            self._ec2_image_id = ec2_config_dict['ec2_image_id']
-            self._ec2_instance_type = ec2_config_dict['ec2_instance_type']
-            self._ec2_volume = ec2_config_dict['ec2_volume']
-            self.key_pair_name = ec2_config_dict['key_pair_name']
-            self._ec2_instance_id = ec2_config_dict['ec2_instance_id']
-            
+            or action == MenuActions.cleanup_cloud_resources.name:
+            print(f"_saved_ec2_config_file: {self._saved_ec2_config_file}")
+    
+        
             table_arrays = [ 
                 ["Parameters","Details"],
-                ['project full path', self._temp_project_absoult_path],
+                ['temp project full path', self._temp_project_absoult_path],
+                ['selected ec2 config file', self._saved_ec2_config_file],
                 ['project folder', self._project_name],
                 ['number of process files', self._process_first_n_files],
                 ['number of  generated instances', self._num_of_nodes],
                 ['max nodes size',self._max_nodes],
                 ["cleanup cloud resources after completion",self._cleanup_resources_after_completion],
-                ["Generate EC2 bastion name",self._ec2_name],
                 ["SSH command", self._runfiles_command],
                 ["Generate EKS cluster name",self._cluster_name],
-                ['poject in tags',self._project_in_tags],
-                ["Parameters","Details"],
                 ['ec2_tags', self._ec2_tages],
                 ['ec2 image id', self._ec2_image_id],
                 ['ec2 instances type', self._ec2_instance_type],
@@ -479,7 +492,8 @@ class Menu(object):
                 ['ec2 keypair', self._keypair],
                 ['pem location', self._local_pem_path],
                 ['ec2 instance id', self._ec2_instance_id],
-
+                ['eks cluster name', self._cluster_name],
+                ['eks nodegroup name', self._nodegroup_name],
             ]
 
 
@@ -512,8 +526,24 @@ class Menu(object):
             file=export_file, 
             setting=self._eks_config_yaml_dcit
         )
-        logging.info("Export eks config")
+        logging.info("Export eks config success")
         return 
+
+    def import_from_ec2_template(self):
+        logging.info(f"import from ec2 template {self.ec2_config_templates}")
+        if not exists(self.ec2_config_templates):
+            raise Exception("ec2_config_templates does not exist")
+        template_config = convert_yaml_to_json(yaml_file=self.ec2_config_templates)
+
+        templagte_tags = template_config['tags']
+
+        if len(templagte_tags):
+            for tag in templagte_tags:
+                print(f"tag {tag}")
+                self.append_ec2_tags(append_dict=tag)
+        self._ec2_image_id = template_config['ec2_image_id']
+        self._ec2_instance_type = template_config['ec2_instance_type']
+        self._ec2_volume = template_config['ec2_volume']
 
 
 
@@ -524,10 +554,16 @@ class Menu(object):
         if not exists(self._saved_ec2_config_file):
             raise Exception("saved_ec2_config_file does not exist")
         self._ec2_config_yaml_dcit = convert_yaml_to_json(yaml_file=self._saved_ec2_config_file)
-  
-        verify_keys_in_ec2_configfile(config_dict=self._ec2_config_yaml_dcit)
-    
 
+        verify_keys_in_ec2_configfile(config_dict=self._ec2_config_yaml_dcit)
+        self._keypair = self._ec2_config_yaml_dcit['key_pair_name']
+        self._ec2_tages = self._ec2_config_yaml_dcit['tags']
+        self._ec2_image_id = self._ec2_config_yaml_dcit['ec2_image_id']
+        self._ec2_instance_type = self._ec2_config_yaml_dcit['ec2_instance_type']
+        self._ec2_volume = self._ec2_config_yaml_dcit['ec2_volume']
+        self._keypair = self._ec2_config_yaml_dcit['key_pair_name']
+        self._ec2_instance_id = self._ec2_config_yaml_dcit['ec2_instance_id']
+  
 
     def import_from_eks_config(self):
         logging.info("import from eks")
@@ -541,6 +577,8 @@ class Menu(object):
         else:
             raise ValueError("cluster name should be None in this state, Please check your code.")
         verify_keys_in_eks_configfile(config_dict=self._eks_config_yaml_dcit)
+        self._cluster_name = self._eks_config_yaml_dcit['metadata']['name']
+        self._nodegroup_name = self._eks_config_yaml_dcit['nodeGroups'][0]['name']
 
 
 
@@ -564,7 +602,7 @@ class Menu(object):
                 input_question= InputDescriptions.input_project_name_in_tags.value,
                 default_answer = self._project_in_tags
             )
-
+            self.append_ec2_tags(append_dict={"Key":"project","Value": self._project_in_tags})
          # debug mode
         if self._menus_action == MenuActions.create_cloud_resources_and_start.name \
             or self._menus_action == MenuActions.resume_from_existing.name:
@@ -601,7 +639,14 @@ class Menu(object):
                 max_node= self._max_nodes
             )
             logging.info(f"Number of generated instances:{self._num_of_nodes}")
-        
+           
+        # is clean up after completion 
+        self._cleanup_resources_after_completion = handle_yes_or_no_question(
+            input_question=InputDescriptions.is_cleanup_resources_after_completion.value,
+            default_answer="no"
+        )
+
+
         # generate run files command 
         if self._menus_action == MenuActions.create_cloud_resources_and_start.name \
             or self._menus_action == MenuActions.resume_from_existing.name:
@@ -621,8 +666,8 @@ class Menu(object):
             input_question=InputDescriptions.input_project_folder_questions.value,
             default_answer=default_project
         )
-        self._project_name = basename(self._origin_project_path)
-        self._temp_project_absoult_path = self._base_path + f"/temp/{self._project_name}"
+        self._project_name = "temp/"+ basename(self._origin_project_path)
+        self._temp_project_absoult_path = self._base_path + f"/{self._project_name}"
 
         logging.info(f"Copy {self._origin_project_path} to {self._temp_project_absoult_path}")
 
@@ -719,7 +764,7 @@ class Menu(object):
         except Exception as e:
             raise Exception(f"Dlete {self._config_history_path} failded")
 
-    def delete_project_folder(self):
+    def delete_temp_project_folder(self):
         logging.info("Delete project folder")
         if not os.path.exists(self._temp_project_absoult_path):
             raise Exception(f"{self._temp_project_absoult_path} does not exist")

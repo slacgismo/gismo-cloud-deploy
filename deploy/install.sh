@@ -53,11 +53,11 @@ echo 'install docker-compose' >> /home/ec2-user/installation.txt
 # install gismo-cloud-deploy
 git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy
 echo 'git clone gismo-cloud-deploy' >> /home/ec2-user/installation.txt
-cd /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/
+cd /home/ec2-user/gismo-cloud-deploy/
 git fetch 
-git switch features/removeImportClusterYamlInGismoCloudDeploy
+git switch feature/refactor0922
 
-sudo chmod +rwx /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config
+# sudo chmod +rwx /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config
 # create virtual environment 
 python3.8 -m venv venv
 echo 'create virtual environment' >> /home/ec2-user/installation.txt
@@ -65,5 +65,5 @@ source ./venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 pip install .
-echo 'run pip install' >> /home/ec2-user/installation.txtqq
+echo 'run pip install' >> /home/ec2-user/installation.txt
 
