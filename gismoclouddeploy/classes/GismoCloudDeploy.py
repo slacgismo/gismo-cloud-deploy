@@ -1,16 +1,15 @@
 
 from distutils import log
-from enum import Enum
+
 
 from terminaltables import AsciiTable
 import fnmatch
 import re
 from transitions import Machine
-from .modiy_config_parameters import convert_yaml_to_json
-from .check_aws import check_aws_validity
-import enum
-from .initial_end_services import initial_end_services
-from .long_pulling_sqs import long_pulling_sqs_multi_server
+from .utilities.convert_yaml import convert_yaml_to_json
+from .utilities.check_aws import check_aws_validity
+from .utilities.initial_end_services import initial_end_services
+from .utilities.long_pulling_sqs import long_pulling_sqs_multi_server
 import os
 import coloredlogs, logging
 from os.path import exists
@@ -20,43 +19,39 @@ import boto3
 import math
 import time
 import threading
-from .eks_utils import scale_eks_nodes_and_wait, wait_pod_ready
+from .utilities.eks_utils import scale_eks_nodes_and_wait
 import json
-from .command_utils import verify_keys_in_configfile
-from .invoke_function import (
+from .utilities.command_utils import verify_keys_in_configfile
+from .utilities.invoke_function import (
     invoke_docker_compose_build,
     invoke_tag_image,
     invoke_ecr_validation,
     invoke_push_image,
     invoke_eks_updagte_kubeconfig,
-    # invoke_process_files_to_server_namespace,
-    invoke_exec_k8s_run_process_files,
-    # invoker_check_docker_running
-    
-    
+    invoke_exec_k8s_run_process_files,    
 )
 
-from .process_log import analyze_all_local_logs_files,process_logs_from_local
-from .k8s_utils import (
+from .utilities.process_log import analyze_all_local_logs_files,process_logs_from_local
+from .utilities.k8s_utils import (
     check_k8s_services_exists, 
     create_k8s_svc_from_yaml,
     get_k8s_pod_name_from_namespace,
     k8s_create_namespace,
 )
-from .DevEnvironments import DevEnvironments
+from .constants.DevEnvironments import DevEnvironments
 
 from typing import List
-from .check_aws import (
+from .utilities.check_aws import (
     connect_aws_client,
     connect_aws_resource,
     get_iam_user_name
 )
 
-from .sqs import (
+from .utilities.sqs import (
 
     create_queue,
 )
-from .command_utils import (
+from .utilities.command_utils import (
 
     create_or_update_k8s_deployment,
 )
@@ -477,6 +472,8 @@ class GismoCloudDeploy(object):
             self._solver_lic_target_path_in_images_dest = "/root/dummy"
 
         try:
+            print("")
+
             invoke_docker_compose_build(
                         project= self.project ,
                         target_path_of_upload_file = self._solver_lic_target_path_in_images_dest,

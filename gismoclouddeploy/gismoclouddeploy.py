@@ -1,10 +1,10 @@
 
 import time
 
-from .utils.DevEnvironments import DevEnvironments
-from .utils.GismoCloudDeploy import  GismoCloudDeploy
+from .classes.constants.DevEnvironments import DevEnvironments
+from .classes.GismoCloudDeploy import  GismoCloudDeploy
 
-from .utils.check_aws import (
+from .classes.utilities.check_aws import (
     check_environment_is_aws,
 )
 import logging

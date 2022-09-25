@@ -182,19 +182,12 @@ def invoke_docker_compose_build(
     source_path_of_upload_file :str = None,
     
 ) -> str:
-    # command = ["export",f"WORKER_DIRECTORY={code_template_folder}", "docker-compose", "build","--build-arg", f"CODES_FOLDER={code_template_folder}"]
     command = f"WORKER_DIRECTORY={project} docker-compose build --build-arg CODES_FOLDER={project} --build-arg TARGET_PATH_OF_UPLOAD_FILE={target_path_of_upload_file} --build-arg SOURCE_PATH_OF_UPLOAD_FILE={source_path_of_upload_file}"
 
     print(f"Build command :{command}")
-    # output = subprocess.check_output(["bash", "-c", command])
     output = subprocess.check_output(["bash", "-c", command])
     return output
-    # try:
-    #     logger.info(f"docker build command: {command}")
-    #     output = exec_subprocess_command(command=command)
-    #     return output
-    # except Exception as e:
-    #     raise e
+
 
 
 def invoke_ecr_validation(ecr_repo: str) -> str:

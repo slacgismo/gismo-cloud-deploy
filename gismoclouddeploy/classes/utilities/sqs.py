@@ -28,21 +28,6 @@ def create_queue(queue_name:str = None, delay_seconds:int = 1, visiblity_timeout
     else:
         return response
 
-# def send_queue_message(queue_name, msg_attributes, msg_body,sqs_client):
-#     """
-#     Sends a message to the specified queue.
-#     """
-#     try:
-#         queue = sqs_client.get_queue_url(QueueName=queue_name)
-#         queue_url=queue['QueueUrl']
-#         response = sqs_client.send_message(QueueUrl=queue_url,
-#                                            MessageAttributes=msg_attributes,
-#                                            MessageBody=msg_body)
-#     except ClientError:
-#         logger.exception(f'Could not send meessage to the - {queue_url}.')
-#         raise
-#     else:
-#         return response
 
 
 def send_queue_message(queue_url, msg_attributes, msg_body,sqs_client):
@@ -161,26 +146,9 @@ def clean_user_previous_sqs_message(
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 
-                # print(msg_body)
                 MessageAttributes = msg['MessageAttributes']
-                # body = msg["Body"].strip("\'<>() ").replace("'", '"').strip("\n")
-                # msg_body = json.loads( msg["Body"])
-                # logger.info(f"msg_body {msg_body}")
-                # print("------------")
-                # # # print(json_obj)
-                # json_obj  = json.loads(msg_body)
-                # print(json_obj)
-                # # data =json_obj['data']
-                # # error = json_obj['error']
-                # # print(data)
-                # print(error)
                 receive_message_user_id = MessageAttributes['user_id']['StringValue']
-                # print(user_id)
-                # print("------------")
                 receipt_handle = msg["ReceiptHandle"]
-                # subject = (
-                #     msg_body["Subject"].strip("'<>() ").replace("'", '"').strip("\n")
-                # )
                 if receive_message_user_id == user_id:
                     logger.info(f"Delete {index} message")
                     index += 1

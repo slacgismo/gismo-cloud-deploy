@@ -1,16 +1,12 @@
-from os import name
+
 import time
-
-
-
 from typing import List
 
-from .DevEnvironments import DevEnvironments
+from ..constants.DevEnvironments import DevEnvironments
 from .check_aws import connect_aws_client, check_environment_is_aws
 import logging
 from .process_log import (
     process_logs_from_local,
-    # analyze_local_logs_files,
 )
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
@@ -40,33 +36,18 @@ logging.basicConfig(
 
 
 def delete_k8s_all_po_sev_deploy_daemonset(namespace: str="default"):
-    # for server_info in server_list:
-        # server_name = server_info['name']
-        # namespace = server_info['namespace']
     logger.info("----------->.  Delete k8s deployment ----------->")
     delete_deploy = invoke_kubectl_delete_all_deployment(namespace=namespace)
     logger.info(delete_deploy)
     logger.info("----------->.  Delete k8s services ----------->")
     delete_svc = invoke_kubectl_delete_all_services(namespace=namespace)
     logger.info(delete_svc)
-    # logger.info("----------->.  Delete k8s namespace ----------->")
-    # delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
-    # logger.info(delete_namespace)
-    # logger.info("----------->.  Delete all daemonset ----------->")
-    # delete_daemonset = invoke_kubectl_delete_all_daemonset()
-    # logger.info(delete_daemonset)
-    # logger.info("----------->.  Delete all po ----------->")
-    # delete_po = invoke_kubectl_delete_all_po()
-    # logger.info(delete_po)
     return 
 
 
 def process_local_logs_and_upload_s3(
-    # worker_config: WORKER_CONFIG = None,
     logs_file_path_name_local: str = None,
     saved_image_name_local: str = None,
-    # saved_files_dict_local:dict= None,
-    # saved_files_dict_cloud :dict = None,
     databucket: str = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
@@ -86,15 +67,6 @@ def process_local_logs_and_upload_s3(
         s3_client=s3_client,
     )
 
-    # logger.info("Update results to S3")
-    # upload_results_to_s3(
-    #     saved_files_dict_cloud=saved_files_dict_cloud,
-    #     saved_files_dict_local=saved_files_dict_local,
-    #     saved_bucket=databucket,
-    #     aws_access_key=aws_access_key,
-    #     aws_secret_access_key=aws_secret_access_key,
-    #     aws_region=aws_region,
-    # )
 
 
 def initial_end_services(
@@ -113,16 +85,6 @@ def initial_end_services(
     initial_process_time: float = None,
 ):
 
-    # logger.info("=========== delete solver lic in bucket ============ ")
-    # if solver['solver_name'] != "None":
-    #     delete_solver_lic_from_bucket(
-    #         saved_solver_bucket=solver['saved_solver_bucket'],
-    #         solver_lic_file_name=solver['solver_lic_file_name'],
-    #         saved_temp_path_in_bucket=solver['saved_temp_path_in_bucket'] + "/" + user_id,
-    #         aws_access_key=aws_access_key,
-    #         aws_secret_access_key=aws_secret_access_key,
-    #         aws_region=aws_region,
-    #     )
     s3_client = connect_aws_client(
         client_name="s3",
         key_id=aws_access_key,

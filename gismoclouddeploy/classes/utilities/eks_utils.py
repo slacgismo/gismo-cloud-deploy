@@ -77,12 +77,6 @@ def num_of_nodes_ready() -> int:
     response = v1.list_node()
     num_of_node_ready = 0
     for node in response.items:
-        # print(node.metadata.labels['kubernetes.io/hostname'])
-        # cluster = node.metadata.labels["alpha.eksctl.io/cluster-name"]
-        # nodegroup = node.metadata.labels["alpha.eksctl.io/nodegroup-name"]
-        # hostname = node.metadata.labels["kubernetes.io/hostname"]
-        # instance_type = node.metadata.labels["beta.kubernetes.io/instance-type"]
-        # region = node.metadata.labels["topology.kubernetes.io/region"]
         status = node.status.conditions[-1].status  # only looks the last
 
         if bool(status) is True:
