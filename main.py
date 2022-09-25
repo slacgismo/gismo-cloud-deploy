@@ -127,7 +127,7 @@ def run_files(
         click.echo("Both file input and number input have been given. You can only choice one.")
         return 
     if cluster =="local" and check_environment_is_aws():
-        click.echo("Runing application on AWS environment. You must to use '-c' option command to specify cluster name.")
+        click.echo("Runing application on AWS environment. Please use '-c' option command to specify a cluster name.")
         return 
 
     default_fileslist = []
