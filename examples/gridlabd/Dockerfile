@@ -4,7 +4,17 @@ FROM debian:11
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ARG CODES_FOLDER
-ENV code_path  "../config/$CODES_FOLDER"
+
+ARG TARGET_PATH_OF_UPLOAD_FILE
+ARG SOURCE_PATH_OF_UPLOAD_FILE
+
+# code template path
+ENV code_path  "../$CODES_FOLDER"
+ENV project_path "../$CODES_FOLDER"
+# license path
+ENV source_path_of_upload_file "./$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
+
+
 
 
 RUN apt-get -q update
@@ -47,22 +57,30 @@ RUN ./install.sh -t -v
 RUN autoreconf -isf && ./configure
 RUN make -j6 system
 
-COPY $code_path/requirements.txt /requirements.txt
+
+# copey requirements
+COPY $project_path/requirements.txt /requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt
 
-COPY ./server/compose/local/flask/entrypoint /entrypoint
+# copy specific file to images 
+
+COPY ./gismoclouddeploy/server/compose/local/flask/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
-COPY ./server/compose/local/flask/start /start
+COPY /gismoclouddeploy/server/compose/local/flask/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
-COPY ./server/compose/local/flask/celery/worker/start /start-celeryworker
+COPY ./gismoclouddeploy/server/compose/local/flask/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
 
+
+COPY ./gismoclouddeploy/server/compose/local/flask/celery/flower/start /start-flower
+RUN sed -i 's/\r$//g' /start-flower
+RUN chmod +x /start-flower
 
 # WORKDIR /app
 

@@ -3,7 +3,17 @@ FROM python:3.8
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ARG CODES_FOLDER
-ENV code_path  "../config/$CODES_FOLDER"
+
+ARG TARGET_PATH_OF_UPLOAD_FILE
+ARG SOURCE_PATH_OF_UPLOAD_FILE
+
+# code template path
+ENV code_path  "../$CODES_FOLDER"
+ENV project_path "../$CODES_FOLDER"
+# license path
+ENV source_path_of_upload_file "./$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
+
+
 
 RUN apt-get update \
   # dependencies for building Python packages
@@ -19,29 +29,40 @@ RUN apt update && apt install libblas3 liblapack3 liblapack-dev libblas-dev cmak
 RUN apt install libhdf5-dev -y
 
 # Requirements are installed here to ensure they will be cached.
-# COPY ./server/requirements.txt /requirements.txt
-# COPY ../config/code-templates/requirements.txt /requirements.txt
-COPY $code_path/requirements.txt /requirements.txt
+
+# copey requirements
+COPY $project_path/requirements.txt /requirements.txt
 RUN pip install --upgrade pip
 RUN pip install -r /requirements.txt
 
-COPY ./server/compose/local/flask/entrypoint /entrypoint
+# copy specific file to images 
+
+COPY ./gismoclouddeploy/server/compose/local/flask/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
-COPY ./server/compose/local/flask/start /start
+COPY /gismoclouddeploy/server/compose/local/flask/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
-COPY ./server/compose/local/flask/celery/worker/start /start-celeryworker
+COPY ./gismoclouddeploy/server/compose/local/flask/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
 
 
 
-COPY ./server/compose/local/flask/celery/flower/start /start-flower
+COPY ./gismoclouddeploy/server/compose/local/flask/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
+
+
+RUN echo "==========COPY license ============================"
+RUN echo "upload local file is: $source_path_of_upload_file"
+RUN echo "upload target path is: $TARGET_PATH_OF_UPLOAD_FILE"
+RUN echo "==================================================="
+# copy license
+RUN mkdir $TARGET_PATH_OF_UPLOAD_FILE
+COPY $source_path_of_upload_file  $TARGET_PATH_OF_UPLOAD_FILE
 
 # WORKDIR /app
 
@@ -53,7 +74,7 @@ WORKDIR /app
 # copy project code
 
 
-COPY ./server .
+COPY ./gismoclouddeploy/server .
 
 COPY $code_path ./project/
 

@@ -8,10 +8,10 @@ ARG TARGET_PATH_OF_UPLOAD_FILE
 ARG SOURCE_PATH_OF_UPLOAD_FILE
 
 # code template path
-ENV code_path  "../projects/$CODES_FOLDER"
-ENV project_path "../projects/$CODES_FOLDER"
+ENV code_path  "../$CODES_FOLDER"
+ENV project_path "../$CODES_FOLDER"
 # license path
-ENV source_path_of_upload_file "../projects/$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
+ENV source_path_of_upload_file "./$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
 
 
 
@@ -37,29 +37,32 @@ RUN pip install -r /requirements.txt
 
 # copy specific file to images 
 
-COPY ./server/compose/local/flask/entrypoint /entrypoint
+COPY ./gismoclouddeploy/server/compose/local/flask/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
-COPY ./server/compose/local/flask/start /start
+COPY /gismoclouddeploy/server/compose/local/flask/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
-COPY ./server/compose/local/flask/celery/worker/start /start-celeryworker
+COPY ./gismoclouddeploy/server/compose/local/flask/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
 
 
 
-COPY ./server/compose/local/flask/celery/flower/start /start-flower
+COPY ./gismoclouddeploy/server/compose/local/flask/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 
 
-
+RUN echo "==========COPY license ============================"
+RUN echo "upload local file is: $source_path_of_upload_file"
+RUN echo "upload target path is: $TARGET_PATH_OF_UPLOAD_FILE"
+RUN echo "==================================================="
 # copy license
-COPY $source_path_of_upload_file/  $TARGET_PATH_OF_UPLOAD_FILE
-
+RUN mkdir $TARGET_PATH_OF_UPLOAD_FILE
+COPY $source_path_of_upload_file  $TARGET_PATH_OF_UPLOAD_FILE
 
 # WORKDIR /app
 
@@ -71,7 +74,7 @@ WORKDIR /app
 # copy project code
 
 
-COPY ./server .
+COPY ./gismoclouddeploy/server .
 
 COPY $code_path ./project/
 
