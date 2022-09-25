@@ -283,6 +283,7 @@ class HandleAWS(object):
 
     def wake_up_ec2(self, wait_time:int = 90, delay:int = 1):
         # import from ec2 file
+        logging.info("Wake up ec2")
         if self._ec2_instance_id is None:
             raise Exception("ec2 instance id is None, Import from exsiting file or create a new one")
         is_ec2_state_ready = False
