@@ -1,6 +1,5 @@
 from genericpath import exists
-from os.path import basename
-from logging import Filter
+from stat import S_ISDIR    
 import boto3
 import os
 import botocore
@@ -610,3 +609,58 @@ def upload_file_to_sc2(
     print(f"Uplodate {local_file} to {remote_file} success")
     return 
 
+
+
+def ssh_download_folder_from_ec2(
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    ec2_resource,
+    local_folder:str,
+    remote_folder:str,
+):
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+    p2_instance = None
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break
+
+    if p2_instance is None:
+        raise Exception(f"{instance_id} does not exist")
+
+    ssh = paramiko.SSHClient()
+    
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    # if use password
+    # transport = paramiko.Transport((host, port))
+    # transport.connect(username=username, password=password)
+    # sftp = paramiko.SFTPClient.from_transport(transport)
+    # sftp_get_recursive(remote_path, local_path, sftp)
+    # sftp.close()
+    logging.info(f"get recursive from {remote_folder} to {local_folder}")
+    ftp_client=ssh.open_sftp()
+    sftp_get_recursive(remote_folder, local_folder, ftp_client)
+    ftp_client.close()
+
+    logging.info(f"Download {remote_folder} to {local_folder} success!!!")
+    return 
+
+def sftp_get_recursive(path, dest, sftp):
+    logging.info("Download files recursive!!")
+    item_list = sftp.listdir_attr(path)
+    dest = str(dest)
+    if not os.path.isdir(dest):
+        os.makedirs(dest, exist_ok=True)
+
+    for item in item_list:
+        logging.info(f"download {item.filename}")
+        mode = item.st_mode
+        if S_ISDIR(mode):
+            sftp_get_recursive(path + "/" + item.filename, dest + "/" + item.filename, sftp)
+        else:
+            sftp.get(path + "/" + item.filename, dest + "/" + item.filename)
+    logging.info(f"Download {path} success")

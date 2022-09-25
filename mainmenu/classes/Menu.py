@@ -103,6 +103,9 @@ class Menu(object):
         #confirmation 
         self._is_confirm_to_process = False
 
+    def get_origin_project_path(self):
+        return self._origin_project_path
+
     def get_number_of_process_files(self):
         return self._process_first_n_files
 

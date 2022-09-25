@@ -9,6 +9,7 @@ import time
 
 import re
 import socket
+from unittest import result
 
 
 from transitions import Machine
@@ -49,7 +50,8 @@ from .utilities.aws_utitlties import (
     check_if_ec2_ready_for_ssh,
     get_public_ip,
     ssh_upload_folder_to_ec2,
-    upload_file_to_sc2
+    upload_file_to_sc2,
+    ssh_download_folder_from_ec2
 )
 
 from .constants.AWSActions import AWSActions
@@ -68,7 +70,8 @@ class HandleAWS(object):
             saved_config_path_base :str = None,
             ec2_tags :list = None,
             local_temp_project_path = None,
-            project_name :str = None
+            project_name :str = None,
+            origin_project_path:str = None,
 
         ) -> None:
 
@@ -116,11 +119,15 @@ class HandleAWS(object):
         self._config_history_path= None
         self.local_temp_project_path = local_temp_project_path
         self.project_name = project_name
+        self._origin_project_path = origin_project_path
 
         # eks variables
         self._cluster_name = None
         self._nodegroup_name = None
         
+    def get_origin_project_path(self):
+        return  self._origin_project_path
+
 
     def get_ec2_name_from_tags(self):
         print(f"self._tags :{self._tags}")
@@ -610,6 +617,29 @@ class HandleAWS(object):
 
         )
         return 
+
+    def ssh_download_results_to_originl_project_path(self ):
+        if self._origin_project_path is None:
+            raise ValueError(f"origin_project_path is None")
+        if not exists(self._origin_project_path):
+            raise Exception(f"{self._origin_project_path} does not exist")
+        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy"
+        remote_projects_results_folder =f"{remote_base_path}/{self.project_name}/results"
+        self._origin_project_results_path = self._origin_project_path +"/results"
+        if not os.path.exists(self._origin_project_results_path):
+            logging.warning(f"{self._origin_project_results_path} does not exist")
+            os.mkdir(self._origin_project_results_path)
+            logging.info(f"{self._origin_project_results_path} create success")
+
+        logging.info(f"download results from {remote_projects_results_folder} to {self._origin_project_results_path}")
+        ssh_download_folder_from_ec2(
+            ec2_resource=self._ec2_resource,
+            user_name=self._login_user,
+            instance_id=self._ec2_instance_id,
+            pem_location=self.get_pem_file_full_path_name(),
+            remote_folder=remote_projects_results_folder,
+            local_folder=self._origin_project_results_path,
+        )
 
     def handle_ssh_eks_action(
         self,

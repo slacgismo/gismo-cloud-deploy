@@ -2,6 +2,7 @@ from doctest import Example
 from genericpath import exists
 
 import sys
+
 # setting path
 sys.path.append('../gismoclouddeploy')
 from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
@@ -65,7 +66,9 @@ def mainmenu(
         project_name = menus.get_project_name()
         temp_project_path = menus.get_temp_project_path()
         ec2_tags = menus.get_ec2_tags()
+        origin_project_path = menus.get_origin_project_path()
         print(f"keypair_name: {keypair_name}")
+
 
         handle_aws_object = HandleAWS(
                 keypair_name = keypair_name,
@@ -76,7 +79,8 @@ def mainmenu(
                 saved_config_path_base = saved_config_path_base,
                 ec2_tags = ec2_tags,
                 local_temp_project_path = temp_project_path,
-                project_name = project_name
+                project_name = project_name,
+                origin_project_path=origin_project_path,
             )
 
         logging.info("Start prepare ec2 state")
@@ -133,10 +137,12 @@ def mainmenu(
             is_run_custom_ssh_command = menus.get_is_run_custom_ssh_command()
             if is_run_custom_ssh_command is True:
                 handle_aws_object.run_ssh_debug_mode()
+                
             else:
                 run_files_command = menus.get_run_files_command()
                 handle_aws_object.run_ssh_command(ssh_command=run_files_command)
-        
+                # download projet results to origin path
+                handle_aws_object.ssh_download_results_to_originl_project_path()
             is_clean_up_after_completion = menus.get_cleanup_after_completion()
 
             # end of peform command , set action for next state

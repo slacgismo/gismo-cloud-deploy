@@ -1,13 +1,13 @@
-import datetime
-import time
-import json
+
 import re
-
+import logging
 import pandas as pd
-
+import logging
 import boto3 
 import os
 from dotenv import load_dotenv
+
+from mainmenu.classes.utilities.aws_utitlties import connect_aws_resource
 load_dotenv()
 # df = pd.read_csv("init_command_logs_644.csv")
 # print(df["file_name"])
@@ -116,3 +116,110 @@ def find_matched_column_name_set(
 # from modules.utils.InputQuestions import InputQuestions
 
 # print(InputQuestions.is_debug_mode_questions.value)
+
+
+import paramiko
+import os
+from stat import S_ISDIR, S_ISREG    
+
+
+
+
+def ssh_download_folder_from_ec2(
+    user_name:str,
+    instance_id:str,
+    pem_location:str,
+    ec2_resource,
+    local_folder:str,
+    remote_folder:str,
+):
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    print(instances)
+    p2_instance = None
+    for instance in instances:
+        if (instance.id==instance_id):
+            p2_instance=instance
+            break
+
+    if p2_instance is None:
+        raise Exception(f"{instance_id} does not exist")
+
+    ssh = paramiko.SSHClient()
+    
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    privkey = paramiko.RSAKey.from_private_key_file(pem_location)
+    ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+    # if use password
+    # transport = paramiko.Transport((host, port))
+    # transport.connect(username=username, password=password)
+    # sftp = paramiko.SFTPClient.from_transport(transport)
+    # sftp_get_recursive(remote_path, local_path, sftp)
+    # sftp.close()
+    logging.info(f"get recursive from {remote_folder} to {local_folder}")
+    ftp_client=ssh.open_sftp()
+    sftp_get_recursive(remote_folder, local_folder, ftp_client)
+    ftp_client.close()
+
+    logging.info(f"Download {remote_folder} to {local_folder} success!!!")
+    return 
+
+
+
+def get_all_files_in_local_dir( local_dir:str) -> list:
+    all_files = list()
+
+    if os.path.exists(local_dir):
+        files = os.listdir(local_dir)
+        for x in files:
+            filename = os.path.join(local_dir, x)
+            print ("filename:" + filename)
+            # isdir
+            if os.path.isdir(filename):
+                all_files.extend(get_all_files_in_local_dir(filename))
+            else:
+                all_files.append(filename)
+        else:
+            print ('{} does not exist'.format(local_dir))
+    else:
+        print(f"{local_dir} doese not exist")
+    return all_files
+
+
+def sftp_get_recursive(path, dest, sftp):
+
+    item_list = sftp.listdir_attr(path)
+    dest = str(dest)
+    if not os.path.isdir(dest):
+        os.makedirs(dest, exist_ok=True)
+
+    for item in item_list:
+        print(f"download {item.filename}")
+        mode = item.st_mode
+        if S_ISDIR(mode):
+            sftp_get_recursive(path + "/" + item.filename, dest + "/" + item.filename, sftp)
+        else:
+            sftp.get(path + "/" + item.filename, dest + "/" + item.filename)
+    print(f"Download {path} success")
+
+from pathlib import Path
+home_dir = str(Path.home())  # ~/
+
+pem_location = home_dir +"/.ssh/gcd-jimmy-cli.pem"
+
+ec2_resource = connect_aws_resource(
+    resource_name='ec2',
+    key_id=AWS_ACCESS_KEY_ID,
+    secret=AWS_SECRET_ACCESS_KEY,
+    region=AWS_DEFAULT_REGION
+)
+base_path = os.getcwd()
+ssh_download_folder_from_ec2(
+    user_name="ec2-user",
+    instance_id="i-08eadb78b12a3970b",
+    pem_location=pem_location,
+    ec2_resource=ec2_resource,
+    local_folder=base_path +"/temp",
+    remote_folder="/home/ec2-user/gismo-cloud-deploy/temp/solardatatools/results",
+
+)
+
