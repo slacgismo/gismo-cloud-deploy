@@ -11,7 +11,7 @@ ARG SOURCE_PATH_OF_UPLOAD_FILE
 ENV code_path  "../$CODES_FOLDER"
 ENV project_path "../$CODES_FOLDER"
 # license path
-ENV source_path_of_upload_file "../$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
+ENV source_path_of_upload_file "./$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
 
 
 
@@ -56,10 +56,13 @@ RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 
 
-
+RUN echo "==========COPY license ============================"
+RUN echo "upload local file is: $source_path_of_upload_file"
+RUN echo "upload target path is: $TARGET_PATH_OF_UPLOAD_FILE"
+RUN echo "==================================================="
 # copy license
+RUN mkdir $TARGET_PATH_OF_UPLOAD_FILE
 COPY $source_path_of_upload_file  $TARGET_PATH_OF_UPLOAD_FILE
-
 
 # WORKDIR /app
 
