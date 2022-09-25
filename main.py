@@ -1,4 +1,5 @@
 
+from mainmenu.classes.utilities.aws_utitlties import check_environment_is_aws
 from mainmenu.mainmenu import mainmenu
 import click
 import logging
@@ -124,6 +125,9 @@ def run_files(
 
     if (len(file) >= 1) and (number is not None):
         click.echo("Both file input and number input have been given. You can only choice one.")
+        return 
+    if cluster =="local" and check_environment_is_aws():
+        click.echo("Runing application on AWS environment. You must to use '-c' option command to specify cluster name.")
         return 
 
     default_fileslist = []

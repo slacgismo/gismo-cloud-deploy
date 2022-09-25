@@ -586,13 +586,16 @@ class HandleAWS(object):
             return
 
     def ssh_upload_folder(self, local_project_path, project_name):
+
         remote_projects_path = f"/home/{self._login_user}/gismo-cloud-deploy/{project_name}"
+
         is_update_folder = handle_yes_or_no_question(
             input_question=InputDescriptions.is_upload_folder_question.value,
             default_answer="yes"
         )
+        print("--------------------------------------")
         print(f"is_update_folder :{is_update_folder}")
-        print(f"local_project_path {local_project_path} remote_projects_path {remote_projects_path}")
+        print(f"local_project_path {local_project_path} \n remote_projects_path {remote_projects_path}")
         if is_update_folder is False:
             return 
 
@@ -600,8 +603,8 @@ class HandleAWS(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=self.get_pem_file_full_path_name(),
-            local_folder=local_project_path,
-            remote_folder=remote_projects_path,
+            local_project_path_base=local_project_path,
+            remote_project_path_base=remote_projects_path,
             ec2_resource=self._ec2_resource,
 
         )

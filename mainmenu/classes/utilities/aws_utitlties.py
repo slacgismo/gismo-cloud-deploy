@@ -453,9 +453,20 @@ def ssh_upload_folder_to_ec2(
     instance_id:str,
     pem_location:str,
     ec2_resource,
-    local_folder:str,
-    remote_folder:str,
+    local_project_path_base:str,
+    remote_project_path_base:str,
 ):
+    '''
+    Upload local temp project folder  to remote temp project folder  
+    1. list all files in local path
+    2. check if relative folder exists on remote path
+    3. if not exist, create a new remote path
+    4. upload all files to remote folder
+
+    example:
+    local_project_path_base : /Users/<local-username>/Development/gismo/gismo-cloud-deploy/temp/solardatatools
+    remote_project_path_base : /home/{user_name}/gismo-cloud-deploy/temp/solardatatools
+    '''
 
     # ec2 = boto3.resource('ec2')
     instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
@@ -470,7 +481,7 @@ def ssh_upload_folder_to_ec2(
         raise Exception(f"{instance_id} does not exist")
         
     # check if directory exist
-    local_files_list = get_all_files_in_local_dir(local_dir=local_folder)
+    local_files_list = get_all_files_in_local_dir(local_dir=local_project_path_base)
     # print(local_files_list)
     # conver local files path to remote path 
     ssh = paramiko.SSHClient()
@@ -479,38 +490,55 @@ def ssh_upload_folder_to_ec2(
     ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
     
     # step 1. get relative folder
-    project_folder = basename(local_folder)
-    print(f"project_folder: {project_folder}, local_folder :{local_folder}")
-    relative_path = []
+    # project_folder = basename(local_folder_base)
+    # print(f"project_folder: {project_folder}, local_folder :{local_folder_base}")
+    logging.info("Lists local files in path, and create remote files list")
+    relative_path = set()
     upload_local_to_remote_dict = {}
-    
     for file in local_files_list:
         path, filename = os.path.split(file)
-        relative = Path(path).relative_to(Path(local_folder))
+        relative = Path(path).relative_to(Path(local_project_path_base))
+        new_path = remote_project_path_base
         if str(relative) == ".":
-            new_path = project_folder
+            upload_local_to_remote_dict[file] = remote_project_path_base +f"/{filename}"
         else:
-            new_path = project_folder +"/" + str(relative)
-        relative_path.append(new_path)
-        upload_local_to_remote_dict[file] = remote_folder +f"/{new_path}/{filename}"
+            upload_local_to_remote_dict[file] = remote_project_path_base +f"/{relative}/{filename}"
+            new_path = remote_project_path_base +f"/{relative}"
+        relative_path.add(new_path)
+       
+    
+    # for file in local_files_list:
+    #     path, filename = os.path.split(file)
+    #     relative = Path(path).relative_to(Path(local_folder_base))
+    #     if str(relative) == ".":
+    #         new_path = project_folder
+    #     else:
+    #         new_path = project_folder +"/" + str(relative)
+    #     print(f"path :{path},relative :{relative}")
+    #     relative_path.append(path)
+    #     upload_local_to_remote_dict[file] = remote_folder_base +f"/{new_path}/{filename}"
+        # upload_local_to_remote_dict[file] = path
+    
     
     for key, value in upload_local_to_remote_dict.items():
-        print(key, value)
+        print(f"file:{file}")
+        print(f"remote file:{value}")
         print("-----------")
-    for folder in relative_path:
-        remote_dir = remote_folder + "/"+ folder
-        print(f"remote_folder :{remote_folder}, folder:{folder}")
 
+    
+
+    logging.info("check if remote exist, if not create a new path")
+    logging.info("------------------------------------------------")
     # Upload files
     for folder in relative_path:
-        remote_dir = remote_folder + "/"+ folder
-        print(f"remote_dir: {remote_dir}")
-        command = f"if [ ! -d \"{remote_dir}\" ]; then \n echo {remote_dir} does not exist \n mkdir {remote_dir} \n echo create {remote_dir}  \n fi"
+        # remote_dir = remote_folder + "/"+ folder
+        print(f"remote_dir: {folder}")
+        command = f"if [ ! -d \"{folder}\" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi"
         (stdin, stdout, stderr) = ssh.exec_command(command)
         for line in stdout.readlines():
             print (line)
-    logging.info(f"Create folder :{remote_dir} success")
-
+    logging.info(f"Create folder :{folder} success")
+     
     ftp_client=ssh.open_sftp()
     for key,value in upload_local_to_remote_dict.items():   
         try:
@@ -521,7 +549,7 @@ def ssh_upload_folder_to_ec2(
         # print(f"local :{key}")
         # print(f"value :{value}")
     ftp_client.close()
-    logging.info(f"Uplodate {local_folder} to {remote_folder} success!!!")
+    logging.info(f"Uplodate {local_project_path_base} to {remote_project_path_base} success!!!")
     return 
 
 

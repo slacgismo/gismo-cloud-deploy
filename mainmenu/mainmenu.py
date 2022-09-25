@@ -111,6 +111,7 @@ def mainmenu(
             local_project_path=temp_project_path,
             project_name=project_name
         )
+        return 
         logging.info("Run command ssh")
         is_run_custom_ssh_command = menus.get_is_run_custom_ssh_command()
         if is_run_custom_ssh_command is True:
@@ -134,7 +135,7 @@ def mainmenu(
     logging.info("End perform command state")
     logging.info("===============================")
 
-
+    return 
     logging.info("Start end state")
     if action == MenuActions.stop_ec2.name:
         handle_aws_object.handle_ec2_action(action=EC2Actions.stop.name)
