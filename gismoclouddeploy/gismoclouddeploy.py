@@ -1,32 +1,17 @@
 
 import time
 
-from transitions import Machine
-from .DevEnvironments import DevEnvironments
+from .utils.DevEnvironments import DevEnvironments
+from .utils.GismoCloudDeploy import  GismoCloudDeploy
 
-from .GismoCloudDeploy import  GismoCloudDeploy
-
-from .check_aws import (
-
+from .utils.check_aws import (
     check_environment_is_aws,
-
 )
-
-
 import logging
 
 
 
-# logger config
-# logger = logging.getLogger()
-# logging.basicConfig(
-#     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
-# )
-import coloredlogs, logging
-# coloredlogs.install()
-
-
-def run_process_files(
+def gismoclouddeploy(
     number: int = 1,
     project: str =None,
     scale_nodes : int = 1,
@@ -75,8 +60,6 @@ def run_process_files(
         default_fileslist = default_fileslist
         
     )
-
-
     try:
         # Initial state , read yaml file and update system variables
         logging.info(f" ===== State: {gcd.state} =======")

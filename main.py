@@ -5,7 +5,7 @@ import click
 import logging
 import os
 from pathlib import Path
-from gismoclouddeploy.utils.run_process_files import run_process_files
+from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -136,7 +136,7 @@ def run_files(
         files = list(file)
         default_fileslist = files
 
-    run_process_files(
+    gismoclouddeploy(
         number=number,
         project = project,
         scale_nodes= scalenodes,
