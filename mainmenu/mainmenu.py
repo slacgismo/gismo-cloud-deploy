@@ -1,16 +1,21 @@
 from doctest import Example
 from genericpath import exists
-import imp
-from importlib.resources import path
-import coloredlogs, logging
+
+import sys
+# setting path
+sys.path.append('../gismoclouddeploy')
+from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
+
+import logging
 
 from .classes.constants.EC2Actions import EC2Actions
-from .classes.HandleEC2 import HandleEC2, create_ec2_object_from_existing_yaml
 from .classes.constants.MenuActions import MenuActions
 from .classes.Menu import Menu
 from .classes.HandleAWS import HandleAWS
 from .classes.constants.AWSActions import AWSActions
 from .classes.constants.EKSActions import EKSActions
+
+
 from os.path import exists
 def mainmenu(
     saved_config_path_base:str = None,
@@ -142,6 +147,16 @@ def mainmenu(
 
         elif action == MenuActions.run_in_local_machine.name:
             logging.info("Run files command in local machine")
+            first_n_file = menus.get_number_of_process_files()
+
+
+            gismoclouddeploy(
+                number=first_n_file,
+                project = project_name,
+                aws_access_key=aws_access_key,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_region=aws_region,
+            )
     except Exception as e:
         logging.error(f"Perform command state failed: {e}")
         action = MenuActions.stop_ec2.name
@@ -184,7 +199,7 @@ def mainmenu(
         action = MenuActions.end_application.name
         raise e
             
-    if menus == MenuActions.end_application.name:
+    if action == MenuActions.end_application.name:
         menus.delete_temp_project_folder()
     else:
         logging.error("Oh no!! somehing wrong. menu action should point to `end_application`. Check your workflow.")
