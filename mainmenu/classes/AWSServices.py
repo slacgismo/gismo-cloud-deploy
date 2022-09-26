@@ -58,7 +58,7 @@ from .constants.AWSActions import AWSActions
 from .constants.EC2Status import EC2Status
 from .constants.EKSActions import EKSActions
 
-class HandleAWS(object):
+class AWSServices(object):
 
     def __init__(
             self, 

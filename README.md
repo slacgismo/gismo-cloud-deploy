@@ -125,7 +125,7 @@ The following question is to type your project path.
 ('Enter project folder (Hit `Enter` button to use default path',): /Users/<username>/Development/gismo/gismo-cloud-deploy/examples/sleep path): 
 ```
 
-There are four examples included in this tool. Please check [Examples projects](#example-projects) for more information. For a quick start, you can input `<bas-path>/gismo-cloud-deploy/examples/sleep` project (`<bas-path>` refer to the absolute path of `gismo-cloud-deploy` folder). It run a for loop without doing anything. The custom script file is `entrypoint.py`. You can modify this script with any custom codes you like and save the results in a JSON format.
+There are four examples included in this tool. Please check [Examples projects](#example-projects) for more information. For a quick start, you can input `<bas-path>/gismo-cloud-deploy/examples/sleep` project (`<bas-path>` refer to the absolute path of `gismo-cloud-deploy` folder). It run a for loop without doing anything. The custom script file is `entrypoint.py`. You can modify this script with any custom codes inside you like and save the results in a JSON format. But you have to put your code block inside the `entrypoint` function. Please read [project files structures](#project-files-structures) to get more details.
 
 ##### project name
 

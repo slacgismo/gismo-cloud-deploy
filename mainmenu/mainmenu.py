@@ -1,4 +1,4 @@
-from doctest import Example
+
 from genericpath import exists
 
 import sys
@@ -12,7 +12,7 @@ import logging
 from .classes.constants.EC2Actions import EC2Actions
 from .classes.constants.MenuActions import MenuActions
 from .classes.Menu import Menu
-from .classes.HandleAWS import HandleAWS
+from .classes.AWSServices import AWSServices
 from .classes.constants.AWSActions import AWSActions
 from .classes.constants.EKSActions import EKSActions
 
@@ -73,7 +73,7 @@ def mainmenu(
         print(f"cluster_name: {cluster_name}")
         print(f"nodegroup_name: {nodegroup_name}")
       
-        handle_aws_object = HandleAWS(
+        aws_services_object = AWSServices(
                 keypair_name = keypair_name,
                 local_pem_path=local_pem_path,
                 aws_access_key=aws_access_key,
@@ -101,18 +101,18 @@ def mainmenu(
 
             template_ec2_config_file = menus.get_ec2_template_file()
             template_eks_config_file = menus.get_eks_template_file()
-            handle_aws_object.create_ec2_from_template_file(
+            aws_services_object.create_ec2_from_template_file(
                 import_file=template_ec2_config_file
             )
             # generate eks cluster from template
-            handle_aws_object.generate_eks_config_and_export(import_file = template_eks_config_file)
+            aws_services_object.generate_eks_config_and_export(import_file = template_eks_config_file)
             # uplod cluster file to ec2
-            handle_aws_object.ssh_update_eks_cluster_file()
+            aws_services_object.ssh_update_eks_cluster_file()
             # create eks cluster
             print(f"cluster_name: {cluster_name}")
             print(f"nodegroup_name: {nodegroup_name}")
             print("---------------------------------")
-            handle_aws_object.handle_ssh_eks_action(
+            aws_services_object.handle_ssh_eks_action(
                 eks_action=EKSActions.create.name,
                 cluster_name=cluster_name,
                 nodegroup_name=nodegroup_name
@@ -123,8 +123,8 @@ def mainmenu(
             action == MenuActions.cleanup_cloud_resources.name:
             saved_ec2_config_file = menus.get_saved_ec2_config_file()
             print(f"saved_ec2_config_file : {saved_ec2_config_file}")
-            handle_aws_object.import_from_existing_ec2_config(config_file=saved_ec2_config_file)
-            handle_aws_object.wake_up_ec2()
+            aws_services_object.import_from_existing_ec2_config(config_file=saved_ec2_config_file)
+            aws_services_object.wake_up_ec2()
     except Exception as e:
         logging.error(f"Prepare ec2 failed :{e}")
         action == MenuActions.end_application.name
@@ -138,7 +138,7 @@ def mainmenu(
         if action == MenuActions.create_cloud_resources_and_start.name or \
             action == MenuActions.resume_from_existing.name:
             logging.info("Update local temp project to ec2")
-            handle_aws_object.ssh_upload_folder(
+            aws_services_object.ssh_upload_folder(
                 local_project_path=temp_project_path,
                 project_name=project_name
             )
@@ -146,13 +146,13 @@ def mainmenu(
             logging.info("Run command ssh")
             is_run_custom_ssh_command = menus.get_is_run_custom_ssh_command()
             if is_run_custom_ssh_command is True:
-                handle_aws_object.run_ssh_debug_mode()
+                aws_services_object.run_ssh_debug_mode()
                 
             else:
                 run_files_command = menus.get_run_files_command()
-                handle_aws_object.run_ssh_command(ssh_command=run_files_command)
+                aws_services_object.run_ssh_command(ssh_command=run_files_command)
                 # download projet results to origin path
-                handle_aws_object.ssh_download_results_to_originl_project_path()
+                aws_services_object.ssh_download_results_to_originl_project_path()
             is_clean_up_after_completion = menus.get_cleanup_after_completion()
 
             # end of peform command , set action for next state
@@ -187,7 +187,7 @@ def mainmenu(
     logging.info("Start end state")
     try:
         if action == MenuActions.stop_ec2.name:
-            handle_aws_object.handle_ec2_action(action=EC2Actions.stop.name)
+            aws_services_object.handle_ec2_action(action=EC2Actions.stop.name)
 
             action = MenuActions.end_application.name
             
@@ -199,15 +199,15 @@ def mainmenu(
                 return 
             print(f"saved_eks_cluster_file, {saved_eks_cluster_file}, project_name :{project_name}")
 
-            handle_aws_object.handle_ssh_eks_action(
+            aws_services_object.handle_ssh_eks_action(
                 eks_action=EKSActions.delete.name,
                 cluster_name=cluster_name,
                 nodegroup_name=nodegroup_name
             )
 
             logging.info("Terminate ec2")
-            handle_aws_object.handle_ec2_action(action=EC2Actions.terminate.name)
-            handle_aws_object.handle_ec2_action(action=AWSActions.delete_keypair.name)
+            aws_services_object.handle_ec2_action(action=EC2Actions.terminate.name)
+            aws_services_object.handle_ec2_action(action=AWSActions.delete_keypair.name)
             menus.delete_saved_config_folder()
 
             action = MenuActions.end_application.name
