@@ -49,7 +49,7 @@ git clone https://github.com/slacgismo/gismo-cloud-deploy.git
 Create a python virtual environment and activate the virtual environment
 
 ```bash
-cd gismo-cloud-deploy/gismoclouddeploy/services 
+cd gismo-cloud-deploy
 python3.8 -m venv venv
 source ./venv/bin/activate
 ```
