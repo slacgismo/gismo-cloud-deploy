@@ -129,7 +129,7 @@ There are four examples included in this tool. Please check [Examples projects](
 
 ##### project name
 
-The following instruction ask you to type a project name. The name is appeared in the tags of each created cloud resources. They are the information of budget management if your company needs. Please type any name you like.
+The following instruction asks you to type a project name. The name appears in the tags of each created cloud resource. They are the information for budget management if your company needs it. Please type any name you like.
 
 ```bash
 Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path): 
@@ -137,7 +137,7 @@ Enter the name of project. This will be listed in all created cloud resources, a
 
 ##### Debug mode
 
-The following instruction ask you to selec deubg mode. If you are a developer who like to debug this project. You can type `yes`, otherwise type `no`. The default answer is `no`.
+The following instruction asks you to select debug mode. Suppose you are a developer who likes to debug this project. You can type `yes`; otherwise, type `no`. The default answer is `no`.
 
 ```bash
 Run debug mode through SSH? If `no`, an following instructions will help you to create a run-files command and execute it. (default answer:no) 
@@ -145,13 +145,13 @@ Run debug mode through SSH? If `no`, an following instructions will help you to 
 
 ##### Number of process files
 
-The following instructions will generate run-command. It starts from asking you if you would like to process all files in the defined data bucket in `config.yaml`. Hit enter button to give the default answer `no`.
+The following instructions will generate the run-command. It starts by asking if you would like to process all files in the defined data bucket in `config.yaml`. Hit enter button to give the default answer `no`.
 
 ```bash
 Do you want to process all files in the databucket that defined in config.yaml? (default answer:no) 
 ```
 
-If you type `no`, then the following instruction will ask you type the number of process files. You can hit enter button to give the default answer `1`. That means this application will process the first one files in the defined data bucket.
+If you type `no`, the following instruction will ask you to type the number of process files. You can enter to give the default answer `1`. This application will process the first files in the defined data bucket.
 
 ```bash
 ("How many files you would like process? \n Input an postive integer number. It processes first 'n'( n as input) number files.",) (default:1) (must be an integer):
@@ -159,7 +159,7 @@ If you type `no`, then the following instruction will ask you type the number of
 
 ##### Number of generated ec2 instances
 
-The following insturction will ask you to type how many ec2 instances that you want to generate. Hit enter button to give the default answer `1`. It will generate one ec2 instance to run the script.
+The following instruction will ask you to type how many ec2 instances you want to generate. Hit enter button to give the default answer `1`. It will spawn one ec2 instance to run the script.
 
 ```bash
  Input an postive integer:  (minimum is 1 and max is 100) (default:1):
@@ -170,7 +170,7 @@ The following insturction will ask you to type how many ec2 instances that you w
 The following instruction will ask you if you would like to destroy the cloud resources that you created after the application is completed. Hit enter button to give the default answer 'no'. Since creating and deleting cloud resources take 10 ~ 20 minutes if you want to run the application multiple times. You can delete those cloud resources later. :warning: However, an active EKS cluster ==cost $0.10 per hour==. So if you don't want to pay the fee. Please type `yes` to destroy all resources after completion.
 
 ```bash
-"Do you want to delete all created resources?\nIf you type 'no', there will be an operating cost from generated eks cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create.Sept,2022). The ec2 bastion will be stopped (no operating cost).\nHowever, if you type 'yes', the generated ec2 bastions and eks cluster will be deleted (No operating cost from ec2 and eks cluster).\n It takes about 10~20 mins to generate a new EKS cluster.\n", (default answer:no) 
+"Do you want to delete all created resources?\n If you type 'no', there will be an operating cost from generated EKS cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create. Sept 2022). The ec2 bastion will be stopped (no operating cost).\n However, if you type 'yes', the generated ec2 bastions and EKS cluster will be deleted (No operating cost from ec2 and EKS cluster).\n It takes about 10~20 mins to generate a new EKS cluster.\n", (default answer:no) 
 ```
 
 Then the terminal will print out all the variables and ask for confirmation to process.
@@ -179,28 +179,28 @@ Then the terminal will print out all the variables and ask for confirmation to p
 Confirm to process (must be yes/no) (default answer:yes) 
 ```
 
-Afer you give the confirmation `yes` to process. It will start the folling steps.
+After you give the confirmation `yes` to process, it will start with the following steps.
 
 ##### create new cloud resource steps
 
-1. Create an security group named `SSH-ONLY`.
-2. Create a key-pair named `gcd-{your-iam-name}`
+1. Create a security group named `SSH-ONLY`.
+2. Create a key-pair named `gcd-{your-iam-name}`.
 3. Create an EC2 bastion
-4. Setup enviroments of EC2 bastion of `gismo-cloud-deploy` project
+4. Setup environments of EC2 bastion of `gismo-cloud-deploy` project
 5. Create an EKS cluster
 6. Upload local project folder to EC2 bastion
-7. Run `gismo-cloud-deploy` on EKS cluster.
-8. Download results from EC2 bastion to local project folder.
-9. Congratulation!! This application compeltes.
+7. Run `gismo-cloud-deploy` on the EKS cluster.
+8. Download results from the EC2 bastion to the local project folder.
+9. Congratulation!! This application completes.
   
-After the application is completed, the saved data are downloaded from EC2 bastion and stored in your `results` folder.
+After completing the application, the saved data are downloaded from the EC2 bastion and stored in your `results` folder.
 The results folder contains four different files.
 
-- logs.csv. The system informaion are listed in this file.
+- logs.csv. The system information is listed in this file.
 - performance.txt. The system performance analysis results.
-- error.csv. If any errors happen, the error logs saved in this file.
-- results.csv. This file contains all save data.
-- runtime.png. This file containes the process times of each task in all instances.
+- error.csv. If any errors happen, the error logs are saved in this file.
+- results.csv. This file contains all saved data.
+- runtime.png. This file contains the process times of each task in all instances.
 
 
 ### MainMenu
