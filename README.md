@@ -26,11 +26,12 @@
 </tr>
 </table>
 
-A tool for executing time-consuming tasks with developer-defined custom code blocks in parallel on the AWS EKS platform.
+This project is to build a tool `gismo-cloud-deploy` designed to executing time-consuming computation on multiple AWS EC2 instances in parallel. The tool containerizes users custom scripts into docker images, and it utilizes `Kubernetes` (AWS EKS) horizontial scaling and vertical scaling features to distrube those images evenly among generated instances.
 
-The custom code blocks is designed to be build as docker images that temporaty stored on an AWS ECR repository. When users request to run the code block on multiple AWS instances in simultaneously. Each AWS instances (EKS nodes) pulls dowm those images from AWS ECR and execute them in parallel. Please follow the [System diagram](#system-diagram) to see more details.
+Since this project uses many cloud services of AWS. An extra automation tool operates AWS services on user's local machine through SSH. The automation tool `mainmenu` can genererate a new EC2 bastion. Through the generated EC2 bastion, it creates EKS cluster and run `gismo-cloud-deploy` tool. Please see the [System diagram](#system-diagram) to get more details.
 
 ---
+
 
 ## Install & Setup
 
@@ -59,11 +60,29 @@ pip install -upgrade pip
 pip install -r requirement.txt
 ```
 
-#### Create EC2 bastion
+#### Set up AWS permissions and credentials
 
-Before we start to create an EC2 instance to control EKS. We need set up the AWS credentials.
+Before we start to run the automation tool that control EC2 instances . We need to set up the AWS credentials.
 
-Create a `.env` file with following AWS credentials: (Plase ask the progrect creator or account manager to add permission into your AWS account)
+First, include the AWS permission on your `IAM` user account. Or, if you are using share account, you can ask your account manager to add proper permissions into your `IAM` user.
+
+The permissions includes:
+
+- AmazonEC2FullAccess
+- AmazonSQSFullAccess
+- AmazonEC2ContainerRegistryFullAccess
+- AmazonS3FullAccess
+- AmazonEC2ContainerServiceAutoscaleRole
+- EC2InstanceProfileForImageBuilderECRContainerBuilds
+- AWSCloudFormationFullAccess
+
+Custom policy
+
+- [AmazonEKSClusterAutoscalerPolicy](./mainmenu/config/policy/AmazonEKSClusterAutoscalerPolicy.json)
+- [EKSAccess](./mainmenu/config/policy/EKSAccess.json)
+- [IamLimitedAccess-EKS](./mainmenu/config/policy/IamLimitedAccess-EKS.json)
+
+Once you add those permissions onto your IAM user. Create a `.env` file with following AWS credentials: 
 
 ```bash
 AWS_ACCESS_KEY_ID=<your-aws-access-key>
@@ -72,29 +91,56 @@ AWS_DEFAULT_REGION=<your-aws-region>
 ECR_REPO=<your-ecr-repository-url>
 ```
 
-***Note*** If you are using your own account other than SLAC Gismo group account. Please create a private ECR repositories that will contains three temporary images (`server`, `worker`, `celeryflower`). Those images are created during the run-time, and will are deleted after the process completed.
+#### Set up AWS ECR
 
-If you want to include a private `solver license`, such as `MOSEK` inside this project. Please include your `solver license` in the `gismo-cloud-deploy/gismoclouddeploy/services/config/license` folder of your local machine. Please follow the [Include MOSEK licenses](#include-mosek-license) section to get more detail.
+If you are using your own account other than SLAC Gismo group account. Please create a private ECR repositories that will contains three temporary images (`server`, `worker`, `celeryflower`). Those images are created during the run-time, and will are deleted after the process completed.
 
-Run handle ec2 command to create a ec2 bastion that control AWS EKS.( Under path: `gismo-cloud-deploy/gismoclouddeploy/services`).
+
+
+<!-- If you want to include a private `solver license`, such as `MOSEK` inside this project. Please include your `solver license` in the `gismo-cloud-deploy/gismoclouddeploy/services/config/license` folder of your local machine. Please follow the [Include MOSEK licenses](#include-mosek-license) section to get more detail. -->
+
+#### Run menu
+
+Run `menu` command to select main menu.
 
 ```bash
-python3 main.py handle-ec2
+python3 main.py menu
+
 ```
 
-A selection menu pop up , please select `create` command.
+A selection menu pop up , please select `create_cloud_resources_and_start` command. It starts a process of creating all necessary cloud resources automatically with instructions and permissions.
 
 ```bash
- > create
-   running
-   stop
-   terminate
-   ssh
-   ssh_create_eks
-   ssh_delete_eks
+ > create_cloud_resources_and_start
+   resume_from_existing
+   cleanup_cloud_resources
+   run_in_local_machine
 ```
 
-Follow the instructions to setup the ec2. The instructions includes:
+The following question is to type your project path.
+
+```bash
+('Enter project folder (Hit `Enter` button to use default path',): /Users/<username>/Development/gismo/gismo-cloud-deploy/examples/sleep path): 
+```
+
+There are four example projects in this gihub repositoy.
+
+- examples/gridlabd
+  - This exmaples runs the [gridlabd](https://github.com/slacgismo/gridlabd) project
+- examples/sleep
+  - This exmaples runs a for loop without doing anything.
+- examples/solardatatools
+  - This exmaples runs the [solar-data-tools](https://github.com/slacgismo/solar-data-tools) project. It might require a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
+- examples/stasticclearsky
+  - This exmaples runs the [StatisticClearSky](https://github.com/slacgismo/StatisticalClearSky) project It might require a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
+
+You can start from examples/sleep. It run a for loop without doing anything. You can edit the 
+
+
+### Project files structures
+
+A project folder 
+
 
 ```bash
 Use default VPC ?(default:yes) (must be yes/no): yes # type yes to use default VPC 

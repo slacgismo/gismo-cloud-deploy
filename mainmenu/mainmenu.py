@@ -192,8 +192,6 @@ def mainmenu(
 
             handle_aws_object.handle_ssh_eks_action(
                 eks_action=EKSActions.delete.name,
-                cluster_file =saved_eks_cluster_file,
-                relative_saved_config_folder_name=project_name
             )
 
             logging.info("Terminate ec2")

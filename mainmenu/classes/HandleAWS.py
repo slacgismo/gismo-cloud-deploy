@@ -472,8 +472,8 @@ class HandleAWS(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=self.get_pem_file_full_path_name(),
-            local_folder=self.local_temp_project_path,
-            remote_folder=remote_projects_folder,
+            local_project_path_base=self.local_temp_project_path,
+            remote_project_path_base=remote_projects_folder,
             ec2_resource=self._ec2_resource,
 
         )
@@ -653,6 +653,8 @@ class HandleAWS(object):
         cluster_name = self._cluster_name
         nodegroup_name = self._nodegroup_name
         ssh_command_list = {}
+
+
         if eks_action == EKSActions.create.name:
             
             logging.info("SSH create eks")
@@ -666,7 +668,7 @@ class HandleAWS(object):
             ssh_command_list['scaledonw cluster'] = scaledown_command
             # delete cluster if cluster exist
             delete_eks_command =  f"rec=\"$(eksctl get cluster | grep {cluster_name})\" \n if [ -n \"$rec\" ] ; then eksctl delete cluster -f {remote_cluster_file}; fi"
-            # delete_eks_command = f"export $( grep -vE \"^(#.*|\s*)$\" {remote_base_path}/.env ) \n eksctl delete cluster -f {remote_cluster_file}"
+
             ssh_command_list['Delete EKS cluster'] = delete_eks_command
 
         elif eks_action == EKSActions.list.name:
@@ -681,6 +683,7 @@ class HandleAWS(object):
 
         for description, command in ssh_command_list.items():
             logging.info(description)
+            logging.info(command)
             try:
                 run_command_in_ec2_ssh(
                     user_name=self._login_user,
