@@ -96,11 +96,6 @@ ECR_REPO=<your-ecr-repository-url>
 
 If you are using your own account other than SLAC Gismo group account. Please create a private ECR repositories that will contains three temporary images (`server`, `worker`, `celeryflower`). Those images are created during the run-time, and will are deleted after the process completed.
 
-
-
-<!-- If you want to include a private `solver license`, such as `MOSEK` inside this project. Please include your `solver license` in the `gismo-cloud-deploy/gismoclouddeploy/services/config/license` folder of your local machine. Please follow the [Include MOSEK licenses](#include-mosek-license) section to get more detail. -->
-
-
 ### Quick Start
 
 #### Run menu

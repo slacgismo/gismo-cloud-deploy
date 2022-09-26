@@ -70,9 +70,9 @@ def mainmenu(
         origin_project_path = menus.get_origin_project_path()
         cluster_name = menus.get_cluster_name()
         nodegroup_name = menus.get_nodegroup_name()
-        print(f"keypair_name: {keypair_name}")
-
-
+        print(f"cluster_name: {cluster_name}")
+        print(f"nodegroup_name: {nodegroup_name}")
+      
         handle_aws_object = HandleAWS(
                 keypair_name = keypair_name,
                 local_pem_path=local_pem_path,
@@ -94,7 +94,7 @@ def mainmenu(
     logging.info("===============================")
     logging.info("End initialization state")
     logging.info("===============================")
-    
+
     try:
         if action == MenuActions.create_cloud_resources_and_start.name:
             logging.info("Create resources")
@@ -109,6 +109,9 @@ def mainmenu(
             # uplod cluster file to ec2
             handle_aws_object.ssh_update_eks_cluster_file()
             # create eks cluster
+            print(f"cluster_name: {cluster_name}")
+            print(f"nodegroup_name: {nodegroup_name}")
+            print("---------------------------------")
             handle_aws_object.handle_ssh_eks_action(
                 eks_action=EKSActions.create.name,
                 cluster_name=cluster_name,

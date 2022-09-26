@@ -81,7 +81,7 @@ class Menu(object):
 
         # self._cluster_name = f"gcd-{self._user_id}-{self._start_time}"
         self._cluster_name = None
-        self._nodegroup_name = None
+        self._nodegroup_name = "gcd"
         self._ec2_name = None
         self._keypair = None
         # self._ec2_name = f"gcd-{self._user_id}-{self._start_time}"
@@ -104,7 +104,10 @@ class Menu(object):
         self._is_confirm_to_process = False
 
     def get_nodegroup_name(self):
+        if self._nodegroup_name is None:
+            return "gcd"
         return self._nodegroup_name
+
     def get_cluster_name(self):
         return self._cluster_name
 

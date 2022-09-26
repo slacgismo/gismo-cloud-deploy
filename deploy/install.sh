@@ -54,8 +54,8 @@ echo 'install docker-compose' >> /home/ec2-user/installation.txt
 git clone https://github.com/slacgismo/gismo-cloud-deploy.git /home/ec2-user/gismo-cloud-deploy
 echo 'git clone gismo-cloud-deploy' >> /home/ec2-user/installation.txt
 cd /home/ec2-user/gismo-cloud-deploy/
-git fetch 
-git switch feature/refactor0922
+
+
 
 # sudo chmod +rwx /home/ec2-user/gismo-cloud-deploy/gismoclouddeploy/services/config
 # create virtual environment 
