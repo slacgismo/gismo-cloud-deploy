@@ -681,9 +681,20 @@ class Menu(object):
         if not os.path.exists(self._temp_project_absoult_path):
             logging.info(f"Create {self._temp_project_absoult_path}")
             os.makedirs(self._temp_project_absoult_path)
+        # 3.8+ only!
+        shutil.copytree(self._origin_project_path, self._temp_project_absoult_path, dirs_exist_ok=True) 
+        return 
 
-        shutil.copytree(self._origin_project_path, self._temp_project_absoult_path, dirs_exist_ok=True)  # 3.8+ only!
-
+    def handle_copy_local_results_to_origin_project(self):
+        loca_project_result = self._origin_project_path +"/results"
+        temp_result = self._temp_project_absoult_path +"/results"
+        logging.info(f"copy {temp_result} to {loca_project_result}")
+        if not os.path.exists(loca_project_result):
+            logging.info(f"Create {loca_project_result}")
+            os.makedirs(loca_project_result)
+            
+        shutil.copytree(src=temp_result, dst=loca_project_result, dirs_exist_ok=True)  
+        
         return 
 
     def handle_verify_project_folder(self):
@@ -709,10 +720,12 @@ class Menu(object):
             self._config_yaml_dcit= convert_yaml_to_json(yaml_file=config_yaml)
         except Exception as e:
             raise Exception(f"convert config yaml failed")
-
-        verify_keys_in_configfile(
-            config_dict=self._config_yaml_dcit
-        )
+        try:
+            verify_keys_in_configfile(
+                config_dict=self._config_yaml_dcit
+            )
+        except Exception as e:
+            raise Exception(f"Verify keys in configfile error:{e}")
         _solver_lic_file_local_source = self._config_yaml_dcit['solver_lic_file_local_source']
         # verify solver file exists
         if _solver_lic_file_local_source is None:

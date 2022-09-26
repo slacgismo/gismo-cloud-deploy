@@ -112,7 +112,7 @@ class GismoCloudDeploy(object):
         self._separated_process_file_list_in_servers = {}
         self._config = {}
         self._saved_path_cloud = ""
-        self._saved_path_local = ""
+        self._saved_path_local = "results"
         self._repeat_number_per_round = 1
         self._is_celeryflower_on = False
         self._repeat_index = 0
@@ -231,7 +231,7 @@ class GismoCloudDeploy(object):
 
             self._code_template_folder  =  None
             self._saved_path_cloud = self._config["saved_path_cloud"]
-            self._saved_path_local = self._config["saved_path_local"]
+            self._saved_path_local = "results" #self._config["saved_path_local"]
             
             self._repeat_number_per_round = self._config["repeat_number_per_round"]
             self._is_celeryflower_on = self._config["is_celeryflower_on"]

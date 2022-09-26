@@ -14,7 +14,6 @@ file_pattern: "*.csv"      #   ".glm"        # Bucket contains origin data files
 process_column_keywords: "^Pow"                 # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
 saved_bucket: "pv.insight.test"                 # Bucket of saved files.
 saved_path_cloud: "results"                     # Path of saved files in bucket
-saved_path_local: "results"
 acccepted_idle_time: 360
 interval_of_checking_sqs : 1
 filename: 

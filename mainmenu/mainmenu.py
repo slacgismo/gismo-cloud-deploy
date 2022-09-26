@@ -50,6 +50,7 @@ def mainmenu(
         local_pem_path = local_pem_path
     )
     # start initialization state
+    action = "Initial"
     try:
         menus.select_main_menus()
         menus.hanlde_initialization()
@@ -85,7 +86,7 @@ def mainmenu(
 
         logging.info("Start prepare ec2 state")
     except Exception as e:
-        logging.error(f"Initial state failed : \n {e}")
+        logging.error(f"Initial state failed : {e}")
         action == MenuActions.end_application.name
 
     logging.info("===============================")
@@ -154,8 +155,6 @@ def mainmenu(
         elif action == MenuActions.run_in_local_machine.name:
             logging.info("Run files command in local machine")
             first_n_file = menus.get_number_of_process_files()
-
-
             gismoclouddeploy(
                 number=first_n_file,
                 project = project_name,
@@ -163,6 +162,10 @@ def mainmenu(
                 aws_secret_access_key=aws_secret_access_key,
                 aws_region=aws_region,
             )
+            logging.info("Copy results to origin path")
+            menus.handle_copy_local_results_to_origin_project()
+            # set end state action
+            action =  MenuActions.end_application.name
     except Exception as e:
         logging.error(f"Perform command state failed: {e}")
         action = MenuActions.stop_ec2.name

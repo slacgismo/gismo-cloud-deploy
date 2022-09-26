@@ -13,7 +13,6 @@ def verify_keys_in_configfile(config_dict:dict):
         verify_a_key_in_dict(dict_format=config_dict, key="process_column_keywords")
         verify_a_key_in_dict(dict_format=config_dict, key="saved_bucket")
         verify_a_key_in_dict(dict_format=config_dict, key="saved_path_cloud")
-        verify_a_key_in_dict(dict_format=config_dict, key="saved_path_local")
         verify_a_key_in_dict(dict_format=config_dict, key="acccepted_idle_time")
         verify_a_key_in_dict(dict_format=config_dict, key="interval_of_checking_sqs")
         verify_a_key_in_dict(dict_format=config_dict, key="filename")
@@ -24,8 +23,8 @@ def verify_keys_in_configfile(config_dict:dict):
         verify_a_key_in_dict(dict_format=config_dict, key="solver_lic_target_path_in_images_dest")
         verify_a_key_in_dict(dict_format=config_dict, key="solver_lic_file_local_source")
         logging.info("Verify config key success")
-    except AssertionError as e:
-        raise AssertionError(f"Assert error {e}")
+    except Exception as e:
+        raise Exception(f"Assert error {e}")
 
 
 
@@ -64,6 +63,6 @@ def verify_keys_in_eks_configfile(config_dict:dict):
 def verify_a_key_in_dict(dict_format:dict, key:str) -> None:
     try:
         assert key in dict_format
-    except AssertionError:
-        raise f"{dict_format} does not contain {key}"
+    except Exception:
+        raise Exception(f"does not contain {key}")
 
