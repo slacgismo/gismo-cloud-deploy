@@ -50,15 +50,15 @@ Create a python virtual environment and activate the virtual environment (Use py
 
 ```bash
 cd gismo-cloud-deploy
-python3.8 -m venv venv
+python3 -m venv venv
 source ./venv/bin/activate
 ```
 
 Install python dependencies.
 
 ```bash
-pip install -upgrade pip 
-pip install -r requirement.txt
+pip install --upgrade pip 
+pip install -r requirements.txt
 ```
 
 #### Set up AWS permissions and credentials
