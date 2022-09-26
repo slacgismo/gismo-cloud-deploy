@@ -103,6 +103,11 @@ class Menu(object):
         #confirmation 
         self._is_confirm_to_process = False
 
+    def get_nodegroup_name(self):
+        return self._nodegroup_name
+    def get_cluster_name(self):
+        return self._cluster_name
+
     def get_origin_project_path(self):
         return self._origin_project_path
 

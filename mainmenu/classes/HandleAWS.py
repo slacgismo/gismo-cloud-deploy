@@ -644,14 +644,16 @@ class HandleAWS(object):
     def handle_ssh_eks_action(
         self,
         eks_action:str , 
+        cluster_name:str,
+        nodegroup_name:str,
         ):
 
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy"
         ec2_name = self.get_ec2_name_from_tags()
         remote_cluster_file =f"{remote_base_path}/created_resources_history/{ec2_name}/cluster.yaml"
 
-        cluster_name = self._cluster_name
-        nodegroup_name = self._nodegroup_name
+        self._cluster_name = cluster_name
+        self._nodegroup_name = nodegroup_name
         ssh_command_list = {}
 
         if cluster_name is None or nodegroup_name is None:

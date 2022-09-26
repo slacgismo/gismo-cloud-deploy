@@ -68,6 +68,8 @@ def mainmenu(
         temp_project_path = menus.get_temp_project_path()
         ec2_tags = menus.get_ec2_tags()
         origin_project_path = menus.get_origin_project_path()
+        cluster_name = menus.get_cluster_name()
+        nodegroup_name = menus.get_nodegroup_name()
         print(f"keypair_name: {keypair_name}")
 
 
@@ -107,7 +109,11 @@ def mainmenu(
             # uplod cluster file to ec2
             handle_aws_object.ssh_update_eks_cluster_file()
             # create eks cluster
-            handle_aws_object.handle_ssh_eks_action(eks_action=EKSActions.create.name)
+            handle_aws_object.handle_ssh_eks_action(
+                eks_action=EKSActions.create.name,
+                cluster_name=cluster_name,
+                nodegroup_name=nodegroup_name
+            )
 
             
         elif action == MenuActions.resume_from_existing.name or \
@@ -192,6 +198,8 @@ def mainmenu(
 
             handle_aws_object.handle_ssh_eks_action(
                 eks_action=EKSActions.delete.name,
+                cluster_name=cluster_name,
+                nodegroup_name=nodegroup_name
             )
 
             logging.info("Terminate ec2")

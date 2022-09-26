@@ -343,7 +343,7 @@ Options:
 - If `number=0`, it processes all files in the buckets.
 
 
-#### Example
+#### Examples
 
 ```bash
 python3 main.py run-files -n 100 -s 16 -p examples/solardatatools -c <your-cluster-name>
@@ -435,30 +435,29 @@ worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 ~~~
 
 :warning: The worker's (`worker-<random id>`) name changes when this application restarts the services.
-:warning: -n <namespaces>
 
-- In this case, this program has two server and three worker. We don't need to care about the server output. We just need to logs out all three worker's logs. And we start to logs out the `worker-6d47d89f94-r7drj` information in the terminal.
+In this case, this program has two server and three worker. We don't need to care about the server output. We just need to logs out all three worker's logs. And we start to logs out the `worker-6d47d89f94-r7drj` information in the terminal.
 
-  ```bash
-  kubectl logs -f worker-6d47d89f94-r7drj -n 1664143xxx-<your-hostid>
-  ```
+```bash
+kubectl logs -f worker-6d47d89f94-r7drj -n 1664143xxx-<your-hostid>
+```
 
-  It prints out the logs detail of `worker-6d47d89f94-r7drj`.Repeat this step to print out the rest two workers in a different terminal.
+It prints out the logs detail of `worker-6d47d89f94-r7drj`.Repeat this step to print out the rest two workers in a different terminal.
 
-- Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
+Please check [kubectl](https://kubernetes.io/docs/tasks/tools/) to get more information.
 
 ### Monitoring the CPU and memory
 
 This is extra information. In case you need to monitoring the cup and memory. Here is the steps.
 
-- Install and apply the metrics server if the system didn't install before.
+Install and apply the metrics server if the system didn't install before.
 
 ```bash
 git clone https://github.com/kodekloudhub/kubernetes-metrics-server.git
 kubectl apply -f kubernetes-metrics-server
 ```
 
-- Check specific pod's memory and CPU usage. For example, if you would like to check pod, `worker-6d47d89f94-zv8pt`, memory and CPU. Use the following command:
+Check specific pod's memory and CPU usage. For example, if you would like to check pod, `worker-6d47d89f94-zv8pt`, memory and CPU. Use the following command:
 
 ```bash
 kubectl top pod worker-6d47d89f94-zv8pt
