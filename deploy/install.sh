@@ -64,6 +64,6 @@ echo 'create virtual environment' >> /home/ec2-user/installation.txt
 source ./venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
-pip install .
+# pip install .
 echo 'run pip install' >> /home/ec2-user/installation.txt
 

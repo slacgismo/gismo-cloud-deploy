@@ -75,5 +75,5 @@ runtime.png
 ./gismoclouddeploy/notebooks/datasets/
 *.pem
 
-
+temp/
 created_resources_history/

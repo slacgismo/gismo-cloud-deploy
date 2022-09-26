@@ -492,7 +492,20 @@ def ssh_upload_folder_to_ec2(
     # project_folder = basename(local_folder_base)
     # print(f"project_folder: {project_folder}, local_folder :{local_folder_base}")
     logging.info("Lists local files in path, and create remote files list")
+    base_path = os.getcwd()
+    
+    # this will be an issue. change here if enoug time
+    logging.warning("Create temp folder. Change below if you have time---")
+    folder = f"/home/{user_name}/gismo-cloud-deploy/temp"
+    logging.info(f"Crete{folder}")
+    command = f"if [ ! -d \"{folder}\" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi"
+    (stdin, stdout, stderr) = ssh.exec_command(command)
+    for line in stdout.readlines():
+        print (line)
+    logging.warning("This is a bad implementation. Change above if you have time---")
+
     relative_path = set()
+
     upload_local_to_remote_dict = {}
     for file in local_files_list:
         path, filename = os.path.split(file)
@@ -505,19 +518,9 @@ def ssh_upload_folder_to_ec2(
             new_path = remote_project_path_base +f"/{relative}"
         relative_path.add(new_path)
        
-    
-    # for file in local_files_list:
-    #     path, filename = os.path.split(file)
-    #     relative = Path(path).relative_to(Path(local_folder_base))
-    #     if str(relative) == ".":
-    #         new_path = project_folder
-    #     else:
-    #         new_path = project_folder +"/" + str(relative)
-    #     print(f"path :{path},relative :{relative}")
-    #     relative_path.append(path)
-    #     upload_local_to_remote_dict[file] = remote_folder_base +f"/{new_path}/{filename}"
-        # upload_local_to_remote_dict[file] = path
-    
+
+  
+    relative = Path(path).relative_to(Path(base_path))
     
     for key, value in upload_local_to_remote_dict.items():
         print(f"file:{file}")
@@ -596,6 +599,15 @@ def upload_file_to_sc2(
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name,username=user_name,pkey=privkey)
+
+    logging.warning("Create created_resources_history folder. Change below if you have time---")
+    folder = f"/home/{user_name}/gismo-cloud-deploy/created_resources_history"
+    logging.info(f"Crete{folder}")
+    command = f"if [ ! -d \"{folder}\" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi"
+    (stdin, stdout, stderr) = ssh.exec_command(command)
+    for line in stdout.readlines():
+        print (line)
+    logging.warning("This is a bad implementation. Change above if you have time---")
 
     command = f"if [ ! -d \"{path}\" ]; then \n echo {path} does not exist \n mkdir {path} \n echo create {path} \n fi"
     (stdin, stdout, stderr) = ssh.exec_command(command)
