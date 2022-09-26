@@ -1,2 +1,2 @@
-,bucket,delay,period,start_time,end_time
-0,pv.insight.nrel,PVO/PVOutput/10010.csv,5,1664166609.2071688,1664166614.207198
+,bucket,curr_process_file,curr_process_column,delay,period,start_time,end_time
+0,pv.insight.nrel,PVO/PVOutput/10010.csv,Power(W),5,5,1664218201.6101944,1664218206.6102076

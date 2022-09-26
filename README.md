@@ -213,7 +213,7 @@ In this action, this application will generate all necessary cloud resources as 
 
 ##### resume_from_existing
 
-If the cloud resources had been created previously, an history record will be stored in `create_resource_history` folder. You can select `resume_from_existing` to resume prvious cloud resources without waiting a long time to create generate new cloud resources.
+If the programs previously created cloud resources, a history record is stored in the `create_resource_history` folder. You can select `resume_from_existing` to resume previous cloud resources without waiting a long time to create new cloud resources.
 
 ##### cleanup_cloud_resources
 
@@ -228,18 +228,18 @@ Run the application on your local machine, and ==it's recommended to run your pr
 - examples/gridlabd
   - This exmaples runs the [gridlabd](https://github.com/slacgismo/gridlabd) project
 - examples/sleep
-  - This exmaples runs a for loop without doing anything.
+  - This example runs a for loop without doing anything.
 - examples/solardatatools
-  - This exmaples runs the [solar-data-tools](https://github.com/slacgismo/solar-data-tools) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
+  - This examples runs the [solar-data-tools](https://github.com/slacgismo/solar-data-tools) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
 - examples/stasticclearsky
-  - This exmaples runs the [StatisticClearSky](https://github.com/slacgismo/StatisticalClearSky) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
+  - This examples runs the [StatisticClearSky](https://github.com/slacgismo/StatisticalClearSky) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
 
 ### Project files structures
 
 A project folder must contains four files as below:
 
 - Dokcerfile
-  This Dockerfile contains all necessay system dependencies. If you would like to install any other dependencies other ahtn python packages. Please include in this file. For example, the `solver licnese file` is copyed from your local folder to dokcer images through this Dockerfile.
+  This Dockerfile contains all necessary system dependencies. Suppose you would like to install any other dependencies other than python packages. Please include it in this file. For example, the `solver license file` is copied from your local folder to docker images through this Dockerfile.
 - entrypoint.py
   When you define your code block folder, this folder has to include a  `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside the code block folder (eg.`code-templates`) and pastes them to docker images.
   Developers can include any files or self-defined python modules in their folder (eg `code-templates`). Those files, sub-folder and modules will be copied to the Docker images.
@@ -247,14 +247,14 @@ A project folder must contains four files as below:
   The `gismoclouddeploy` passes the filename and column name to this `entrypoint.py` file. Each entrypoint.py file processes exactly one filename and column name only. For example, if you want to process one file with two column names. This application will run this entrypoint.py twice with the same file name and two different column names.
 
 - requirements.txt
-  Please include a `requirements.txt` file under your project folder. You have to include all the necessary dependencies pacakges in this file. The Docker copys those files into their images, and the application will install python packages based on it. Some packages are necessary to run flask server and celery worker. Please do not remove it. Please check the example `requirements.txt` to get more details.
+  Please include a `requirements.txt` file under your project folder. You have to include all the necessary dependencies packages in this file. The Docker copies those files into their images, and the application will install python packages based on it. Some packages are necessary to run the flask server and celery worker. Please do not remove it. Please check the example `requirements.txt` to get more details.
 - config.yaml
-  This file lists all the system parameters that pass to the `gismoclouddeploy`. Please check the file to see more detail descriptions.
+  This file lists all the system parameters that pass to the `gismoclouddeploy`. Please check the file to see more detailed descriptions.
 
 #### Run command on AWS
 
 Suppose you are already familiar with how to create EC2 bastion and EKS cluster. You can run this application directly on AWS. It is faster and easy to debug. Follow the steps to run this application on AWS EC2.
-If you have created and install all the dependecies. Activate your pyton3 virtual environment.
+Suppose you have created and installed all the dependencies. Activate your pyton3 virtual environment.
 
 ```bash
 cd gismo-cloud-deploy/gismoclouddeploy/services
