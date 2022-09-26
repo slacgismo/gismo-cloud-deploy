@@ -424,14 +424,9 @@ It prints out:
 ~~~
 NAME                       READY   STATUS    RESTARTS   AGE
 rabbitmq-84669ddxxs-rc2fx   1/1     Running   0          10h
-rabbitmq-84669dd8f-xm597   1/1     Running   0          10h
 redis-697477d557-8jdz2     1/1     Running   0          10h
-redis-697477d557-mxtpx     1/1     Running   0          10h
-server-65bf8bc584-h885f    1/1     Running   0          10h
 server-65bf8bc584-kc6zs    1/1     Running   0          10h
 worker-6d47d89f94-r7drj    1/1     Running   0          10h
-worker-6d47d89f94-zh8pq    1/1     Running   0          10h
-worker-6d47d89f94-zv8pt    1/1     Running   0          10h
 ~~~
 
 :warning: The worker's (`worker-<random id>`) name changes when this application restarts the services.

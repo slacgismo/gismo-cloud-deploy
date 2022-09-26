@@ -458,7 +458,7 @@ class HandleAWS(object):
             command=ssh_command
         )
     
-        remote_projects_folder =f"{remote_base_path}/temp/{self.project_name}"
+        remote_projects_folder =f"{remote_base_path}/{self.project_name}"
         
         logging.info("-------------------")
         logging.info(f"upload local project folder to ec2 projects")

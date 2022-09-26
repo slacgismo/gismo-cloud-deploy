@@ -1,7 +1,7 @@
 import inquirer
 from asyncio import streams
 
-import coloredlogs, logging
+import logging
 from .aws_utitlties import connect_aws_client,check_bucket_exists_on_s3
 import os
 def convert_yes_no_to_bool(input:str) -> bool:
