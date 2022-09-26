@@ -507,7 +507,7 @@ class Menu(object):
         print(table.table)
         # ask confirmation to process
         self._is_confirm_to_process = handle_yes_or_no_question(
-            input_question="Comfim to process (must be yes/no)",
+            input_question="Confirm to process (must be yes/no)",
             default_answer="yes"
         )
 

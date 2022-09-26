@@ -654,6 +654,8 @@ class HandleAWS(object):
         nodegroup_name = self._nodegroup_name
         ssh_command_list = {}
 
+        if cluster_name is None or nodegroup_name is None:
+            raise Exception("cluster_name is None")
 
         if eks_action == EKSActions.create.name:
             

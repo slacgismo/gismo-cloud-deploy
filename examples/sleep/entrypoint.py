@@ -64,7 +64,9 @@ def entrypoint(
 
         save_data = {
             "bucket": data_bucket,
-            "delay": curr_process_file,
+            "curr_process_file": curr_process_file,
+            "curr_process_column": curr_process_column,
+            "delay":delay,
             "period": period,
             "start_time": start_time,
             "end_time": end_time,
