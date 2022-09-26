@@ -46,7 +46,7 @@ Download the source code from the github repository.
 git clone https://github.com/slacgismo/gismo-cloud-deploy.git
 ```
 
-Create a python virtual environment and activate the virtual environment
+Create a python virtual environment and activate the virtual environment (Use python 3.8+ version)
 
 ```bash
 cd gismo-cloud-deploy
