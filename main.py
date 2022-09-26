@@ -54,7 +54,7 @@ def main():
     "--project",
     "-p",
     help="Project folder name",
-    default="examples/solardatatools",
+    default="examples/sleep",
 )
 @click.option(
     "--scalenodes",
