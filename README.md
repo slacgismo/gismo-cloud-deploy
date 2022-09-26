@@ -104,7 +104,6 @@ Run `menu` command to select main menu.
 
 ```bash
 python3 main.py menu
-
 ```
 
 A selection menu pop up , please select `create_cloud_resources_and_start` command. It starts a process of creating all necessary cloud resources automatically with instructions and permissions.
