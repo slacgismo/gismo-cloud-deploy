@@ -90,7 +90,7 @@ class Menu(object):
         self._local_pem_path = local_pem_path 
 
         # default project 
-        self._template_project = self._base_path +"/examples/solardatatools"
+        self._template_project = self._base_path +"/examples/sleep"
         self._project_name = None
         self._temp_project_absoult_path = None
         self._origin_project_path = None

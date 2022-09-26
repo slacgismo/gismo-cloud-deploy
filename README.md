@@ -63,11 +63,11 @@ pip install -r requirements.txt
 
 #### Set up AWS permissions and credentials
 
-Before we start to run the automation tool that control EC2 instances . We need to set up the AWS credentials.
+Before running the automation tool that controls EC2 instances, we need to set up the AWS credentials.
 
-First, include the AWS permission on your `IAM` user account. Or, if you are using share account, you can ask your account manager to add proper permissions into your `IAM` user.
+If you are using a share account, you can ask your account manager to add permissions into your `IAM` user. If you are individual user would like use this application. You can login into your AWS console and select your `IAM` user in the `IAM` user page. Hit the `Add permissions` button to inlcude standard and custom permissions below.
 
-The permissions includes:
+The standard permissions includes:
 
 - AmazonEC2FullAccess
 - AmazonSQSFullAccess
@@ -83,7 +83,7 @@ Custom policy
 - [EKSAccess](./mainmenu/config/policy/EKSAccess.json)
 - [IamLimitedAccess-EKS](./mainmenu/config/policy/IamLimitedAccess-EKS.json)
 
-Once you add those permissions onto your IAM user. Create a `.env` file with following AWS credentials: 
+Once you add those permissions onto your IAM user. Create a local `.env` file in the top level of your repository. The file should include:
 
 ```bash
 AWS_ACCESS_KEY_ID=<your-aws-access-key>
