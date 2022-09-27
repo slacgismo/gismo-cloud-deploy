@@ -323,7 +323,7 @@ class Menu(object):
             or action == MenuActions.cleanup_cloud_resources.name:
             self.select_created_cloud_config_files()
             self.import_from_ec2_config()
-            self.import_from_eks_config()
+            # self.import_from_eks_config()
         elif action == MenuActions.create_cloud_resources_and_start.name:
             logging.info("Create new resources")
             self.generate_ec2_name()

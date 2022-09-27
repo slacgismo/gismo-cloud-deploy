@@ -1,0 +1,14 @@
+ec2_image_id: ami-0568773882d492fc8
+ec2_instance_id: i-0f5951c35e469442d
+ec2_instance_type: t2.large
+ec2_volume: '20'
+key_pair_name: gcd-jimmy-cli
+login_user: ec2-user
+securitygroup_name: SSH-ONLY
+tags:
+- Key: Name
+  Value: gcd-jimmy-cli-1664301657
+- Key: managedBy
+  Value: boto3
+- Key: project
+  Value: pvinsight
