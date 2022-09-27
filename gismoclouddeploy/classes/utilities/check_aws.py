@@ -18,25 +18,13 @@ def check_aws_validity(key_id: str, secret: str) -> bool:
     except Exception as e:
         return False
 
-
-# def check_environment_is_aws() -> bool:
-#     my_user = os.environ.get("USER")
-#     is_aws = True if "ec2" in my_user else False
-#     return is_aws
 def check_environment_is_aws() -> bool:
     datasource_file = "/var/lib/cloud/instance/datasource"
     if exists(datasource_file):
         return True
     else:
         return False
-#     try:
-#     with open(datasource_file) as f:
-#         line = f.readlines()
-#         print("I'm running on EC2!")
-#         if "DataSourceEc2Local" in line[0]:
-#             print("I'm running on EC2!")
-# except FileNotFoundError:
-#         print(f"{datasource_file} not found")
+
 
 def connect_aws_client(client_name: str, key_id: str, secret: str, region: str):
     try:
@@ -217,10 +205,7 @@ def get_ec2_state_from_id(ec2_client, id) -> str:
             return state
             # logging.info(f"system_status :{system_status}, instance_status:{instance_status},")
     return None
-    # if  state is not None:
-    #     logging.info(f"instance state : { state}")
-    # else:
-    #     raise Exception(f"Cannot find instance state from {self._ec2_instance_id}")
+
 
 def get_iam_user_name(sts_client) -> str:
     try:

@@ -53,12 +53,6 @@ def process_logs_from_local(
     pods_name_prefix_set = ("worker")
     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
 
-    # save nodes info to csv.
-    # print("----------------")
-    # print(f"pods_info_dict: {pods_info_dict}")
-    # print("----------------")
-
-
     # print(pods_info_dict)
     worker_dict = process_df_for_gantt(df)
     # # # # Show dataframe
@@ -144,6 +138,181 @@ def read_all_csv_from_s3_and_parse_dates_from(
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return result_df
+
+
+
+
+def analyze_all_local_logs_files(
+        project:str ,
+        instanceType:str,
+        num_namspaces:int ,
+        init_process_time_list:float,
+        total_proscee_time_list:float,
+        eks_nodes_number:int,
+        num_workers:int,
+        logs_file_path:str,
+        performance_file_txt:str,
+        num_unfinished_tasks:int,
+        code_templates_folder:str,
+        repeat_number:int
+    ) -> List[str]:
+
+
+    logs_files_list = []
+    for _file in os.listdir(logs_file_path):
+        prefix = _file.split("-")[0]
+        if prefix == "logs":
+            logs_files_list.append(_file)
+
+    header = ["Performance"]
+    file_name = ["File name"]
+    average_task_duration = ["average_task_duration"]
+    min_duration = ["min_duration"]
+    max_duration = ["max_duration"]
+    num_error_task = ["num_error_task"]
+    num_unfinished_tasks = ["num_unfinished_tasks"]
+    shortest_task = ["shortest_task"]
+    longest_task = ["longest_task"]
+    task_duration_in_parallelism = ["task_duration_in_parallelism"]
+    tasks_durtaion_sum = ["tasks_durtaion_sum"]
+    initial_process_time = ["initial_process_time"]
+    total_process_time = ["total_process_time"]
+    effeciencyFactor = ["effeciencyFactor"]
+    total_tasks = ["total_tasks"]
+    error_task = ["error_task"]
+
+    index = 0
+    performance_dict = {}
+    for logs_file in logs_files_list:
+        logger.info(f"Porcess {logs_file}")
+        logs_path_name = logs_file_path + "/" + logs_file
+        per_dict = analyze_signle_local_logs_file(
+            logs_file_path_name=logs_path_name,
+            instanceType=instanceType,
+            initial_process_time=0,
+            total_process_time=1100,
+            eks_nodes_number=eks_nodes_number,
+            num_workers=num_workers,
+            num_unfinished_tasks=0,
+            code_templates_folder=code_templates_folder,
+        )
+  
+        repeat_number_str = f"Repeat {index}"
+        file_name.append(logs_file)
+        total_tasks.append(per_dict["total_tasks"])
+        average_task_duration.append(per_dict["average_task_duration"])
+        min_duration.append(per_dict["min_duration"])
+        shortest_task.append(per_dict["shortest_task"])
+        longest_task.append(per_dict["longest_task"])
+        max_duration.append(per_dict["max_duration"])
+        num_error_task.append(per_dict["num_error_task"])
+        num_unfinished_tasks.append(per_dict["num_unfinished_tasks"])
+        task_duration_in_parallelism.append(per_dict["task_duration_in_parallelism"])
+        tasks_durtaion_sum.append(per_dict["tasks_durtaion_sum"])
+        effeciencyFactor.append(per_dict["effeciencyFactor"])
+        header.append(repeat_number_str)
+        index += 1
+        # save to dict 
+        performance_dict[logs_file]  = {
+            'total_tasks':total_tasks,
+            'average_task_duration' : per_dict["average_task_duration"],
+            'min_duration':per_dict["min_duration"],
+            'shortest_task':per_dict["shortest_task"],
+            'longest_task':per_dict["longest_task"],
+            'max_duration':per_dict["max_duration"],
+            'num_error_task':per_dict["num_error_task"],
+            'num_unfinished_tasks':per_dict["num_unfinished_tasks"],
+            'task_duration_in_parallelism':per_dict["task_duration_in_parallelism"],
+            'tasks_durtaion_sum':per_dict["task_duration_in_parallelism"],
+            'effeciencyFactor':per_dict["effeciencyFactor"],
+            'repeat_number_str':repeat_number_str
+        }
+
+    initial_process_time = initial_process_time + init_process_time_list
+    total_process_time = total_process_time + total_proscee_time_list
+
+    if repeat_number > 1:
+        # Mean and Std
+
+        header.append("Mean")
+        header.append("Std")
+        # average_task_duration
+        mean_of_average_task_duration = round(
+            statistics.mean(average_task_duration[1:]), 2
+        )
+        std_of_average_task_duration = round(
+            statistics.stdev(average_task_duration[1:]), 2
+        )
+        average_task_duration.append(mean_of_average_task_duration)
+        average_task_duration.append(std_of_average_task_duration)
+
+        # task_duration_in_parallelism
+        mean_of_task_duration_in_parallelism = round(
+            statistics.mean(task_duration_in_parallelism[1:]), 2
+        )
+        std_of_task_duration_in_parallelism = round(
+            statistics.stdev(task_duration_in_parallelism[1:]), 2
+        )
+        task_duration_in_parallelism.append(mean_of_task_duration_in_parallelism)
+        task_duration_in_parallelism.append(std_of_task_duration_in_parallelism)
+
+        # tasks_durtaion_sum
+        mean_of_tasks_durtaion_sum = round(statistics.mean(tasks_durtaion_sum[1:]), 2)
+        std_of_tasks_durtaion_sum = round(statistics.stdev(tasks_durtaion_sum[1:]), 2)
+        tasks_durtaion_sum.append(mean_of_tasks_durtaion_sum)
+        tasks_durtaion_sum.append(std_of_tasks_durtaion_sum)
+
+        # initial_process_time
+        mean_of_init_process_time_list = round(
+            statistics.mean(init_process_time_list), 2
+        )
+        std_of_init_process_time_list = round(
+            statistics.stdev(init_process_time_list), 2
+        )
+
+        initial_process_time.append(mean_of_init_process_time_list)
+        initial_process_time.append(std_of_init_process_time_list)
+
+        # total_process_time
+        mean_of_total_process_time = round(statistics.mean(total_proscee_time_list), 2)
+        std_of_total_process_time = round(statistics.stdev(total_proscee_time_list), 2)
+
+        total_process_time.append(mean_of_total_process_time)
+        total_process_time.append(std_of_total_process_time)
+
+        mean_of_effeciencyFactor = round(statistics.mean(effeciencyFactor[1:]), 2)
+        std_of_effeciencyFactor = round(statistics.stdev(effeciencyFactor[1:]), 2)
+        effeciencyFactor.append(mean_of_effeciencyFactor)
+        effeciencyFactor.append(std_of_effeciencyFactor)
+    performance = [
+        header,
+        ["Project", project, ""],
+        ["Total number of nodes", f"{eks_nodes_number}"],
+        ["Number of namespaces",f"{num_namspaces}"],
+        ["Number of workers per namesapces", f"{num_workers}"],
+        ["Instance type", f"{instanceType}"],
+        file_name,
+        total_tasks,
+        average_task_duration,
+        min_duration,
+        shortest_task,
+        max_duration,
+        longest_task,
+        num_error_task,
+        num_unfinished_tasks,
+        task_duration_in_parallelism,
+        tasks_durtaion_sum,
+        initial_process_time,
+        total_process_time,
+        effeciencyFactor,
+    ]
+    table1 = AsciiTable(performance)
+    print(table1.table)
+    print(performance_file_txt)
+    with open(performance_file_txt, "w") as file:
+        print(table1.table, file=file)
+        file.close()
+    return
 
 
 def analyze_signle_local_logs_file(
@@ -269,218 +438,3 @@ def analyze_signle_local_logs_file(
         "effeciencyFactor": round(effeciencyFactor, 2),
     }
     return performance_dict
-
-def analyze_all_local_logs_files(
-        project:str ,
-        instanceType:str,
-        num_namspaces:int ,
-        init_process_time_list:float,
-        total_proscee_time_list:float,
-        eks_nodes_number:int,
-        num_workers:int,
-        logs_file_path:str,
-        performance_file_txt:str,
-        num_unfinished_tasks:int,
-        code_templates_folder:str,
-        repeat_number:int
-    ) -> List[str]:
-# def analyze_all_local_logs_files(
-#     logs_file_path: str = None,
-#     instanceType: str = None,
-#     init_process_time_list: float = 0,
-#     total_proscee_time_list: float = 0,
-#     eks_nodes_number: int = 0,
-#     num_workers: int = 0,
-#     save_file_path_name: str = None,
-#     num_unfinished_tasks: int = 0,
-#     code_templates_folder: str = None,
-#     repeat_number: int = 1,
-# ) -> List[str]:
-
-    
-
-    logs_files_list = []
-    for _file in os.listdir(logs_file_path):
-        prefix = _file.split("-")[0]
-        if prefix == "logs":
-            logs_files_list.append(_file)
-
-    header = ["Performance"]
-    file_name = ["File name"]
-    average_task_duration = ["average_task_duration"]
-    min_duration = ["min_duration"]
-    max_duration = ["max_duration"]
-    num_error_task = ["num_error_task"]
-    num_unfinished_tasks = ["num_unfinished_tasks"]
-    shortest_task = ["shortest_task"]
-    longest_task = ["longest_task"]
-    task_duration_in_parallelism = ["task_duration_in_parallelism"]
-    tasks_durtaion_sum = ["tasks_durtaion_sum"]
-    initial_process_time = ["initial_process_time"]
-    total_process_time = ["total_process_time"]
-    effeciencyFactor = ["effeciencyFactor"]
-    total_tasks = ["total_tasks"]
-    error_task = ["error_task"]
-
-    index = 0
-    performance_dict = {}
-    for logs_file in logs_files_list:
-        logger.info(f"Porcess {logs_file}")
-        logs_path_name = logs_file_path + "/" + logs_file
-        per_dict = analyze_signle_local_logs_file(
-            logs_file_path_name=logs_path_name,
-            instanceType=instanceType,
-            initial_process_time=0,
-            total_process_time=1100,
-            eks_nodes_number=eks_nodes_number,
-            num_workers=num_workers,
-            num_unfinished_tasks=0,
-            code_templates_folder=code_templates_folder,
-        )
-  
-        repeat_number_str = f"Repeat {index}"
-        file_name.append(logs_file)
-        total_tasks.append(per_dict["total_tasks"])
-        average_task_duration.append(per_dict["average_task_duration"])
-        min_duration.append(per_dict["min_duration"])
-        shortest_task.append(per_dict["shortest_task"])
-        longest_task.append(per_dict["longest_task"])
-        max_duration.append(per_dict["max_duration"])
-        num_error_task.append(per_dict["num_error_task"])
-        num_unfinished_tasks.append(per_dict["num_unfinished_tasks"])
-        task_duration_in_parallelism.append(per_dict["task_duration_in_parallelism"])
-        tasks_durtaion_sum.append(per_dict["tasks_durtaion_sum"])
-        effeciencyFactor.append(per_dict["effeciencyFactor"])
-        header.append(repeat_number_str)
-        index += 1
-        # save to dict 
-        performance_dict[logs_file]  = {
-            'total_tasks':total_tasks,
-            'average_task_duration' : per_dict["average_task_duration"],
-            'min_duration':per_dict["min_duration"],
-            'shortest_task':per_dict["shortest_task"],
-            'longest_task':per_dict["longest_task"],
-            'max_duration':per_dict["max_duration"],
-            'num_error_task':per_dict["num_error_task"],
-            'num_unfinished_tasks':per_dict["num_unfinished_tasks"],
-            'task_duration_in_parallelism':per_dict["task_duration_in_parallelism"],
-            'tasks_durtaion_sum':per_dict["task_duration_in_parallelism"],
-            'effeciencyFactor':per_dict["effeciencyFactor"],
-            'repeat_number_str':repeat_number_str
-        }
-
-    initial_process_time = initial_process_time + init_process_time_list
-    total_process_time = total_process_time + total_proscee_time_list
-
-    # _logs = {
-    #             "file_name": msg_dict["file_name"],
-    #             "column_name": msg_dict["column_name"],
-    #             "task_id": msg_dict["task_id"],
-    #             "start_time": msg_dict["start_time"],
-    #             "end_time": msg_dict["end_time"],
-    #             "hostname": msg_dict["hostname"],
-    #             "host_ip": msg_dict["host_ip"],
-    #             "pid": msg_dict["pid"],
-    #             "alert_type": msg_dict["alert_type"],
-    #             "po_server_name":msg_dict["po_server_name"],
-    #             "node_name": node_name,
-                
-    #         }
-    #                 # print(f"--------logs :{_logs}")
-    #                 logs_data.append(_logs)
-    _performance_list = []
-    if repeat_number > 1:
-        # Mean and Std
-
-        header.append("Mean")
-        header.append("Std")
-        # average_task_duration
-        mean_of_average_task_duration = round(
-            statistics.mean(average_task_duration[1:]), 2
-        )
-        std_of_average_task_duration = round(
-            statistics.stdev(average_task_duration[1:]), 2
-        )
-        average_task_duration.append(mean_of_average_task_duration)
-        average_task_duration.append(std_of_average_task_duration)
-
-        # task_duration_in_parallelism
-        mean_of_task_duration_in_parallelism = round(
-            statistics.mean(task_duration_in_parallelism[1:]), 2
-        )
-        std_of_task_duration_in_parallelism = round(
-            statistics.stdev(task_duration_in_parallelism[1:]), 2
-        )
-        task_duration_in_parallelism.append(mean_of_task_duration_in_parallelism)
-        task_duration_in_parallelism.append(std_of_task_duration_in_parallelism)
-
-        # tasks_durtaion_sum
-        mean_of_tasks_durtaion_sum = round(statistics.mean(tasks_durtaion_sum[1:]), 2)
-        std_of_tasks_durtaion_sum = round(statistics.stdev(tasks_durtaion_sum[1:]), 2)
-        tasks_durtaion_sum.append(mean_of_tasks_durtaion_sum)
-        tasks_durtaion_sum.append(std_of_tasks_durtaion_sum)
-
-        # initial_process_time
-        mean_of_init_process_time_list = round(
-            statistics.mean(init_process_time_list), 2
-        )
-        std_of_init_process_time_list = round(
-            statistics.stdev(init_process_time_list), 2
-        )
-
-        initial_process_time.append(mean_of_init_process_time_list)
-        initial_process_time.append(std_of_init_process_time_list)
-
-        # total_process_time
-        mean_of_total_process_time = round(statistics.mean(total_proscee_time_list), 2)
-        std_of_total_process_time = round(statistics.stdev(total_proscee_time_list), 2)
-
-        total_process_time.append(mean_of_total_process_time)
-        total_process_time.append(std_of_total_process_time)
-
-        mean_of_effeciencyFactor = round(statistics.mean(effeciencyFactor[1:]), 2)
-        std_of_effeciencyFactor = round(statistics.stdev(effeciencyFactor[1:]), 2)
-        effeciencyFactor.append(mean_of_effeciencyFactor)
-        effeciencyFactor.append(std_of_effeciencyFactor)
-
-        # _performance_dict = {
-        #     "code_folder":code_templates_folder,
-        #     "number_nodes":eks_nodes_number,
-        #     "numer_worker":num_workers,
-        #     "instance_type": instanceType,
-        #     "file_name":file_name,
-        #     "total_tasks":total_tasks,
-
-
-        # }
-
-    performance = [
-        header,
-        ["Project", project, ""],
-        ["Total number of nodes", f"{eks_nodes_number}"],
-        ["Number of namespaces",f"{num_namspaces}"],
-        ["Number of workers per namesapces", f"{num_workers}"],
-        ["Instance type", f"{instanceType}"],
-        file_name,
-        total_tasks,
-        average_task_duration,
-        min_duration,
-        shortest_task,
-        max_duration,
-        longest_task,
-        num_error_task,
-        num_unfinished_tasks,
-        task_duration_in_parallelism,
-        tasks_durtaion_sum,
-        initial_process_time,
-        total_process_time,
-        effeciencyFactor,
-    ]
-    table1 = AsciiTable(performance)
-    print(table1.table)
-    print("---------")
-    print(performance_file_txt)
-    with open(performance_file_txt, "w") as file:
-        print(table1.table, file=file)
-        file.close()
-    return

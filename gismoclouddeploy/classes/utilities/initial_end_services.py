@@ -3,23 +3,17 @@ import time
 from typing import List
 
 from ..constants.DevEnvironments import DevEnvironments
-from .check_aws import connect_aws_client, check_environment_is_aws
+from .check_aws import connect_aws_client
 import logging
 from .process_log import (
     process_logs_from_local,
 )
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
-    invoke_docker_compose_down_and_remove,
     invoke_kubectl_delete_all_deployment,
     invoke_kubectl_delete_all_services,
-    invoke_kubectl_delete_all_daemonset,
-    invoke_kubectl_delete_all_po,
     invoke_kubectl_delete_namespaces,
     invoke_kubectl_delete_all_from_namspace,
-    invoke_force_delete_namespace,
-    invoke_docker_system_prune_all
-
 )
 from .command_utils import delete_files_from_bucket
 
@@ -71,8 +65,6 @@ def process_local_logs_and_upload_s3(
 
 def initial_end_services(
     server_list : list = None,
-    solver:dict = None,
-    user_id:str = None,
     services_config_list: List[str] = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
@@ -85,12 +77,6 @@ def initial_end_services(
     initial_process_time: float = None,
 ):
 
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
     try:
         # check if totoal process time is longer than 60 sec
         current_time = time.time()
@@ -158,36 +144,7 @@ def initial_end_services(
     return
 
 
-def delete_solver_lic_from_bucket(
-    saved_solver_bucket: str = None,
-    saved_temp_path_in_bucket: str = None,
-    solver_lic_file_name: str = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-) -> None:
-    if (
-        saved_solver_bucket is None
-        or saved_temp_path_in_bucket is None
-        or solver_lic_file_name is None
-        or aws_access_key is None
-        or aws_secret_access_key is None
-        or aws_region is None
-    ):
-        logger.warning("No input parameters")
-        return
-    try:
-        s3_client = connect_aws_client(
-            "s3", key_id=aws_access_key, secret=aws_secret_access_key, region=aws_region
-        )
-        full_path = saved_temp_path_in_bucket + "/" + solver_lic_file_name
-        delete_files_from_bucket(
-            bucket_name=saved_solver_bucket, full_path=full_path, s3_client=s3_client
-        )
-    except Exception as e:
-        logger.error(f"Delete solver lic Failed{e}")
-        logger.error(f"End services first. please fix this!!")
-    return
+
 
 
 def delete_ecr_image(

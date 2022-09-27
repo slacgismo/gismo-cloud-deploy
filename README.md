@@ -202,11 +202,9 @@ The results folder contains four different files.
 - results.csv. This file contains all saved data.
 - runtime.png. This file contains the process times of each task in all instances.
 
-
 ### MainMenu
 
 Users can select four actions.
-
 ##### create_cloud_resources_and_start
 
 In this action, this application will generate all necessary cloud resources as [create new cloud resources](#create-new-cloud-resource-steps) described.
@@ -226,30 +224,74 @@ Run the application on your local machine, and ==it's recommended to run your pr
 ### Example projects
 
 - examples/gridlabd
-  - This exmaples runs the [gridlabd](https://github.com/slacgismo/gridlabd) project
+  This exmaples runs the [gridlabd](https://github.com/slacgismo/gridlabd) project
+
 - examples/sleep
-  - This example runs a for loop without doing anything.
+  This example runs a for loop without doing anything.
+
 - examples/solardatatools
-  - This examples runs the [solar-data-tools](https://github.com/slacgismo/solar-data-tools) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
+  This examples runs the [solar-data-tools](https://github.com/slacgismo/solar-data-tools) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details about how to get this license. 
+  If you want to include a solver license file such as `mosek.lic`, you have to specify the three parameters `solver_name`, `solver_lic_target_path_in_images_dest` and `solver_lic_file_local_source` in your project's `config.yaml` file. The license file has to be located in your local project folder in the same location (relative path ) that you specifiy as `solver_lic_file_local_source`. The `solver_lic_target_path_in_images_dest` is the absolute path that puts the license file in the built images, and it's where official `MOSEK` requests.
+  
 - examples/stasticclearsky
-  - This examples runs the [StatisticClearSky](https://github.com/slacgismo/StatisticalClearSky) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
+  This examples runs the [StatisticClearSky](https://github.com/slacgismo/StatisticalClearSky) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
 
 ### Project files structures
 
 A project folder must contains four files as below:
 
-- Dokcerfile
-  This Dockerfile contains all necessary system dependencies. Suppose you would like to install any other dependencies other than python packages. Please include it in this file. For example, the `solver license file` is copied from your local folder to docker images through this Dockerfile.
-- entrypoint.py
-  When you define your code block folder, this folder has to include a  `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside the code block folder (eg.`code-templates`) and pastes them to docker images.
-  Developers can include any files or self-defined python modules in their folder (eg `code-templates`). Those files, sub-folder and modules will be copied to the Docker images.
+- [Dokcerfile](#dockerfile)
+- [entrypoint.py](#entrypointpy)
+- [requirements.txt](#requirementstxt)
+- [config.yaml](#configyaml)
+  
+#### Dockerfile
 
-  The `gismoclouddeploy` passes the filename and column name to this `entrypoint.py` file. Each entrypoint.py file processes exactly one filename and column name only. For example, if you want to process one file with two column names. This application will run this entrypoint.py twice with the same file name and two different column names.
+This Dockerfile contains all necessary system dependencies. Suppose you would like to install any other dependencies other than python packages. Please include it in this file. For example, the `solver license file` is copied from your local folder to docker images through this Dockerfile.
 
-- requirements.txt
-  Please include a `requirements.txt` file under your project folder. You have to include all the necessary dependencies packages in this file. The Docker copies those files into their images, and the application will install python packages based on it. Some packages are necessary to run the flask server and celery worker. Please do not remove it. Please check the example `requirements.txt` to get more details.
-- config.yaml
-  This file lists all the system parameters that pass to the `gismoclouddeploy`. Please check the file to see more detailed descriptions.
+#### entrypoint.py
+
+When you define your code block folder, this folder has to include a  `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside the project folder (eg.`examples/solardatatools`) and pastes them to docker images. Developers can include any files or self-defined python modules in their folder (eg `my_modules`). Those files, sub-folder and modules will be copied to the Docker images.
+
+The `gismoclouddeploy` passes the filename and column name to this `entrypoint.py` file. Each entrypoint.py file processes exactly one filename with one column name only. For example, if you want to process one file with two column names. This application will run this entrypoint.py twice with the same file name and two different column names.
+
+#### requirements.txt
+
+Please include a `requirements.txt` file under your project folder. You have to include all the necessary dependencies packages in this file. The Docker copies those files into their images, and the application will install python packages based on it. Some packages are necessary to run the flask server and celery worker. Please do not remove it. Please check the example `requirements.txt` to get more details.
+
+#### config.yaml
+
+This file lists all the system parameters that pass to the `gismoclouddeploy`. Here list some import parameters:
+
+- solver_name: "MOSEK"
+  If you want to include a solver license in your project. You must give a name of this solver. If you dont want to include any solvers, just leave this parameters empty or give it "".
+- solver_lic_target_path_in_images_dest: "/root/mosek"
+  It is the absolute path of your solver license file inside the docker images. The path is given by the official `MOSEK` company. If you don't want to include any solvers, just leave this parameter empty or give it "".
+- solver_lic_file_local_source: "license/mosek.lic"
+  It is your license file's relative path and file name inside your local project folder. If you don't want to include any solvers, leave this parameter empty or give it "".
+
+- data_bucket: "pv.insight.nrel"
+  This is the S3 bucket where you keep your data files.
+- file_pattern: "*.csv"
+  This application searches and down the file that match this file pattern, and passes them to the tasks.
+- process_column_keywords: "^Pow"
+  When the application downloads each `csv` file, it searches the column name by this column keywords based on regex expression and pass to the tasks.
+  :warning: If the application only searches column keywords in `csv` file. If you use other file formats, it omits this parameter.
+- saved_bucket: "pv.insight.test"
+- saved_path_cloud: "results"
+
+- filename:
+  - saved_data: 'results.csv'
+  - logs_data: 'logs.csv'
+  - error_data: 'errors.csv'
+  - performance: 'performance.txt'
+  - runtime_gantt_chart: 'runtime.png'
+These are the saved files' names. Please do not change them. Those saved files are stored in your local project path under the `results` folder.
+
+- is_celeryflower_on: False
+  Turn of / off flower . You can turn on Celery folwer to monitor the rabbitmq inside kubernetes. It will provide a public link to access the celeryflower. However, the celeryflower service is destroyed after application completed. Moreover, it generate extra cost because of public IP address from AWS.
+- num_worker_pods_per_namespace: 8
+  number of instances per namspaces. If you are running short task (for exampel, 5 sec tasks), you can set this number samller, such as 4. However, 8 is recommanded.
 
 #### Run command on AWS
 
@@ -332,10 +374,19 @@ Options:
 ~~~
 
 - If you use the default `run-files` command with no option, this program processes the files defined in the `config.yaml` file and generates the saved results in a file specified in `config.yaml` file.
-
 - The process file command with option command `-n` followed by an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first ten files in the specified bucket )
 - If `number=0`, it processes all files in the buckets.
+- If you want to run a specific file in the defined data bucket, You can use `-f` option command. You can use multiple files with multiple `-f` commands. However, you cannot specify `-n` and `-f` commands simultaneously. They are the opposite.
 
+```bash
+python3 main.py run-files -f PVO/PVOutput/11106.csv -f PVO/PVOutput/10010.csv -s 1 -p examples/solardatatools -c <your-cluster-name>
+```
+
+- If you are running on AWS, giving a cluster name through `-c` option command is necessary.
+- The `-s` option command is to specify how many instances you want to generate.
+- The `-p` command is the project name. This project have to locate in this repository. It's recommended to put it under `temp` folder.
+  ***Note*** If you are using the `menu` selection's `run-in-local-machine`. You can put your project anywhere on your local machine. The `menu` copies the project into this repository under `temp` folder.
+- The `-r` option command is to specify how many time you want to repeat the application. The default value is `1`.
 
 #### Examples
 

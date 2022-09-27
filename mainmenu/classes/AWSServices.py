@@ -1,23 +1,15 @@
 
 from glob import escape
 import readline
-from os.path import relpath
-from os.path import normpath, basename
-from pathlib import Path
+
+
 from os.path import exists
 import time
 
-import re
-import socket
-from unittest import result
-
-
-from transitions import Machine
+from sshconf import read_ssh_config
+from os.path import expanduser
 import os
-import coloredlogs, logging
-from terminaltables import AsciiTable
-import inquirer
-
+import  logging
 from mainmenu.classes.constants.EC2Actions import EC2Actions
 from .utilities.verification import verify_keys_in_ec2_configfile, verify_keys_in_eks_configfile
 from .utilities.handle_inputs import (
@@ -110,6 +102,7 @@ class AWSServices(object):
         self._ec2_instance_type = None
         self._ec2_volume = None
         self._ec2_instance_id = None
+        self._ec2_public_ip = None
         self.securitygroup_name = None
         self._securitygroup_ids = []
         self.key_pair_name = keypair_name
@@ -250,7 +243,7 @@ class AWSServices(object):
             logging.info(f"get and set default vpc id :{self._default_vpc_id} ")
 
         elif action == AWSActions.create_ec2_instance.name:
-            logging.info("Create ec2 action")
+            logging.info("Create ec2 action !!!")
             try:
                 if self._securitygroup_ids is None or not len(self._securitygroup_ids):
                     raise Exception("securitygroup_ids is None")
@@ -269,8 +262,24 @@ class AWSServices(object):
                 logging.info(f"ec2_instance_id: {ec2_instance_id}")
                 self._ec2_instance_id = ec2_instance_id
                 logging.info("-------------------")
-                logging.info(f"Create ec2 bastion completed")
+                logging.info(f"Create ec2 bastion completed:{self._ec2_instance_id}")
                 logging.info("-------------------")
+                wait_time = 90
+                delay = 3
+                while wait_time > 0 and self._ec2_public_ip is None:
+                    self._ec2_public_ip = get_public_ip(
+                        ec2_client=self._ec2_client,
+                        instance_id=self._ec2_instance_id
+                    )
+                    wait_time -= delay
+                    time.sleep(delay)
+                    logging.info(f"Waiting {wait_time}... public ip:{self._ec2_public_ip}")
+                if wait_time <=0:
+                    raise Exception("Get public ip wait overtime")
+                
+                self.add_public_ip_to_sshconfig(
+                    public_ip=self._ec2_public_ip
+                )
             except Exception as e:
                 raise Exception(f"Create ec2 instance failed: \n {e}")
 
@@ -314,6 +323,14 @@ class AWSServices(object):
         
         if ec2_state == EC2Status.running.name:
             logging.info("EC2 in running state")
+            self._ec2_public_ip = get_public_ip(
+                ec2_client=self._ec2_client,
+                instance_id=self._ec2_instance_id
+            )
+            logging.info("Update ssh config")
+            self.add_public_ip_to_sshconfig(
+                public_ip=self._ec2_public_ip
+            )
             pass
 
         return 
@@ -541,32 +558,7 @@ class AWSServices(object):
         if action is None:
             raise ValueError("action is None")
 
-        if action == EC2Actions.create.name:
-            logging.info("Create new EC2 instances")
-            try:
-                if self._securitygroup_ids is None:
-                    raise Exception("securitygroup_ids is None")
-                if self.key_pair_name is None:
-                    raise Exception("key_pair_name is None")
-
-                ec2_instance_id = create_instance(     
-                    ImageId=self._ec2_image_id,
-                    InstanceType = self._ec2_instance_type,
-                    key_piar_name = self.key_pair_name,
-                    ec2_client=self._ec2_client,
-                    tags= self._tags,
-                    SecurityGroupIds = self._securitygroup_ids,
-                    volume=self._ec2_volume
-                )
-                logging.info(f"ec2_instance_id: {ec2_instance_id}")
-                self._ec2_instance_id = ec2_instance_id
-                logging.info("-------------------")
-                logging.info(f"Create ec2 bastion completed")
-                logging.info("-------------------")
-
-            except Exception as e:
-                raise Exception(f"Create ec2 instance failed {e}")
-        elif action == EC2Actions.start.name:
+        if action == EC2Actions.start.name:
             if self._ec2_instance_id is not None:
                 res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).start() #for stopping an ec2 instance
                 instance = check_if_ec2_ready_for_ssh(instance_id=self._ec2_instance_id, wait_time=self._ssh_total_wait_time, delay=self._ssh_wait_time_interval, pem_location=self.get_pem_file_full_path_name(),user_name=self._login_user)
@@ -582,6 +574,9 @@ class AWSServices(object):
         elif action == EC2Actions.stop.name:
             if self._ec2_instance_id is not None:
                 res = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).stop() #for stopping an ec2 instance
+                self.delete_public_ip_to_sshconfig(
+                    public_ip=self._ec2_public_ip
+                )
             else:
                 logging.error("ec2_resource id is empty")
             return
@@ -752,3 +747,40 @@ class AWSServices(object):
             local_file=self._created_eks_config_file,
             remote_file=remote_cluster,
         )
+
+
+    def add_public_ip_to_sshconfig(
+        self,
+        public_ip:str,
+    ):
+
+        logging.info("Add public ip to  ssh config")
+        c = read_ssh_config(expanduser("~/.ssh/config"))
+        print("hosts", c.hosts())
+
+        if public_ip is None:
+            raise Exception ("Public is none")
+
+        if self._login_user is None:
+            raise Exception ("login user is none")
+        
+        if self.key_pair_name is None:
+            raise Exception ("keypair name is none")
+
+            
+        c.add(public_ip, 
+            Hostname=public_ip, 
+            User=self._login_user,
+            IdentityFile=f"{self.key_pair_name}.pem"
+        )
+        logging.info(f"add {public_ip} success")
+        c.save()
+    
+    def delete_public_ip_to_sshconfig(self,public_ip:str):
+        logging.info("Delete public ip to ssh config")
+        c = read_ssh_config(expanduser("~/.ssh/config"))
+        print("hosts", c.hosts())
+        c.remove(public_ip)
+        logging.info(f"Remove {public_ip} success")
+        c.save()
+

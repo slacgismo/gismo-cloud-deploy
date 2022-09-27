@@ -73,6 +73,8 @@ def mainmenu(
         print(f"cluster_name: {cluster_name}")
         print(f"nodegroup_name: {nodegroup_name}")
       
+
+        
         aws_services_object = AWSServices(
                 keypair_name = keypair_name,
                 local_pem_path=local_pem_path,
@@ -86,7 +88,10 @@ def mainmenu(
                 origin_project_path=origin_project_path,
             )
 
+        
+
         logging.info("Start prepare ec2 state")
+
     except Exception as e:
         logging.error(f"Initial state failed : {e}")
         action == MenuActions.end_application.name
@@ -95,10 +100,11 @@ def mainmenu(
     logging.info("End initialization state")
     logging.info("===============================")
 
+
+    logging.info("Create resources state")
     try:
         if action == MenuActions.create_cloud_resources_and_start.name:
             logging.info("Create resources")
-
             template_ec2_config_file = menus.get_ec2_template_file()
             template_eks_config_file = menus.get_eks_template_file()
             aws_services_object.create_ec2_from_template_file(
@@ -117,12 +123,24 @@ def mainmenu(
                 cluster_name=cluster_name,
                 nodegroup_name=nodegroup_name
             )
+        else:
+            pass
+    except Exception as e:
+        logging.error("Create resource state failed")
+        logging.error("Delete created resources")
+        action = MenuActions.cleanup_cloud_resources.name
 
+    logging.info("===============================")
+    logging.info("End create resources state")
+    logging.info("===============================")
+
+    logging.info("Start wake up ec2 state")
+    try:
+        if action == MenuActions.create_cloud_resources_and_start.name or \
+            action == MenuActions.resume_from_existing.name or \
+                action == MenuActions.cleanup_cloud_resources:
             
-        elif action == MenuActions.resume_from_existing.name or \
-            action == MenuActions.cleanup_cloud_resources.name:
             saved_ec2_config_file = menus.get_saved_ec2_config_file()
-            print(f"saved_ec2_config_file : {saved_ec2_config_file}")
             aws_services_object.import_from_existing_ec2_config(config_file=saved_ec2_config_file)
             aws_services_object.wake_up_ec2()
     except Exception as e:
@@ -130,7 +148,7 @@ def mainmenu(
         action == MenuActions.end_application.name
 
     logging.info("===============================")
-    logging.info("End prepare ec2 state")
+    logging.info("End wake up ec2 state")
     logging.info("===============================")
 
     logging.info("Start perform command state")
@@ -153,14 +171,15 @@ def mainmenu(
                 aws_services_object.run_ssh_command(ssh_command=run_files_command)
                 # download projet results to origin path
                 aws_services_object.ssh_download_results_to_originl_project_path()
-            is_clean_up_after_completion = menus.get_cleanup_after_completion()
 
+            is_clean_up_after_completion = menus.get_cleanup_after_completion()
+            logging.info(f"is_clean_up_after_completion :{is_clean_up_after_completion}")
             # end of peform command , set action for next state
             if is_clean_up_after_completion is False:
                 action = MenuActions.stop_ec2.name
             else:
-                action == MenuActions.cleanup_cloud_resources.name
-
+                action = MenuActions.cleanup_cloud_resources.name
+            logging.info(f"action:{action}")
         elif action == MenuActions.run_in_local_machine.name:
             logging.info("Run files command in local machine")
             first_n_file = menus.get_number_of_process_files()
@@ -177,11 +196,14 @@ def mainmenu(
             action =  MenuActions.end_application.name
     except Exception as e:
         logging.error(f"Perform command state failed: {e}")
+        logging.error("Stop ec2")
         action = MenuActions.stop_ec2.name
 
     logging.info("===============================")
     logging.info("End perform command state")
     logging.info("===============================")
+
+    
 
     
     logging.info("Start end state")

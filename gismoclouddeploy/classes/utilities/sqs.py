@@ -1,9 +1,6 @@
 from botocore.exceptions import ClientError
 import logging
-import time
 import botocore
-import json
-import re
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -125,54 +122,3 @@ def delete_queue_message(
         return response
 
 
-def clean_user_previous_sqs_message(
-    sqs_url: str,
-    sqs_client: "botocore.client.SQS",
-    wait_time: int,
-    counter: int,
-    delay: int,
-    user_id: str,
-):
-    index = 0
-    while counter:
-        messages = receive_queue_message(
-            queue_url=sqs_url,
-            MaxNumberOfMessages=10,
-            sqs_client=sqs_client,
-            wait_time=wait_time,
-        )
-        # print(messages)
-        if "Messages" in messages:
-            for msg in messages["Messages"]:
-                msg_body = msg["Body"]
-                
-                MessageAttributes = msg['MessageAttributes']
-                receive_message_user_id = MessageAttributes['user_id']['StringValue']
-                receipt_handle = msg["ReceiptHandle"]
-                if receive_message_user_id == user_id:
-                    logger.info(f"Delete {index} message")
-                    index += 1
-                    delete_queue_message(sqs_url, receipt_handle, sqs_client)
-
-        else:
-            logger.info("Clean previous message completed")
-            return
-
-        counter -= 1
-        time.sleep(delay)
-
-
-def list_queues(sqs_resource, queue_prefix ):
-    """
-    Creates an iterable of all Queue resources in the collection.
-    """
-    try:
-        sqs_queues = []
-        for queue in sqs_resource.queues.filter(QueueNamePrefix=queue_prefix):
-        # for queue in sqs_resource.queues.all():
-            sqs_queues.append(queue)
-    except ClientError:
-        logger.exception('Could not list queues.')
-        raise
-    else:
-        return sqs_queues

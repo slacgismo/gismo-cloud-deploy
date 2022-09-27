@@ -1,15 +1,9 @@
-from email.policy import default
-from genericpath import exists
-import json
-from re import L
-import time
-from kubernetes import client, config
 
+from kubernetes import client, config
 from typing import Tuple
 import logging
 import yaml
 from typing import List
-from datetime import datetime
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -285,21 +279,6 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
 
     return None
 
-# def log_k8s_pod_name_from_namespace(pod_name_prefix:str = None, namespace:str = "default") -> str:
-#     config.load_kube_config()
-#     v1 = client.CoreV1Api()
-#     ret = v1.list_namespaced_pod(namespace)
-#     pods = []
-#     for i in ret.items:    
-#         status = i.status.conditions[-1].status
-#         podname = i.metadata.name.split("-")[0]
-#         if podname == pod_name_prefix:
-#             # status = i.status.conditions
-#             name = i.metadata.name
-    
-    
-
-
 
 
 def k8s_create_namespace(namespace:str = None):
@@ -312,13 +291,7 @@ def k8s_create_namespace(namespace:str = None):
         v1 = client.CoreV1Api()
         v1.create_namespace(ns)
         logging.info(f'Created namespace "{namespace}"')
-        logging.debug((json.dumps(ns.metadata, default=str)))
-
-    
     return 
-
-
-
 
 def k8s_delete_namespace(namespace:str = None):
     if namespace is None:
@@ -349,71 +322,3 @@ def k8s_list_all_namespace():
     
     print(ret)
 
-# def get_k8s_pod_name_list(pod_name: str = None, number_server: int = 1) -> List[dict]:
-#     config.load_kube_config()
-#     v1 = client.CoreV1Api()
-#     ret = v1.list_pod_for_all_namespaces(watch=False)
-#     pods = []
-#     # while counter > 0 :
-    # for i in ret.items:
-    #     status = i.status.conditions[-1].status
-    #     podname = i.metadata.name.split("-")[0]
-    #     if podname == pod_name:
-    #         # status = i.status.conditions
-    #         name = i.metadata.name
-   
-
-    #         # state = i.status.container_statuses[-1].state
-    #         ready = i.status.container_statuses[-1].ready
-    #         if ready is True:
-    #             # if it's ready
-    #             started_at = i.status.container_statuses[-1].state.running.started_at
-    #             status = i.status
-    #             # print("==========")
-    #             # print(f"started_at {type(started_at)}")
-    #             timestamp =  started_at.timestamp()
-    #             # print(f"timestamp :{timestamp}")
-    #             # res = re.search('\(([^)]+)', str(started_at)).group(1)
-    #             # year, month, day, hours, minutes, sec, tz = res.split(', ')
-    #             # dattime_string = f"{year}/{month}/{day} {hours}:{minutes}:{sec}"
-    #             # print(dattime_string)
-    #             # timestamp = time.mktime(datetime.datetime.strptime(dattime_string, "%Y/%m/%d %H:%M:%S").timetuple())
-    #             # print(timestamp)
-    #             pod_info = {"name": name, "timestamp": timestamp}
-    #             pods.append(pod_info)
-    # sort_orders = sorted(pods, key=lambda d: d['timestamp'], reverse=True) 
-
-    # if len(sort_orders) >= number_server :
-    #     _list =  sort_orders[0:number_server]
-    #     res = [ sub['name'] for sub in _list ]
-    #     print(f"----------- get_k8s_pod_name_list :{ res}")
-    #     return res
-#     return sort_orders
-#     # only get the latest server
-#     # if len(pods) > 0:
-#     #     max_date = pods[0]["started_at"]
-#     #     latest_server_pod_name = pods[0]["name"]
-#     #     for pod in pods:
-#     #         if max_date < pod["started_at"]:
-#     #             max_date = pod["started_at"]
-#     #             latest_server_pod_name = pod["name"]
-#     #     return latest_server_pod_name
-
-#     # return None
-
-
-# def get_cluster_name(namespace:str):
-#     clusters_info = []
-#     d1  = {}
-#     config.load_kube_config()
-#     #config.load_incluster_config()
-#     configuration = client.Configuration()
-#     api_instance = client.AppsV1beta2Api(client.ApiClient(configuration))
-#     try:
-#         api_response = api_instance.list_namespaced_stateful_set(namespace)
-#         for cluster in api_response.items:
-#             d1['name']=cluster.metadata.labels['operator.io/cluster']
-#             clusters_info.append(d1.copy())
-#         return clusters_info
-#     except ApiException as e:
-#         return "Exception when calling AppsV1beta2Api->patch_namespaced_stateful_set_status: %s\n" % e

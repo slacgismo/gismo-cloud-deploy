@@ -1,7 +1,3 @@
-
-from distutils import log
-
-
 from terminaltables import AsciiTable
 import fnmatch
 import re
@@ -725,25 +721,6 @@ class GismoCloudDeploy(object):
         self._total_proscee_time_list.append(self._total_proscee_time)
         return 
        
-
-
-    # def handle_long_pulling_sqs(self, event):
-    #     logging.info("handle_long_pulling_sqs")
-        # delay = aws_config_obj.interval_of_check_dynamodb_in_second
-        # acccepted_idle_time = int(worker_config_obj.acccepted_idle_time)
-        # unfinished_tasks_id_set = long_pulling_sqs_multi_server(
-        #     saved_file_dict_local=self._saved_file_list_local,
-        #     delay=self._interval_of_checking_sqs,
-        #     sqs_url=self._sqs_url,
-        #     acccepted_idle_time=self._acccepted_idle_time,
-        #     aws_access_key=self.aws_access_key,
-        #     aws_secret_access_key=self.aws_secret_access_key,
-        #     aws_region=self.aws_region,
-        #     server_list = self._ready_server_list
-        # )
-        # self._initial_process_time = time.time() - self._start_time
-
-    
     
     def handle_clean_services(self, event):
         logging.info("handle_clean_services")
@@ -988,34 +965,6 @@ def create_config_parameters_to_app(
         raise ValueError(f"pase config parametes failed {e}")
     return config_str
 
-
-# def check_file_extension(
-#     files_list:list,
-#     extension:
-# )
-
-# def get_file_path_based_on_env(file_name, env, file_path_local, file_path_cloud, repeat_index, user_id):
-#     """ return full saved file name and path based on env"""
-#     file_path_name = ""
-#     # add repeat_index into filename
-#     # _relative_path, filename = os.path.split(file_name)
-#     # print(_relative_path, filename)
-#     name, extension = file_name.split(".")
-   
-#     new_filename = f"{name}-{repeat_index}.{extension}"
-#     if env == Environments.AWS.name:
-#         file_path_name = file_path_cloud +"/" + user_id + "/" + new_filename
-
-#     else:
-#         # check if directory exist 
-#         base_path = os.getcwd()
-#         local_full_path = f"{base_path}/{file_path_local}"
-#         if not os.path.exists(local_full_path):
-#             logging.info(f"{local_full_path} does not exist. Create {local_full_path}")
-#             os.mkdir(local_full_path)
-#         file_path_name = file_path_local +"/" + new_filename
-        
-#     return file_path_name   
 
 def upload_file_to_s3(
     bucket: str = None,

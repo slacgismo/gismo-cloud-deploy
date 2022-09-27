@@ -267,7 +267,7 @@ def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user
                 logging.info(f"{instance_id} is ready to connect SSH")
                 return True
         wait_time -= delay
-        time.sleep(delay)
+       
         logging.info(f"Wait: {wait_time}...")
 
 
@@ -325,6 +325,7 @@ def get_public_ip(
 
     for reservation in reservations:
         for instance in reservation['Instances']:
+
             return (instance.get("PublicIpAddress"))
 
 

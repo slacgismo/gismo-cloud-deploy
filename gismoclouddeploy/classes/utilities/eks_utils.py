@@ -1,8 +1,5 @@
 import time
-
 from kubernetes import client, config
-
-
 import logging
 from .k8s_utils import read_k8s_yml
 

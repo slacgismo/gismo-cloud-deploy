@@ -94,6 +94,7 @@ class Menu(object):
         self._project_name = None
         self._temp_project_absoult_path = None
         self._origin_project_path = None
+        self._config_history_path = None
 
 
         # ssh command 
@@ -784,6 +785,8 @@ class Menu(object):
 
     def delete_saved_config_folder(self):
         logging.info("Delete saved config folder")
+        if self._config_history_path is None:
+            raise Exception("config history path is None")
         if not os.path.exists(self._config_history_path):
             raise Exception(f"{self._config_history_path} does not exist")
         try:

@@ -1,12 +1,10 @@
 from asyncio.log import logger
-import re
 
 from subprocess import PIPE, run
 
 import subprocess
 import sys
 import threading
-import logging
 
 
 
@@ -87,12 +85,6 @@ def exec_eksctl_update_admin_arn(cluster_name:str, region:str, arn:str) -> str:
         return output
     except Exception as e:
         raise e
-
-def invoke_kubectl_delete_all_daemonset(namespace: str = "default"):
-    command = ["kubectl", "delete", "DaemonSet", "--all","-n",f"{namespace}"]
-
-    res = exec_docker_command(command)
-    return res
 
 def invoke_kubectl_delete_all_po(namespace:str = "default"):
     command = ["kubectl", "delete", "po", "--all", "-n", f"{namespace}"]
@@ -484,20 +476,3 @@ def invoke_docker_system_prune_all():
     output = subprocess.check_output(["bash", "-c", command])
     return output
 
-    # NAMESPACE=
-    # kubectl get namespace $NAMESPACE -o json > $NAMESPACE.json
-    # sed -i -e 's/"kubernetes"//' $NAMESPACE.json
-    # kubectl replace --raw "/api/v1/namespaces/$NAMESPACE/finalize" -f ./$NAMESPACE.json
-
-# deleta all resource in namspace
-# kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all
-
-# def invoker_check_docker_running() -> bool:
-
-#     s = subprocess.check_output('docker ps', shell=True)
-
-#     if s.find('containername') != -1:
-#         print ('docker found!')
-#         return True
-#     else:
-#         return False

@@ -333,7 +333,7 @@ def long_pulling_sqs_multi_server(
         # wait_time -= int(delay)
 
     return uncompleted_task_id_set
-    
+
 def append_receive_data(
     data_dict: dict = None,
     file_name: str = None,
