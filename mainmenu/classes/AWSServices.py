@@ -5,7 +5,6 @@ import readline
 
 from os.path import exists
 import time
-from tkinter import E
 
 from sshconf import read_ssh_config
 from os.path import expanduser
