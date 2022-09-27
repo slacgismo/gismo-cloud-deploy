@@ -125,7 +125,13 @@ The following question is to type your project path.
 ('Enter project folder (Hit `Enter` button to use default path',): /Users/<username>/Development/gismo/gismo-cloud-deploy/examples/sleep path): 
 ```
 
-There are four examples included in this tool. Please check [Examples projects](#example-projects) for more information. For a quick start, you can input `<bas-path>/gismo-cloud-deploy/examples/sleep` project (`<bas-path>` refer to the absolute path of `gismo-cloud-deploy` folder). It run a for loop without doing anything. The custom script file is `entrypoint.py`. You can modify this script with any custom codes inside you like and save the results in a JSON format. But you have to put your code block inside the `entrypoint` function. Please read [project files structures](#project-files-structures) to get more details.
+There are four examples included in this tool. Please check [Examples projects](#example-projects) for more information.
+First, for a quick start, copy the `example/sleep` projects to your desktop. You can input `<bas-path>/desktop/sleep` project (`<bas-path>` refer to the absolute path of `desktop` folder). Then editing the function `entrypoint` in `entrypoint.py`. Change the delay time from `5` to `3`. The application will only run a for-loop in this task for `3` seconds.
+
+Second, open the `config.yaml` file in your project folder. You have to specify the `data_bucket`, `file_pattern` and `process_column_keywords` parameters. Use default `file_pattern:*csv` `data_bucket:"pv.insight.nrel"` and default `process_column_keywords: "^Pow"`, this application will process the file that matches `file_pattern:*csv` in `data_bucket:"pv.insight.nrel"`.  In this case, it runs the `csv` file of a bucket called `pv.insight.nrel` on S3. When this application is running, the application passes the match file name to `entrypoint` function as `curr_process_file` and matched column name as `curr_process_column`. If there is no matched column name, the `curr_process_column` in the entrypoint function is `None`.
+
+ <!-- It run a for loop without doing anything. The custom script file is `entrypoint.py`. You can modify this script with any custom codes inside you like and save the results in a JSON format. But you have to put your code block inside the `entrypoint` function. Please read [project files structures](#project-files-structures) to get more details. -->
+
 
 ##### project name
 
