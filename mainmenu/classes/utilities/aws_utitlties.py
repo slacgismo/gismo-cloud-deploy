@@ -100,7 +100,7 @@ def get_default_vpc_id(ec2_client) -> str:
         raise Exception(err)
 
 def check_keypair_exist(ec2_client, keypair_anme) ->bool:
-    print("0--=-------")
+
     logging.info("Check keypair exist")
     try:
         keypairs = ec2_client.describe_key_pairs(
@@ -113,6 +113,27 @@ def check_keypair_exist(ec2_client, keypair_anme) ->bool:
     except botocore.exceptions.ClientError as err:
         print(f"{keypair_anme} does not exist")
         return False
+
+def download_existing_keypair(ec2_client,keypair_anme, file_location):
+    logging.info("Check keypair exist")
+    try:
+        keypairs = ec2_client.describe_key_pairs(
+          KeyNames=[keypair_anme]
+        )
+        if len(keypairs) == 0 :
+            raise Exception(f"key: {keypair_anme} does not exist")
+        private_key = keypairs["KeyMaterial"]
+        check_if_path_exist_and_create(file_location)
+
+        ## write private key to file with 400 permissions
+        with os.fdopen(os.open(f"{file_location}/{keypair_anme}.pem", os.O_WRONLY | os.O_CREAT, 0o400), "w+") as handle: handle.write(private_key)
+        logging.info(f"Create {keypair_anme} success, file location: {file_location}")
+        return 
+    
+    except botocore.exceptions.ClientError as err:
+        print(f"{keypair_anme} does not exist")
+        return False
+
 
 
 def get_ec2_instance_id_and_keypair_with_tags(ec2_client, tag_key_f,  tag_val_f) -> dict:
@@ -267,7 +288,7 @@ def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user
                 logging.info(f"{instance_id} is ready to connect SSH")
                 return True
         wait_time -= delay
-       
+        time.sleep(delay)
         logging.info(f"Wait: {wait_time}...")
 
 
@@ -347,8 +368,7 @@ def run_command_in_ec2_ssh(
             p2_instance=instance
             break;
     if p2_instance is None:
-        print(f"{instance_id} is not ready")
-        return 
+        raise Exception(f"ssh: {instance_id} is not found")
 
 
     ssh = paramiko.SSHClient()

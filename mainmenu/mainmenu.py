@@ -138,7 +138,7 @@ def mainmenu(
     try:
         if action == MenuActions.create_cloud_resources_and_start.name or \
             action == MenuActions.resume_from_existing.name or \
-                action == MenuActions.cleanup_cloud_resources:
+                action == MenuActions.cleanup_cloud_resources.name:
             
             saved_ec2_config_file = menus.get_saved_ec2_config_file()
             aws_services_object.import_from_existing_ec2_config(config_file=saved_ec2_config_file)
@@ -230,7 +230,7 @@ def mainmenu(
             logging.info("Terminate ec2")
             aws_services_object.handle_ec2_action(action=EC2Actions.terminate.name)
             aws_services_object.handle_ec2_action(action=AWSActions.delete_keypair.name)
-            menus.delete_saved_config_folder()
+            # menus.delete_saved_config_folder()
 
             action = MenuActions.end_application.name
                 # if all resources deletd . delte saved comfig folder

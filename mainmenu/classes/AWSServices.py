@@ -19,6 +19,7 @@ from .utilities.handle_inputs import (
 from .constants.InputDescriptions import InputDescriptions
 from .utilities.convert_yaml import convert_yaml_to_json,write_aws_setting_to_yaml
 from .utilities.aws_utitlties import (
+    download_existing_keypair,
     connect_aws_client,
     check_environment_is_aws,
     connect_aws_resource,
@@ -224,9 +225,19 @@ class AWSServices(object):
                 
                 logging.info(f"keypair:{self.key_pair_name} does not exist create a new keypair in {self.local_pem_path}")
                 create_key_pair(ec2_client=self._ec2_client, keyname=self.key_pair_name, file_location=self.local_pem_path)
+             
             else:
                 logging.info(f"keypair:{self.key_pair_name} exist")
+                logging.info(f"check local keypair pem file exist")
+                if not exists(self.get_pem_file_full_path_name()):
+                    download_existing_keypair(
+                        ec2_client=self._ec2_client,
+                        keypair_anme=self.key_pair_name,
+                        file_location=self.local_pem_path,              
+                    )
+            return 
 
+                
         elif action == AWSActions.delete_keypair.name:
             logging.info("Delete keypair action")
             if not check_keypair_exist(ec2_client=self._ec2_client, keypair_anme=self.key_pair_name):
@@ -578,14 +589,14 @@ class AWSServices(object):
                     public_ip=self._ec2_public_ip
                 )
             else:
-                logging.error("ec2_resource id is empty")
+                logging.error("ec2 instance id is empty")
             return
         elif action == EC2Actions.terminate.name:
             logging.info("Get ec2 terminate")
             if self._ec2_instance_id is not None:
                 res_term  = self._ec2_resource.instances.filter(InstanceIds = [self._ec2_instance_id]).terminate() #for terminate an ec2 insta
             else:
-                logging.error("ec2_resource id is empty")
+                logging.error("ec2 instance id is empty")
             return
 
     def ssh_upload_folder(self, local_project_path, project_name):
@@ -650,6 +661,9 @@ class AWSServices(object):
         self._cluster_name = cluster_name
         self._nodegroup_name = nodegroup_name
         ssh_command_list = {}
+
+        if self._ec2_instance_id is None:
+            raise Exception("instance id is None")
 
         if cluster_name is None or nodegroup_name is None:
             raise Exception(f"cluster_name {cluster_name} or f{nodegroup_name} is None")
