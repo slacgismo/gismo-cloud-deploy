@@ -5,6 +5,7 @@ import readline
 
 from os.path import exists
 import time
+from tkinter import E
 
 from sshconf import read_ssh_config
 from os.path import expanduser
@@ -215,27 +216,30 @@ class AWSServices(object):
                 delete_security_group(ec2_client=self._ec2_client, group_id=sg_id)
 
         elif action == AWSActions.create_keypair.name:
-            logging.info("Create keypair action")
-            if self.key_pair_name is None:
-                raise ValueError("Key pair name is None")
-            if not check_keypair_exist(
-                ec2_client=self._ec2_client, 
-                keypair_anme=self.key_pair_name
-                ):
+            try:
+                logging.info("Create keypair action")
+                if self.key_pair_name is None:
+                    raise ValueError("Key pair name is None")
+                if not check_keypair_exist(
+                    ec2_client=self._ec2_client, 
+                    keypair_anme=self.key_pair_name
+                    ):
+                    
+                    logging.info(f"keypair:{self.key_pair_name} does not exist create a new keypair in {self.local_pem_path}")
+                    create_key_pair(ec2_client=self._ec2_client, keyname=self.key_pair_name, file_location=self.local_pem_path)
                 
-                logging.info(f"keypair:{self.key_pair_name} does not exist create a new keypair in {self.local_pem_path}")
-                create_key_pair(ec2_client=self._ec2_client, keyname=self.key_pair_name, file_location=self.local_pem_path)
-             
-            else:
-                logging.info(f"keypair:{self.key_pair_name} exist")
-       
-                if not exists(self.get_pem_file_full_path_name()):
-                    download_existing_keypair(
-                        ec2_client=self._ec2_client,
-                        keypair_anme=self.key_pair_name,
-                        file_location=self.local_pem_path,              
-                    )
-            return 
+                else:
+                    logging.info(f"keypair:{self.key_pair_name} exist")
+        
+                    if not exists(self.get_pem_file_full_path_name()):
+                        download_existing_keypair(
+                            ec2_client=self._ec2_client,
+                            keypair_anme=self.key_pair_name,
+                            file_location=self.local_pem_path             
+                        )
+                return 
+            except Exception as e:
+                raise Exception(f"Create keypair fialed:{e}")
 
                 
         elif action == AWSActions.delete_keypair.name:
