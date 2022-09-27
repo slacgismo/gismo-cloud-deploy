@@ -115,12 +115,12 @@ def check_keypair_exist(ec2_client, keypair_anme) ->bool:
         return False
 
 def download_existing_keypair(ec2_client,keypair_anme, file_location):
-    logging.info("Check keypair exist")
+    logging.info("Check if keypair exist")
     try:
         keypairs = ec2_client.describe_key_pairs(
           KeyNames=[keypair_anme]
         )
-        if len(keypairs) == 0 :
+        if len(keypairs) == 0 : 
             raise Exception(f"key: {keypair_anme} does not exist")
         private_key = keypairs["KeyMaterial"]
         check_if_path_exist_and_create(file_location)
@@ -131,8 +131,8 @@ def download_existing_keypair(ec2_client,keypair_anme, file_location):
         return 
     
     except botocore.exceptions.ClientError as err:
-        print(f"{keypair_anme} does not exist")
-        return False
+        logging.error(f"{keypair_anme} does not exist")
+        raise Exception(f"Download keypair failed :{err}")
 
 
 

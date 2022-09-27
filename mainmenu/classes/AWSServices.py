@@ -228,7 +228,7 @@ class AWSServices(object):
              
             else:
                 logging.info(f"keypair:{self.key_pair_name} exist")
-                logging.info(f"check local keypair pem file exist")
+       
                 if not exists(self.get_pem_file_full_path_name()):
                     download_existing_keypair(
                         ec2_client=self._ec2_client,
