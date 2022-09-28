@@ -339,112 +339,11 @@ class Menu(object):
 
         #step 5 print out variable and ask for confirmed:
         self.print_variables_and_request_confirmation()
-        # if self._is_confirm_to_process:
-        #     self.generate_config_history_path_and_export_cluster()
+
 
         logging.info("=================")
         logging.info("Initializatin end")
         logging.info("=================")
-        # if action == MenuActions.create_cloud_resources_and_start.name:
-        #     self.handle_input_projet_tags()
-        # # step 4. input questions:
-        # if action != MenuActions.create_cloud_resources_and_start.name:
-        #     self.handle_proecess_files_inputs_questions()
-
-        # if action != MenuActions.create_cloud_resources_and_start.name:
-
-            
-            # generate ec2 variable
-            # generate eks cluster variable
-
-
-        # if action == MenuActions.create_cloud_resources_and_start.name:
-        #     logging.info("Creat from new")
-        # elif self._menus_action == MenuActions.resume_from_existing.name:
-        #     logging.info("Resume from existing")
-        # elif self._menus_action == MenuActions.run_in_local_machine.name:
-        #     logging.info("Run in local")
-        # elif self._menus_action == MenuActions.cleanup_cloud_resources.name:
-        #     logging.info("Run delete cloud resources")
-
-
-
-    #handle mensu action
-    # def handle_prepare_actions(self):
-    #     if self._menus_action is None:
-    #         raise Exception("No menu action selected , somehting wrong")
-
-    #     if self._menus_action == MenuActions.create_cloud_resources_and_start.name:
-    #         logging.info("crete cloud resources and start")
-    #         logging.info("Step 1 , input project folder")
-            # self.generate_ec2_name()
-            # self.generate_eks_cluster_name()
-            # self.generate_keypair_name()
-    #         self.handle_enter_input_project_path()
-    #         logging.info("Step 2 , check file structur corrects")
-    #         self.handle_verify_project_folder()
-    #         logging.info("Step 3 , input questions")
-    #         self.handle_proecess_files_inputs_questions()
-    #         logging.info("Step 4 , generate cluster.yaml from tempaltes")
-    #         self.generate_config_history_path_and_export_eks_config()
-    #         self.handle_input_projet_tags()
-    #         self.import_ec2_variables_from_templates()
-    #         self.print_variables_and_request_confirmation()
-
-
-
-    #     elif self._menus_action == MenuActions.resume_from_existing.name :
-    #         logging.info("resume from existing")
-    #         logging.info("Step 0 , select saved config file")
-    #         self.select_created_cloud_config_files()
-    #         logging.info("Step 1 , input project folder")
-    #         self.handle_enter_input_project_path()
-    #         logging.info("Step 2 , check file structur corrects")
-    #         self.handle_verify_project_folder()
-            # self.import_from_ec2_config()
-     
-            # self.import_from_eks_config()
-
-    #         logging.info("Step 3 , handle ask question")
-    #         self.handle_proecess_files_inputs_questions()
-    #         self.print_variables_and_request_confirmation()
- 
-            
-
-
-    #     elif self._menus_action == MenuActions.cleanup_cloud_resources.name:
-    #         logging.info("clearnup created cloud resources")
-    #         logging.info("Step 0 , select saved config file")
-    #         self.select_created_cloud_config_files()
-    #         logging.info("Step 1 , input project folder")
-    #         self.handle_enter_input_project_path()
-    #         logging.info("Step 2 , check file structur corrects")
-    #         self.handle_verify_project_folder()
-    #         self.import_from_ec2_config()
-    #         self.import_from_eks_config()
-    #         self.print_variables_and_request_confirmation()
-            
-
-    #     elif self._menus_action == MenuActions.run_in_local_machine.name:
-    #         logging.info("run in local machine")
-    #         self.handle_enter_input_project_path()
-    #         logging.info("Step 3 , check file structur corrects")
-    #         logging.info("Step 3 , handle ask question")
-
-    #         self.handle_verify_project_folder()
-    #         self.handle_proecess_files_inputs_questions()
-    #         self.print_variables_and_request_confirmation()
-    #         print(f"self._project_name,:{self._project_name,}")
-    #         # run_process_files(
-    #         #     number=self._process_first_n_files,
-    #         #     project = self._project_name,
-    #         #     scale_nodes= 1,
-    #         #     repeat = 1,
-    #         #     aws_access_key=self.aws_access_key,
-    #         #     aws_secret_access_key=self.aws_secret_access_key,
-    #         #     aws_region=self.aws_region,
-    #         #     default_fileslist = []
-    #         # )
 
 
     def print_variables_and_request_confirmation(self):

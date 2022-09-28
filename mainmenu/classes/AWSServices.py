@@ -19,7 +19,6 @@ from .utilities.handle_inputs import (
 from .constants.InputDescriptions import InputDescriptions
 from .utilities.convert_yaml import convert_yaml_to_json,write_aws_setting_to_yaml
 from .utilities.aws_utitlties import (
-    download_existing_keypair,
     connect_aws_client,
     check_environment_is_aws,
     connect_aws_resource,
@@ -229,13 +228,14 @@ class AWSServices(object):
                 
                 else:
                     logging.info(f"keypair:{self.key_pair_name} exist")
-        
-                    if not exists(self.get_pem_file_full_path_name()):
-                        download_existing_keypair(
-                            ec2_client=self._ec2_client,
-                            keypair_anme=self.key_pair_name,
-                            file_location=self.local_pem_path             
-                        )
+                    pem_file = self.get_pem_file_full_path_name()
+                    if not exists(pem_file):
+                        logging.warning(f"{pem_file} is missing")
+                        logging.warning(f"delete existing {self.key_pair_name}")
+                        self.handle_aws_actions(action=AWSActions.delete_keypair.name)
+
+                        raise Exception("Please re run menu and create a new resources again!!")
+
                 return 
             except Exception as e:
                 raise Exception(f"Create keypair fialed:{e}")
