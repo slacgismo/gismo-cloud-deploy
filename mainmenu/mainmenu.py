@@ -4,14 +4,13 @@ from genericpath import exists
 import sys
 
 # setting path
-sys.path.append('../gismoclouddeploy')
-from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
+
 
 import logging
 
 from .classes.constants.EC2Actions import EC2Actions
 from .classes.constants.MenuActions import MenuActions
-from .classes.Menu import Menu
+from .classes.FiniteStateMachine import FiniteStateMachine
 from .classes.AWSServices import AWSServices
 from .classes.constants.AWSActions import AWSActions
 from .classes.constants.EKSActions import EKSActions
@@ -28,6 +27,57 @@ def mainmenu(
     local_pem_path: str = None,
 ):
     logging.info("Main menu")
+
+    fsm = FiniteStateMachine(
+        saved_config_path_base= saved_config_path_base,
+        ec2_config_templates= ec2_config_templates,
+        eks_config_templates=  eks_config_templates,
+        aws_access_key=aws_access_key,
+        aws_secret_access_key=aws_secret_access_key,
+        aws_region= aws_region,
+        local_pem_path = local_pem_path
+    )
+
+    try:
+        # Initial state , read yaml file and update system variables
+        logging.info(f" ===== State: {fsm.state} =======")
+        fsm.trigger_initial() 
+    except Exception as e:
+        logging.error(f"Initial error :{e}")
+    is_confirm_to_process = fsm.is_confirm_to_process()
+    action = fsm.get_action()
+    if is_confirm_to_process is False:
+        fsm.trigger_end()
+    else:
+        try:
+            if action == MenuActions.create_cloud_resources_and_start.name or \
+                action == MenuActions.resume_from_existing.name:
+                logging.info(f" ===== State: {fsm.state}  =======")
+                # ready state, build , tag and push images
+                fsm.trigger_creation()
+                logging.info(f" ===== State: {fsm.state} =======")
+                # deploy state, deploy k8s , scale eks nodes
+            
+                fsm.trigger_wakeup()
+                logging.info(f" ===== State: {fsm.state}  =======")
+
+                # processing state, send coammd to server, long pulling sqs
+                fsm.trigger_process()
+                logging.info(f" ===== State: {fsm.state} =======")
+            elif action == MenuActions.run_in_local_machine.name:
+                logging.info(f" ===== State: {fsm.state} =======")
+                fsm.trigger_run_local()
+                logging.info(f" ===== State: {fsm.state} =======")
+
+        except Exception as e:
+            # something wrong break while loop and clean services. 
+            logging.error(f"Somehting wrong : {e}")
+        try:
+            # trigger repetition, increate repeat index and update file index
+            fsm.trigger_end()
+        except Exception as e:
+            logging.error(f"End state error : {e}")
+    return 
 
     # check if file exist
     if not exists(saved_config_path_base):

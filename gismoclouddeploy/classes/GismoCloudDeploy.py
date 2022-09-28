@@ -261,7 +261,7 @@ class GismoCloudDeploy(object):
             #     os.makedirs(self._saved_path_local)
             logging.info(f"Remove previous files in {self._saved_path_local} folder")
       
-            absolute_saved_file_path = self._base_path +f"/{self.project}/"+self._saved_path_local
+            absolute_saved_file_path = self._base_path +"/"+ self._saved_path_local
             if not exists(absolute_saved_file_path):
                 logging.info(f"Make dir {absolute_saved_file_path} ")
                 os.makedirs(absolute_saved_file_path)

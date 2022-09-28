@@ -1,6 +1,8 @@
 import inquirer
 from asyncio import streams
 
+from ..constants.InputDescriptions import InputDescriptions
+from ..constants.MenuActions import MenuActions
 import logging
 from .aws_utitlties import connect_aws_client,check_bucket_exists_on_s3
 import os
@@ -141,3 +143,50 @@ def select_is_breaking_ssh():
 
     is_breaking_ssh = inst_answer["is_breaking"]
     return convert_yes_no_to_bool(input=is_breaking_ssh)
+
+
+def select_acions_menu()-> str:
+    '''
+    Select an action from a menu
+    '''
+    logging.info("Main menus")
+    menus_selection =[]
+    
+    inst_question = [
+        inquirer.List('action',
+                        message=InputDescriptions.select_an_action.value,
+                        choices=[
+                            MenuActions.create_cloud_resources_and_start.name,
+                            MenuActions.resume_from_existing.name, 
+                            MenuActions.cleanup_cloud_resources.name, 
+                            MenuActions.run_in_local_machine.name],
+                    ),
+    ]
+    inst_answer = inquirer.prompt(inst_question)
+    action = inst_answer["action"]
+    
+    logging.info(f"Set action : {action}")
+    return action
+
+def  enter_the_working_project_path(default_project:str ) -> str:
+        '''
+        input project path
+        '''
+
+        origin_project_path = handle_input_project_path_question(
+            input_question=InputDescriptions.input_project_folder_questions.value,
+            default_answer=default_project
+        )
+        return origin_project_path
+        self._project_name = "temp/"+ basename(self._origin_project_path)
+        self._temp_project_absoult_path = self._base_path + f"/{self._project_name}"
+
+        logging.info(f"Copy {self._origin_project_path} to {self._temp_project_absoult_path}")
+
+        # if tem project temp does not exist create temp project
+        if not os.path.exists(self._temp_project_absoult_path):
+            logging.info(f"Create {self._temp_project_absoult_path}")
+            os.makedirs(self._temp_project_absoult_path)
+        # 3.8+ only!
+        shutil.copytree(self._origin_project_path, self._temp_project_absoult_path, dirs_exist_ok=True) 
+        return 
