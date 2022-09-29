@@ -46,8 +46,9 @@ def mainmenu(
         fsm.trigger_initial() 
     except Exception as e:
         logging.error(f"Initial error :{e}")
-        action = fsm.get_action()
-        platform = fsm.get_platform()
+        
+    action = fsm.get_action()
+    platform = fsm.get_platform()
 
     logging.info(f" ===== State: {fsm.state}  =======")
 

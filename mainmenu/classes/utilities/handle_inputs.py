@@ -326,3 +326,7 @@ def get_subfolder(parent_folder) -> list:
 def remove_partent_path_from_absolute_path(parent_path, absolut_path) -> str:
     relative_path = os.path.relpath(absolut_path, parent_path)
     return relative_path
+
+def handle_input_ssh_custom_command():
+    custom_command = input(f"Please type your command: ")
+    return custom_command
