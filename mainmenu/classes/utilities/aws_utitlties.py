@@ -129,6 +129,7 @@ def get_ec2_instance_id_and_keypair_with_tags(ec2_client, tag_key_f,  tag_val_f)
 
         print("---------------")
         Reservations = response['Reservations']
+        print(f"Reservations :{Reservations}")
         # print(response['Reservations'])
         if len(Reservations)> 0:
             if 'Instances' in Reservations[0] and len(Reservations[0]['Instances']) > 0 :

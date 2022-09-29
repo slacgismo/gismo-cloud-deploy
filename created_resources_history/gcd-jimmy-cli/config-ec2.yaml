@@ -1,5 +1,5 @@
 ec2_image_id: ami-0568773882d492fc8
-ec2_instance_id: i-0175b0513c008daf9
+ec2_instance_id: i-0a196471e425d433b
 ec2_instance_type: t2.large
 ec2_volume: '20'
 key_pair_name: gcd-jimmy-cli

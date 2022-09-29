@@ -182,12 +182,28 @@ class AWSServices(object):
         # step 4 . create instance
         # check if ec2 name already exist
         
-        is_ec2_existing = check_if_ec2_with_name_exist(
-            ec2_resource=self._ec2_resource,
-            ec2_name=self.system_id
+        # is_ec2_existing = check_if_ec2_with_name_exist(
+        #     ec2_resource=self._ec2_resource,
+        #     ec2_name=self.system_id
+        # )
+        ec2_info = get_ec2_instance_id_and_keypair_with_tags(
+            ec2_client=self._ec2_client,
+            tag_key_f="Name",
+            tag_val_f=self.system_id
         )
-        if is_ec2_existing is True:
-            raise Exception(f"EC2 {self.system_id} exists. This application limits one account to create one instacne for security purpoe\n. Please use resume from existing or delete it and create a new one.")
+
+        
+        if ec2_info is not None:
+            InstanceId=ec2_info['InstanceId']
+            KeyName=ec2_info['KeyName']
+            status=ec2_info['State']['Name']
+            if status != EC2Status.terminated.name:
+                logging.error(f"EC2 {InstanceId} with name:{KeyName} exists, and i's not at terminated state. current status: {status}")
+                logging.error(f"This application limits creating one ec2 instance per account. If you are running this application in multiple computers. \n You need to wait it finished. Or you can login into you AWS console and create the AWS resouces manully.")
+                raise Exception("Create ec2 failed. Duplicate ec2 instances exist")
+            else:
+                logging.warning(f"EC2 {InstanceId} with name:{KeyName} found. It's terminated")
+
 
         self.handle_aws_actions(action=AWSActions.create_ec2_instance.name)
 
@@ -245,11 +261,9 @@ class AWSServices(object):
                     logging.info(f"keypair:{self._keypair_name} exist")
                     pem_file = get_pem_file_full_path_name(self.local_pem_path,self._keypair_name)
                     if not exists(pem_file):
-                        logging.warning(f"{pem_file} is missing")
-                        logging.warning(f"delete existing {self._keypair_name}")
-                        self.handle_aws_actions(action=AWSActions.delete_keypair.name)
-
-                        raise Exception("Please re run menu and create a new resources again!!")
+                        logging.warning(f"Find key pair on AWS but local {pem_file} is missiong")
+                        logging.warning("You can use clean resource to delete keypari and regenerate a new one")
+                        raise Exception("Please clean previous resources and run menu again !!")
 
                 return 
             except Exception as e:

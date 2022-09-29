@@ -399,7 +399,7 @@ class FiniteStateMachine(object):
     # Process state
     def handle_process(self, event):
         logging.info("handle_process")
-        return 
+
         if self._platform == Platform.AWS.name:
             logging.info("Run process on AWS")
      
