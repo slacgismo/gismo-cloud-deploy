@@ -6,7 +6,7 @@ from os.path import expanduser
 
 def add_public_ip_to_sshconfig(
         public_ip:str,
-        hostname:str,
+        host:str,
         login_user:str,
         key_pair_name:str
     ):
@@ -23,17 +23,17 @@ def add_public_ip_to_sshconfig(
         
         if key_pair_name is None:
             raise Exception ("keypair name is none")
-        for host in  c.hosts():
-            if host == hostname:
-                logging.info(f"{hostname} exist in .ssh/config")
-                c.set(public_ip, 
-                    hostname=hostname, 
+        for _host in  c.hosts():
+            if _host == host:
+                logging.info(f"{host} exist in .ssh/config")
+                c.set(host, 
+                    hostname=public_ip, 
                     User=login_user,
                     IdentityFile=f"{key_pair_name}.pem"
                 )
                 return
-        c.add(public_ip, 
-            hostname=hostname, 
+        c.add(host, 
+            hostname=public_ip, 
             User=login_user,
             IdentityFile=f"{key_pair_name}.pem"
         )

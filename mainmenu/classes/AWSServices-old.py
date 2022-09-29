@@ -303,18 +303,7 @@ class AWSServices(object):
             logging.info("Check ec2 exist !!!")
 
 
-            
-
-    # def get_ec2_status(self):
-    #     if self._ec2_instance_id is None:
-    #         raise Exception("EC2 id does not exist")
-    #     self._ec2_status = get_ec2_state_from_id(
-    #         ec2_client=self._ec2_client,
-    #         id=self._ec2_instance_id
-    #     )
-
-    #     return self._ec2_status
-
+        
 
 
     def wake_up_ec2(self, 

@@ -61,6 +61,7 @@ from .utilities.aws_utitlties import (
 
 
 class FiniteStateMachine(object):
+    """Class for implemeting state machine to run automation of gismoclouddeploy on different platform."""
     states=[
             'start',
             'init', 
@@ -197,39 +198,42 @@ class FiniteStateMachine(object):
                 try:
                     self._ec2_config_dict = import_and_verify_ec2_config(ec2_config_file=self.ec2_config_templates)
                     self._eks_config_dict = import_and_verify_eks_config(saved_eks_config_file = self.eks_config_templates)
+                    logging.info("==============")
                     # generate parameters and replace template dict
                     # generate ec2 and eks cluster name 
-                    if self._user_id is None or self._start_time is None:
-                        raise Exception("user id or start time is None")
+                    self._system_id =  self._generate_system_id()
+                    cluster_name = self._system_id
+                    keypair_name = self._system_id
+                    if self._system_id is None or self._start_time is None:
+                        raise Exception("system id or start time is None")
 
                     project_in_tags = self._input_answers['project_in_tags']
 
-                    self._system_id =  self._generate_system_id()
-
-
-
-                    cluster_name = self._system_id
-                    keypair_name = self._system_id
+                
+           
 
                     # replace ec2 config 
-                    self._ec2_config_dict['key_pair_name'] = keypair_name
-                    ec2_project_tags = {"Key":"project", "Value": project_in_tags}
-                    ec2_name_tags = {"Key":"Name", "Value": self._system_id}
-                    # append tags
-                    self._ec2_config_dict['tags'].append(ec2_project_tags)
-                    self._ec2_config_dict['tags'].append(ec2_name_tags)
+                    try:
+                        self._ec2_config_dict['key_pair_name'] = keypair_name
+                        ec2_project_tags = {"Key":"project", "Value": project_in_tags}
+                        ec2_name_tags = {"Key":"Name", "Value": self._system_id}
+                        # append tags
+                        self._ec2_config_dict['tags'].append(ec2_project_tags)
+                        self._ec2_config_dict['tags'].append(ec2_name_tags)
 
-                    
-                    # replace eks config
-                    self._eks_config_dict['metadata']['name'] = cluster_name
-                    self._eks_config_dict['metadata']['region'] = self.aws_region
-                    self._eks_config_dict['metadata']['tags']['project'] = project_in_tags
-                    self._eks_config_dict['nodeGroups'][0]['tags']['project'] = project_in_tags
-                    logging.info("Generate ec2, eks parameters from templates success")
-                    print(self._eks_config_dict)
+                        
+                        # replace eks config
+                        self._eks_config_dict['metadata']['name'] = cluster_name
+                        self._eks_config_dict['metadata']['region'] = self.aws_region
+                        self._eks_config_dict['metadata']['tags']['project'] = project_in_tags
+                        self._eks_config_dict['nodeGroups'][0]['tags']['project'] = project_in_tags
+                        logging.info("Generate ec2, eks parameters from templates success")
+                    except Exception as e:
+                        raise Exception(f"generate ec2 eks parameters failed:{e}")
+                
 
                 except Exception as e:
-                    raise Exception("")
+                    raise Exception(f"create cloud resources init failed:{e}")
 
 
             else:
@@ -252,9 +256,8 @@ class FiniteStateMachine(object):
                     self._eks_config_dict = import_and_verify_eks_config(saved_eks_config_file = eks_config_file)
                 except Exception as e:
                     raise Exception("A EC2 file exists but a eks file does not exists")
-
-
-        
+   
+        return 
 
     
     
@@ -299,21 +302,21 @@ class FiniteStateMachine(object):
         # steo 3 init services based on system id and paltform
         if self._platform == Platform.AWS.name:
             temp_project_absoult_path = get_absolute_paht_from_project_name(project_name=self._project_name, base_path=self._base_path)
-            logging.info("Init aws services")
+            logging.info("-----------------------------------------")
+            logging.info(f"Init aws services {self._ec2_config_dict}")
+            
             try:
                 self._aws_services = AWSServices(
                         local_pem_path=self.local_pem_path,
                         aws_access_key=self.aws_access_key,
                         aws_secret_access_key=self.aws_secret_access_key,
                         aws_region= self.aws_region,
-                        saved_config_path_base = self.saved_config_path_base,
                         local_temp_project_path = temp_project_absoult_path,
                         project_name = self._project_name,
                         origin_project_path=self._origin_project_path,
                         system_id=self._system_id,
                         ec2_config_dict=self._ec2_config_dict,
                         eks_config_dict=self._eks_config_dict
-
                     )
             except Exception as e:
                 raise Exception(f"Init aws service failed:{e}")
@@ -327,9 +330,9 @@ class FiniteStateMachine(object):
         if self._platform == Platform.AWS.name:
             if self._action == MenuActions.create_cloud_resources_and_start.name:
                 logging.info("Start to create cloud resource")
-                self._aws_services.create_ec2_from_template_file()
-                export_ec2_file = self.saved_config_path_base + f"/{self._system_id}/config-ec2.yaml"
                 try:
+                    self._aws_services.create_ec2_from_template_file()
+                    export_ec2_file = self.saved_config_path_base + f"/{self._system_id}/config-ec2.yaml"
                     self._aws_services.export_ec2_params_to_file(
                         export_file=export_ec2_file
                     )
@@ -363,6 +366,8 @@ class FiniteStateMachine(object):
         logging.info("Check cloud resources")
         # check keypair 
         try:
+            print("----------------fdsd")
+            print(f"ec2_config_dict :{self._aws_services.ec2_config_dict}")
             self._aws_services.handle_aws_actions(action=AWSActions.create_keypair.name)
         except Exception as e:
             raise Exception(f"check keypair error:{e}")
@@ -394,6 +399,7 @@ class FiniteStateMachine(object):
     # Process state
     def handle_process(self, event):
         logging.info("handle_process")
+        return 
         if self._platform == Platform.AWS.name:
             logging.info("Run process on AWS")
      
@@ -414,18 +420,7 @@ class FiniteStateMachine(object):
                     cluster_name = cluster_name
                 )
                 # execute run file command 
-                ec2_config_file = self.saved_config_path_base +f"/{self._system_id}/config-ec2.yaml"
-                if not exists(ec2_config_file):
-                    raise Exception(f"{ec2_config_file} does not exist")
-                ec2_dict = convert_yaml_to_json(yaml_file=ec2_config_file)
-                ec2_instance_id = ec2_dict['ec2_instance_id']
-                login_user = ec2_dict['login_user']
-                key_pair_name = ec2_dict['key_pair_name']
-                if ec2_instance_id is None:
-                    raise Exception("ec2 instance id is None")
                 self._aws_services.run_ssh_command(
-                    login_user=login_user,
-                    ec2_instance_id=ec2_instance_id,
                     ssh_command=run_files_command
                 )
             else:
@@ -454,7 +449,7 @@ class FiniteStateMachine(object):
     
     # End state
     def handle_cleanup_cloud_resources(self, event):
-        logging.info("handle_cleanup_cloud_resources")
+        logging.info("start end state")
         if self._platform == Platform.LOCAL.name:
             return
         # step 1, is clean up cloud resources
@@ -494,11 +489,17 @@ class FiniteStateMachine(object):
                 logging.warning("Delete security group not implement")
 
             else:
-                logging.info("Stop ec2")
-                self._aws_services.handle_ec2_action(
-                    action=EC2Actions.stop.name,
-            )
-            logging.info("Stop ec2 success")
+                try:
+                    logging.info("Stop ec2")
+                    self._aws_services.handle_ec2_action(
+                        action=EC2Actions.stop.name,
+                    )
+                    logging.info("Stop ec2 success")
+                except Exception as e:
+                    raise Exception(f"Stop ec2 failed:{e}")
+        logging.info("End of stop or clean cloud resources")
+
+        return 
 
     def handle_completion(self, event):
         logging.info("handle remove temp project path")
@@ -516,7 +517,7 @@ class FiniteStateMachine(object):
         table = AsciiTable(complete_array)
         print(table.table)
     # ============== 
-    # end state function 
+    # end states methods 
     # ============== 
 
 

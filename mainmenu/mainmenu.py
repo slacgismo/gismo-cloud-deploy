@@ -42,15 +42,18 @@ def mainmenu(
 
     try:
         # Initial state , read yaml file and update system variables
-        logging.info(f" ===== State: {fsm.state} =======")
+        logging.info(f" ===== Menu State: {fsm.state} =======")
         fsm.trigger_initial() 
+        action = fsm.get_action()
+        platform = fsm.get_platform()
+        print(f"action :{action} platform:{platform}")
+        logging.info(f" ===== Menu State: {fsm.state} =======")
     except Exception as e:
-        logging.error(f"Initial error :{e}")
-        
-    action = fsm.get_action()
-    platform = fsm.get_platform()
+        fsm.trigger_end() 
+        logging.error(f"Initial state error :{e}")
 
-    logging.info(f" ===== State: {fsm.state}  =======")
+ 
+    logging.info(f" ===== Menu State: {fsm.state}  =======")
 
     if platform == Platform.LOCAL.name:
         try:
@@ -60,15 +63,16 @@ def mainmenu(
     else:
         try:
             fsm.trigger_ready()
-            logging.info(f" ===== State: {fsm.state}  =======")
+            logging.info(f" ===== Menu State: {fsm.state}  =======")
             fsm.trigger_process()
-            logging.info(f" ===== State: {fsm.state}  =======")
+            logging.info(f" ===== Menu State: {fsm.state}  =======")
         except Exception as e:
             raise Exception(f"AWS platform error :{e}")
     
 
     try:
         fsm.trigger_end()
+        logging.info(f" ===== Menu State: {fsm.state}  =======")
     except Exception as e:
         logging.error("End state error")
     return 

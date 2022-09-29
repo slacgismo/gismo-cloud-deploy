@@ -56,6 +56,17 @@ coloredlogs.install()
 
 
 class GismoCloudDeploy(object):
+    """
+    Class of GismoCloudDeploy services.
+    It's a state machines that performs following steps. 
+    1. build docker images
+    2. push to AWS ECR , if on AWS platform
+    3. generate instances
+    5. deploy Flask services through Kubernetes 
+    6. separate process files into small group. 
+
+    
+    """
     states=[
         'system_stop', 
         'system_initial',

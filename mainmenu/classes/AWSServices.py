@@ -54,14 +54,15 @@ from .utilities.aws_utitlties import (
     ssh_upload_folder_to_ec2,
     upload_file_to_sc2,
     ssh_download_folder_from_ec2,
-    get_public_ip_and_update_sshconfig
+    get_public_ip_and_update_sshconfig,
+    check_if_ec2_with_name_exist
 )
 
 from .constants.AWSActions import AWSActions
 from .constants.EC2Status import EC2Status
 from .constants.EKSActions import EKSActions
 class AWSServices(object):
-
+    """Class of controlling AWS services based on boto3 """
     def __init__(
             self, 
             local_pem_path:str = None,
@@ -126,7 +127,18 @@ class AWSServices(object):
             secret=self.aws_secret_access_key,
             region=self.aws_region,
         )
-    
+        try:
+            self.impor_ec2_parameters_from_dict()
+        except Exception as e:
+            raise Exception(f"Import ec2 parameter failed: {e}")
+        try:
+            self.impor_eks_parameters_from_dict()
+        except Exception as e:
+            raise Exception(f"Import ec2 parameter failed: {e}")
+
+
+    def get_security_group_ids(self):
+        return self._securitygroup_ids
     def impor_ec2_parameters_from_dict(self):
         ec2_config_dict = self.ec2_config_dict
         if self.ec2_config_dict is None:
@@ -157,17 +169,10 @@ class AWSServices(object):
 
 
 
-    def create_ec2_from_template_file(self):
-        try:
-            self.impor_ec2_parameters_from_dict()
-        except Exception as e:
-            raise Exception(f"Import ec2 parameter failed: {e}")
-        try:
-            self.impor_eks_parameters_from_dict()
-        except Exception as e:
-            raise Exception(f"Import ec2 parameter failed: {e}")
-        
+    def create_ec2_from_template_file(self):        
         # step 1 , check keypair
+    
+
         self.handle_aws_actions(action=AWSActions.create_keypair.name)
         # step 2 . get default vpc id to create security group
         self.handle_aws_actions(action=AWSActions.get_default_vpc_id.name)
@@ -175,13 +180,21 @@ class AWSServices(object):
         self.handle_aws_actions(action=AWSActions.create_securitygroup.name)
         securitygroup_ids = self.get_security_group_ids()
         # step 4 . create instance
+        # check if ec2 name already exist
+        
+        is_ec2_existing = check_if_ec2_with_name_exist(
+            ec2_resource=self._ec2_resource,
+            ec2_name=self.system_id
+        )
+        if is_ec2_existing is True:
+            raise Exception(f"EC2 {self.system_id} exists. This application limits one account to create one instacne for security purpoe\n. Please use resume from existing or delete it and create a new one.")
+
         self.handle_aws_actions(action=AWSActions.create_ec2_instance.name)
 
-
+        
 
     def handle_aws_actions(self, action:AWSActions):
-        # if self._aws_action == AWSActions.get_default_vpc_id.name():
-        #     logging.info("Get default VPC id")
+
         if action == AWSActions.create_securitygroup.name:
             logging.info("Create security group action")
             if self._default_vpc_id is None:
@@ -289,25 +302,7 @@ class AWSServices(object):
                     login_user=self._login_user,
                     keypair_name=self._keypair_name
                 )
-                # wait_time = 90
-                # delay = 3
-                # while wait_time > 0 and self._ec2_public_ip is None:
-                #     self._ec2_public_ip = get_public_ip(
-                #         ec2_client=self._ec2_client,
-                #         instance_id=self._ec2_instance_id
-                #     )
-                #     wait_time -= delay
-                #     time.sleep(delay)
-                #     logging.info(f"Waiting {wait_time}... public ip:{self._ec2_public_ip}")
-                # if wait_time <=0:
-                #     raise Exception("Get public ip wait overtime")
-                
-                # add_public_ip_to_sshconfig(
-                #     public_ip=self._ec2_public_ip,
-                #     hostname=self.system_id,
-                #     login_user=self._login_user,
-                #     key_pair_name=self._keypair_name
-                # )
+ 
             except Exception as e:
                 raise Exception(f"Create ec2 instance failed: \n {e}")
 
@@ -386,7 +381,7 @@ class AWSServices(object):
             instance_id=self._ec2_instance_id,
             command=command,
             pem_location=pem_file,
-            ec2_client=self._ec2_client
+            ec2_resource=self._ec2_resource
         )
 
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy"
@@ -415,7 +410,7 @@ class AWSServices(object):
             user_name= self._login_user,
             instance_id= self._ec2_instance_id,
             pem_location=pem_file,
-            ec2_client=self._ec2_client,
+            ec2_resource=self._ec2_resource,
             command=ssh_command
         )
     
@@ -627,7 +622,7 @@ class AWSServices(object):
             user_name= self._login_user,
             instance_id= self._ec2_instance_id,
             pem_location=pem_file,
-            ec2_client=self._ec2_client,
+            ec2_resource=self._ec2_resource,
             command=full_ssh_command
         )
 
@@ -649,10 +644,15 @@ class AWSServices(object):
         action:str,
         ):
         if action is None:
-            raise ValueError("action is None")
-        ec2_instance_id = self._ec2_instance_id,
+            raise Exception("action is None")
+        ec2_instance_id = self._ec2_instance_id
         login_user = self._login_user
         pem_file = get_pem_file_full_path_name(self.local_pem_path,self._keypair_name)
+        if login_user is None:
+            raise Exception("login user is None")
+        if ec2_instance_id is None:  
+            raise Exception("ec2 instance id is None")
+
         if action == EC2Actions.start.name:
             if ec2_instance_id is not None:
                 res = self._ec2_resource.instances.filter(InstanceIds = [ec2_instance_id]).start() #for stopping an ec2 instance
@@ -666,16 +666,16 @@ class AWSServices(object):
                 logging.info("---------------------------------")
                 logging.info("Ec2 start")
                 
-        elif action == EC2Actions.stop.name:
-            if ec2_instance_id is not None:   
+        elif action == EC2Actions.stop.name:       
+            try:
                 res = self._ec2_resource.instances.filter(InstanceIds = [ec2_instance_id]).stop() #for stopping an ec2 instance
-            else:
-                logging.error("ec2 instance id is empty")
-            return
+            except Exception as e:
+                raise Exception(f"Stop ec2 failed:{e}")
         elif action == EC2Actions.terminate.name:
             logging.info("Get ec2 terminate")
-            if ec2_instance_id is not None:
+            try:
                 res_term  = self._ec2_resource.instances.filter(InstanceIds = [ec2_instance_id]).terminate() #for terminate an ec2 insta
-            else:
-                logging.error("ec2 instance id is empty")
-            return
+            except Exception as e:
+                raise Exception(f"Terminate ec2 failed:{e}")
+        return
+

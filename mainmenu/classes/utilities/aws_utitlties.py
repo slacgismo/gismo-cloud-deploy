@@ -707,7 +707,23 @@ def get_public_ip_and_update_sshconfig(
     
     add_public_ip_to_sshconfig(
         public_ip=ec2_public_ip,
-        hostname=system_id,
+        host=system_id,
         login_user=login_user,
         key_pair_name=keypair_name
     )
+
+def check_if_ec2_with_name_exist(
+    ec2_resource = None,
+    ec2_name:str = None
+):  
+    try:
+        for instance in ec2_resource.instances.all():
+            ec2tags = instance.tags
+            for tag in ec2tags:
+                if tag['Key'] == "Name":
+                    name = tag['Value']
+                    if name == ec2_name:
+                        return True
+    except Exception as e:
+        raise Exception (f"find ec2 name in tags failed:{e}")
+    return False
