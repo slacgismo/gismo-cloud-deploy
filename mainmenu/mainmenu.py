@@ -8,6 +8,8 @@ import sys
 
 import logging
 
+from mainmenu.classes.constants.Platform import Platform
+
 from .classes.constants.EC2Actions import EC2Actions
 from .classes.constants.MenuActions import MenuActions
 from .classes.FiniteStateMachine import FiniteStateMachine
@@ -44,39 +46,59 @@ def mainmenu(
         fsm.trigger_initial() 
     except Exception as e:
         logging.error(f"Initial error :{e}")
-    is_confirm_to_process = fsm.is_confirm_to_process()
-    action = fsm.get_action()
-    if is_confirm_to_process is False:
-        fsm.trigger_end()
+        action = fsm.get_action()
+        platform = fsm.get_platform()
+
+    logging.info(f" ===== State: {fsm.state}  =======")
+
+    if platform == Platform.LOCAL.name:
+        try:
+            fsm.trigger_run_local()
+        except Exception as e:
+            raise Exception(f"Run command in local failed: {e}")
     else:
         try:
-            if action == MenuActions.create_cloud_resources_and_start.name or \
-                action == MenuActions.resume_from_existing.name:
-                logging.info(f" ===== State: {fsm.state}  =======")
-                # ready state, build , tag and push images
-                fsm.trigger_creation()
-                logging.info(f" ===== State: {fsm.state} =======")
-                # deploy state, deploy k8s , scale eks nodes
-            
-                fsm.trigger_wakeup()
-                logging.info(f" ===== State: {fsm.state}  =======")
-
-                # processing state, send coammd to server, long pulling sqs
-                fsm.trigger_process()
-                logging.info(f" ===== State: {fsm.state} =======")
-            elif action == MenuActions.run_in_local_machine.name:
-                logging.info(f" ===== State: {fsm.state} =======")
-                fsm.trigger_run_local()
-                logging.info(f" ===== State: {fsm.state} =======")
-
+            fsm.trigger_ready()
+            logging.info(f" ===== State: {fsm.state}  =======")
+            fsm.trigger_process()
+            logging.info(f" ===== State: {fsm.state}  =======")
         except Exception as e:
-            # something wrong break while loop and clean services. 
-            logging.error(f"Somehting wrong : {e}")
-        try:
-            # trigger repetition, increate repeat index and update file index
-            fsm.trigger_end()
-        except Exception as e:
-            logging.error(f"End state error : {e}")
+            raise Exception(f"AWS platform error :{e}")
+    
+
+    try:
+        fsm.trigger_end()
+    except Exception as e:
+        logging.error("End state error")
+    return 
+    try:
+        if action == MenuActions.create_cloud_resources_and_start.name or \
+            action == MenuActions.resume_from_existing.name:
+            logging.info(f" ===== State: {fsm.state}  =======")
+            # ready state, build , tag and push images
+            fsm.trigger_creation()
+            logging.info(f" ===== State: {fsm.state} =======")
+            # deploy state, deploy k8s , scale eks nodes
+        
+            fsm.trigger_wakeup()
+            logging.info(f" ===== State: {fsm.state}  =======")
+
+            # processing state, send coammd to server, long pulling sqs
+            fsm.trigger_process()
+            logging.info(f" ===== State: {fsm.state} =======")
+        elif action == MenuActions.run_in_local_machine.name:
+            logging.info(f" ===== State: {fsm.state} =======")
+            fsm.trigger_run_local()
+            logging.info(f" ===== State: {fsm.state} =======")
+
+    except Exception as e:
+        # something wrong break while loop and clean services. 
+        logging.error(f"Somehting wrong : {e}")
+    try:
+        # trigger repetition, increate repeat index and update file index
+        fsm.trigger_end()
+    except Exception as e:
+        logging.error(f"End state error : {e}")
     return 
 
     # check if file exist

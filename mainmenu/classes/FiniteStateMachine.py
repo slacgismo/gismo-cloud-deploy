@@ -1,4 +1,6 @@
 
+from random import randrange
+from sre_parse import FLAGS
 import time
 import os
 from os.path import  basename, exists
@@ -6,14 +8,29 @@ import logging
 import inquirer
 import shutil
 from terminaltables import AsciiTable
+from mainmenu.classes.constants.AWSActions import AWSActions
 from mainmenu.classes.constants.InputDescriptions import InputDescriptions
 from .constants.MenuActions import MenuActions
+from .constants.EKSActions import EKSActions
+from .constants.EC2Actions import EC2Actions
+from .constants.Platform import Platform
 from .utilities.convert_yaml import convert_yaml_to_json,write_aws_setting_to_yaml
 from .utilities.verification import (
     verify_keys_in_ec2_configfile,
     verify_keys_in_eks_configfile,
     verify_keys_in_configfile,
+    import_and_verify_ec2_config,
+    import_and_verify_eks_config
+
 )
+import difflib
+from .utilities.helper import(
+    generate_project_name_from_project_path,
+    get_absolute_paht_from_project_name,
+    delete_project_folder,
+    generate_run_command_from_inputs
+)
+
 import sys
 sys.path.append('../../gismoclouddeploy')
 from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
@@ -30,7 +47,11 @@ from .utilities.handle_inputs import(
     handle_input_number_of_process_files_question,
     handle_input_number_of_scale_instances_question,
     select_acions_menu,
-    enter_the_working_project_path
+    enter_the_working_project_path,
+    select_platform,
+    handle_proecess_files_inputs_questions,
+    get_system_id_from_selected_history,
+    handle_input_ssh_custom_command
 )
 from transitions import Machine
 from .utilities.aws_utitlties import (
@@ -43,8 +64,7 @@ class FiniteStateMachine(object):
     states=[
             'start',
             'init', 
-            'creation',
-            'wakup',
+            'ready',
             'process',
             'end',
         ]
@@ -78,39 +98,43 @@ class FiniteStateMachine(object):
         self.aws_region = aws_region
         self.ec2_config_templates = ec2_config_templates
         self.eks_config_templates = eks_config_templates
+        self.local_pem_path = local_pem_path 
 
 
-
+        # private variable 
         self._action = None
         self._origin_project_path = None
         self._base_path = os.getcwd()
         self._project_name = None
         self._select_history_path = None
-        self._run_files_command = None
+        # self._run_files_command = None
 
-        self._user_id = self._set_user_id()
+        # self._user_id = self._set_user_id()
+        self._system_id = None
         self._start_time = str(int(time.time()))
 
         self._ec2_config_dict = {}
         self._eks_config_dict = {}
 
         self._input_answers = {}
-
+        self._aws_services = None
+        self._platform = None
 
         self.machine = Machine(model=self, states=FiniteStateMachine.states, initial='start', on_exception='handle_error',send_event=True)
+        # regular cloud state
+        self.machine.add_transition(trigger='trigger_initial', source='start', dest='init', before="handle_inputs",after="handle_confirmation")
+        self.machine.add_transition(trigger='trigger_ready', source='init', dest='ready', before="handle_create_resources", after="handle_system_check")
+        self.machine.add_transition(trigger='trigger_process', source='ready', dest='process', after="handle_process")
+    
 
-        self.machine.add_transition(trigger='trigger_initial', source='start', dest='init', before="hanlde_init",after="handle_confirmation")
-        self.machine.add_transition(trigger='trigger_creation', source='init', dest='creation', before="handle_creation", after="handle_setup_env")
-        self.machine.add_transition(trigger='trigger_wakup', source='creation', dest='wakup', before="handle_verify_system",after="handle_wakeup")
-        self.machine.add_transition(trigger='trigger_process', source='wakeup', dest='process', after="handle_cloud_processing")
-        # clean up resouces
-
-
-        # run in local machine
+       # run in local machine
         self.machine.add_transition(trigger='trigger_run_local', source='init', dest='process', after="handle_local_processing")
-        
+
         # End of application
         self.machine.add_transition(trigger='trigger_end', source='*', dest='end', before ='handle_cleanup_cloud_resources', after = 'handle_completion')
+
+
+        
 
     def _set_user_id(self):
         sts_client = connect_aws_client(
@@ -125,215 +149,358 @@ class FiniteStateMachine(object):
         else:
             raise Exception("AWS credentials are not correct")
 
-    def _generate_ec2_name(self):
-        return f"gcd-{self._user_id}-{self._start_time}"
-    def _generate_eks_cluster_name(self):
-        return f"gcd-{self._user_id}-{self._start_time}"
-    def _generate_keypair_name(self):
-        return f"gcd-{self._user_id}"
+    def _generate_system_id(self):
+        user_id = self._set_user_id()
+        return  f"gcd-{user_id}"
 
     def get_action(self):
         return self._action
+    def get_platform(self):
+        return self._platform
+    # ============== 
+    # state function 
+    # ============== 
 
+    # Error state
     def handle_error(self, event):
+        logging.error("Error state")
+        # ask if need to clean up the resources
+
         raise ValueError(f"Error: {event.error}") 
 
 
 
-    # Initial state 
-
-    def hanlde_init(self,event):
-        logging.info("actions selection")
-
-
-        self._action = select_acions_menu()
+    # Init state
+    def handle_inputs(self, event):
+        logging.info("handle inputs")
+         # step 1 input project folder
         self._origin_project_path = enter_the_working_project_path(default_project=FiniteStateMachine.default_answer['default_project'])
         self.set_project_name()
         self.copy_origin_project_into_temp_folder()
 
-        # step 1 . ask for project
-        self._input_answers = handle_proecess_files_inputs_questions(action=self._action, default_answer=FiniteStateMachine.default_answer)
+         # step 2 verify project
+        self.handle_verify_project_folder()
+         # step 3 select platform
+        self._platform= select_platform()
+        # step 4 select action
+        self._action = select_acions_menu(platform=self._platform)
+         # step 5 ask inputs based on platform 
+        self._input_answers = handle_proecess_files_inputs_questions(
+            action=self._action,
+            platform=self._platform,
+            default_answer=FiniteStateMachine.default_answer
+        )
+        # step 6 import config or generate id on AWS
+        if self._platform == Platform.AWS.name:
+            if self._action == MenuActions.create_cloud_resources_and_start.name:
+                logging.info("Generate system id")
+                try:
+                    self._ec2_config_dict = import_and_verify_ec2_config(ec2_config_file=self.ec2_config_templates)
+                    self._eks_config_dict = import_and_verify_eks_config(saved_eks_config_file = self.eks_config_templates)
+                    # generate parameters and replace template dict
+                    # generate ec2 and eks cluster name 
+                    if self._user_id is None or self._start_time is None:
+                        raise Exception("user id or start time is None")
 
-        # hande import ec2 eks cloud resources
-        if self._action == MenuActions.resume_from_existing.name \
-            or self._action == MenuActions.cleanup_cloud_resources.name:
+                    project_in_tags = self._input_answers['project_in_tags']
 
-            logging.info("Import history cloud resources config")
-            self._select_history_path  = select_created_cloud_config_files(saved_config_path_base=self.saved_config_path_base)
-            logging.info(f"Select history path : {self._select_history_path}")
-            ec2_config_file = self._select_history_path +"/config-ec2.yaml"
-            print(f"ec2_config_file :{ec2_config_file}")
-            try:
-                self._ec2_config_dict = import_and_verify_ec2_config(ec2_config_file=ec2_config_file)
-            except Exception as e:
+                    self._system_id =  self._generate_system_id()
 
-                raise Exception(f"Import and verify history ec2 file failed: {e}")
-            eks_config_file = self._select_history_path +"/cluster.yaml"
-            try:
-                self._eks_config_dict = import_from_eks_config(saved_eks_config_file = eks_config_file)
-            except Exception as e:
-                logging.warning("A EC2 file exists but a eks file does not exists")
-                logging.warning("It still goes to next state to check if the ec2 exists. ")
-                logging.warning("If the ec2 exists and no eks cluster had been created, it creates a new cluster.")
-                logging.warning("If the ec2 does not exist, raies exception and delete this hitory file")
-                raise Exception("Terminates up ec2 and ask to re create a new cluster again")
-                # raise Exception("selected EKS config history file does not exist")
 
-        elif self._action == MenuActions.create_cloud_resources_and_start.name:
-            logging.info("Generate ec2_dict from template")
-            print(f"self.ec2_config_templates: {self.ec2_config_templates}")
-            try:
-                # import template
-                self._ec2_config_dict = import_and_verify_ec2_config(ec2_config_file=self.ec2_config_templates)
-                self._eks_config_dict = import_from_eks_config(saved_eks_config_file = self.eks_config_templates)
-                # generate parameters and replace template dict
-                # generate ec2 and eks cluster name 
-                if self._user_id is None or self._start_time is None:
-                    raise Exception("user id or start time is None")
 
-                project_in_tags = self._input_answers['project_in_tags']
+                    cluster_name = self._system_id
+                    keypair_name = self._system_id
 
-                ec2_name = self._generate_ec2_name()
-                cluster_name = self._generate_eks_cluster_name()
-                keypair_name = self._generate_keypair_name()
+                    # replace ec2 config 
+                    self._ec2_config_dict['key_pair_name'] = keypair_name
+                    ec2_project_tags = {"Key":"project", "Value": project_in_tags}
+                    ec2_name_tags = {"Key":"Name", "Value": self._system_id}
+                    # append tags
+                    self._ec2_config_dict['tags'].append(ec2_project_tags)
+                    self._ec2_config_dict['tags'].append(ec2_name_tags)
 
-                # replace ec2 config 
-                self._ec2_config_dict['key_pair_name'] = keypair_name
-                ec2_project_tags = {"Key":"project", "Value": project_in_tags}
-                ec2_name_tags = {"Key":"Name", "Value": ec2_name}
-                # append tags
-                self._ec2_config_dict['tags'].append(ec2_project_tags)
-                self._ec2_config_dict['tags'].append(ec2_name_tags)
+                    
+                    # replace eks config
+                    self._eks_config_dict['metadata']['name'] = cluster_name
+                    self._eks_config_dict['metadata']['region'] = self.aws_region
+                    self._eks_config_dict['metadata']['tags']['project'] = project_in_tags
+                    self._eks_config_dict['nodeGroups'][0]['tags']['project'] = project_in_tags
+                    logging.info("Generate ec2, eks parameters from templates success")
+                    print(self._eks_config_dict)
 
-                
-                # replace eks config
-                self._eks_config_dict['metadata']['name'] = cluster_name
-                self._eks_config_dict['metadata']['region'] = self.aws_region
-                self._eks_config_dict['metadata']['tags']['project'] = project_in_tags
-                self._eks_config_dict['nodeGroups'][0]['tags']['project'] = project_in_tags
-                logging.info("Generate ec2, eks parameters from templates success")
-                print(self._eks_config_dict)
-                return 
-            except Exception as e:
-                raise Exception(f"Generate ec2, eks parameters from templates failed :{e}")
+                except Exception as e:
+                    raise Exception("")
+
+
+            else:
+                # select history
+                logging.info("Import from hoistory base on system id")
+                self._system_id  = get_system_id_from_selected_history(saved_config_path_base=self.saved_config_path_base)
+                logging.info(f"selected id :{self._system_id }")
+                self._select_history_path  = self.saved_config_path_base +f"/{ self._system_id}"
+
+                ec2_config_file = self._select_history_path +"/config-ec2.yaml"
+
+                try:
+                    self._ec2_config_dict = import_and_verify_ec2_config(ec2_config_file=ec2_config_file)
+                    tags = self._ec2_config_dict['tags']
+                except Exception as e:
+
+                    raise Exception(f"Import and verify history ec2 file failed: {e}")
+                eks_config_file = self._select_history_path +"/cluster.yaml"
+                try:
+                    self._eks_config_dict = import_and_verify_eks_config(saved_eks_config_file = eks_config_file)
+                except Exception as e:
+                    raise Exception("A EC2 file exists but a eks file does not exists")
+
+
+        
 
     
-    # Creation state
-    def handle_confirmation(self,event):
-        logging.info("handle verification")
-
-        # print out ec2, eks parameters
-        if self._action == MenuActions.cleanup_cloud_resources.name or \
-            self._action == MenuActions.resume_from_existing.name or \
-                self._action == MenuActions.create_cloud_resources_and_start.name:
-            
-            logging.info("Print out ec2, eks variables")
+    
+    def handle_confirmation(self, event):
+        logging.info("handle confirmation")
+        # step 1 print out variables
+        if self._platform == Platform.AWS.name:
+            # eks parameters
             ec2_arrays = [["EC2 setting", "Details"]]
-            # EC2 table
             for key, value in self._ec2_config_dict.items():
                     array = [key, value]
                     ec2_arrays.append(array)
             ec2_table = AsciiTable(ec2_arrays)
             print(ec2_table.table)
-            # EKS table
-            cluster_name = None
-            if len(self._eks_config_dict) and 'metadata' in self._eks_config_dict:
-                cluster_name = self._eks_config_dict['metadata']['name']
+            # ec2 parameters
             
-            if cluster_name is None:
-                logging.warning("No eks cluster informations")
-                logging.warning("If confirm to process, it will generate a new cluster, with a new name")
-            
-            else:
-                eks_arrays = [["EKS cluster name", cluster_name]]
-                for key, value in self._eks_config_dict.items():
-                        array = [key, value]
-                        eks_arrays.append(array)
-                eks_table = AsciiTable(eks_arrays)
-                print(eks_table.table)
-
-        
-
-        # create run-command 
-        # is_ssh = self._input_answers['is_ssh']
-        # if is_ssh is not True:
-        #     process_first_n_files = self._input_answers['process_first_n_files']
-            
-        #     if self._action == MenuActions.run_in_local_machine.name:
-        #         self._run_files_command = generate_run_command_from_inputs(
-        #             is_local= True,
-        #             process_first_n_files=process_first_n_files,
-        #             project_name = self._project_name
-        #         )
-        #     elif self._action == MenuActions.resume_from_existing.name or \
-        #             self._action == MenuActions.create_cloud_resources_and_start.name:
-        #         print("-----------")
-               
-        #         cluster_name = self._eks_config_dict['metadata']['name']
-        #         num_of_nodes = self._input_answers['num_of_nodes']
-        #         self._run_files_command = generate_run_command_from_inputs(
-        #             is_local= False,
-        #             process_first_n_files=process_first_n_files,
-        #             project_name = self._project_name,
-        #             num_of_nodes=num_of_nodes,
-        #             cluster_name = cluster_name
-        #         )
-
-        if self._action == MenuActions.resume_from_existing.name or \
-                self._action == MenuActions.create_cloud_resources_and_start.name or \
-                    self._action == MenuActions.run_in_local_machine.name:
-            input_arrays = [["Input parameters", "answer"]]
-            logging.info("Print out input questions answer")
-            for key, value in self._input_answers.items():
+  
+            eks_arrays = [["EKS setting", "Details"]]
+            for key, value in self._eks_config_dict.items():
                     array = [key, value]
-                    input_arrays.append(array)
-            # input_arrays.append(["run_files command",self._run_files_command])
-            input_table = AsciiTable(input_arrays)
+                    eks_arrays.append(array)
+            eks_table = AsciiTable(eks_arrays)
+            print(eks_table.table)
+    
+        # general questions
+        input_arrays = [["Input parameters", "answer"]]
+        
+        for key, value in self._input_answers.items():
+                array = [key, value]
+                input_arrays.append(array)
+        # input_arrays.append(["run_files command",self._run_files_command])
+        input_table = AsciiTable(input_arrays)
             
-            print(input_table.table)
-
-
-    def handle_export(self, event):
-        logging.info("handle_export")
-
-
-
-    def is_confirm_to_process(self) -> bool:
+        print(input_table.table)
+        # step 2 ask confirmation
         is_comfirm = handle_yes_or_no_question(
             input_question="Confirm to process (must be yes/no)",
             default_answer="yes"
         )
+        if is_comfirm is False:
+            raise Exception("Cancel process")
+        # steo 3 init services based on system id and paltform
+        if self._platform == Platform.AWS.name:
+            temp_project_absoult_path = get_absolute_paht_from_project_name(project_name=self._project_name, base_path=self._base_path)
+            logging.info("Init aws services")
+            try:
+                self._aws_services = AWSServices(
+                        local_pem_path=self.local_pem_path,
+                        aws_access_key=self.aws_access_key,
+                        aws_secret_access_key=self.aws_secret_access_key,
+                        aws_region= self.aws_region,
+                        saved_config_path_base = self.saved_config_path_base,
+                        local_temp_project_path = temp_project_absoult_path,
+                        project_name = self._project_name,
+                        origin_project_path=self._origin_project_path,
+                        system_id=self._system_id,
+                        ec2_config_dict=self._ec2_config_dict,
+                        eks_config_dict=self._eks_config_dict
 
-        return is_comfirm
+                    )
+            except Exception as e:
+                raise Exception(f"Init aws service failed:{e}")
+        
+        return 
 
     
-    def handle_creation(self,event):
-        logging.info("handle create cloud resources")
-        if self._action == MenuActions.create_cloud_resources_and_start.name:
-            logging.info("Start to create cloud resource")
+    # Ready state
+    def handle_create_resources(self, event):
+        logging.info("handle_create_resources")
+        if self._platform == Platform.AWS.name:
+            if self._action == MenuActions.create_cloud_resources_and_start.name:
+                logging.info("Start to create cloud resource")
+                self._aws_services.create_ec2_from_template_file()
+                export_ec2_file = self.saved_config_path_base + f"/{self._system_id}/config-ec2.yaml"
+                try:
+                    self._aws_services.export_ec2_params_to_file(
+                        export_file=export_ec2_file
+                    )
+                except Exception as e:
+                    raise Exception(f"create ec2 failed: {e}")
+                # step 5 , install dependencies
+                try:
+                    self._aws_services.hanle_ec2_setup_dependencies()
+                except Exception as e:
+                    raise Exception(f"setup ec2 failed :{e}")
+                # create eks 
+                created_eks_config_file = self.saved_config_path_base + f"/{self._system_id}/cluster.yaml"
+                self._aws_services.generate_eks_config_and_export(eks_config_yaml_dcit=self._eks_config_dict, export_file=created_eks_config_file)
+                # upload local cluster file to cloud 
+                try:
+                    self._aws_services.ssh_update_eks_cluster_file(src_file=created_eks_config_file)
+                except Exception as e:
+                    raise Exception(f"ssh upload cluster file failed: {e}")
+                try:
+                    self._aws_services.handle_ssh_eks_action(
+                            eks_action=EKSActions.create.name
+                        )
+                except Exception as e:
+                    raise Exception("Create eks failed")
+
+                return 
 
 
-    def handle_setup_env(self, event):
-        logging.info("handle setup ec2 bastion")
+
+    def handle_system_check(self, event):
+        logging.info("Check cloud resources")
+        # check keypair 
+        try:
+            self._aws_services.handle_aws_actions(action=AWSActions.create_keypair.name)
+        except Exception as e:
+            raise Exception(f"check keypair error:{e}")
+        # check ec2 status
+        try:
+            self._aws_services.wake_up_ec2()
+        except Exception as e:
+            raise Exception(f"Wakeup ec2 failed :{e}")
+        # check eks cluster exist
+        logging.info("Check if eks cluster exist")
+        cluster_name = self._eks_config_dict['metadata']['name']
+        try:
+            find_cluster_name = self._aws_services.check_eks_exist(
+                cluster_name=cluster_name
+            )
+            
+            print(str(find_cluster_name))
+            if str(find_cluster_name) == str(cluster_name):
+                logging.info(f"{find_cluster_name} found and match to savd eks cluster.yaml")
+            else:
+                output_list = [li for li in difflib.ndiff(find_cluster_name, cluster_name) if li[0] != ' ']
+                logging.error(f"two string cluster different: {output_list}")
+                raise Exception(f"{find_cluster_name} does not exsit on AWS ")
+
+        except Exception as e:
+            raise Exception(f"search eks cluster failed :{e}")
 
 
-    # Wakeup  state
-    def handle_import_configfiles(self,event):
-        logging.info("handle import configfile")
+    # Process state
+    def handle_process(self, event):
+        logging.info("handle_process")
+        if self._platform == Platform.AWS.name:
+            logging.info("Run process on AWS")
+     
+            if self._action == MenuActions.run_in_local_machine.name or \
+                self._action == MenuActions.cleanup_cloud_resources.name:
+                raise Exception(f"Aciton {self._action} should not enter this state. Check your code")
         
-    def handle_wakeup(self,event):
-        logging.info("handle wakeup")
+            is_ssh = self._input_answers['is_ssh']
+            if is_ssh is False:
+                process_first_n_files = self._input_answers['process_first_n_files']
+                cluster_name = self._eks_config_dict['metadata']['name']
+                num_of_nodes = self._input_answers['num_of_nodes']
+                run_files_command = generate_run_command_from_inputs(
+                    platform=self._platform,
+                    process_first_n_files=process_first_n_files,
+                    project_name = self._project_name,
+                    num_of_nodes=num_of_nodes,
+                    cluster_name = cluster_name
+                )
+                # execute run file command 
+                ec2_config_file = self.saved_config_path_base +f"/{self._system_id}/config-ec2.yaml"
+                if not exists(ec2_config_file):
+                    raise Exception(f"{ec2_config_file} does not exist")
+                ec2_dict = convert_yaml_to_json(yaml_file=ec2_config_file)
+                ec2_instance_id = ec2_dict['ec2_instance_id']
+                login_user = ec2_dict['login_user']
+                key_pair_name = ec2_dict['key_pair_name']
+                if ec2_instance_id is None:
+                    raise Exception("ec2 instance id is None")
+                self._aws_services.run_ssh_command(
+                    login_user=login_user,
+                    ec2_instance_id=ec2_instance_id,
+                    ssh_command=run_files_command
+                )
+            else:
+                logging.info("SSH Debug mode")
+                self._aws_services.run_ssh_debug_mode()
 
-    # process state
-    def handle_process(self,event):
-        logging.info("handle process")
+        # if is_ssh
+            # debug mode
+        # else: run files command
+
+
+    def handle_local_processing(self, event):
+ 
+        logging.info("Run command in local machine")
+        first_n_file = self._input_answers['process_first_n_files']
+
+        gismoclouddeploy(
+            number=first_n_file,
+            project = self._project_name,
+            aws_access_key=self.aws_access_key,
+            aws_secret_access_key=self.aws_secret_access_key,
+            aws_region=self.aws_region,
+        )
+        logging.info("Copy results to origin path")
+
     
     # End state
-    def handle_cleanup_cloud_resources(self,event):
-        logging.info("handle clean up ")
-    
-    
-    def handle_completion(self,event):
+    def handle_cleanup_cloud_resources(self, event):
+        logging.info("handle_cleanup_cloud_resources")
+        if self._platform == Platform.LOCAL.name:
+            return
+        # step 1, is clean up cloud resources
+        is_cleanup_resources_after_completion = False
+        if self._input_answers is not None:
+            if "cleanup_resources_after_completion" in self._input_answers:
+                is_cleanup_resources_after_completion = self._input_answers['cleanup_resources_after_completion']
+        
+        if self._platform == Platform.AWS.name:
+            if self._action == MenuActions.cleanup_cloud_resources.name or \
+                is_cleanup_resources_after_completion is True:
+                logging.info("Clean up cloud resources")
+                # delete eks cluster
+                try:
+                    self._aws_services.handle_ssh_eks_action(
+                        eks_action=EKSActions.delete.name,
+                    )
+                except Exception as e:
+                    raise Exception(f"Delete eks cluster failed {e}")
+
+                # terminate ec2 
+                try:
+
+                    self._aws_services.handle_ec2_action(
+                        action=EC2Actions.terminate.name,
+                    )
+                except Exception as e:
+                    raise Exception(f"Terminate ec2 failed {e}")
+                # delete key pair
+                try:
+                    self._aws_services.handle_aws_actions(
+                        action=AWSActions.delete_keypair.name
+                    )
+                except Exception as e:
+                    raise Exception(f"Delete keypair failed :{e}")
+                # delete security group wait 
+                logging.warning("Delete security group not implement")
+
+            else:
+                logging.info("Stop ec2")
+                self._aws_services.handle_ec2_action(
+                    action=EC2Actions.stop.name,
+            )
+            logging.info("Stop ec2 success")
+
+    def handle_completion(self, event):
         logging.info("handle remove temp project path")
         temp_project_absoult_path = get_absolute_paht_from_project_name(project_name=self._project_name, base_path=self._base_path)
         delete_project_folder(project_path=temp_project_absoult_path)
@@ -342,19 +509,21 @@ class FiniteStateMachine(object):
         complete_array = [
             ["Applications","Completion"],
             ["Project name",self._project_name],
-            ["Total process time",total_process_time],
+            ["Total process time",total_process_time,"sec"],
             ["Action",self._action]
 
         ]
         table = AsciiTable(complete_array)
         print(table.table)
-        return
+    # ============== 
+    # end state function 
+    # ============== 
+
 
     def set_project_name(self):
         project_name = generate_project_name_from_project_path(project_path=self._origin_project_path)
         self._project_name = project_name
 
-   
     def copy_origin_project_into_temp_folder(self):
 
         if self._project_name is None:
@@ -373,216 +542,47 @@ class FiniteStateMachine(object):
             raise Exception(f"Copy {self._origin_project_path} to {temp_project_absoult_path} failed: {e}")
         return 
 
+    def handle_verify_project_folder(self):
+        '''
+        Verify entrypoint.py
+        Verify Dockerfile
+        Verify requirements.txt
+        Verify config.yaml
+        Verify solver is defined
+        '''
 
-    def handle_local_processing(self ,event):
-        logging.info("Run command in local machine")
-        first_n_file = self._input_answers['process_first_n_files']
-
-        gismoclouddeploy(
-            number=first_n_file,
-            project = self._project_name,
-            aws_access_key=self.aws_access_key,
-            aws_secret_access_key=self.aws_secret_access_key,
-            aws_region=self.aws_region,
-        )
-        logging.info("Copy results to origin path")
-
-
-
-
-def delete_project_folder(project_path:str):
-    logging.info("Delete project folder")
-    if not os.path.exists(project_path):
-        raise Exception(f"{project_path} does not exist")
-    try:
-        shutil.rmtree(project_path)
-        logging.info(f"Delete {project_path} success")
-    except Exception as e:
-        raise Exception(f"Dlete {project_path} failded")
-def generate_run_command_base_on_input_answers(action:str, input_answers:dict, project_name:str, cluster_name:str, num_of_nodes:int) -> str:
-    command = None
-    process_first_n_files = 1
-    if "process_first_n_files" in input_answers:
-        process_first_n_files = input_answers['input_answers']
-    else:
-        raise Exception("input_answers has no process_first_n_files key")
-
-    if project_name is None:
-        raise Exception("project name is None")
-
-    if action == MenuActions.run_in_local_machine.name:
-        command = f"python3 main.py run-files -n {process_first_n_files} -p {project_name}"
-    if action == MenuActions.create_cloud_resources_and_start.name or action == MenuActions.resume_from_existing.name:
-        if (cluster_name or num_of_nodes) is None :
-            raise Exception("Cluster name or num of node is None")
-        command = f"python3 main.py run-files -n {process_first_n_files} -s {num_of_nodes} -p {project_name} -c {cluster_name}"
-
-    if command is None:
-        raise Exception("command is None, Check your work flow.")
-    return command
-
-        
-def import_and_verify_ec2_config(ec2_config_file:str) -> dict:
-    logging.info(f"import from ec2 {ec2_config_file}")
-    if ec2_config_file is None:
-        raise Exception(f"saved_ec2_config_file is None") 
-    if not exists(ec2_config_file):
-        raise Exception("saved_ec2_config_file does not exist")
-    try:
-        config_dict = convert_yaml_to_json(yaml_file=ec2_config_file)
-        verify_keys_in_ec2_configfile(config_dict=config_dict)
-        return config_dict
-    except Exception as e:
-        raise e 
-
-def import_from_eks_config(saved_eks_config_file:str)-> dict:
-    logging.info("import from eks")
-    if saved_eks_config_file is None:
-        raise Exception(f"saved_eks_config_file is None") 
-    if not exists(saved_eks_config_file):
-        raise Exception("saved_eks_config_file does not exist")
-    try:
-        config_dict = convert_yaml_to_json(yaml_file=saved_eks_config_file)
-        verify_keys_in_eks_configfile(config_dict=config_dict)
-        return config_dict
-    except Exception as e:
-        raise e
-
-
-
-def handle_proecess_files_inputs_questions(action:MenuActions, default_answer:dict) -> dict:
-
-    return_answer= {}
-    try:
-        if action == MenuActions.cleanup_cloud_resources.name:
-            logging.info("No further more questions in clearn mode!!")
-            return
-        # project tag
-        if action == MenuActions.create_cloud_resources_and_start.name:
-            project_in_tags = hanlde_input_project_name_in_tag(
-                input_question= InputDescriptions.input_project_name_in_tags.value,
-                default_answer = default_answer['project_in_tags']
-            )
-            # update answer
-            return_answer['project_in_tags'] = project_in_tags
-    
-        if action == MenuActions.create_cloud_resources_and_start.name \
-            or action == MenuActions.resume_from_existing.name:
-            is_ssh  = handle_yes_or_no_question(
-                input_question=InputDescriptions.is_debug_mode_questions.value,
-                default_answer=default_answer['is_ssh']
-            )
-            return_answer['is_ssh'] = is_ssh
-            if is_ssh is True:
-                return return_answer
-
-        # process files
-        process_first_n_files = default_answer['process_first_n_files']
-        is_process_all_file = handle_yes_or_no_question(
-            input_question=InputDescriptions.is_process_all_files_questions.value,
-            default_answer=default_answer['is_process_all_file']
-        )
-        if is_process_all_file is False:
-            process_first_n_files = handle_input_number_of_process_files_question(
-                input_question=InputDescriptions.input_the_first_n_files_questions.value,
-                default_answer=process_first_n_files,
-            )
-            return_answer['process_first_n_files'] = process_first_n_files
-            logging.info(f"Process first {process_first_n_files} files")
-        else:       
-            return_answer['process_first_n_files'] = process_first_n_files
-            logging.info(f"Process all files: -n {process_first_n_files}")
-
-        
-
-        if action == MenuActions.create_cloud_resources_and_start.name \
-            or action == MenuActions.resume_from_existing.name:
-            logging.info("Input the number of instances ")
-            num_of_nodes = handle_input_number_of_scale_instances_question(
-                input_question=InputDescriptions.input_number_of_generated_instances_questions.value,
-                default_answer=default_answer['num_of_nodes'],
-                max_node= default_answer['max_node']
-            )
-            return_answer['num_of_nodes'] = num_of_nodes
-            logging.info(f"Number of generated instances:{num_of_nodes}")
+        files_check_list = ["entrypoint.py","Dockerfile","requirements.txt","config.yaml"]
+        temp_project_absoult_path = get_absolute_paht_from_project_name(project_name=self._project_name, base_path=self._base_path)
+        for file in files_check_list:
             
-        if action == MenuActions.run_in_local_machine.name:
-            return return_answer
-        # is clean up after completion 
-        cleanup_resources_after_completion = handle_yes_or_no_question(
-            input_question=InputDescriptions.is_cleanup_resources_after_completion.value,
-            default_answer=default_answer["cleanup_resources_after_completion"]
-        )
-        return_answer['cleanup_resources_after_completion'] = cleanup_resources_after_completion
-    except Exception as e:
-        raise Exception (f"handle_proecess_files_inputs_questions error: {e}")
-
-    return return_answer
-
-    
-
-
-def generate_project_name_from_project_path(project_path:str) -> str:
-    project_name = "temp/"+ basename(project_path)
-    return project_name
-
-def get_absolute_paht_from_project_name(project_name:str, base_path:str) -> str:
-    temp_project_absoult_path =  os.path.join(base_path,project_name)
-    return temp_project_absoult_path
-
-
-def select_created_cloud_config_files(saved_config_path_base:str) -> str:
-    '''
-    Select created resource config files from a path
-    '''
-    logging.info("select_created_cloud_config_files")  
-
-    config_lists = get_subfolder(parent_folder=saved_config_path_base)
-    questions = [
-        inquirer.List('dir',
-                        message=InputDescriptions.select_an_created_resources.value,
-                        choices=config_lists,
-                    ),
-    ]
-    inst_answer = inquirer.prompt(questions)
-    answer =  inst_answer["dir"]
-    select_absolute_history_path = saved_config_path_base + f"/{answer}"
-    return select_absolute_history_path
-
- 
-
-def get_subfolder(parent_folder) -> list:
-    if not os.path.exists(parent_folder):
-        raise Exception (f"{parent_folder} does not exis–t")
-    config_lists= []
-    for fullpath, j , y in  os.walk(parent_folder):
-        relative_path = remove_partent_path_from_absolute_path(parent_path=parent_folder, absolut_path=fullpath)
-        if relative_path == ".":
-            continue
-        config_lists.append(relative_path)
-    return config_lists
-
-def remove_partent_path_from_absolute_path(parent_path, absolut_path) -> str:
-    relative_path = os.path.relpath(absolut_path, parent_path)
-    return relative_path
-
-
-
-
-def generate_run_command_from_inputs(
-    process_first_n_files:int = 1, 
-    cluster_name:str = None, 
-    num_of_nodes:str = 1, 
-    project_name:str = None, 
-    is_local:bool= True) -> str:
-
-    command = None
-    if is_local:
-        command = f"python3 main.py run-files -n {process_first_n_files} -p {project_name}"
-    else:
-        command = f"python3 main.py run-files -n {process_first_n_files} -s {num_of_nodes} -p {project_name} -c {cluster_name}"
-
-    if command is None:
-        raise Exception("Generated command is None")
-        
-    return command
+            full_path_file = temp_project_absoult_path + "/"+file
+            if not exists(full_path_file):
+                raise Exception(f"{full_path_file} does not exist!!")
+            logging.info(f"{file} exists !!")
+            
+        logging.info("Verify files list success")
+        config_yaml =temp_project_absoult_path + "/config.yaml"
+        try:
+            self._config_yaml_dcit= convert_yaml_to_json(yaml_file=config_yaml)
+        except Exception as e:
+            raise Exception(f"convert config yaml failed")
+        try:
+            verify_keys_in_configfile(
+                config_dict=self._config_yaml_dcit
+            )
+        except Exception as e:
+            raise Exception(f"Verify keys in configfile error:{e}")
+        solver_lic_file_local_source = self._config_yaml_dcit['solver_lic_file_local_source']
+        # verify solver file exists
+        if solver_lic_file_local_source is None:
+            logging.warning("Process without solver file")
+        elif len(solver_lic_file_local_source) == 0:
+            logging.warning("Process without solver file")
+        else:
+            logging.info("Check solver file")
+            solver_absolute_path_file = temp_project_absoult_path + f"/{solver_lic_file_local_source}"
+            if not exists(solver_absolute_path_file):
+                raise Exception(f" solver {solver_absolute_path_file} does not exist")
+            logging.info(f"solver file :{solver_lic_file_local_source} exist")
+            
+        return 

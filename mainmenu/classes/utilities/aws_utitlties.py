@@ -8,7 +8,7 @@ import paramiko
 import time
 from pathlib import Path
 from .convert_yaml import check_if_path_exist_and_create,write_aws_setting_to_yaml
-
+from .update_sshconfig import add_public_ip_to_sshconfig
 from asyncio import exceptions
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
@@ -337,12 +337,12 @@ def run_command_in_ec2_ssh(
     user_name:str,
     instance_id:str,
     pem_location:str,
-    ec2_client,
+    ec2_resource,
     command:str,
     ):
 
-    ec2 = boto3.resource('ec2')
-    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    # ec2 = boto3.resource('ec2')
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
   
     p2_instance = None
     for instance in instances:
@@ -679,3 +679,35 @@ def sftp_get_recursive(path, dest, sftp):
         else:
             sftp.get(path + "/" + item.filename, dest + "/" + item.filename)
     logging.info(f"Download {path} success")
+
+
+
+
+def get_public_ip_and_update_sshconfig(
+    wait_time:int = 90,
+    delay :int =3,
+    ec2_instance_id:str = None,
+    ec2_client = None,
+    system_id :str= None,
+    login_user:str = None,
+    keypair_name:str = None,
+) -> str :
+    ec2_public_ip = None
+
+    while wait_time > 0 and ec2_public_ip is None:
+        ec2_public_ip = get_public_ip(
+            ec2_client=ec2_client,
+            instance_id=ec2_instance_id
+        )
+        wait_time -= delay
+        time.sleep(delay)
+        logging.info(f"Waiting {wait_time}... public ip:{ec2_public_ip}")
+    if wait_time <=0:
+        raise Exception("Get public ip wait overtime")
+    
+    add_public_ip_to_sshconfig(
+        public_ip=ec2_public_ip,
+        hostname=system_id,
+        login_user=login_user,
+        key_pair_name=keypair_name
+    )

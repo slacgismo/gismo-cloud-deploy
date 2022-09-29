@@ -25,3 +25,6 @@ def check_if_path_exist_and_create(file:str):
         print(f"{path} does not exist. Create path")
         os.mkdir(path)
         print(f"Create {path} success")
+
+
+

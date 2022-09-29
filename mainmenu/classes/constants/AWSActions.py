@@ -9,3 +9,4 @@ class AWSActions(enum.Enum):
     create_keypair = "create_keypair"
     delete_keypair = "delete_keypair"
     create_ec2_instance = "create_ec2_instance"
+    check_ec2_exist = "check_ec2_exist"

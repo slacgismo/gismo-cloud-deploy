@@ -1,5 +1,6 @@
 import logging
-
+from .convert_yaml import convert_yaml_to_json
+from os.path import exists
 
 def verify_keys_in_configfile(config_dict:dict):
     '''
@@ -66,3 +67,30 @@ def verify_a_key_in_dict(dict_format:dict, key:str) -> None:
     except Exception:
         raise Exception(f"does not contain {key}")
 
+
+
+def import_and_verify_ec2_config(ec2_config_file:str) -> dict:
+    logging.info(f"import from ec2 {ec2_config_file}")
+    if ec2_config_file is None:
+        raise Exception(f"saved_ec2_config_file is None") 
+    if not exists(ec2_config_file):
+        raise Exception("saved_ec2_config_file does not exist")
+    try:
+        config_dict = convert_yaml_to_json(yaml_file=ec2_config_file)
+        verify_keys_in_ec2_configfile(config_dict=config_dict)
+        return config_dict
+    except Exception as e:
+        raise e 
+
+def import_and_verify_eks_config(saved_eks_config_file:str)-> dict:
+    logging.info("import from eks")
+    if saved_eks_config_file is None:
+        raise Exception(f"saved_eks_config_file is None") 
+    if not exists(saved_eks_config_file):
+        raise Exception("saved_eks_config_file does not exist")
+    try:
+        config_dict = convert_yaml_to_json(yaml_file=saved_eks_config_file)
+        verify_keys_in_eks_configfile(config_dict=config_dict)
+        return config_dict
+    except Exception as e:
+        raise e

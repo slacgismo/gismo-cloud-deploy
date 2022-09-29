@@ -3,6 +3,7 @@ from asyncio import streams
 
 from ..constants.InputDescriptions import InputDescriptions
 from ..constants.MenuActions import MenuActions
+from ..constants.Platform import Platform
 import logging
 from .aws_utitlties import connect_aws_client,check_bucket_exists_on_s3
 import os
@@ -145,25 +146,36 @@ def select_is_breaking_ssh():
     return convert_yes_no_to_bool(input=is_breaking_ssh)
 
 
-def select_acions_menu()-> str:
+def select_acions_menu(platform:str)-> str:
     '''
     Select an action from a menu
     '''
     logging.info("Main menus")
     menus_selection =[]
-    
-    inst_question = [
-        inquirer.List('action',
-                        message=InputDescriptions.select_an_action.value,
-                        choices=[
-                            MenuActions.create_cloud_resources_and_start.name,
-                            MenuActions.resume_from_existing.name, 
-                            MenuActions.cleanup_cloud_resources.name, 
-                            MenuActions.run_in_local_machine.name],
-                    ),
-    ]
-    inst_answer = inquirer.prompt(inst_question)
-    action = inst_answer["action"]
+    action = None
+    if platform == Platform.LOCAL.name:
+        inst_question = [
+            inquirer.List('action',
+                            message=InputDescriptions.select_an_action.value,
+                            choices=[ MenuActions.run_in_local_machine.name ],
+                        ),
+        ]
+        inst_answer = inquirer.prompt(inst_question)
+        action = inst_answer["action"]
+
+    elif platform == Platform.AWS.name:
+        inst_question = [
+            inquirer.List('action',
+                            message=InputDescriptions.select_an_action.value,
+                            choices=[
+                                MenuActions.create_cloud_resources_and_start.name,
+                                MenuActions.resume_from_existing.name, 
+                                MenuActions.cleanup_cloud_resources.name, 
+],
+                        ),
+        ]
+        inst_answer = inquirer.prompt(inst_question)
+        action = inst_answer["action"]
     
     logging.info(f"Set action : {action}")
     return action
@@ -190,3 +202,127 @@ def  enter_the_working_project_path(default_project:str ) -> str:
         # 3.8+ only!
         shutil.copytree(self._origin_project_path, self._temp_project_absoult_path, dirs_exist_ok=True) 
         return 
+
+
+def select_platform() -> str:
+    inst_question = [
+        inquirer.List('select_platform',
+                            message="Select platform ?",
+                            choices=[Platform.LOCAL.name,Platform.AWS.name],
+                        ),
+        ]
+    inst_answer = inquirer.prompt(inst_question)
+
+    platform = inst_answer["select_platform"]
+    return platform
+
+
+
+
+def handle_proecess_files_inputs_questions(action:MenuActions, default_answer:dict, platform:Platform) -> dict:
+
+    return_answer= {}
+    
+    if platform == Platform.AWS.name:
+        try:
+            logging.info("hanlde inputs on AWS")
+            # action
+            if action == MenuActions.cleanup_cloud_resources.name:
+                logging.info("Clearn up resources, No inputs needs")
+                return return_answer
+            
+            # project tags
+            if action == MenuActions.create_cloud_resources_and_start.name:
+                project_in_tags = hanlde_input_project_name_in_tag(
+                    input_question= InputDescriptions.input_project_name_in_tags.value,
+                    default_answer = default_answer['project_in_tags']
+                )
+                # update answer
+                return_answer['project_in_tags'] = project_in_tags
+
+            # debug mode
+            if action == MenuActions.create_cloud_resources_and_start.name \
+                or action == MenuActions.resume_from_existing.name:
+                is_ssh  = handle_yes_or_no_question(
+                    input_question=InputDescriptions.is_debug_mode_questions.value,
+                    default_answer=default_answer['is_ssh']
+                )
+                return_answer['is_ssh'] = is_ssh
+                if is_ssh is True:
+                    return return_answer
+
+                # number of generate nodes
+
+                logging.info("Input the number of instances ")
+                num_of_nodes = handle_input_number_of_scale_instances_question(
+                    input_question=InputDescriptions.input_number_of_generated_instances_questions.value,
+                    default_answer=default_answer['num_of_nodes'],
+                    max_node= default_answer['max_node']
+                )
+                return_answer['num_of_nodes'] = num_of_nodes
+                logging.info(f"Number of generated instances:{num_of_nodes}")
+
+                # is clean up after completion 
+                cleanup_resources_after_completion = handle_yes_or_no_question(
+                    input_question=InputDescriptions.is_cleanup_resources_after_completion.value,
+                    default_answer=default_answer["cleanup_resources_after_completion"]
+                )
+                return_answer['cleanup_resources_after_completion'] = cleanup_resources_after_completion
+        except Exception as e:
+            raise Exception(f"Handle input AWS questions error:{e}")
+            
+
+    # accross platform questions. run-files command
+    try:
+        process_first_n_files = default_answer['process_first_n_files']
+        is_process_all_file = handle_yes_or_no_question(
+        input_question=InputDescriptions.is_process_all_files_questions.value,
+                default_answer=default_answer['is_process_all_file']
+            )
+        if is_process_all_file is False:
+            process_first_n_files = handle_input_number_of_process_files_question(
+                input_question=InputDescriptions.input_the_first_n_files_questions.value,
+                default_answer=process_first_n_files,
+            )
+            return_answer['process_first_n_files'] = process_first_n_files
+            logging.info(f"Process first {process_first_n_files} files")
+        else:       
+            return_answer['process_first_n_files'] = process_first_n_files
+            logging.info(f"Process all files: -n {process_first_n_files}")
+    except Exception as e:
+        raise Exception(f"Handle generate run-file command error:{e}")
+
+    return return_answer     
+   
+def get_system_id_from_selected_history(saved_config_path_base:str) -> str:
+    '''
+    Select created resource config files from a path
+    '''
+    logging.info("select_created_cloud_config_files")  
+
+    config_lists = get_subfolder(parent_folder=saved_config_path_base)
+    questions = [
+        inquirer.List('dir',
+                        message=InputDescriptions.select_an_created_resources.value,
+                        choices=config_lists,
+                    ),
+    ]
+    inst_answer = inquirer.prompt(questions)
+    answer =  inst_answer["dir"]
+    # select_absolute_history_path = saved_config_path_base + f"/{answer}"
+    return answer
+
+def get_subfolder(parent_folder) -> list:
+    if not os.path.exists(parent_folder):
+        raise Exception (f"{parent_folder} does not exis–t")
+    config_lists= []
+    for fullpath, j , y in  os.walk(parent_folder):
+        relative_path = remove_partent_path_from_absolute_path(parent_path=parent_folder, absolut_path=fullpath)
+        if relative_path == ".":
+            continue
+        config_lists.append(relative_path)
+    return config_lists
+
+def remove_partent_path_from_absolute_path(parent_path, absolut_path) -> str:
+    relative_path = os.path.relpath(absolut_path, parent_path)
+    return relative_path
