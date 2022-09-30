@@ -3,6 +3,7 @@ from stat import S_ISDIR
 import boto3
 from mypy_boto3_ec2.client import EC2Client
 from mypy_boto3_s3.client import S3Client
+from mypy_boto3_sts.client import STSClient
 
 import os
 import botocore
@@ -152,7 +153,7 @@ def get_default_vpc_id(ec2_client:EC2Client) -> str:
     except Exception as e:
         raise Exception(f"Get default vpc id failed")
 
-def check_vpc_id_exists(ec2_client,vpc_id:str) -> bool:
+def check_vpc_id_exists(ec2_client:EC2Client,vpc_id:str) -> bool:
     try:
         response = ec2_client.describe_vpcs(
         Filters=[{"Name": "vpc-id", "Values": [vpc_id]}]
@@ -213,7 +214,7 @@ def get_ec2_state_from_id(ec2_client:EC2Client, id:str) -> str:
             return state
     return None
 
-def get_iam_user_name(sts_client) -> str:
+def get_iam_user_name(sts_client:STSClient) -> str:
     try:
         response = sts_client.get_caller_identity()
         if 'Arn' in response:
@@ -696,6 +697,7 @@ def get_public_ip_and_update_sshconfig(
     system_id :str= None,
     login_user:str = None,
     keypair_name:str = None,
+    local_pem_path :str = None,
 ) -> str :
     ec2_public_ip = None
 
@@ -714,7 +716,8 @@ def get_public_ip_and_update_sshconfig(
         public_ip=ec2_public_ip,
         host=system_id,
         login_user=login_user,
-        key_pair_name=keypair_name
+        key_pair_name=keypair_name,
+        local_pem_path = local_pem_path,
     )
 
 def check_if_ec2_with_name_exist(

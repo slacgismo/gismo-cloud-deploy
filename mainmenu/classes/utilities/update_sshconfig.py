@@ -1,3 +1,4 @@
+from genericpath import exists
 import logging
 
 from sshconf import read_ssh_config
@@ -8,13 +9,22 @@ def add_public_ip_to_sshconfig(
         public_ip:str,
         host:str,
         login_user:str,
-        key_pair_name:str
+        key_pair_name:str,
+        local_pem_path :str 
     ):
+    
+        ssh_confg_file  = local_pem_path +"/config"
+        if not exists(ssh_confg_file):
+            try:
+                open(ssh_confg_file, 'a').close()
+            except OSError:
+                logging.info(f'Failed creating the {ssh_confg_file}')
+            else:
+                logging.info('File created')
+     
+        c = read_ssh_config(ssh_confg_file)
 
-        logging.info("Add public ip to  ssh config")
-        c = read_ssh_config(expanduser("~/.ssh/config"))
-
-
+    
         if public_ip is None:
             raise Exception ("Public is none")
 

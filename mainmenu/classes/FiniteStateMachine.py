@@ -255,6 +255,9 @@ class FiniteStateMachine(object):
 
                     raise Exception(f"Import and verify history ec2 file failed: {e}")
                 eks_config_file = self._select_history_path +"/cluster.yaml"
+                if not exists(eks_config_file):
+                    logging.warning("No saved eks condig file found import from templates")
+                    eks_config_file = self.eks_config_templates
                 try:
                     self._eks_config_dict = import_and_verify_eks_config(saved_eks_config_file = eks_config_file)
                 except Exception as e:
@@ -471,7 +474,7 @@ class FiniteStateMachine(object):
                     else:
                         logging.warning(f"No eks created history, skip deleting eks clsuter..!!")
                 except Exception as e:
-                    raise Exception(f"Delete eks cluster {cluster_name} failed {e}")
+                    raise Exception(e)
 
                 # terminate ec2 
                 try:
@@ -491,7 +494,13 @@ class FiniteStateMachine(object):
                 # delete security group wait 
                 logging.warning("Delete security group not implement")
 
-
+                # Delete config
+                
+                try:
+                    history_path = self.saved_config_path_base +f"/{self._system_id}"
+                    delete_project_folder(project_path=history_path)
+                except Exception as e:
+                    raise Exception(f"Delete {history_path} failed")
             else:
                 try:
                     logging.info("Stop ec2")

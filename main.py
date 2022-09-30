@@ -162,8 +162,8 @@ def run_files(
         default_fileslist = default_fileslist
     )
 
-# two issues , windows .ssh/config not exist
-# second issues . delete ec2 if cluster name does not exist
+
+# history config not deleted
 
 # ***************************
 #  Meuns

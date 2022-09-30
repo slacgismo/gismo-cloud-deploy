@@ -317,7 +317,8 @@ class AWSServices(object):
                     ec2_instance_id=self._ec2_instance_id,
                     system_id=self.system_id,
                     login_user=self._login_user,
-                    keypair_name=self._keypair_name
+                    keypair_name=self._keypair_name,
+                    local_pem_path= self.local_pem_path
                 )
  
             except Exception as e:
@@ -596,7 +597,8 @@ class AWSServices(object):
                 ec2_instance_id=self._ec2_instance_id,
                 system_id=self.system_id,
                 login_user=self._login_user,
-                keypair_name=self._keypair_name
+                keypair_name=self._keypair_name,
+                local_pem_path = self.local_pem_path
             )
             # add_public_ip_to_sshconfig(
             #     public_ip=self._ec2_public_ip,
