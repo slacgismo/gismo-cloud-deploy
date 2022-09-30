@@ -205,7 +205,6 @@ class AWSServices(object):
         self.handle_aws_actions(action=AWSActions.create_ec2_instance.name)
         return 
 
-
         
 
     def handle_aws_actions(self, action:AWSActions):
@@ -242,7 +241,7 @@ class AWSServices(object):
                 logging.info(f"Deleting {self._securitygroup_ids}")
                 delete_security_group(ec2_client=self._ec2_client, group_id=sg_id)
 
-        
+
         elif action == AWSActions.create_keypair.name:
             try:
                 logging.info("Create keypair action")
@@ -263,11 +262,10 @@ class AWSServices(object):
                         logging.warning(f"Find key pair on AWS but local {pem_file} is missiong")
                         logging.warning("You can use clean resource to delete keypari and regenerate a new one")
                         raise Exception("Please clean previous resources and run menu again !!")
-
-                return 
+ 
             except Exception as e:
                 raise Exception(f"Create keypair fialed:{e}")
-        return 
+
                 
         elif action == AWSActions.delete_keypair.name:
             logging.info("Delete keypair action")

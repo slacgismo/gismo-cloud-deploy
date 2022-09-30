@@ -103,7 +103,7 @@ def main():
 def run_files(
     number: int = 1,
     scalenodes:int = 1,
-    project: str = "examples/solardatatools",
+    project: str = "examples/sleep",
     repeat: int = 1,
     cluster: str = 'local',
     nodegroup_name: str = 'gcd',
@@ -117,7 +117,15 @@ def run_files(
                         If number is 0, this application processs all files in the defined bucket in config.yaml.
                         If number is an integer, this applicaion process the first `number` files in the defined bucket in config.yaml.
 
-    :param configfile:  Define config file name. Default value is "./config/config.yaml"
+    :param scalenodes:  Define the number of nodes(instances) that you want to generate on AWS EKS or any cloud platform. The default number is `1`.
+    :param project:     Define the project name. The default projec is `examples/sleep`.
+    :param repeat:      Define how many times you want to repeat this process. The default number is `1`.
+    :param cluster:     Define the cluster name of AWS EKS cluster. If you are running on local machine, you can use the default name `local`.
+    :param nodegroup_name:  Define the nodegroup of cluster. The default name is `gcd`. 
+                            You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.
+    :param instance_type:   Define the instance type of the nodes. You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.
+                            (PS. t2.micro cannot work in this projct.)
+    :param file:         D
 
     """
     if (len(file) < 1) and number is None:
@@ -159,6 +167,9 @@ def run_files(
 @main.command()
 
 def menu():
+    """
+    A interactive menu to guide user to run `gismoclouddeploy` on different plaform.
+    """
     base_path = os.getcwd()  
     home_dir = str(Path.home())  # ~/
 
@@ -171,6 +182,7 @@ def menu():
         aws_region= AWS_DEFAULT_REGION,
         local_pem_path = home_dir +"/.ssh"
     )
+
 
 # ***************************
 #  Main

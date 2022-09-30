@@ -15,8 +15,6 @@ ENV project_path "../$CODES_FOLDER"
 ENV source_path_of_upload_file "./$CODES_FOLDER/$SOURCE_PATH_OF_UPLOAD_FILE" 
 
 
-
-
 RUN apt-get -q update
 
 RUN apt-get install tzdata -y
@@ -48,7 +46,7 @@ RUN apt-get install libgdal-dev -y
 WORKDIR /usr/local/src
 # download model
 
-RUN git clone -b develop-fix-debian-11-setup-arm https://github.com/slacgismo/gridlabd.git
+RUN git clone -b develop-add-aws-install https://github.com/slacgismo/gridlabd.git
 WORKDIR /usr/local/src/gridlabd
 
 
@@ -87,19 +85,12 @@ RUN chmod +x /start-flower
 # RUN mkdir /app
 WORKDIR /app
 
-
-
-# # copy project code
-
 # copy project code
-
 
 COPY ./server .
 
 COPY $code_path ./project/
 RUN chmod -R 755 ./project/
-
-# COPY ../config/code-templates-gridlabdNY /usr/local/src/gridlabd
 
 
 ENTRYPOINT ["/entrypoint"]
