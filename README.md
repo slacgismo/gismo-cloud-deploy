@@ -98,6 +98,19 @@ If you are using your own account other than SLAC Gismo group account. Please cr
 
 ### Quick Start
 
+#### Important information
+
+- This quick start tutorial demonstrates how to run this application on the AWS EKS platform. This process generates operating costs. You could select platform `LOCAL` to avoid those AWS costs.
+- The AWS walk-through generates the following cloud resources:
+  - EC2 bastion( Main control instances to control EKS)
+  - EKS cluster (Multiple nodes)
+  - SQS
+  - Security Group
+  - Keypair
+- When you run the application through `menu`, it limits one EC2 basiton and one EKS cluster per account.
+- The EC2 bastion and EKS cluster name is `gcd-<Your-iam-user-name>`.
+- If you want to run multiple `gismoclouddeploy`, you need to manually generate EC2 bastion and EKS cluster.
+
 #### Run menu
 
 Run `menu` command to select main menu.
@@ -106,18 +119,6 @@ Run `menu` command to select main menu.
 python3 main.py menu
 ```
 
-A selection menu pop up , please select `create_cloud_resources_and_start` command. It starts a process of creating all necessary cloud resources automatically with instructions and permissions.
-
-##### main menu
-
-```bash
- > create_cloud_resources_and_start
-   resume_from_existing
-   cleanup_cloud_resources
-   run_in_local_machine
-```
-
-The following question is to type your project path.
 
 ##### project path
 
@@ -132,6 +133,26 @@ Second, open the `config.yaml` file in your project folder. You have to specify 
 
  <!-- It run a for loop without doing anything. The custom script file is `entrypoint.py`. You can modify this script with any custom codes inside you like and save the results in a JSON format. But you have to put your code block inside the `entrypoint` function. Please read [project files structures](#project-files-structures) to get more details. -->
 
+##### platform
+
+Select a paltform environment you want this applicaion to run on it. In this example, please select `AWS` platform.
+
+```bash
+  LOCAL
+> AWS
+```
+
+##### actions
+
+Please select an action to execute this application. In this example, please select `create_cloud_resources_and_start`. It creates all new cloud resources and start the applications.
+
+```bash
+ > create_cloud_resources_and_start
+   resume_from_existing
+   cleanup_cloud_resources
+```
+
+The following question is to type your project path.
 
 ##### project name
 
@@ -149,20 +170,6 @@ The following instruction asks you to select debug mode. Suppose you are a devel
 Run debug mode through SSH? If `no`, an following instructions will help you to create a run-files command and execute it. (default answer:no) 
 ```
 
-##### Number of process files
-
-The following instructions will generate the run-command. It starts by asking if you would like to process all files in the defined data bucket in `config.yaml`. Hit enter button to give the default answer `no`.
-
-```bash
-Do you want to process all files in the databucket that defined in config.yaml? (default answer:no) 
-```
-
-If you type `no`, the following instruction will ask you to type the number of process files. You can enter to give the default answer `1`. This application will process the first files in the defined data bucket.
-
-```bash
-("How many files you would like process? \n Input an postive integer number. It processes first 'n'( n as input) number files.",) (default:1) (must be an integer):
-```
-
 ##### Number of generated ec2 instances
 
 The following instruction will ask you to type how many ec2 instances you want to generate. Hit enter button to give the default answer `1`. It will spawn one ec2 instance to run the script.
@@ -177,9 +184,56 @@ The following instruction will ask you if you would like to destroy the cloud re
 
 ```bash
 "Do you want to delete all created resources?\n If you type 'no', there will be an operating cost from generated EKS cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create. Sept 2022). The ec2 bastion will be stopped (no operating cost).\n However, if you type 'yes', the generated ec2 bastions and EKS cluster will be deleted (No operating cost from ec2 and EKS cluster).\n It takes about 10~20 mins to generate a new EKS cluster.\n", (default answer:no) 
+
+##### Number of process files
+
+The following instructions will generate the run-command. It starts by asking if you would like to process all files in the defined data bucket in `config.yaml`. Hit enter button to give the default answer `no`.
+
+```bash
+Do you want to process all files in the databucket that defined in config.yaml? (default answer:no) 
 ```
 
+If you type `no`, the following instruction will ask you to type the number of process files. You can enter to give the default answer `1`. This application will process the first files in the defined data bucket.
+
+```bash
+("How many files you would like process? \n Input an postive integer number. It processes first 'n'( n as input) number files.",) (default:1) (must be an integer):
+```
+
+##### confirmation
+
 Then the terminal will print out all the variables and ask for confirmation to process.
+
+```bash
++--------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| EC2 setting        | Details                                                                                                                       |
++--------------------+-------------------------------------------------------------------------------------------------------------------------------+
+| ec2_image_id       | ami-0568773882d492fc8                                                                                                         |
+| ec2_instance_id    | None                                                                                                                          |
+| securitygroup_name | SSH-ONLY                                                                                                                      |
+| ec2_instance_type  | t2.large                                                                                                                      |
+| ec2_volume         | 20                                                                                                                            |
+| key_pair_name      | gcd-xxx                                                                                                                       |
+| login_user         | ec2-user                                                                                                                      |
+| tags               | [{'Key': 'managedBy', 'Value': 'boto3'}, {'Key': 'project', 'Value': 'xxx'}, {'Key': 'Name', 'Value': 'gcd-xxx-xx'}]          |
++--------------------+-------------------------------------------------------------------------------------------------------------------------------+
++-------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| EKS setting | Details                                                                                                                                                    |
++-------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| apiVersion  | eksctl.io/v1alpha5                                                                                                                                         |
+| kind        | ClusterConfig                                                                                                                                              |
+| metadata    | {'name': 'gcd-xxx', 'region': 'xx-xx-xx', 'tags': {'project': 'xxxx', 'managedBy': 'eksctl'}}                                                              |
+| nodeGroups  | [{'name': 'gcd', 'instanceType': 't2.large', 'desiredCapacity': 0, 'minSize': 0, 'maxSize': 100, 'tags': {'project': 'pvinsight', 'managedBy': 'eksctl'}}] |
++-------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+
++------------------------------------+-----------+
+| Input parameters                   | answer    |
++------------------------------------+-----------+
+| project_in_tags                    | xxxxxxxxx |
+| is_ssh                             | False     |
+| num_of_nodes                       | 1         |
+| cleanup_resources_after_completion | False     |
+| process_first_n_files              | 1         |
++------------------------------------+-----------+
+```
 
 ```bash
 Confirm to process (must be yes/no) (default answer:yes) 
@@ -543,6 +597,10 @@ mapUsers: |
 ### System diagram
 
 ![System diagram](./systemdiagram.png)
+
+### Menu workflow
+
+![Menu workflow](./menu-fsm-flow.png)
 
 ## Usage
 

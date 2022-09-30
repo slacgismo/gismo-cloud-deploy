@@ -51,8 +51,12 @@ def mainmenu(
     except Exception as e:
         fsm.trigger_end() 
         logging.error(f"Initial state error :{e}")
-
+        return 
+    
+    if action == MenuActions.cleanup_cloud_resources.name:
+        fsm.trigger_end() 
  
+
     logging.info(f" ===== Menu State: {fsm.state}  =======")
 
     if platform == Platform.LOCAL.name:

@@ -164,10 +164,11 @@ class FiniteStateMachine(object):
 
     # Error state
     def handle_error(self, event):
-        logging.error("Error state")
+        # logging.error("Error state")
         # ask if need to clean up the resources
-
-        raise ValueError(f"Error: {event.error}") 
+        logging.error(f"Handle error :{event.error}")
+        return 
+        # raise Exception(f"Error") 
 
 
 
