@@ -31,13 +31,13 @@ RUN apt-get install libgdal-dev -y
 WORKDIR /usr/local/src
 # download model
 
-RUN git clone -b develop-add-aws-install https://github.com/slacgismo/gridlabd.git
-WORKDIR /usr/local/src/gridlabd
+# RUN git clone -b develop-add-aws-install https://github.com/slacgismo/gridlabd.git
+# WORKDIR /usr/local/src/gridlabd
 
 
 
-RUN ./install.sh -t -v
-RUN autoreconf -isf && ./configure
-RUN make -j6 system
+# RUN ./install.sh -t -v
+# RUN autoreconf -isf && ./configure
+# RUN make -j6 system
 
 

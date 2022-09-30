@@ -37,7 +37,7 @@ def mainmenu(
         except Exception as e:
             raise Exception(f"Create {local_pem_path} failed")
 
-
+    logging.info(f"local_pem_path: {local_pem_path}")
 
     fsm = FiniteStateMachine(
         saved_config_path_base= saved_config_path_base,

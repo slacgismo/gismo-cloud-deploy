@@ -254,6 +254,10 @@ class AWSServices(object):
                     
                     logging.info(f"keypair:{self._keypair_name} does not exist create a new keypair in {self.local_pem_path}")
                     create_key_pair(ec2_client=self._ec2_client, keyname=self._keypair_name, file_location=self.local_pem_path)
+                    logging.info("=============================")
+                    logging.info(f"pem_file :{self._keypair_name}")
+                    logging.info(f"self.local_pem_path :{self.local_pem_path}")
+                    logging.info("=============================")
                 
                 else:
                     logging.info(f"keypair:{self._keypair_name} exist")
@@ -262,7 +266,9 @@ class AWSServices(object):
                         logging.warning(f"Find key pair on AWS but local {pem_file} is missiong")
                         logging.warning("You can use clean resource to delete keypari and regenerate a new one")
                         raise Exception("Please clean previous resources and run menu again !!")
- 
+                    logging.info("=============================")
+                    logging.info(f"pem_file :{pem_file}")
+                    logging.info("=============================")
             except Exception as e:
                 raise Exception(f"Create keypair fialed:{e}")
 
@@ -490,6 +496,12 @@ class AWSServices(object):
         remote_cluster_file =f"{remote_base_path}/created_resources_history/{self.system_id}/cluster.yaml"
         login_user= self._login_user
         pem_file = get_pem_file_full_path_name(self.local_pem_path,self._keypair_name)
+        logging.info("=============================")
+        logging.info(f"pem_file :{pem_file}")
+        logging.info(f"cluster_name :{cluster_name}")
+        logging.info("=============================")
+        
+
         if instance_id is None:
             raise Exception("instance id is None")
 
