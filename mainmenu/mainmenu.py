@@ -38,7 +38,7 @@ def mainmenu(
             raise Exception(f"Create {local_pem_path} failed")
 
 
-    return 
+
     fsm = FiniteStateMachine(
         saved_config_path_base= saved_config_path_base,
         ec2_config_templates= ec2_config_templates,
