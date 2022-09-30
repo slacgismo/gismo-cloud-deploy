@@ -7,8 +7,6 @@ import os
 
 
 import logging
-from tkinter import E
-
 from mainmenu.classes.constants.Platform import Platform
 
 from .classes.constants.EC2Actions import EC2Actions
