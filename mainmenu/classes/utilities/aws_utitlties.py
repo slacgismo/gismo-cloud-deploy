@@ -1,6 +1,9 @@
 from genericpath import exists
 from stat import S_ISDIR    
 import boto3
+from mypy_boto3_ec2.client import EC2Client
+from mypy_boto3_s3.client import S3Client
+
 import os
 import botocore
 import logging
@@ -56,7 +59,7 @@ def connect_aws_resource(resource_name: str, key_id: str, secret: str, region: s
         raise Exception("AWS Validation Error")
 
 
-def check_bucket_exists_on_s3(s3_client, bucket_name:str) -> bool:
+def check_bucket_exists_on_s3(s3_client:S3Client, bucket_name:str) -> bool:
     try:
         buckets_list = s3_client.list_buckets()
         print(buckets_list)
@@ -88,7 +91,7 @@ def get_security_group_id_with_name(group_name:str, ec2_client) -> str:
         raise Exception(f"{e}")
 
 
-def get_default_vpc_id(ec2_client) -> str:
+def get_default_vpc_id(ec2_client:EC2Client) -> str:
     try:
         response = ec2_client.describe_vpcs()
         if len(response.get('Vpcs', [{}])) > 0:
@@ -99,7 +102,7 @@ def get_default_vpc_id(ec2_client) -> str:
     except botocore.exceptions.ClientError as err:
         raise Exception(err)
 
-def check_keypair_exist(ec2_client, keypair_anme) ->bool:
+def check_keypair_exist(ec2_client:EC2Client, keypair_anme:str) ->bool:
 
     logging.info("Check keypair exist")
     try:
@@ -118,16 +121,10 @@ def check_keypair_exist(ec2_client, keypair_anme) ->bool:
 
 
 
-def get_ec2_instance_id_and_keypair_with_tags(ec2_client, tag_key_f,  tag_val_f) -> dict:
+def get_ec2_instance_id_and_keypair_with_tags(ec2_client:EC2Client, tag_key_f:str,  tag_val_f:str) -> dict:
     try:
-        # response = ec2_client.describe_instance_status(
-        #     Filter =[
-        #         [{'Name': 'tag:'+tag_key_f, 'Values': [tag_val_f]}]
-        #     ]
-        # )
-        response = ec2_client.describe_instances(Filters=[{'Name': 'tag:'+tag_key_f, 'Values': [tag_val_f]}])
 
-        print("---------------")
+        response = ec2_client.describe_instances(Filters=[{'Name': 'tag:'+tag_key_f, 'Values': [tag_val_f]}])
         Reservations = response['Reservations']
         print(f"Reservations :{Reservations}")
         # print(response['Reservations'])
@@ -143,7 +140,7 @@ def get_ec2_instance_id_and_keypair_with_tags(ec2_client, tag_key_f,  tag_val_f)
     except botocore.exceptions.ClientError as err:
         raise Exception(err)
 
-def get_default_vpc_id(ec2_client) -> str:
+def get_default_vpc_id(ec2_client:EC2Client) -> str:
     logging.info("get default VPC id ")
     try:
         response = ec2_client.describe_vpcs()
@@ -167,7 +164,7 @@ def check_vpc_id_exists(ec2_client,vpc_id:str) -> bool:
         logging.error("FInd VPC id error")
     return False
 
-def check_sg_group_name_exists_and_return_sg_id(ec2_client , group_name:str) -> str:
+def check_sg_group_name_exists_and_return_sg_id(ec2_client:EC2Client , group_name:str) -> str:
     logging.info("Check security group id ")
     try:
         response = ec2_client.describe_security_groups(
@@ -183,7 +180,7 @@ def check_sg_group_name_exists_and_return_sg_id(ec2_client , group_name:str) -> 
 
 
 
-def check_keypair_name_exists(ec2_client ,keypair_name:str) -> bool:
+def check_keypair_name_exists(ec2_client:EC2Client ,keypair_name:str) -> bool:
     logging.info("Check key pairname ")
     try:
         response = ec2_client.describe_key_pairs(
@@ -197,7 +194,7 @@ def check_keypair_name_exists(ec2_client ,keypair_name:str) -> bool:
         return False
 
 
-def get_ec2_state_from_id(ec2_client, id) -> str:
+def get_ec2_state_from_id(ec2_client:EC2Client, id:str) -> str:
     
     #check ec2 status
     response = ec2_client.describe_instance_status(
@@ -214,12 +211,7 @@ def get_ec2_state_from_id(ec2_client, id) -> str:
             instance_status = instance['InstanceStatus']
             state = instance['InstanceState']['Name']
             return state
-            # logging.info(f"system_status :{system_status}, instance_status:{instance_status},")
     return None
-    # if  state is not None:
-    #     logging.info(f"instance state : { state}")
-    # else:
-    #     raise Exception(f"Cannot find instance state from {self._ec2_instance_id}")
 
 def get_iam_user_name(sts_client) -> str:
     try:
@@ -233,23 +225,30 @@ def get_iam_user_name(sts_client) -> str:
     except botocore.exceptions.ClientError as err:
         raise Exception(err)
 
-def delete_security_group(ec2_client, group_id):
+def delete_security_group(ec2_client:EC2Client, group_id:str):
     try:
         delete_sg = ec2_client.delete_security_group(GroupId=group_id)
         logging.info("SG Deleted")
     except botocore.exceptions.ClientError as err:
         raise Exception(err)
 
-def delete_key_pair(ec2_client, key_name):
+def delete_key_pair(ec2_client:EC2Client, key_name:str):
     try:
         delete_key_pair = ec2_client.delete_key_pair(KeyName=key_name)
         logging.info("Key pair deleted")
     except botocore.exceptions.ClientError as err:
         raise Exception(err)
 
-def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user_name)  -> bool:
-    ec2 = boto3.resource('ec2')
-    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+def check_if_ec2_ready_for_ssh(
+    instance_id:str,
+    wait_time:int,
+    delay:int,
+    pem_location:str, 
+    user_name:str,
+    ec2_resource
+    )  -> bool:
+    # ec2 = boto3.resource('ec2')
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
     print(instances)
     
     p2_instance = None
@@ -278,13 +277,13 @@ def check_if_ec2_ready_for_ssh(instance_id, wait_time, delay, pem_location, user
 
 
 def create_instance(
-    ec2_client,
+    ec2_client:EC2Client,
     ImageId :str,
     InstanceType:str,
     key_piar_name: str,
     tags:dict,
     volume:int,
-    SecurityGroupIds,
+    SecurityGroupIds:list,
     ) -> str:
     # ec2_client = boto3.client("ec2", region_name="us-user-2")
     instances = ec2_client.run_instances(
@@ -323,7 +322,7 @@ def create_instance(
     return instancesID
 
 def get_public_ip(
-    ec2_client,
+    ec2_client:EC2Client,
     instance_id:str):
     reservations = ec2_client.describe_instances(InstanceIds=[instance_id]).get("Reservations")
 
@@ -368,8 +367,13 @@ def run_command_in_ec2_ssh(
 
 
 
-def create_security_group(ec2_client, vpc_id:str = None, tags:list = None, group_name:str = 'SSH-ONLY') -> dict:
-     #Create a security group and allow SSH inbound rule through the VPC
+def create_security_group(
+    c2_client:EC2Client, 
+    vpc_id:str = None,
+    tags:list = None,
+    group_name:str = 'SSH-ONLY'
+    ) -> dict:
+
    
     try:
         response = ec2_client.create_security_group(
@@ -405,7 +409,7 @@ def create_security_group(ec2_client, vpc_id:str = None, tags:list = None, group
         print(err)
 
 
-def create_key_pair(ec2_client,keyname:str, file_location:str):
+def create_key_pair(ec2_client:EC2Client,keyname:str, file_location:str):
  
     try:
         key_pair = ec2_client.create_key_pair(KeyName=keyname)
@@ -584,10 +588,10 @@ def upload_file_to_sc2(
     pem_location:str,
     local_file:str,
     remote_file:str,
-    ec2_client,):
+    ec2_resource,):
 
-    ec2 = boto3.resource('ec2')
-    instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+
+    instances = ec2_resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
     print(instances)
 
     for instance in instances:
@@ -665,7 +669,7 @@ def ssh_download_folder_from_ec2(
     logging.info(f"Download {remote_folder} to {local_folder} success!!!")
     return 
 
-def sftp_get_recursive(path, dest, sftp):
+def sftp_get_recursive(path:str, dest:str, sftp:paramiko.SSHClient):
     logging.info("Download files recursive!!")
     item_list = sftp.listdir_attr(path)
     dest = str(dest)
@@ -688,7 +692,7 @@ def get_public_ip_and_update_sshconfig(
     wait_time:int = 90,
     delay :int =3,
     ec2_instance_id:str = None,
-    ec2_client = None,
+    ec2_client:EC2Client = None,
     system_id :str= None,
     login_user:str = None,
     keypair_name:str = None,
@@ -728,3 +732,24 @@ def check_if_ec2_with_name_exist(
     except Exception as e:
         raise Exception (f"find ec2 name in tags failed:{e}")
     return False
+
+
+def check_eks_cluster_with_name_exist(
+    eks_client = None,
+    cluster_name:str = None
+) -> bool:
+    try:
+        response = eks_client.list_clusters()
+        if len(response) == 0:
+            raise Exception("EKS Resposse has no data")
+
+        if 'clusters' in response:
+            cluster_list = response['clusters']
+            for name in cluster_list:
+                print(name)
+                if name == cluster_name:
+                    return True
+
+        return False
+    except Exception as e:
+        raise Exception(f"Check eks name failed :{e}")

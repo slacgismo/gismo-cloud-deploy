@@ -167,8 +167,8 @@ class FiniteStateMachine(object):
         # logging.error("Error state")
         # ask if need to clean up the resources
         logging.error(f"Handle error :{event.error}")
-        return 
-        # raise Exception(f"Error") 
+ 
+        raise Exception(f"Error :{event.error}") 
 
 
 
@@ -367,8 +367,6 @@ class FiniteStateMachine(object):
         logging.info("Check cloud resources")
         # check keypair 
         try:
-            print("----------------fdsd")
-            print(f"ec2_config_dict :{self._aws_services.ec2_config_dict}")
             self._aws_services.handle_aws_actions(action=AWSActions.create_keypair.name)
         except Exception as e:
             raise Exception(f"check keypair error:{e}")
@@ -379,19 +377,13 @@ class FiniteStateMachine(object):
             raise Exception(f"Wakeup ec2 failed :{e}")
         # check eks cluster exist
         logging.info("Check if eks cluster exist")
-        cluster_name = self._eks_config_dict['metadata']['name']
         try:
-            find_cluster_name = self._aws_services.check_eks_exist(
-                cluster_name=cluster_name
-            )
-            
-            print(str(find_cluster_name))
-            if str(find_cluster_name) == str(cluster_name):
-                logging.info(f"{find_cluster_name} found and match to savd eks cluster.yaml")
+            cluster_name = self._aws_services.get_cluster_name()
+            is_cluster_exist = self._aws_services.check_eks_exist()
+            if is_cluster_exist is False:
+                raise Exception(f"Cluster {cluster_name} does not exist. Please clean up resouces and create a new!!")
             else:
-                output_list = [li for li in difflib.ndiff(find_cluster_name, cluster_name) if li[0] != ' ']
-                logging.error(f"two string cluster different: {output_list}")
-                raise Exception(f"{find_cluster_name} does not exsit on AWS ")
+                logging.info(f"Cluster {cluster_name} exist. Continue to process... ")
 
         except Exception as e:
             raise Exception(f"search eks cluster failed :{e}")
@@ -463,13 +455,21 @@ class FiniteStateMachine(object):
             if self._action == MenuActions.cleanup_cloud_resources.name or \
                 is_cleanup_resources_after_completion is True:
                 logging.info("Clean up cloud resources")
+                # check if eks exist 
+                
                 # delete eks cluster
                 try:
-                    self._aws_services.handle_ssh_eks_action(
-                        eks_action=EKSActions.delete.name,
-                    )
+                    cluster_name = self._aws_services.get_cluster_name()
+                    is_eks_cluster_exist = self._aws_services.check_eks_exist()
+                    if is_eks_cluster_exist :
+                        self._aws_services.handle_ssh_eks_action(
+                            eks_action=EKSActions.delete.name,
+                        )
+
+                    else:
+                        logging.warning(f"No eks cluster {cluster_name} found, skip delete eks cluster..!!")
                 except Exception as e:
-                    raise Exception(f"Delete eks cluster failed {e}")
+                    raise Exception(f"Delete eks cluster {cluster_name} failed {e}")
 
                 # terminate ec2 
                 try:

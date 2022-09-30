@@ -1,5 +1,6 @@
 
 
+import re
 import readline
 
 
@@ -55,7 +56,8 @@ from .utilities.aws_utitlties import (
     upload_file_to_sc2,
     ssh_download_folder_from_ec2,
     get_public_ip_and_update_sshconfig,
-    check_if_ec2_with_name_exist
+    check_if_ec2_with_name_exist,
+    check_eks_cluster_with_name_exist
 )
 
 from .constants.AWSActions import AWSActions
@@ -136,6 +138,8 @@ class AWSServices(object):
         except Exception as e:
             raise Exception(f"Import ec2 parameter failed: {e}")
 
+    def get_cluster_name(self):
+        return self._cluster_name
 
     def get_security_group_ids(self):
         return self._securitygroup_ids
@@ -359,7 +363,9 @@ class AWSServices(object):
             wait_time=self._ssh_total_wait_time, 
             delay=self._ssh_wait_time_interval, 
             pem_location=pem_file,
-            user_name=self._login_user)
+            user_name=self._login_user,
+            ec2_resource=self._ec2_resource
+            )
 
         logging.info(f"instance ready :{instance}")
 
@@ -381,9 +387,9 @@ class AWSServices(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=pem_file,
-            ec2_client=self._ec2_client,
             local_file=local_env,
             remote_file=remote_env,
+            ec2_resource=self._ec2_resource
         )
         # run install.sh
         logging.info("=============================")
@@ -411,9 +417,9 @@ class AWSServices(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=pem_file,
-            ec2_client=self._ec2_client,
             local_file=local_env,
             remote_file=remote_env,
+            ec2_resource=self._ec2_resource
         )
 
         logging.info("-------------------")
@@ -473,9 +479,9 @@ class AWSServices(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=pem_file,
-            ec2_client=self._ec2_client,
             local_file=src_file,
             remote_file=remote_cluster,
+            ec2_resource=self._ec2_resource
         )
 
     def handle_ssh_eks_action(
@@ -520,7 +526,7 @@ class AWSServices(object):
 
         elif eks_action == EKSActions.check_cluster_exist.name:
             logging.info("chekc cluster exist")
- 
+         
       
 
         elif eks_action == EKSActions.scaledownzero.name:
@@ -597,33 +603,21 @@ class AWSServices(object):
 
  
     def check_eks_exist(self,
-            cluster_name:str,
-        ) -> str:
-        command = f"rec=\"$(eksctl get cluster | grep {cluster_name})\" \n if [ -n \"$rec\" ] ; then echo {cluster_name}; fi"
-        # ssh_command_list['List EKS cluster'] = command
-        ec2 = boto3.resource('ec2')
-        instances = ec2.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
-    
-        p2_instance = None
-        for instance in instances:
-            if (instance.id==self._ec2_instance_id):
-                p2_instance=instance
-                break
-        if p2_instance is None:
-            raise Exception(f"ssh: {self._ec2_instance_id} is not found")
-
-
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        pem_file = get_pem_file_full_path_name(self.local_pem_path,self._keypair_name)
-        privkey = paramiko.RSAKey.from_private_key_file(pem_file)
-        ssh.connect(p2_instance.public_dns_name,username=self._login_user,pkey=privkey)
-        print('started...')
-        stdin, stdout, stderr = ssh.exec_command(command, get_pty=True)
-        for line in iter(stdout.readline, ""):
-            find_cluster_name = line.strip('\n').strip('\r')
-            return find_cluster_name
-        return None 
+        ) -> bool:
+        eks_client = connect_aws_client(
+            client_name='eks',
+            key_id=self.aws_access_key,
+            secret= self.aws_secret_access_key,
+            region=self.aws_region
+        )
+        try:
+            is_cluster_exist = check_eks_cluster_with_name_exist(
+                eks_client= eks_client,
+                cluster_name= self._cluster_name
+            )
+            return is_cluster_exist
+        except Exception as e:
+            raise Exception("check eks exist failed")
 
     def run_ssh_command(self, 
         ssh_command:str,
@@ -670,7 +664,14 @@ class AWSServices(object):
         if action == EC2Actions.start.name:
             if ec2_instance_id is not None:
                 res = self._ec2_resource.instances.filter(InstanceIds = [ec2_instance_id]).start() #for stopping an ec2 instance
-                instance = check_if_ec2_ready_for_ssh(instance_id=ec2_instance_id, wait_time=self._ssh_total_wait_time, delay=self._ssh_wait_time_interval, pem_location=pem_file,user_name=login_user)
+                instance = check_if_ec2_ready_for_ssh(
+                    instance_id=ec2_instance_id,
+                    wait_time=self._ssh_total_wait_time, 
+                    delay=self._ssh_wait_time_interval, 
+                    pem_location=pem_file,
+                    user_name=login_user,
+                    ec2_resource=self._ec2_resource
+                )
                 ec2_public_ip = get_public_ip(
                     ec2_client=self._ec2_client,
                     instance_id=ec2_instance_id
