@@ -460,14 +460,16 @@ class FiniteStateMachine(object):
                 # delete eks cluster
                 try:
                     cluster_name = self._aws_services.get_cluster_name()
-                    is_eks_cluster_exist = self._aws_services.check_eks_exist()
-                    if is_eks_cluster_exist :
-                        self._aws_services.handle_ssh_eks_action(
-                            eks_action=EKSActions.delete.name,
-                        )
-
+                    if cluster_name is not None:
+                        is_eks_cluster_exist = self._aws_services.check_eks_exist()
+                        if is_eks_cluster_exist :
+                            self._aws_services.handle_ssh_eks_action(
+                                eks_action=EKSActions.delete.name,
+                            )
+                        else:
+                            logging.warning(f"No eks cluster {cluster_name} found, skip deleting eks cluster..!!")
                     else:
-                        logging.warning(f"No eks cluster {cluster_name} found, skip delete eks cluster..!!")
+                        logging.warning(f"No eks created history, skip deleting eks clsuter..!!")
                 except Exception as e:
                     raise Exception(f"Delete eks cluster {cluster_name} failed {e}")
 
