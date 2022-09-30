@@ -112,7 +112,7 @@ class AWSServices(object):
 
         # private variables
         self._ssh_total_wait_time = 90
-        self._ssh_wait_time_interval = 1
+        self._ssh_wait_time_interval = 3
         self._aws_action= None
       
 
@@ -183,13 +183,6 @@ class AWSServices(object):
         # step 3 . chcek security group
         self.handle_aws_actions(action=AWSActions.create_securitygroup.name)
         securitygroup_ids = self.get_security_group_ids()
-        # step 4 . create instance
-        # check if ec2 name already exist
-        
-        # is_ec2_existing = check_if_ec2_with_name_exist(
-        #     ec2_resource=self._ec2_resource,
-        #     ec2_name=self.system_id
-        # )
         ec2_info = get_ec2_instance_id_and_keypair_with_tags(
             ec2_client=self._ec2_client,
             tag_key_f="Name",
@@ -210,6 +203,8 @@ class AWSServices(object):
 
 
         self.handle_aws_actions(action=AWSActions.create_ec2_instance.name)
+        return 
+
 
         
 
@@ -247,7 +242,7 @@ class AWSServices(object):
                 logging.info(f"Deleting {self._securitygroup_ids}")
                 delete_security_group(ec2_client=self._ec2_client, group_id=sg_id)
 
-
+        
         elif action == AWSActions.create_keypair.name:
             try:
                 logging.info("Create keypair action")
@@ -272,7 +267,7 @@ class AWSServices(object):
                 return 
             except Exception as e:
                 raise Exception(f"Create keypair fialed:{e}")
-
+        return 
                 
         elif action == AWSActions.delete_keypair.name:
             logging.info("Delete keypair action")

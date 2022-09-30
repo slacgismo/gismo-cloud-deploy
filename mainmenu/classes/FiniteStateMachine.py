@@ -121,6 +121,8 @@ class FiniteStateMachine(object):
         self._aws_services = None
         self._platform = None
 
+        # Define finite state machine 
+
         self.machine = Machine(model=self, states=FiniteStateMachine.states, initial='start', on_exception='handle_error',send_event=True)
         # regular cloud state
         self.machine.add_transition(trigger='trigger_initial', source='start', dest='init', before="handle_inputs",after="handle_confirmation")
@@ -419,10 +421,7 @@ class FiniteStateMachine(object):
             else:
                 logging.info("SSH Debug mode")
                 self._aws_services.run_ssh_debug_mode()
-
-        # if is_ssh
-            # debug mode
-        # else: run files command
+        return 
 
 
     def handle_local_processing(self, event):
@@ -438,6 +437,7 @@ class FiniteStateMachine(object):
             aws_region=self.aws_region,
         )
         logging.info("Copy results to origin path")
+        return 
 
     
     # End state
@@ -489,6 +489,7 @@ class FiniteStateMachine(object):
                 # delete security group wait 
                 logging.warning("Delete security group not implement")
 
+
             else:
                 try:
                     logging.info("Stop ec2")
@@ -517,6 +518,7 @@ class FiniteStateMachine(object):
         ]
         table = AsciiTable(complete_array)
         print(table.table)
+        return 
     # ============== 
     # end states methods 
     # ============== 
