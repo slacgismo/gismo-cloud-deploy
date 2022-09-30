@@ -1,4 +1,3 @@
-
 from os.path import exists
 import os
 import logging
@@ -169,8 +168,7 @@ class AWSServices(object):
                 logging.error(
                     f"This application limits creating one ec2 instance per account. If you are running this application in multiple computers. \n You need to wait it finished. Or you can login into you AWS console and create the AWS resouces manully."
                 )
-                raise Exception(
-                    "Create ec2 failed. Duplicate ec2 instances exist")
+                raise Exception("Create ec2 failed. Duplicate ec2 instances exist")
             else:
                 logging.warning(
                     f"EC2 {InstanceId} with name:{KeyName} found. It's terminated"
@@ -196,8 +194,7 @@ class AWSServices(object):
                     tags=self._ec2_tags,
                     group_name=self._securitygroup_name,
                 )
-                self._securitygroup_ids = [
-                    security_info_dict["security_group_id"]]
+                self._securitygroup_ids = [security_info_dict["security_group_id"]]
                 logging.info(
                     f"Create SecurityGroupIds : {self._securitygroup_ids} in vpc_id:{self._default_vpc_id} success"
                 )
@@ -222,8 +219,7 @@ class AWSServices(object):
                 )
                 self._securitygroup_ids = [sg_id]
                 logging.info(f"Deleting {self._securitygroup_ids}")
-                delete_security_group(
-                    ec2_client=self._ec2_client, group_id=sg_id)
+                delete_security_group(ec2_client=self._ec2_client, group_id=sg_id)
 
         elif action == AWSActions.create_keypair.name:
             try:
@@ -273,8 +269,7 @@ class AWSServices(object):
             if not check_keypair_exist(
                 ec2_client=self._ec2_client, keypair_anme=self._keypair_name
             ):
-                logging.info(
-                    f"keypair:{self._keypair_name} does not exist do nothing ")
+                logging.info(f"keypair:{self._keypair_name} does not exist do nothing ")
             else:
                 logging.info(f"Deleting:{self._keypair_name} ")
                 delete_key_pair(
@@ -287,10 +282,8 @@ class AWSServices(object):
                     os.remove(local_pem)
                     logging.info(f"Delete local pem: {local_pem} success")
         elif action == AWSActions.get_default_vpc_id.name:
-            self._default_vpc_id = get_default_vpc_id(
-                ec2_client=self._ec2_client)
-            logging.info(
-                f"get and set default vpc id :{self._default_vpc_id} ")
+            self._default_vpc_id = get_default_vpc_id(ec2_client=self._ec2_client)
+            logging.info(f"get and set default vpc id :{self._default_vpc_id} ")
 
         elif action == AWSActions.create_ec2_instance.name:
             logging.info("Create ec2 action !!!")
@@ -312,8 +305,7 @@ class AWSServices(object):
                 logging.info(f"ec2_instance_id: {ec2_instance_id}")
                 self._ec2_instance_id = ec2_instance_id
                 logging.info("-------------------")
-                logging.info(
-                    f"Create ec2 bastion completed:{self._ec2_instance_id}")
+                logging.info(f"Create ec2 bastion completed:{self._ec2_instance_id}")
                 logging.info("-------------------")
                 get_public_ip_and_update_sshconfig(
                     ec2_client=self._ec2_client,
@@ -357,8 +349,7 @@ class AWSServices(object):
 
     def hanle_ec2_setup_dependencies(self):
         logging.info("Start setup gcd environments on AWS ec2")
-        pem_file = get_pem_file_full_path_name(
-            self.local_pem_path, self._keypair_name)
+        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
         instance = check_if_ec2_ready_for_ssh(
             instance_id=self._ec2_instance_id,
             wait_time=self._ssh_total_wait_time,
@@ -462,8 +453,7 @@ class AWSServices(object):
         logging.info(f"cluster name:{self._cluster_name }")
         # export file
         verify_keys_in_eks_configfile(config_dict=eks_config_yaml_dcit)
-        write_aws_setting_to_yaml(
-            file=export_file, setting=eks_config_yaml_dcit)
+        write_aws_setting_to_yaml(file=export_file, setting=eks_config_yaml_dcit)
 
         logging.info("Export eks config success")
         return
@@ -471,8 +461,7 @@ class AWSServices(object):
     def ssh_update_eks_cluster_file(self, src_file: str):
         # ec2_name = self.get_ec2_name_from_tags()
         remote_cluster = f"/home/{self._login_user}/gismo-cloud-deploy/created_resources_history/{self.system_id}/cluster.yaml"
-        pem_file = get_pem_file_full_path_name(
-            self.local_pem_path, self._keypair_name)
+        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
         upload_file_to_sc2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
@@ -494,8 +483,7 @@ class AWSServices(object):
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy"
         remote_cluster_file = f"{remote_base_path}/created_resources_history/{self.system_id}/cluster.yaml"
         login_user = self._login_user
-        pem_file = get_pem_file_full_path_name(
-            self.local_pem_path, self._keypair_name)
+        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
         logging.info("=============================")
         logging.info(f"pem_file :{pem_file}")
         logging.info(f"cluster_name :{cluster_name}")
@@ -505,8 +493,7 @@ class AWSServices(object):
             raise Exception("instance id is None")
 
         if cluster_name is None or nodegroup_name is None:
-            raise Exception(
-                f"cluster_name {cluster_name} or f{nodegroup_name} is None")
+            raise Exception(f"cluster_name {cluster_name} or f{nodegroup_name} is None")
 
         if eks_action == EKSActions.create.name:
 
@@ -549,8 +536,7 @@ class AWSServices(object):
                     ec2_resource=self._ec2_resource,
                 )
             except Exception as e:
-                raise Exception(
-                    f"run eks command {description} file failed \n {e}")
+                raise Exception(f"run eks command {description} file failed \n {e}")
 
     def wake_up_ec2(self, wait_time: int = 90, delay: int = 3):
 
@@ -633,8 +619,7 @@ class AWSServices(object):
         full_ssh_command = (
             f"cd {remote_base_path} \n source ./venv/bin/activate \n {ssh_command} "
         )
-        pem_file = get_pem_file_full_path_name(
-            self.local_pem_path, self._keypair_name)
+        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
         run_command_in_ec2_ssh(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
@@ -662,8 +647,7 @@ class AWSServices(object):
             raise Exception("action is None")
         ec2_instance_id = self._ec2_instance_id
         login_user = self._login_user
-        pem_file = get_pem_file_full_path_name(
-            self.local_pem_path, self._keypair_name)
+        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
         if login_user is None:
             raise Exception("login user is None")
         if ec2_instance_id is None:
@@ -705,4 +689,25 @@ class AWSServices(object):
                 ).terminate()  # for terminate an ec2 insta
             except Exception as e:
                 raise Exception(f"Terminate ec2 failed:{e}")
+        return
+
+    def ssh_upload_selected_project_folder_from_temp(self):
+        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
+        remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy"
+        remote_projects_folder = f"{remote_base_path}/{self.project_name}"
+        logging.info("-------------------")
+        logging.info(f"upload local project folder to ec2 projects")
+        logging.info(f"local folder:{self.local_temp_project_path}")
+        logging.info(f"remote folder:{remote_projects_folder}")
+        logging.info("-------------------")
+
+        ssh_upload_folder_to_ec2(
+            user_name=self._login_user,
+            instance_id=self._ec2_instance_id,
+            pem_location=pem_file,
+            local_project_path_base=self.local_temp_project_path,
+            remote_project_path_base=remote_projects_folder,
+            ec2_resource=self._ec2_resource,
+        )
+
         return

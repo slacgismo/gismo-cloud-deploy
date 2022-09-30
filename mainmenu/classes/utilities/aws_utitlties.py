@@ -4,6 +4,7 @@ import boto3
 from mypy_boto3_ec2.client import EC2Client
 from mypy_boto3_s3.client import S3Client
 from mypy_boto3_sts.client import STSClient
+from mypy_boto3_ec2.service_resource import EC2ServiceResource
 
 import os
 import botocore
@@ -293,7 +294,16 @@ def create_instance(
     volume: int,
     SecurityGroupIds: list,
 ) -> str:
-    # ec2_client = boto3.client("ec2", region_name="us-user-2")
+    """
+    Create an EC2 instance from boto3 client
+    :param ec2_client:          the boto3 ec2 client
+    :param ImageId:             the aws ec2 instance image id
+    :param InstanceType:        the instance type: You havce to use at least t2.medium to run this application
+    :param key_piar_name:       the key pair name
+    :param tags:                the tages in ec2
+    :param volume:              the ec2 stoarge
+    :param SecurityGroupIds:    the security group ids
+    """
     instances = ec2_client.run_instances(
         ImageId=ImageId,
         MinCount=1,
@@ -342,7 +352,14 @@ def run_command_in_ec2_ssh(
     ec2_resource,
     command: str,
 ):
-
+    """
+    Check if AWS security group with name, if the security group with name does not exist, it create a new one.
+    :param user_name:       the login user of ec2
+    :param instance_id:     the instance id of ec2
+    :param pem_location:    the pem file path
+    :param ec2_resource:    the boto3 resource
+    :param command:         the ssh command
+    """
     # ec2 = boto3.resource('ec2')
     instances = ec2_resource.instances.filter(
         Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
@@ -370,12 +387,17 @@ def run_command_in_ec2_ssh(
 
 
 def create_security_group(
-    c2_client: EC2Client,
+    ec2_client: EC2Client,
     vpc_id: str = None,
     tags: list = None,
     group_name: str = "SSH-ONLY",
 ) -> dict:
-
+    """
+    Check if AWS security group with name, if the security group with name does not exist, it create a new one.
+    :param vpc_id:      the vpc id of security group
+    :param tags:        the tags in security group
+    :param group_name:  the name of security group
+    """
     try:
         response = ec2_client.create_security_group(
             GroupName=group_name,
@@ -404,7 +426,12 @@ def create_security_group(
 
 
 def create_key_pair(ec2_client: EC2Client, keyname: str, file_location: str):
-
+    """
+    create ec2 keypair and download pem file
+    :param ec2_client:       boto3 ec2 client object
+    :param keyname:          keypair name
+    :param file_location     keypair pem file download local path
+    """
     try:
         key_pair = ec2_client.create_key_pair(KeyName=keyname)
     except Exception as e:
@@ -422,38 +449,11 @@ def create_key_pair(ec2_client: EC2Client, keyname: str, file_location: str):
     return
 
 
-def export_ec2_parameters_to_yaml(
-    export_file: str,
-    securitygroup_ids: list,
-    ec2_image_id: str,
-    ec2_instance_id: str,
-    ec2_instance_type: str,
-    ec2_volume: str,
-    key_pair_name: str,
-    login_user: str,
-    tags: dict,
-    vpc_id: str,
-):
-    config_dict = {}
-    config_dict["SecurityGroupIds"] = securitygroup_ids
-    config_dict["ec2_image_id"] = ec2_image_id
-    config_dict["ec2_instance_id"] = ec2_instance_id
-    config_dict["ec2_instance_type"] = ec2_instance_type
-    config_dict["ec2_volume"] = ec2_volume
-    config_dict["key_pair_name"] = key_pair_name
-    config_dict["login_user"] = login_user
-    config_dict["tags"] = tags
-    config_dict["vpc_id"] = vpc_id
-
-    write_aws_setting_to_yaml(file=export_file, setting=config_dict)
-    logging.info("Export eks config")
-
-
 def ssh_upload_folder_to_ec2(
     user_name: str,
     instance_id: str,
     pem_location: str,
-    ec2_resource,
+    ec2_resource: EC2ServiceResource,
     local_project_path_base: str,
     remote_project_path_base: str,
 ):
@@ -463,10 +463,13 @@ def ssh_upload_folder_to_ec2(
     2. check if relative folder exists on remote path
     3. if not exist, create a new remote path
     4. upload all files to remote folder
-
-    example:
-    local_project_path_base : /Users/<local-username>/Development/gismo/gismo-cloud-deploy/temp/solardatatools
-    remote_project_path_base : /home/{user_name}/gismo-cloud-deploy/temp/solardatatools
+    ----------------------------------------------------------
+    :param user_name:          login user of ec2
+    :param instance_id:         EC2 instance id
+    :param pem_location:        local pem file
+    :param ec2_resource:        Boto3 ec2 resource
+    :param local_project_path_base:         loca project path folder : /Users/<local-username>/Development/gismo/gismo-cloud-deploy/temp/solardatatools
+    :param remote_project_path_base:        remote project path folder: /home/{user_name}/gismo-cloud-deploy/temp/solardatatools
     """
 
     # ec2 = boto3.resource('ec2')
@@ -499,16 +502,15 @@ def ssh_upload_folder_to_ec2(
     base_path = os.getcwd()
 
     # this will be an issue. change here if enoug time
-    logging.warning("Create temp folder. Change below if you have time---")
+    logging.info("Create remote temp folder if it does not exist")
     folder = f"/home/{user_name}/gismo-cloud-deploy/temp"
     logging.info(f"Crete{folder}")
     command = f'if [ ! -d "{folder}" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi'
     (stdin, stdout, stderr) = ssh.exec_command(command)
     for line in stdout.readlines():
         print(line)
-    logging.warning("This is a bad implementation. Change above if you have time---")
 
-    relative_path = set()
+    relative_path = []
 
     upload_local_to_remote_dict = {}
     for file in local_files_list:
@@ -524,17 +526,12 @@ def ssh_upload_folder_to_ec2(
                 remote_project_path_base + f"/{relative}/{filename}"
             )
             new_path = remote_project_path_base + f"/{relative}"
-        relative_path.add(new_path)
+        relative_path.insert(0, new_path)
 
     relative = Path(path).relative_to(Path(base_path))
 
-    for key, value in upload_local_to_remote_dict.items():
-        print(f"file:{file}")
-        print(f"remote file:{value}")
-        print("-----------")
-
     logging.info("check if remote exist, if not create a new path")
-    logging.info("------------------------------------------------")
+
     # Upload files
     for folder in relative_path:
         # remote_dir = remote_folder + "/"+ folder

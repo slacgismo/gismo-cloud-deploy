@@ -1,0 +1,28 @@
+# AWS parameters used for cli.
+
+scale_eks_nodes_wait_time: 90 # in second
+interval_of_wait_pod_ready: 90 # in second
+
+# solver:
+solver_name: "MOSEK"
+solver_lic_target_path_in_images_dest: "/root/mosek"
+solver_lic_file_local_source: "license/mosek.lic"
+
+data_bucket: "pv.insight.nrel"
+file_pattern: "*.csv" #   ".glm"        # Bucket contains origin data files. user regulare expression
+process_column_keywords: "^Pow" # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
+saved_bucket: "pv.insight.test" # Bucket of saved files.
+saved_path_cloud: "results" # Path of saved files in bucket
+acccepted_idle_time: 360
+interval_of_checking_sqs: 1
+filename:
+  saved_data: "results.csv"
+  logs_data: "logs.csv"
+  error_data: "errors.csv"
+  performance: "performance.txt"
+  runtime_gantt_chart: "runtime.png"
+
+repeat_number_per_round: 1 # Repeat overall tasks per round before run end services.
+is_celeryflower_on: False # Turn of / off flower . You can turn on Celery folwer to monitor the rabbitmq inside kubernetes. It will provide a public link to access the celeryflower. However, the celeryflower service is destroyed after application completed. Moreover, it generate extra cost because of public IP address from AWS.
+num_worker_pods_per_namespace: 8 # number of instances per namspaces. If you are running short task (for exampel, 5 sec tasks), you can set this number samller, such as 4. However, 8 is recommanded.
+

@@ -317,6 +317,7 @@ def handle_proecess_files_inputs_questions(
             return_answer["process_first_n_files"] = process_first_n_files
             logging.info(f"Process first {process_first_n_files} files")
         else:
+            process_first_n_files = 0
             return_answer["process_first_n_files"] = process_first_n_files
             logging.info(f"Process all files: -n {process_first_n_files}")
     except Exception as e:

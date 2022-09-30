@@ -285,8 +285,6 @@ class FiniteStateMachine(object):
                     )
                 except Exception as e:
                     raise Exception("A EC2 file exists but a eks file does not exists")
-                
-                
 
         return
 
@@ -424,10 +422,10 @@ class FiniteStateMachine(object):
 
         except Exception as e:
             raise Exception(f"search eks cluster failed :{e}")
-        
+
         if self._action == MenuActions.resume_from_existing.name:
             # upload temp project folder
-            self._aws_services.
+            self._aws_services.ssh_upload_selected_project_folder_from_temp()
 
     # Process state
     def handle_process(self, event):
