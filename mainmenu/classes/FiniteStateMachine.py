@@ -228,10 +228,8 @@ class FiniteStateMachine(object):
                     # replace ec2 config
                     try:
                         self._ec2_config_dict["key_pair_name"] = keypair_name
-                        ec2_project_tags = {
-                            "Key": "project", "Value": project_in_tags}
-                        ec2_name_tags = {"Key": "Name",
-                                         "Value": self._system_id}
+                        ec2_project_tags = {"Key": "project", "Value": project_in_tags}
+                        ec2_name_tags = {"Key": "Name", "Value": self._system_id}
                         # append tags
                         self._ec2_config_dict["tags"].append(ec2_project_tags)
                         self._ec2_config_dict["tags"].append(ec2_name_tags)
@@ -249,8 +247,7 @@ class FiniteStateMachine(object):
                             "Generate ec2, eks parameters from templates success"
                         )
                     except Exception as e:
-                        raise Exception(
-                            f"generate ec2 eks parameters failed:{e}")
+                        raise Exception(f"generate ec2 eks parameters failed:{e}")
 
                 except Exception as e:
                     raise Exception(f"create cloud resources init failed:{e}")
@@ -275,8 +272,7 @@ class FiniteStateMachine(object):
                     tags = self._ec2_config_dict["tags"]
                 except Exception as e:
 
-                    raise Exception(
-                        f"Import and verify history ec2 file failed: {e}")
+                    raise Exception(f"Import and verify history ec2 file failed: {e}")
                 eks_config_file = self._select_history_path + "/cluster.yaml"
                 if not exists(eks_config_file):
                     logging.warning(
@@ -288,8 +284,9 @@ class FiniteStateMachine(object):
                         saved_eks_config_file=eks_config_file
                     )
                 except Exception as e:
-                    raise Exception(
-                        "A EC2 file exists but a eks file does not exists")
+                    raise Exception("A EC2 file exists but a eks file does not exists")
+                
+                
 
         return
 
@@ -379,8 +376,7 @@ class FiniteStateMachine(object):
                     raise Exception(f"setup ec2 failed :{e}")
                 # create eks
                 created_eks_config_file = (
-                    self.saved_config_path_base +
-                    f"/{self._system_id}/cluster.yaml"
+                    self.saved_config_path_base + f"/{self._system_id}/cluster.yaml"
                 )
                 self._aws_services.generate_eks_config_and_export(
                     eks_config_yaml_dcit=self._eks_config_dict,
@@ -406,8 +402,7 @@ class FiniteStateMachine(object):
         logging.info("Check cloud resources")
         # check keypair
         try:
-            self._aws_services.handle_aws_actions(
-                action=AWSActions.create_keypair.name)
+            self._aws_services.handle_aws_actions(action=AWSActions.create_keypair.name)
         except Exception as e:
             raise Exception(f"check keypair error:{e}")
         # check ec2 status
@@ -425,11 +420,14 @@ class FiniteStateMachine(object):
                     f"Cluster {cluster_name} does not exist. Please clean up resouces and create a new!!"
                 )
             else:
-                logging.info(
-                    f"Cluster {cluster_name} exist. Continue to process... ")
+                logging.info(f"Cluster {cluster_name} exist. Continue to process... ")
 
         except Exception as e:
             raise Exception(f"search eks cluster failed :{e}")
+        
+        if self._action == MenuActions.resume_from_existing.name:
+            # upload temp project folder
+            self._aws_services.
 
     # Process state
     def handle_process(self, event):
@@ -459,8 +457,7 @@ class FiniteStateMachine(object):
                     cluster_name=cluster_name,
                 )
                 # execute run file command
-                self._aws_services.run_ssh_command(
-                    ssh_command=run_files_command)
+                self._aws_services.run_ssh_command(ssh_command=run_files_command)
             else:
                 logging.info("SSH Debug mode")
                 self._aws_services.run_ssh_debug_mode()
@@ -543,8 +540,7 @@ class FiniteStateMachine(object):
                 # Delete config
 
                 try:
-                    history_path = self.saved_config_path_base + \
-                        f"/{self._system_id}"
+                    history_path = self.saved_config_path_base + f"/{self._system_id}"
                     delete_project_folder(project_path=history_path)
                 except Exception as e:
                     raise Exception(f"Delete {history_path} failed")
@@ -645,8 +641,7 @@ class FiniteStateMachine(object):
         logging.info("Verify files list success")
         config_yaml = temp_project_absoult_path + "/config.yaml"
         try:
-            self._config_yaml_dcit = convert_yaml_to_json(
-                yaml_file=config_yaml)
+            self._config_yaml_dcit = convert_yaml_to_json(yaml_file=config_yaml)
         except Exception as e:
             raise Exception(f"convert config yaml failed")
         try:
@@ -667,8 +662,7 @@ class FiniteStateMachine(object):
                 temp_project_absoult_path + f"/{solver_lic_file_local_source}"
             )
             if not exists(solver_absolute_path_file):
-                raise Exception(
-                    f" solver {solver_absolute_path_file} does not exist")
+                raise Exception(f" solver {solver_absolute_path_file} does not exist")
             logging.info(f"solver file :{solver_lic_file_local_source} exist")
 
         return

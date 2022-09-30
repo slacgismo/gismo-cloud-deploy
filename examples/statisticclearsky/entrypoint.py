@@ -1,16 +1,9 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-
 # PVInsight Code Imports
 from solardatatools import DataHandler
 from solardatatools.dataio import get_pvdaq_data
 
 import logging
-
 from os.path import exists
-from datetime import datetime
-from .my_modules import read_csv_from_s3
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -52,8 +45,7 @@ def entrypoint(
     if solver_name is not None and (exists(solver_file) is False):
         return Exception(f"solver_file:{solver_file} dose not exist")
 
-    data_frame = get_pvdaq_data(sysid=34, year=range(
-        2011, 2015), api_key="DEMO_KEY")[0]
+    data_frame = get_pvdaq_data(sysid=34, year=range(2011, 2015), api_key="DEMO_KEY")[0]
     dh = DataHandler(data_frame)
     dh.run_pipeline(power_col="ac_power")
     dh.fit_statistical_clear_sky_model()
