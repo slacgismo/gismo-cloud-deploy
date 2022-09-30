@@ -550,7 +550,7 @@ class AWSServices(object):
 
     def wake_up_ec2(self, 
         wait_time:int = 90, 
-        delay:int = 1):
+        delay:int = 3):
 
         logging.info("Wake up ec2")
         ec2_instance_id = self._ec2_instance_id
