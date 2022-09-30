@@ -1,8 +1,7 @@
-from email.policy import default
+
 import json
 import logging
-from telnetlib import STATUS
-import glob
+
 from project import create_app, ext_celery
 from utils.aws_utils import connect_aws_client
 from utils.find_matched_column_name_set import find_matched_column_name_set
@@ -11,7 +10,7 @@ from flask.cli import FlaskGroup
 import click
 import time
 from project.tasks import process_data_task, pong_worker
-from project.tasks_utilities.tasks_utils import publish_message_sns, send_queue_message
+from project.tasks_utilities.tasks_utils import send_queue_message
 from models.SNSSubjectsAlert import SNSSubjectsAlert
 
 app = create_app()
@@ -70,7 +69,7 @@ def process_files(worker_config_str: str):
         raise
     default_files = json.loads(worker_config_json["default_process_files"])
     sqs_url = worker_config_json["sqs_url"]
-    po_server_name =  worker_config_json["po_server_name"]
+    po_server_name = worker_config_json["po_server_name"]
     try:
         s3_client = connect_aws_client(
             client_name="s3",
@@ -92,23 +91,24 @@ def process_files(worker_config_str: str):
     # print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
-    repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])
+    repeat_number_per_round = int(
+        worker_config_json["repeat_number_per_round"])
     for i in range(repeat_number_per_round):
         for index_file, file in enumerate(default_files):
-            columns_key=worker_config_json["process_column_keywords"] 
+            columns_key = worker_config_json["process_column_keywords"]
             matched_column_set = find_matched_column_name_set(
-                    bucket_name=worker_config_json["data_bucket"],
-                    columns_key=columns_key,
-                    file_path_name=file,
-                    s3_client=s3_client,
-                    file_extension = ".csv"
-                )
-            
+                bucket_name=worker_config_json["data_bucket"],
+                columns_key=columns_key,
+                file_path_name=file,
+                s3_client=s3_client,
+                file_extension=".csv",
+            )
+
             if len(matched_column_set) < 1:
                 # if no match return no Column set
                 matched_column_set = {"None"}
 
-            for index_colium,  column in enumerate(matched_column_set):
+            for index_colium, column in enumerate(matched_column_set):
                 task_input_json = worker_config_json
                 task_input_json["curr_process_file"] = file
                 task_input_json["curr_process_column"] = column
@@ -127,12 +127,11 @@ def process_files(worker_config_str: str):
                     "column_name": column,
                     "task_id": str(task_id),
                     "send_time": str(send_time),
-                    "po_server_name":po_server_name,
+                    "po_server_name": po_server_name,
                     "index_file": index_file,
                     "index_colium": index_colium,
-                    "repeat_number_per_round":i,
+                    "repeat_number_per_round": i,
                     "alert_type": SNSSubjectsAlert.SEND_TASKID.name,
-
                 }
                 MSG_BODY = json.dumps(msg_body)
                 send_response = send_queue_message(
@@ -152,7 +151,7 @@ def process_files(worker_config_str: str):
     msg_body = {
         "data": None,
         "error": None,
-        "po_server_name":po_server_name,
+        "po_server_name": po_server_name,
         "total_tasks": len(task_ids),
         "alert_type": SNSSubjectsAlert.SEND_TASKID_INFO.name,
     }

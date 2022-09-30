@@ -13,6 +13,7 @@ from terminaltables import AsciiTable
 import plotly.express as px
 import plotly.io as pio
 import botocore
+from mypy_boto3_s3.client import S3Client
 
 
 def process_df_for_gantt(df: pd):
@@ -42,7 +43,7 @@ def process_df_for_gantt(df: pd):
 def process_logs_from_local(
     logs_file_path_name_local: str = None,
     saved_image_name_local: str = None,
-    s3_client: "botocore.client.S3" = None,
+    s3_client: S3Client = None,
 ) -> bool:
     if exists(logs_file_path_name_local) is False:
         logger.error(f"{logs_file_path_name_local} does not exist")
@@ -50,7 +51,7 @@ def process_logs_from_local(
 
     df = pd.read_csv(logs_file_path_name_local)
 
-    pods_name_prefix_set = ("worker")
+    pods_name_prefix_set = "worker"
     pods_info_dict = match_pod_ip_to_node_name(pods_name_prefix_set)
 
     # print(pods_info_dict)
@@ -140,23 +141,20 @@ def read_all_csv_from_s3_and_parse_dates_from(
     return result_df
 
 
-
-
 def analyze_all_local_logs_files(
-        project:str ,
-        instanceType:str,
-        num_namspaces:int ,
-        init_process_time_list:float,
-        total_proscee_time_list:float,
-        eks_nodes_number:int,
-        num_workers:int,
-        logs_file_path:str,
-        performance_file_txt:str,
-        num_unfinished_tasks:int,
-        code_templates_folder:str,
-        repeat_number:int
-    ) -> List[str]:
-
+    project: str,
+    instanceType: str,
+    num_namspaces: int,
+    init_process_time_list: float,
+    total_proscee_time_list: float,
+    eks_nodes_number: int,
+    num_workers: int,
+    logs_file_path: str,
+    performance_file_txt: str,
+    num_unfinished_tasks: int,
+    code_templates_folder: str,
+    repeat_number: int,
+) -> List[str]:
 
     logs_files_list = []
     for _file in os.listdir(logs_file_path):
@@ -196,7 +194,7 @@ def analyze_all_local_logs_files(
             num_unfinished_tasks=0,
             code_templates_folder=code_templates_folder,
         )
-  
+
         repeat_number_str = f"Repeat {index}"
         file_name.append(logs_file)
         total_tasks.append(per_dict["total_tasks"])
@@ -212,20 +210,20 @@ def analyze_all_local_logs_files(
         effeciencyFactor.append(per_dict["effeciencyFactor"])
         header.append(repeat_number_str)
         index += 1
-        # save to dict 
-        performance_dict[logs_file]  = {
-            'total_tasks':total_tasks,
-            'average_task_duration' : per_dict["average_task_duration"],
-            'min_duration':per_dict["min_duration"],
-            'shortest_task':per_dict["shortest_task"],
-            'longest_task':per_dict["longest_task"],
-            'max_duration':per_dict["max_duration"],
-            'num_error_task':per_dict["num_error_task"],
-            'num_unfinished_tasks':per_dict["num_unfinished_tasks"],
-            'task_duration_in_parallelism':per_dict["task_duration_in_parallelism"],
-            'tasks_durtaion_sum':per_dict["task_duration_in_parallelism"],
-            'effeciencyFactor':per_dict["effeciencyFactor"],
-            'repeat_number_str':repeat_number_str
+        # save to dict
+        performance_dict[logs_file] = {
+            "total_tasks": total_tasks,
+            "average_task_duration": per_dict["average_task_duration"],
+            "min_duration": per_dict["min_duration"],
+            "shortest_task": per_dict["shortest_task"],
+            "longest_task": per_dict["longest_task"],
+            "max_duration": per_dict["max_duration"],
+            "num_error_task": per_dict["num_error_task"],
+            "num_unfinished_tasks": per_dict["num_unfinished_tasks"],
+            "task_duration_in_parallelism": per_dict["task_duration_in_parallelism"],
+            "tasks_durtaion_sum": per_dict["task_duration_in_parallelism"],
+            "effeciencyFactor": per_dict["effeciencyFactor"],
+            "repeat_number_str": repeat_number_str,
         }
 
     initial_process_time = initial_process_time + init_process_time_list
@@ -288,7 +286,7 @@ def analyze_all_local_logs_files(
         header,
         ["Project", project, ""],
         ["Total number of nodes", f"{eks_nodes_number}"],
-        ["Number of namespaces",f"{num_namspaces}"],
+        ["Number of namespaces", f"{num_namspaces}"],
         ["Number of workers per namesapces", f"{num_workers}"],
         ["Instance type", f"{instanceType}"],
         file_name,

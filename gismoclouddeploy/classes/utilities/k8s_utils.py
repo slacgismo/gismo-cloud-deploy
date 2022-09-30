@@ -1,4 +1,3 @@
-
 from kubernetes import client, config
 from typing import Tuple
 import logging
@@ -74,7 +73,9 @@ def create_k8s_deployment_from_yaml(
     namspace: str = "default",
 ) -> bool:
 
-    print(f"create_k8s_deployment_from_yaml {service_name} namspace :{namspace}, file_name:{file_name}")
+    print(
+        f"create_k8s_deployment_from_yaml {service_name} namspace :{namspace}, file_name:{file_name}"
+    )
     print("--------------------------")
     try:
         file_setting = read_k8s_yml(full_path_name=file_name)
@@ -107,9 +108,9 @@ def create_k8s_deployment_from_yaml(
             "imagePullPolicy"
         ] = imagePullPolicy
 
-    # ehceck daemonset or deployment 
+    # ehceck daemonset or deployment
     kind = file_setting["kind"]
-            
+
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
     if kind == "Deployment":
@@ -134,6 +135,7 @@ def create_k8s_deployment_from_yaml(
         except Exception as e:
             logger.error(f"create k8s daemon set error: {e}")
             raise e
+
 
 def get_k8s_deployment(prefix: str = None) -> str:
     config.load_kube_config()
@@ -177,7 +179,9 @@ def get_k8s_pod_info(prefix: str = None) -> dict:
     }
 
 
-def get_k8s_image_and_tag_from_deployment(prefix: str = None, namespace:str = "default") -> Tuple[str, str, str]:
+def get_k8s_image_and_tag_from_deployment(
+    prefix: str = None, namespace: str = "default"
+) -> Tuple[str, str, str]:
     try:
         config.load_kube_config()
         v1 = client.AppsV1Api()
@@ -199,7 +203,7 @@ def get_k8s_image_and_tag_from_deployment(prefix: str = None, namespace:str = "d
         raise e
 
 
-def check_k8s_services_exists(name: str = None, namspace:str = "default") -> bool:
+def check_k8s_services_exists(name: str = None, namspace: str = "default") -> bool:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     # resp = v1.list_service_for_all_namespaces(watch=False)
@@ -244,12 +248,15 @@ def get_k8s_pod_name(pod_name: str = None) -> List[dict]:
 
     return None
 
-def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str = "default") -> str:
+
+def get_k8s_pod_name_from_namespace(
+    pod_name_prefix: str = None, namespace: str = "default"
+) -> str:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     ret = v1.list_namespaced_pod(namespace)
     pods = []
-    for i in ret.items:    
+    for i in ret.items:
         status = i.status.conditions[-1].status
         podname = i.metadata.name.split("-")[0]
         if podname == pod_name_prefix:
@@ -262,63 +269,64 @@ def get_k8s_pod_name_from_namespace (pod_name_prefix:str = None, namespace:str =
             if len(container_statuses) >= 1:
                 ready = i.status.container_statuses[-1].ready
             ready = i.status.container_statuses[-1].ready
-            
+
             if ready is True:
                 # if it's ready
                 started_at = i.status.container_statuses[-1].state.running.started_at
                 status = i.status
-                timestamp =  started_at.timestamp()
+                timestamp = started_at.timestamp()
                 pod_info = {"name": name, "timestamp": timestamp}
                 pods.append(pod_info)
-                
-    sort_orders = sorted(pods, key=lambda d: d['timestamp'], reverse=True) 
-    if len(sort_orders) > 0 :
-        res = [ sub['name'] for sub in sort_orders ][0]
+
+    sort_orders = sorted(pods, key=lambda d: d["timestamp"], reverse=True)
+    if len(sort_orders) > 0:
+        res = [sub["name"] for sub in sort_orders][0]
         print(f"----------- get first k8s_pod_name :{ res}")
         return res
 
     return None
 
 
-
-def k8s_create_namespace(namespace:str = None):
+def k8s_create_namespace(namespace: str = None):
     if namespace is None:
         logger.error("namespace is None")
-        return 
+        return
     if not check_k8s_namespace_exits(namespace):
         ns = client.V1Namespace()
         ns.metadata = client.V1ObjectMeta(name=namespace)
         v1 = client.CoreV1Api()
         v1.create_namespace(ns)
         logging.info(f'Created namespace "{namespace}"')
-    return 
+    return
 
-def k8s_delete_namespace(namespace:str = None):
+
+def k8s_delete_namespace(namespace: str = None):
     if namespace is None:
         logger.error("namespace is None")
-        return 
+        return
 
     if check_k8s_namespace_exits(namespace):
         logger.info(f"Delete {namespace} ")
     else:
         logger.info(f"No {namespace} exists ")
-    return 
-    
+    return
 
-def check_k8s_namespace_exits(namespace:str = None) -> bool:
+
+def check_k8s_namespace_exits(namespace: str = None) -> bool:
     config.load_kube_config()
-    v1 = client.CoreV1Api() 
+    v1 = client.CoreV1Api()
     ret = v1.list_namespace()
-    for i in ret.items:    
+    for i in ret.items:
         name = i.metadata.name
         if name == namespace:
             logger.info(f"{namespace} already exits")
             return True
     return False
+
+
 def k8s_list_all_namespace():
     config.load_kube_config()
     v1 = client.CoreV1Api()
     ret = v1.list_namespace()
-    
-    print(ret)
 
+    print(ret)

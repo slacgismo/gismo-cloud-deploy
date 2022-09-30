@@ -1,7 +1,7 @@
 from asyncio import log
 import boto3
 import pandas as pd
-
+from mypy_boto3_s3.client import S3Client
 import os
 import os.path
 
@@ -44,7 +44,7 @@ def read_csv_from_s3_with_column_name(
     bucket_name: str = None,
     file_path_name: str = None,
     column_name: str = None,
-    s3_client: str = None,
+    s3_client: S3Client = None,
 ) -> pd.DataFrame:
 
     if (
@@ -70,24 +70,3 @@ def read_csv_from_s3_with_column_name(
     else:
         print(f"Unsuccessful S3 get_object response. Status - {status}")
     return df
-
-
-def download_solver_licence_from_s3_and_save(
-    s3_client,
-    bucket_name: str,
-    file_path_name: str,
-    saved_file_path: str,
-    saved_file_name: str,
-) -> None:
-
-    if not os.path.exists(saved_file_path):
-        os.makedirs(saved_file_path)
-
-    saved_file_path_name = saved_file_path + "/" + saved_file_name
-
-    try:
-        s3_client.download_file(bucket_name, file_path_name, saved_file_path_name)
-    except Exception as e:
-        raise e
-
-

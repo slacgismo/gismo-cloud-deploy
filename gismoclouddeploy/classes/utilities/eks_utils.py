@@ -25,8 +25,7 @@ def num_pod_ready(container_prefix: str) -> int:
     ready_replicas = 0
     for i in resp.items:
         pod_prefix = i.metadata.name.split("-")[0]
-  
-        
+
         if pod_prefix == container_prefix:
             if (
                 int(i.metadata.annotations["deployment.kubernetes.io/revision"])
@@ -52,11 +51,13 @@ def wait_pod_ready(
     print(f"num_container {num_container} container_prefix {container_prefix}")
     cunrrent_num_container = 0
     # print(f"container_prefix :{container_prefix}")
-    while counter > 0 :
+    while counter > 0:
         cunrrent_num_container = num_pod_ready(container_prefix=container_prefix)
         if cunrrent_num_container == num_container:
-            logger.info(f"{num_container} {container_prefix} pods are running --> break")
-            
+            logger.info(
+                f"{num_container} {container_prefix} pods are running --> break"
+            )
+
             return
         counter -= delay
         logger.info(
@@ -127,7 +128,10 @@ def match_pod_ip_to_node_name(pods_name_sets: set) -> dict:
             pods[ip] = dict(POD_NAME=_pod_name, NOD_NAME=_node_name)
     return pods
 
-def match_hostname_from_node_name(hostname:str = None,pod_prefix:str = "worker") -> str:
+
+def match_hostname_from_node_name(
+    hostname: str = None, pod_prefix: str = "worker"
+) -> str:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     # print("Listing pods with their IPs:")
@@ -139,10 +143,11 @@ def match_hostname_from_node_name(hostname:str = None,pod_prefix:str = "worker")
         if _pod_prefix == pod_prefix and _pod_name == hostname:
             _node_name = i.spec.node_name
             return _node_name
-            
+
     return None
 
-def collect_node_name_and_pod_name(pod_prefix:str = "worker")  -> dict:
+
+def collect_node_name_and_pod_name(pod_prefix: str = "worker") -> dict:
     config.load_kube_config()
     v1 = client.CoreV1Api()
     # print("Listing pods with their IPs:")
@@ -153,10 +158,10 @@ def collect_node_name_and_pod_name(pod_prefix:str = "worker")  -> dict:
         _pod_prefix = i.metadata.name.split("-")[0]
         _pod_name = i.metadata.name
         if _pod_prefix == pod_prefix:
-           
+
             _node_name = i.spec.node_name
             nodes[_pod_name] = _node_name
-            
+
     return nodes
 
 
@@ -235,4 +240,3 @@ def scale_eks_nodes_and_wait(
     except Exception as e:
         logger.error(f"scale node number error: {e}")
         raise e
-

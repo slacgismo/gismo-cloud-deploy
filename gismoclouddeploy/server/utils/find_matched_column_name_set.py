@@ -1,10 +1,10 @@
 from .aws_utils import (
     read_column_from_csv_from_s3,
-
 )
 from typing import List, Set
 import logging
 import re
+
 # logger config
 logger = logging.getLogger()
 logging.basicConfig(
@@ -17,7 +17,7 @@ def find_matched_column_name_set(
     bucket_name: str = None,
     file_path_name: str = None,
     s3_client: "botocore.client.S3" = None,
-    file_extension: str = ".csv"
+    file_extension: str = ".csv",
 ) -> Set[set]:
     """
     Find the match column name from key word. if matched column has no value inside, it will be skipped.
@@ -38,6 +38,6 @@ def find_matched_column_name_set(
     matched_column_set = set()
     for column in total_columns:
         match = re.search(columns_key, column)
-        if (match):
+        if match:
             matched_column_set.add(column)
     return matched_column_set

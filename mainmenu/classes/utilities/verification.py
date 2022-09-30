@@ -2,10 +2,11 @@ import logging
 from .convert_yaml import convert_yaml_to_json
 from os.path import exists
 
-def verify_keys_in_configfile(config_dict:dict):
-    '''
-     Verify Keys in config_file
-    '''
+
+def verify_keys_in_configfile(config_dict: dict):
+    """
+    Verify Keys in config_file
+    """
     try:
         verify_a_key_in_dict(dict_format=config_dict, key="scale_eks_nodes_wait_time")
         verify_a_key_in_dict(dict_format=config_dict, key="interval_of_wait_pod_ready")
@@ -21,15 +22,18 @@ def verify_keys_in_configfile(config_dict:dict):
         verify_a_key_in_dict(dict_format=config_dict, key="is_celeryflower_on")
         # Solver
         verify_a_key_in_dict(dict_format=config_dict, key="solver_name")
-        verify_a_key_in_dict(dict_format=config_dict, key="solver_lic_target_path_in_images_dest")
-        verify_a_key_in_dict(dict_format=config_dict, key="solver_lic_file_local_source")
+        verify_a_key_in_dict(
+            dict_format=config_dict, key="solver_lic_target_path_in_images_dest"
+        )
+        verify_a_key_in_dict(
+            dict_format=config_dict, key="solver_lic_file_local_source"
+        )
         logging.info("Verify config key success")
     except Exception as e:
         raise Exception(f"Assert error {e}")
 
 
-
-def verify_keys_in_ec2_configfile(config_dict:dict):
+def verify_keys_in_ec2_configfile(config_dict: dict):
 
     try:
         verify_a_key_in_dict(dict_format=config_dict, key="ec2_image_id")
@@ -45,34 +49,33 @@ def verify_keys_in_ec2_configfile(config_dict:dict):
         raise AssertionError(f"Assert ec2 error {e}")
 
 
-def verify_keys_in_eks_configfile(config_dict:dict):
+def verify_keys_in_eks_configfile(config_dict: dict):
     try:
         verify_a_key_in_dict(dict_format=config_dict, key="apiVersion")
         verify_a_key_in_dict(dict_format=config_dict, key="metadata")
         verify_a_key_in_dict(dict_format=config_dict, key="nodeGroups")
-        metadata = config_dict['metadata']
+        metadata = config_dict["metadata"]
         verify_a_key_in_dict(dict_format=metadata, key="name")
         verify_a_key_in_dict(dict_format=metadata, key="region")
         verify_a_key_in_dict(dict_format=metadata, key="tags")
-        nodeGroups = config_dict['nodeGroups']
+        nodeGroups = config_dict["nodeGroups"]
         assert len(nodeGroups) > 0
         logging.info("Verify eks config key success")
     except AssertionError as e:
         raise AssertionError(f"Assert eks error {e}")
 
 
-def verify_a_key_in_dict(dict_format:dict, key:str) -> None:
+def verify_a_key_in_dict(dict_format: dict, key: str) -> None:
     try:
         assert key in dict_format
     except Exception:
         raise Exception(f"does not contain {key}")
 
 
-
-def import_and_verify_ec2_config(ec2_config_file:str) -> dict:
+def import_and_verify_ec2_config(ec2_config_file: str) -> dict:
     logging.info(f"import from ec2 {ec2_config_file}")
     if ec2_config_file is None:
-        raise Exception(f"saved_ec2_config_file is None") 
+        raise Exception(f"saved_ec2_config_file is None")
     if not exists(ec2_config_file):
         raise Exception("saved_ec2_config_file does not exist")
     try:
@@ -80,12 +83,13 @@ def import_and_verify_ec2_config(ec2_config_file:str) -> dict:
         verify_keys_in_ec2_configfile(config_dict=config_dict)
         return config_dict
     except Exception as e:
-        raise e 
+        raise e
 
-def import_and_verify_eks_config(saved_eks_config_file:str)-> dict:
+
+def import_and_verify_eks_config(saved_eks_config_file: str) -> dict:
     logging.info("import from eks")
     if saved_eks_config_file is None:
-        raise Exception(f"saved_eks_config_file is None") 
+        raise Exception(f"saved_eks_config_file is None")
     if not exists(saved_eks_config_file):
         raise Exception("saved_eks_config_file does not exist")
     try:

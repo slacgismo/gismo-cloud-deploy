@@ -7,8 +7,6 @@ import sys
 import threading
 
 
-
-
 class Command(object):
     def __init__(self, cmd):
         self.cmd = cmd
@@ -28,9 +26,6 @@ class Command(object):
             thread.join()
 
         return self.process.returncode
-
-
-
 
 
 def exec_subprocess_command(command: str) -> str:
@@ -63,14 +58,16 @@ def exec_docker_command(command: str) -> str:
     return result.stdout
 
 
-def exec_eksctl_create_cluster(cluster_file:str) -> str:
+def exec_eksctl_create_cluster(cluster_file: str) -> str:
     try:
         command = f"eksctl create cluster -f {cluster_file}"
         output = exec_subprocess_command(command=command)
         return output
     except Exception as e:
         raise e
-def exec_eksctl_delete_cluster(cluster_file:str) -> str:
+
+
+def exec_eksctl_delete_cluster(cluster_file: str) -> str:
     try:
         command = f"eksctl delete cluster -f {cluster_file}"
         output = exec_subprocess_command(command=command)
@@ -78,7 +75,8 @@ def exec_eksctl_delete_cluster(cluster_file:str) -> str:
     except Exception as e:
         raise e
 
-def exec_eksctl_update_admin_arn(cluster_name:str, region:str, arn:str) -> str:
+
+def exec_eksctl_update_admin_arn(cluster_name: str, region: str, arn: str) -> str:
     try:
         command = f"eksctl create iamidentitymapping --cluster  {cluster_name} --region={region} --arn {arn} --group system:masters --username admin"
         output = exec_subprocess_command(command=command)
@@ -86,43 +84,52 @@ def exec_eksctl_update_admin_arn(cluster_name:str, region:str, arn:str) -> str:
     except Exception as e:
         raise e
 
-def invoke_kubectl_delete_all_po(namespace:str = "default"):
+
+def invoke_kubectl_delete_all_po(namespace: str = "default"):
     command = ["kubectl", "delete", "po", "--all", "-n", f"{namespace}"]
 
     res = exec_docker_command(command)
     return res
 
-def invoke_kubectl_delete_all_services(namespace:str= "default"):
-    command = ["kubectl", "delete", "svc", "--all", "-n" ,f"{namespace}"]
+
+def invoke_kubectl_delete_all_services(namespace: str = "default"):
+    command = ["kubectl", "delete", "svc", "--all", "-n", f"{namespace}"]
 
     res = exec_docker_command(command)
     return res
 
-def invoke_kubectl_delete_all_deployment(namespace:str = "default"):
-    command = ["kubectl", "delete", "deployment", "--all","-n",f"{namespace}"]
+
+def invoke_kubectl_delete_all_deployment(namespace: str = "default"):
+    command = ["kubectl", "delete", "deployment", "--all", "-n", f"{namespace}"]
 
     res = exec_docker_command(command)
     return res
 
-## Create Namespace 
-def invoke_kubectl_create_namespaces(namespace:str) -> str:
+
+## Create Namespace
+def invoke_kubectl_create_namespaces(namespace: str) -> str:
     command = ["kubectl", "create", "namespace", f"{namespace}"]
 
     res = exec_docker_command(command)
     return res
-## Delete Namespace 
-def invoke_kubectl_delete_namespaces(namespace:str) -> str:
+
+
+## Delete Namespace
+def invoke_kubectl_delete_namespaces(namespace: str) -> str:
     command = ["kubectl", "delete", "namespace", f"{namespace}", "--wait=false"]
 
     res = exec_docker_command(command)
     return res
 
-def invoke_kubectl_delete_all_from_namspace(namespace:str) -> str:
-    command = ["kubectl", "delete","all","--all","-n", f"{namespace}"]
+
+def invoke_kubectl_delete_all_from_namspace(namespace: str) -> str:
+    command = ["kubectl", "delete", "all", "--all", "-n", f"{namespace}"]
     print(f"command :{command}")
     res = exec_docker_command(command)
 
     return res
+
+
 ## ===================
 
 
@@ -170,16 +177,14 @@ def invoke_docker_compose_up() -> str:
 
 def invoke_docker_compose_build(
     project: str = None,
-    target_path_of_upload_file :str = None,
-    source_path_of_upload_file :str = None,
-    
+    target_path_of_upload_file: str = None,
+    source_path_of_upload_file: str = None,
 ) -> str:
     command = f"WORKER_DIRECTORY={project} docker-compose build --build-arg CODES_FOLDER={project} --build-arg TARGET_PATH_OF_UPLOAD_FILE={target_path_of_upload_file} --build-arg SOURCE_PATH_OF_UPLOAD_FILE={source_path_of_upload_file}"
 
     print(f"Build command :{command}")
     output = subprocess.check_output(["bash", "-c", command])
     return output
-
 
 
 def invoke_ecr_validation(ecr_repo: str) -> str:
@@ -202,7 +207,6 @@ def invoke_tag_image(
 def invoke_push_image(image_name: str, image_tag: str, ecr_repo: str) -> str:
     command = f"docker push {ecr_repo}/{image_name}:{image_tag}"
     output = exec_subprocess_command(command=command)
-
 
 
 def invoke_eksctl_scale_node(
@@ -228,22 +232,20 @@ def invoke_exec_docker_run_process_files(
     config_params_str: str = None,
     image_name: str = None,
     first_n_files: str = None,
-    namespace:str = "default",
+    namespace: str = "default",
 ) -> str:
 
     command = [
         "docker",
         "exec",
         "-n",
-        f"{namespace}"
-        "-it",
+        f"{namespace}" "-it",
         image_name,
         "python",
         "app.py",
         "process_files",
         f"{config_params_str}",
         f"{first_n_files}",
-
     ]
     try:
         # print(command)
@@ -279,9 +281,7 @@ def invoke_exec_docker_ping_worker(
 
 
 def invoke_exec_docker_check_task_status(
-    server_name: str = None,
-    task_id: str = None,
-    namespace:str = "default"
+    server_name: str = None, task_id: str = None, namespace: str = "default"
 ) -> str:
     command = [
         "docker",
@@ -314,11 +314,9 @@ def invoke_eks_get_cluster() -> str:
 
 
 def invoke_exec_k8s_run_process_files(
-    config_params_str: str = None,
-    pod_name: str = None,
-    namespace:str = "default"
+    config_params_str: str = None, pod_name: str = None, namespace: str = "default"
 ) -> None:
-    
+
     command = [
         "kubectl",
         "exec",
@@ -331,7 +329,7 @@ def invoke_exec_k8s_run_process_files(
         "python",
         "app.py",
         "process_files",
-        f"{config_params_str}"
+        f"{config_params_str}",
     ]
     # print(f"run-fils command: {command}")
     try:
@@ -348,10 +346,8 @@ def invoke_exec_k8s_run_process_files(
         res.terminate()
 
 
-
 def invoke_exec_k8s_ping_worker(
-    service_name: str = None,
-    namespace:str = "default"
+    service_name: str = None, namespace: str = "default"
 ) -> str:
     command = [
         "kubectl",
@@ -372,9 +368,7 @@ def invoke_exec_k8s_ping_worker(
 
 
 def invoke_exec_k8s_check_task_status(
-    server_name: str = None,
-    task_id: str = None,
-    namespace :str = "default"
+    server_name: str = None, task_id: str = None, namespace: str = "default"
 ) -> str:
     command = [
         "kubectl",
@@ -390,7 +384,7 @@ def invoke_exec_k8s_check_task_status(
         "check_task_status",
         f"{task_id}",
     ]
-   
+
     try:
         res = subprocess.Popen(
             command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -440,7 +434,8 @@ def invoke_ks8_exec_revoke_task(pod_name: str = None, task_id: str = None) -> st
     res = exec_docker_command(command)
     return res
 
-# kubectl exec --namespace 0-dhcpvisitor21818slacstanfordedu server-65bf8bc584-tzkgr  --stdin --tty -- python app.py ping_worker 
+
+# kubectl exec --namespace 0-dhcpvisitor21818slacstanfordedu server-65bf8bc584-tzkgr  --stdin --tty -- python app.py ping_worker
 def invoke_docker_check_image_exist(image_name: str = None):
     try:
         command = f"docker image inspect {image_name}"
@@ -456,10 +451,9 @@ def invoke_check_docker_services():
     return output
 
 
-
-def invoke_force_delete_namespace(namespace:str = None):
+def invoke_force_delete_namespace(namespace: str = None):
     try:
-        command = f"kubectl get namespace {namespace} -o json > {namespace}.json; sed -i -e 's/\"kubernetes\"//' {namespace}.json; kubectl replace --raw \"/api/v1/namespaces/{namespace}/finalize\" -f ./{namespace}.json"
+        command = f'kubectl get namespace {namespace} -o json > {namespace}.json; sed -i -e \'s/"kubernetes"//\' {namespace}.json; kubectl replace --raw "/api/v1/namespaces/{namespace}/finalize" -f ./{namespace}.json'
         output = subprocess.check_output(["bash", "-c", command])
         return output
     except Exception as e:
@@ -467,12 +461,12 @@ def invoke_force_delete_namespace(namespace:str = None):
 
 
 def invoke_delete_all_resource_in_all_namespace():
-    command = '''kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all'''
+    command = """kubectl delete "$(kubectl api-resources --namespaced=true --verbs=delete -o name | tr "\n" "," | sed -e 's/,$//')" --all"""
     output = subprocess.check_output(["bash", "-c", command])
     return output
+
 
 def invoke_docker_system_prune_all():
-    command = 'docker system prune -a -f'
+    command = "docker system prune -a -f"
     output = subprocess.check_output(["bash", "-c", command])
     return output
-

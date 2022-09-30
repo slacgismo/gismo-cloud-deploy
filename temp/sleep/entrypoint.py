@@ -1,17 +1,10 @@
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# PVInsight Code Imports
-from solardatatools import DataHandler
-from solardatatools.dataio import get_pvdaq_data
-
 import logging
+
 
 from os.path import exists
 from datetime import datetime
 from .my_modules import read_csv_from_s3
-
+import time
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -19,7 +12,6 @@ logging.basicConfig(
 
 
 def entrypoint(
-    user_id: str = None,
     data_bucket: str = None,
     curr_process_file: str = None,
     curr_process_column: str = None,
@@ -40,23 +32,47 @@ def entrypoint(
     :param str aws_region:
     :param str solver_name: The solver name that defined in config.yaml
     :param str solver_file: The solver file location inside worker. This file location is defined in config.yaml.
-    :return dict json_message: Return a json format object contain user_id (This message is used to publish sns message and track logs in dynamodb)
+    :return dict json_message: Return a json format object
     """
 
     ## ==================== Modify your code below ==================== ##
+    # curr_process_file = "PVO/PVOutput/10284.csv"
+    # curr_process_column = "Power(W)"
     logger.info(
         f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
     )
+    print("---------->")
+    delay = 5
+    start_time = time.time()
+    i = 0
+    is_end = False
+    period = 0
+    end_time = 0
+    print ("Start : %s" % time.ctime())
+    while period < delay:
+        i += 0
+        # _curr = time.time()
+        end_time =  time.time()
+        period = int(end_time - start_time)
+        print(f"period: {period}")
+    print ("End : %s" % time.ctime())
 
-    # check solver file exist: The download function is inside `check_and_download_solver` function ""
-    if solver_name is not None and (exists(solver_file) is False):
-        return Exception(f"solver_file:{solver_file} dose not exist")
+    
 
-    data_frame = get_pvdaq_data(sysid=34, year=range(
-        2011, 2015), api_key="DEMO_KEY")[0]
-    dh = DataHandler(data_frame)
-    dh.run_pipeline(power_col="ac_power")
-    dh.fit_statistical_clear_sky_model()
-    save_data = {"deg_rate": dh.scsf.deg_rate}
+    try:
+        # ==================== PS:Save data in json format is required  ==================== ##
 
+        save_data = {
+            "bucket": data_bucket,
+            "curr_process_file": curr_process_file,
+            "curr_process_column": curr_process_column,
+            "delay":delay,
+            "period": period,
+            "start_time": start_time,
+            "end_time": end_time,
+        }
+    except Exception as e:
+        raise Exception(f"Save data error: {e}")
+
+    # # ==================== Modify your code above ==================== ##
     return save_data

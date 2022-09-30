@@ -1,5 +1,6 @@
 import yaml
 
+
 def convert_yaml_to_json(yaml_file: str = None):
     try:
         with open(yaml_file, "r") as stream:

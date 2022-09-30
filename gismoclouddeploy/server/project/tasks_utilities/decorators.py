@@ -6,8 +6,6 @@ import time
 import os
 import socket
 from .tasks_utils import (
-    publish_message_sns,
-    check_and_download_solver,
     send_queue_message,
     connect_aws_client,
 )
@@ -64,7 +62,7 @@ def tracklog_decorator(func):
         host_ip = socket.gethostbyname(hostname)
         pid = os.getpid()
         msg_body = {
-            "po_server_name":po_server_name,
+            "po_server_name": po_server_name,
             "file_name": curr_process_file,
             "column_name": curr_process_column,
             "task_id": task_id,
@@ -98,6 +96,5 @@ def tracklog_decorator(func):
             sqs_client=sqs_client,
         )
         print(f"---------> {curr_process_file}")
-        # print(send_response)
 
     return wrapper

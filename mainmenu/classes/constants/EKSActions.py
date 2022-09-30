@@ -1,7 +1,6 @@
 import enum
 
 
-
 class EKSActions(enum.Enum):
     create = "create"
     delete = "delete"

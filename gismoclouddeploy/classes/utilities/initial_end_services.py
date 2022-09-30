@@ -1,13 +1,9 @@
-
 import time
 from typing import List
 
 from ..constants.DevEnvironments import DevEnvironments
 from .check_aws import connect_aws_client
 import logging
-from .process_log import (
-    process_logs_from_local,
-)
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
     invoke_kubectl_delete_all_deployment,
@@ -15,7 +11,6 @@ from .invoke_function import (
     invoke_kubectl_delete_namespaces,
     invoke_kubectl_delete_all_from_namspace,
 )
-from .command_utils import delete_files_from_bucket
 
 from .sqs import delete_queue
 
@@ -27,44 +22,18 @@ logging.basicConfig(
 )
 
 
-
-
-def delete_k8s_all_po_sev_deploy_daemonset(namespace: str="default"):
+def delete_k8s_all_po_sev_deploy_daemonset(namespace: str = "default"):
     logger.info("----------->.  Delete k8s deployment ----------->")
     delete_deploy = invoke_kubectl_delete_all_deployment(namespace=namespace)
     logger.info(delete_deploy)
     logger.info("----------->.  Delete k8s services ----------->")
     delete_svc = invoke_kubectl_delete_all_services(namespace=namespace)
     logger.info(delete_svc)
-    return 
-
-
-def process_local_logs_and_upload_s3(
-    logs_file_path_name_local: str = None,
-    saved_image_name_local: str = None,
-    databucket: str = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-):
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-
-
-    process_logs_from_local(
-        logs_file_path_name_local=logs_file_path_name_local,
-        saved_image_name_local=saved_image_name_local,
-        s3_client=s3_client,
-    )
-
+    return
 
 
 def initial_end_services(
-    server_list : list = None,
+    server_list: list = None,
     services_config_list: List[str] = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
@@ -73,7 +42,7 @@ def initial_end_services(
     cluster_name: str = None,
     nodegroup_name: str = None,
     sqs_url: str = None,
-    env:str = None,
+    env: str = None,
     initial_process_time: float = None,
 ):
 
@@ -84,7 +53,7 @@ def initial_end_services(
         if process_time < 60:
             wait_time = process_time
             delay = 1
-            while wait_time > 0 :
+            while wait_time > 0:
                 logging.info(f"Wait {wait_time}")
                 wait_time -= delay
                 time.sleep(delay)
@@ -97,15 +66,14 @@ def initial_end_services(
         )
         res = delete_queue(queue_url=sqs_url, sqs_client=sqs_client)
         logger.info(f"Delete {sqs_url} success")
-        
+
     except Exception as e:
         logger.error(f"Delete queue failed {e}")
 
-    
     for server_info in server_list:
-        namespace = server_info['namespace']
+        namespace = server_info["namespace"]
         # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
-        _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace = namespace)
+        _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace=namespace)
         print(_delete_resource)
         _delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
         # _delete_namespace= invoke_force_delete_namespace(namespace=namespace)
@@ -136,15 +104,11 @@ def initial_end_services(
                     image_name=service,
                     image_tag=image_tag,
                 )
-    
+
     logger.info("Delete all docker images")
     # invoke_docker_system_prune_all()
-        
-        
+
     return
-
-
-
 
 
 def delete_ecr_image(
@@ -196,8 +160,8 @@ def check_ecr_tag_exists(
 
 
 def upload_results_to_s3(
-    saved_files_dict_local:dict = None,
-    saved_files_dict_cloud:dict = None,
+    saved_files_dict_local: dict = None,
+    saved_files_dict_cloud: dict = None,
     saved_bucket: str = None,
     aws_access_key: str = None,
     aws_secret_access_key: str = None,
@@ -206,9 +170,9 @@ def upload_results_to_s3(
 
     # saved_file_list = worker_config.filename
     logger.info("start update results")
-    for key , localfile in saved_files_dict_local.items(): 
+    for key, localfile in saved_files_dict_local.items():
         file_local = saved_files_dict_local[key]
-        file_aws =  saved_files_dict_cloud[key]
+        file_aws = saved_files_dict_cloud[key]
         logger.info(f"{key} file_local :{file_local} file_aws :{file_aws}")
 
         # check if local exist
@@ -222,13 +186,13 @@ def upload_results_to_s3(
                     aws_secret_access_key=aws_secret_access_key,
                     aws_region=aws_region,
                 )
-                logger.info(f"Save {file_local} to {file_aws}  on {saved_bucket} success")
+                logger.info(
+                    f"Save {file_local} to {file_aws}  on {saved_bucket} success"
+                )
             except Exception as e:
                 logger.error(f"Save data on S3 failed {e}")
                 raise Exception(e)
-    return 
-
-
+    return
 
 
 def upload_file_to_s3(

@@ -1,4 +1,3 @@
-
 from mainmenu.mainmenu import mainmenu
 from mainmenu.classes.utilities.aws_utitlties import check_environment_is_aws
 
@@ -8,8 +7,8 @@ import os
 from pathlib import Path
 from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
 from dotenv import load_dotenv
-load_dotenv()
 
+load_dotenv()
 
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
@@ -31,7 +30,6 @@ def main():
     pass
 
 
-
 # ***************************
 #  Run files
 # ***************************
@@ -49,8 +47,6 @@ def main():
     """,
     default=None,
 )
-
-
 @click.option(
     "--project",
     "-p",
@@ -69,47 +65,42 @@ def main():
     help="Repeat time",
     default=1,
 )
-
 @click.option(
     "--cluster",
     "-c",
     help="eks cluster name, if run in local, just use defaul 'local'",
     default="local",
 )
-
-
 @click.option(
     "--nodegroup_name",
     "-nd",
-    help="eks cluster nodegroup name, default is 'gcd'. It's hardcode in config/eks/cluster.yaml ",
+    help="eks cluster nodegroup name, default is 'gcd'.\
+        Define the instance type of the nodes. You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.\
+        (PS. t2.micro cannot work in this application.)",
     default="gcd",
 )
-
-
 @click.option(
     "--instance_type",
     "-in",
     help="eks node instance type , default is 't2.large'. It's hardcode in config/eks/cluster.yaml ",
     default="t2.large",
 )
-
 @click.option(
     "--file",
     "-f",
-    help="run specific file)",
-    multiple=True
+    help="If you want to process specific files on S3 bucket, you can use this option command. \
+            For example: python3 main.py run-files -f PVO/PVOutput/11106.csv -f PVO/PVOutput/10010.csv -s 1 -p examples/solardatatools -c <your-cluster-name>",
+    multiple=True,
 )
-
-
 def run_files(
     number: int = 1,
-    scalenodes:int = 1,
+    scalenodes: int = 1,
     project: str = "examples/sleep",
     repeat: int = 1,
-    cluster: str = 'local',
-    nodegroup_name: str = 'gcd',
-    instance_type:str = 't2.large',
-    file:str = None
+    cluster: str = "local",
+    nodegroup_name: str = "gcd",
+    instance_type: str = "t2.large",
+    file: str = None,
 ):
     """
     Proccess files in defined bucket
@@ -122,44 +113,48 @@ def run_files(
     :param project:     Define the project name. The default projec is `examples/sleep`.
     :param repeat:      Define how many times you want to repeat this process. The default number is `1`.
     :param cluster:     Define the cluster name of AWS EKS cluster. If you are running on local machine, you can use the default name `local`.
-    :param nodegroup_name:  Define the nodegroup of cluster. The default name is `gcd`. 
+    :param nodegroup_name:  Define the nodegroup of cluster. The default name is `gcd`.
                             You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.
     :param instance_type:   Define the instance type of the nodes. You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.
-                            (PS. t2.micro cannot work in this projct.)
-    :param file:        If you want to process specific files on S3 bucket, you can use this option command. You can use multiple -f command to process multiple files. 
+                            (PS. t2.micro cannot work in this application.)
+    :param file:        If you want to process specific files on S3 bucket, you can use this option command.
                         For example: python3 main.py run-files -f PVO/PVOutput/11106.csv -f PVO/PVOutput/10010.csv -s 1 -p examples/solardatatools -c <your-cluster-name>
 
     """
     if (len(file) < 1) and number is None:
         click.echo("No number input nor file input. Please enter number or file input")
-        return  
+        return
 
     if (len(file) >= 1) and (number is not None):
-        click.echo("Both file input and number input have been given. You can only choice one.")
-        return 
-    if cluster =="local" and check_environment_is_aws():
-        click.echo("Runing application on AWS environment. Please use '-c' option command to specify a cluster name.")
-        return 
+        click.echo(
+            "Both file input and number input have been given. You can only choice one."
+        )
+        return
+    if cluster == "local" and check_environment_is_aws():
+        click.echo(
+            "Runing application on AWS environment. Please use '-c' option command to specify a cluster name."
+        )
+        return
 
     default_fileslist = []
-    if len(file)>= 1:
+    if len(file) >= 1:
         # convert input file tuple to a list
         files = list(file)
         default_fileslist = files
 
     gismoclouddeploy(
         number=number,
-        project = project,
-        scale_nodes= scalenodes,
-        repeat = repeat,
+        project=project,
+        scale_nodes=scalenodes,
+        repeat=repeat,
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
         aws_region=AWS_DEFAULT_REGION,
         ecr_repo=ECR_REPO,
-        cluster = cluster,
-        nodegroup_name = nodegroup_name,
-        instance_type= instance_type,
-        default_fileslist = default_fileslist
+        cluster=cluster,
+        nodegroup_name=nodegroup_name,
+        instance_type=instance_type,
+        default_fileslist=default_fileslist,
     )
 
 
@@ -169,22 +164,21 @@ def run_files(
 #  Meuns
 # ***************************
 @main.command()
-
 def menu():
     """
-    A interactive menu to guide user to run `gismoclouddeploy` on different plaform.
+    A interactive menu to guide users to run the `gismoclouddeploy` funciton on different plaform.
     """
-    base_path = os.getcwd()  
+    base_path = os.getcwd()
     home_dir = str(Path.home())  # ~/
 
     mainmenu(
-        saved_config_path_base= base_path+ "/created_resources_history",
-        ec2_config_templates= base_path + "/mainmenu/config/ec2/config-ec2.yaml",
-        eks_config_templates=  base_path + "/mainmenu/config/eks/cluster.yaml",
+        saved_config_path_base=base_path + "/created_resources_history",
+        ec2_config_templates=base_path + "/mainmenu/config/ec2/config-ec2.yaml",
+        eks_config_templates=base_path + "/mainmenu/config/eks/cluster.yaml",
         aws_access_key=AWS_ACCESS_KEY_ID,
         aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
-        aws_region= AWS_DEFAULT_REGION,
-        local_pem_path = home_dir +"/.ssh"
+        aws_region=AWS_DEFAULT_REGION,
+        local_pem_path=home_dir + "/.ssh",
     )
 
 
@@ -194,5 +188,3 @@ def menu():
 
 if __name__ == "__main__":
     main()
-
-

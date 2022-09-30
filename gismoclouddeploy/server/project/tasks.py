@@ -41,14 +41,17 @@ def process_data_task(
         aws_region = kwargs["aws_region"]
     except Exception as e:
         raise Exception(f"Input key error:{e}")
-    try: 
-        if 'solver' in kwargs:
-            solver = kwargs['solver']
+    try:
+        if "solver" in kwargs:
+            solver = kwargs["solver"]
             print(f"solver :{solver}")
             if solver is not None:
-                if 'solver_name' in solver:    
-                    solver_name = solver['solver_name']
-                if 'solver_lic_target_path' in solver and 'solver_lic_file_name' in solver:
+                if "solver_name" in solver:
+                    solver_name = solver["solver_name"]
+                if (
+                    "solver_lic_target_path" in solver
+                    and "solver_lic_file_name" in solver
+                ):
                     solver_file = (
                         solver["solver_lic_target_path"]
                         + "/"
@@ -56,7 +59,6 @@ def process_data_task(
                     )
     except Exception as e:
         raise Exception(f"parse {kwargs} key error:{e}")
-
 
     response = entrypoint(
         data_bucket=data_bucket,
