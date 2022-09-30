@@ -2,11 +2,12 @@
 from genericpath import exists
 
 import sys
-
+import os
 # setting path
 
 
 import logging
+from tkinter import E
 
 from mainmenu.classes.constants.Platform import Platform
 
@@ -30,6 +31,16 @@ def mainmenu(
 ):
     logging.info("Main menu")
 
+    # check local_pem_path exist 
+    if not exists(local_pem_path):
+        try:
+            os.mkdir(local_pem_path)
+            logging.info(f"Create {local_pem_path} success")
+        except Exception as e:
+            raise Exception(f"Create {local_pem_path} failed")
+
+
+    return 
     fsm = FiniteStateMachine(
         saved_config_path_base= saved_config_path_base,
         ec2_config_templates= ec2_config_templates,

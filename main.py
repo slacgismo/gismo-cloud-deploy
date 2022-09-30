@@ -125,7 +125,8 @@ def run_files(
                             You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.
     :param instance_type:   Define the instance type of the nodes. You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.
                             (PS. t2.micro cannot work in this projct.)
-    :param file:         D
+    :param file:        If you want to process specific files on S3 bucket, you can use this option command. You can use multiple -f command to process multiple files. 
+                        For example: python3 main.py run-files -f PVO/PVOutput/11106.csv -f PVO/PVOutput/10010.csv -s 1 -p examples/solardatatools -c <your-cluster-name>
 
     """
     if (len(file) < 1) and number is None:
