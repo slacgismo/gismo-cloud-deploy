@@ -11,7 +11,7 @@ from .invoke_function import (
     invoke_kubectl_delete_namespaces,
     invoke_kubectl_delete_all_from_namspace,
 )
-from halo import Halo
+
 from .sqs import delete_queue
 
 from os.path import exists
@@ -65,8 +65,7 @@ def initial_end_services(
 
     except Exception as e:
         logging.error(f"Delete queue failed {e}")
-    spinner = Halo(text="Loading", spinner="dots")
-    spinner.start()
+
     for server_info in server_list:
         namespace = server_info["namespace"]
         # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
@@ -75,7 +74,7 @@ def initial_end_services(
         _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace=namespace)
         _delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
         logging.info(f"Delete namespace:{namespace}")
-    spinner.stop()
+
     if env == DevEnvironments.AWS.name:
         logging.info("Scale down EKS nodes ")
         scale_eks_nodes_and_wait(
