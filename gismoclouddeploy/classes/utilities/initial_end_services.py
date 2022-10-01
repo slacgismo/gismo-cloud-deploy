@@ -11,24 +11,20 @@ from .invoke_function import (
     invoke_kubectl_delete_namespaces,
     invoke_kubectl_delete_all_from_namspace,
 )
-
+from halo import Halo
 from .sqs import delete_queue
 
 from os.path import exists
-
-logger = logging.getLogger()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
-)
+import logging
 
 
 def delete_k8s_all_po_sev_deploy_daemonset(namespace: str = "default"):
-    logger.info("----------->.  Delete k8s deployment ----------->")
+    logging.info("----------->.  Delete k8s deployment ----------->")
     delete_deploy = invoke_kubectl_delete_all_deployment(namespace=namespace)
-    logger.info(delete_deploy)
-    logger.info("----------->.  Delete k8s services ----------->")
+    logging.info(delete_deploy)
+    logging.info("----------->.  Delete k8s services ----------->")
     delete_svc = invoke_kubectl_delete_all_services(namespace=namespace)
-    logger.info(delete_svc)
+    logging.info(delete_svc)
     return
 
 
@@ -65,22 +61,23 @@ def initial_end_services(
             region=aws_region,
         )
         res = delete_queue(queue_url=sqs_url, sqs_client=sqs_client)
-        logger.info(f"Delete {sqs_url} success")
+        logging.info(f"Delete {sqs_url} success")
 
     except Exception as e:
-        logger.error(f"Delete queue failed {e}")
-
+        logging.error(f"Delete queue failed {e}")
+    spinner = Halo(text="Loading", spinner="dots")
+    spinner.start()
     for server_info in server_list:
         namespace = server_info["namespace"]
         # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
+
+        logging.info(f"Clean all resources in: {namespace}")
         _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace=namespace)
-        print(_delete_resource)
         _delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
-        # _delete_namespace= invoke_force_delete_namespace(namespace=namespace)
-        print(f"Delete namespace :{namespace}")
-        print(_delete_resource)
+        logging.info(f"Delete namespace:{namespace}")
+    spinner.stop()
     if env == DevEnvironments.AWS.name:
-        logger.info("Scale down EKS nodes ")
+        logging.info("Scale down EKS nodes ")
         scale_eks_nodes_and_wait(
             scale_node_num=0,
             total_wait_time=scale_eks_nodes_wait_time,
@@ -88,7 +85,7 @@ def initial_end_services(
             cluster_name=cluster_name,
             nodegroup_name=nodegroup_name,
         )
-        logger.info("----------->.  Delete Temp ECR image ----------->")
+        logging.info("-----------  Delete Temp ECR image -----------")
         ecr_client = connect_aws_client(
             client_name="ecr",
             key_id=aws_access_key,
@@ -104,7 +101,7 @@ def initial_end_services(
                     image_tag=image_tag,
                 )
 
-    logger.info("Delete all docker images")
+    logging.info("Delete all docker images")
     # invoke_docker_system_prune_all()
 
     return
@@ -168,11 +165,11 @@ def upload_results_to_s3(
 ) -> None:
 
     # saved_file_list = worker_config.filename
-    logger.info("start update results")
+    logging.info("start update results")
     for key, localfile in saved_files_dict_local.items():
         file_local = saved_files_dict_local[key]
         file_aws = saved_files_dict_cloud[key]
-        logger.info(f"{key} file_local :{file_local} file_aws :{file_aws}")
+        logging.info(f"{key} file_local :{file_local} file_aws :{file_aws}")
 
         # check if local exist
         if exists(file_local):
@@ -185,11 +182,11 @@ def upload_results_to_s3(
                     aws_secret_access_key=aws_secret_access_key,
                     aws_region=aws_region,
                 )
-                logger.info(
+                logging.info(
                     f"Save {file_local} to {file_aws}  on {saved_bucket} success"
                 )
             except Exception as e:
-                logger.error(f"Save data on S3 failed {e}")
+                logging.error(f"Save data on S3 failed {e}")
                 raise Exception(e)
     return
 
@@ -210,4 +207,4 @@ def upload_file_to_s3(
         region=aws_region,
     )
     response = s3_client.upload_file(source_file_local, bucket, target_file_s3)
-    logger.info(f"Upload {source_file_local} success")
+    logging.info(f"Upload {source_file_local} success")

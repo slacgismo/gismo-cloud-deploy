@@ -22,10 +22,10 @@ def create_k8s_from_yaml(file_path: str, file_name: str, app_name: str) -> bool:
                 resp = apps_v1_api.create_namespaced_deployment(
                     body=dep, namespace="default"
                 )
-                print("Created. status='%s'" % str(resp.status))
+
                 return True
             except Exception as e:
-                print(f"no deplyment.yaml {file_name}")
+                logger.error(f"no deplyment.yaml {file_name}")
                 raise e
     except Exception as e:
         print(f"openf file {full_path_name} failed: {e}")
@@ -57,7 +57,6 @@ def create_k8s_svc_from_yaml(
         resp = apps_v1_api.create_namespaced_service(
             body=file_setting, namespace=namspace
         )
-        print("Created. status='%s'" % str(resp.status))
         return True
     except Exception as e:
         logger.error(f"create k8s svc error: {e}")
@@ -73,10 +72,10 @@ def create_k8s_deployment_from_yaml(
     namspace: str = "default",
 ) -> bool:
 
-    print(
+    logger.info(
         f"create_k8s_deployment_from_yaml {service_name} namspace :{namspace}, file_name:{file_name}"
     )
-    print("--------------------------")
+
     try:
         file_setting = read_k8s_yml(full_path_name=file_name)
     except Exception as e:
@@ -87,8 +86,8 @@ def create_k8s_deployment_from_yaml(
         "imagePullPolicy"
     ]
     default_replicas = file_setting["spec"]["replicas"]
-    print("----------------------------")
-    print(f"update yaml file :namspace {namspace}")
+
+    # print(f"update yaml file :namspace {namspace}")
 
     print(str(desired_replicas), image_url_tag, imagePullPolicy)
     # update setting if not nont
@@ -114,7 +113,7 @@ def create_k8s_deployment_from_yaml(
     config.load_kube_config()
     apps_v1_api = client.AppsV1Api()
     if kind == "Deployment":
-        print(f"------> apply deployment {image_url_tag} namspace: {namspace}")
+        logger.info(f"Apply deployment {image_url_tag} namspace: {namspace}")
         try:
             resp = apps_v1_api.create_namespaced_deployment(
                 body=file_setting, namespace=namspace
@@ -125,7 +124,7 @@ def create_k8s_deployment_from_yaml(
             logger.error(f"create k8s deployment error: {e}")
             raise e
     elif kind == "DaemonSet":
-        print(f"apply damentset {image_url_tag}")
+
         try:
             resp = apps_v1_api.create_namespaced_daemon_set(
                 body=file_setting, namespace=namspace
@@ -281,7 +280,7 @@ def get_k8s_pod_name_from_namespace(
     sort_orders = sorted(pods, key=lambda d: d["timestamp"], reverse=True)
     if len(sort_orders) > 0:
         res = [sub["name"] for sub in sort_orders][0]
-        print(f"----------- get first k8s_pod_name :{ res}")
+        logger.info(f"Found k8s_pod_name :{res}")
         return res
 
     return None

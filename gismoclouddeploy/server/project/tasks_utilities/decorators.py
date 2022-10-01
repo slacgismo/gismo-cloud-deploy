@@ -7,7 +7,6 @@ import os
 import socket
 from .tasks_utils import (
     send_queue_message,
-    connect_aws_client,
 )
 
 import logging
@@ -83,11 +82,17 @@ def tracklog_decorator(func):
 
         # msg_body = {"data":response,"error": error_output}
         MSG_BODY = json.dumps(msg_body)
-        sqs_client = connect_aws_client(
-            client_name="sqs",
-            key_id=aws_access_key,
-            secret=aws_secret_access_key,
-            region=aws_region,
+        # sqs_client = connect_aws_client(
+        #     client_name="sqs",
+        #     key_id=aws_access_key,
+        #     secret=aws_secret_access_key,
+        #     region=aws_region,
+        # )
+        sqs_client = boto3.client(
+            "sqs",
+            region_name=aws_region,
+            aws_access_key_id=aws_access_key,
+            aws_secret_access_key=aws_secret_access_key,
         )
         send_response = send_queue_message(
             queue_url=sqs_url,
@@ -98,3 +103,17 @@ def tracklog_decorator(func):
         print(f"---------> {curr_process_file}")
 
     return wrapper
+
+
+def connect_aws_client(client_name: str, key_id: str, secret: str, region: str):
+    try:
+        client = boto3.client(
+            client_name,
+            region_name=region,
+            aws_access_key_id=key_id,
+            aws_secret_access_key=secret,
+        )
+        return client
+
+    except Exception:
+        raise Exception("AWS Validation Error")

@@ -1,6 +1,6 @@
 from genericpath import exists
 
-import sys
+
 import os
 
 # setting path

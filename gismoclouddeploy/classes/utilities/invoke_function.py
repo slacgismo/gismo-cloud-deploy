@@ -124,7 +124,7 @@ def invoke_kubectl_delete_namespaces(namespace: str) -> str:
 
 def invoke_kubectl_delete_all_from_namspace(namespace: str) -> str:
     command = ["kubectl", "delete", "all", "--all", "-n", f"{namespace}"]
-    print(f"command :{command}")
+    # print(f"command :{command}")
     res = exec_docker_command(command)
 
     return res
@@ -182,7 +182,7 @@ def invoke_docker_compose_build(
 ) -> str:
     command = f"WORKER_DIRECTORY={project} docker-compose build --build-arg CODES_FOLDER={project} --build-arg TARGET_PATH_OF_UPLOAD_FILE={target_path_of_upload_file} --build-arg SOURCE_PATH_OF_UPLOAD_FILE={source_path_of_upload_file}"
 
-    print(f"Build command :{command}")
+    # print(f"Build command :{command}")
     output = subprocess.check_output(["bash", "-c", command])
     return output
 
@@ -362,7 +362,7 @@ def invoke_exec_k8s_ping_worker(
         "app.py",
         "ping_worker",
     ]
-    print(f"command : {command}")
+    # print(f"command : {command}")
     res = exec_docker_command(command)
     return res
 

@@ -8,6 +8,7 @@ from .utilities.initial_end_services import initial_end_services
 from .utilities.long_pulling_sqs import long_pulling_sqs_multi_server
 from mypy_boto3_s3.client import S3Client
 import os
+from halo import Halo
 import coloredlogs
 import logging
 from os.path import exists
@@ -683,6 +684,8 @@ class GismoCloudDeploy(object):
         delay = 5
         ready_server_list = []
         logging.info(f"self._k8s_namespace_set :{self._k8s_namespace_set}")
+        spinner = Halo(text="Loading", spinner="dots")
+        spinner.start()
         while wait_time > 0 and len(ready_server_list) < len(self._k8s_namespace_set):
             ready_server_list = []
             for namespace in self._k8s_namespace_set:
@@ -699,14 +702,16 @@ class GismoCloudDeploy(object):
             )
             time.sleep(delay)
             wait_time -= delay
-
+        spinner.stop()
         self._ready_server_list = ready_server_list
         wait_time = 16
-        delay = 2
+        delay = 4
+        spinner.start()
         while wait_time > 0:
             time.sleep(delay)
             wait_time -= delay
-            logging.info(f"Waiting ..{wait_time} sec")
+            logging.info(f"Waiting.. {wait_time} sec")
+        spinner.stop()
         logging.info("Server is ready")
         return
 

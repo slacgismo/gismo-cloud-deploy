@@ -1,7 +1,7 @@
 from asyncio import log
 import boto3
 import pandas as pd
-from mypy_boto3_s3.client import S3Client
+
 import os
 import os.path
 
@@ -44,7 +44,7 @@ def read_csv_from_s3_with_column_name(
     bucket_name: str = None,
     file_path_name: str = None,
     column_name: str = None,
-    s3_client: S3Client = None,
+    s3_client=None,
 ) -> pd.DataFrame:
 
     if (

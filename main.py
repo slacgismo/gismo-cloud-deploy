@@ -17,12 +17,6 @@ AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
 # SQS_URL = os.getenv("SQS_URL")  # aws standard url
 ECR_REPO = os.getenv("ECR_REPO")  # get ecr repo
 
-# logger config
-logger = logging.getLogger()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
-)
-
 
 # Parent Command
 @click.group()
