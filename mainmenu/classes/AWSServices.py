@@ -131,6 +131,10 @@ class AWSServices(object):
         self._login_user = ec2_config_dict["login_user"]
         self._securitygroup_name = ec2_config_dict["securitygroup_name"]
         logging.info("Import EC2 parameters success")
+        self._pem_file = get_pem_file_full_path_name(
+            self.local_pem_path, self._keypair_name
+        )
+
         return
 
     def impor_eks_parameters_from_dict(self):
@@ -245,12 +249,10 @@ class AWSServices(object):
 
                 else:
                     logging.info(f"keypair:{self._keypair_name} exist")
-                    pem_file = get_pem_file_full_path_name(
-                        self.local_pem_path, self._keypair_name
-                    )
-                    if not exists(pem_file):
+
+                    if not exists(self._pem_file):
                         logging.warning(
-                            f"Find key pair on AWS but local {pem_file} is missiong"
+                            f"Find key pair on AWS but local {self._pem_file} is missiong"
                         )
                         logging.warning(
                             "You can use clean resource to delete keypari and regenerate a new one"
@@ -259,7 +261,7 @@ class AWSServices(object):
                             "Please clean previous resources and run menu again !!"
                         )
                     logging.info("=============================")
-                    logging.info(f"pem_file :{pem_file}")
+                    logging.info(f"self._pem_file :{self._pem_file}")
                     logging.info("=============================")
             except Exception as e:
                 raise Exception(f"Create keypair fialed:{e}")
@@ -275,12 +277,9 @@ class AWSServices(object):
                 delete_key_pair(
                     ec2_client=self._ec2_client, key_name=self._keypair_name
                 )
-                local_pem = get_pem_file_full_path_name(
-                    self.local_pem_path, self._keypair_name
-                )
-                if exists(local_pem):
-                    os.remove(local_pem)
-                    logging.info(f"Delete local pem: {local_pem} success")
+                if exists(self._pem_file):
+                    os.remove(self._pem_file)
+                    logging.info(f"Delete local pem: {self._pem_file} success")
         elif action == AWSActions.get_default_vpc_id.name:
             self._default_vpc_id = get_default_vpc_id(ec2_client=self._ec2_client)
             logging.info(f"get and set default vpc id :{self._default_vpc_id} ")
@@ -349,12 +348,12 @@ class AWSServices(object):
 
     def hanle_ec2_setup_dependencies(self):
         logging.info("Start setup gcd environments on AWS ec2")
-        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
+
         instance = check_if_ec2_ready_for_ssh(
             instance_id=self._ec2_instance_id,
             wait_time=self._ssh_total_wait_time,
             delay=self._ssh_wait_time_interval,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             user_name=self._login_user,
             ec2_resource=self._ec2_resource,
         )
@@ -367,7 +366,7 @@ class AWSServices(object):
         logging.info("---------------------")
         logging.info(f"public_ip :{self._ec2_public_ip}")
         logging.info("---------------------")
-        # upload install.sh
+
         logging.info("-------------------")
         logging.info(f"upload install.sh")
         logging.info("-------------------")
@@ -377,7 +376,7 @@ class AWSServices(object):
         upload_file_to_sc2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             local_file=local_env,
             remote_file=remote_env,
             ec2_resource=self._ec2_resource,
@@ -391,7 +390,7 @@ class AWSServices(object):
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             command=command,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             ec2_resource=self._ec2_resource,
         )
 
@@ -407,7 +406,7 @@ class AWSServices(object):
         upload_file_to_sc2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             local_file=local_env,
             remote_file=remote_env,
             ec2_resource=self._ec2_resource,
@@ -420,7 +419,7 @@ class AWSServices(object):
         run_command_in_ec2_ssh(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             ec2_resource=self._ec2_resource,
             command=ssh_command,
         )
@@ -436,7 +435,7 @@ class AWSServices(object):
         ssh_upload_folder_to_ec2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             local_project_path_base=self.local_temp_project_path,
             remote_project_path_base=remote_projects_folder,
             ec2_resource=self._ec2_resource,
@@ -461,11 +460,11 @@ class AWSServices(object):
     def ssh_update_eks_cluster_file(self, src_file: str):
         # ec2_name = self.get_ec2_name_from_tags()
         remote_cluster = f"/home/{self._login_user}/gismo-cloud-deploy/created_resources_history/{self.system_id}/cluster.yaml"
-        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
+
         upload_file_to_sc2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             local_file=src_file,
             remote_file=remote_cluster,
             ec2_resource=self._ec2_resource,
@@ -483,9 +482,9 @@ class AWSServices(object):
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy"
         remote_cluster_file = f"{remote_base_path}/created_resources_history/{self.system_id}/cluster.yaml"
         login_user = self._login_user
-        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
+
         logging.info("=============================")
-        logging.info(f"pem_file :{pem_file}")
+        logging.info(f"self._self._pem_file :{self._pem_file}")
         logging.info(f"cluster_name :{cluster_name}")
         logging.info("=============================")
 
@@ -532,7 +531,7 @@ class AWSServices(object):
                     user_name=login_user,
                     instance_id=instance_id,
                     command=command,
-                    pem_location=pem_file,
+                    pem_location=self._pem_file,
                     ec2_resource=self._ec2_resource,
                 )
             except Exception as e:
@@ -619,11 +618,11 @@ class AWSServices(object):
         full_ssh_command = (
             f"cd {remote_base_path} \n source ./venv/bin/activate \n {ssh_command} "
         )
-        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
+
         run_command_in_ec2_ssh(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             ec2_resource=self._ec2_resource,
             command=full_ssh_command,
         )
@@ -647,7 +646,7 @@ class AWSServices(object):
             raise Exception("action is None")
         ec2_instance_id = self._ec2_instance_id
         login_user = self._login_user
-        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
+
         if login_user is None:
             raise Exception("login user is None")
         if ec2_instance_id is None:
@@ -662,7 +661,7 @@ class AWSServices(object):
                     instance_id=ec2_instance_id,
                     wait_time=self._ssh_total_wait_time,
                     delay=self._ssh_wait_time_interval,
-                    pem_location=pem_file,
+                    pem_location=self._pem_file,
                     user_name=login_user,
                     ec2_resource=self._ec2_resource,
                 )
@@ -692,7 +691,7 @@ class AWSServices(object):
         return
 
     def ssh_upload_selected_project_folder_from_temp(self):
-        pem_file = get_pem_file_full_path_name(self.local_pem_path, self._keypair_name)
+
         remote_base_path = f"/home/{self._login_user}/gismo-cloud-deploy"
         remote_projects_folder = f"{remote_base_path}/{self.project_name}"
         logging.info("-------------------")
@@ -704,7 +703,7 @@ class AWSServices(object):
         ssh_upload_folder_to_ec2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
-            pem_location=pem_file,
+            pem_location=self._pem_file,
             local_project_path_base=self.local_temp_project_path,
             remote_project_path_base=remote_projects_folder,
             ec2_resource=self._ec2_resource,

@@ -67,7 +67,6 @@ def mainmenu(
         fsm.trigger_initial()
         action = fsm.get_action()
         platform = fsm.get_platform()
-        print(f"action :{action} platform:{platform}")
         logging.info(f" ===== Menu State: {fsm.state} =======")
     except Exception as e:
         fsm.trigger_end()

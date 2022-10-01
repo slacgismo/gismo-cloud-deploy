@@ -7,6 +7,8 @@ from .utilities.handle_inputs import (
     select_platform,
     handle_proecess_files_inputs_questions,
     get_system_id_from_selected_history,
+    select_ec2_instance_type,
+    select_eks_instance_type,
 )
 from .AWSServices import AWSServices
 from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
@@ -197,12 +199,14 @@ class FiniteStateMachine(object):
         self._platform = select_platform()
         # step 4 select action
         self._action = select_acions_menu(platform=self._platform)
+
         # step 5 ask inputs based on platform
         self._input_answers = handle_proecess_files_inputs_questions(
             action=self._action,
             platform=self._platform,
             default_answer=FiniteStateMachine.default_answer,
         )
+
         # step 6 import config or generate id on AWS
         if self._platform == Platform.AWS.name:
             if self._action == MenuActions.create_cloud_resources_and_start.name:
@@ -214,8 +218,16 @@ class FiniteStateMachine(object):
                     self._eks_config_dict = import_and_verify_eks_config(
                         saved_eks_config_file=self.eks_config_templates
                     )
-                    logging.info("==============")
-                    # generate parameters and replace template dict
+                    # ask if user want to change the instance type
+                    if self._platform == Platform.AWS.name:
+                        ec2_instance_type = select_ec2_instance_type()
+                        eks_instance_type = select_eks_instance_type()
+                        # update ec2 instance type
+                        self._ec2_config_dict["ec2_instance_type"] = ec2_instance_type
+                        self._eks_config_dict["nodeGroups"][0][
+                            "instanceType"
+                        ] = eks_instance_type
+
                     # generate ec2 and eks cluster name
                     self._system_id = self._generate_system_id()
                     cluster_name = self._system_id
@@ -329,9 +341,6 @@ class FiniteStateMachine(object):
             temp_project_absoult_path = get_absolute_paht_from_project_name(
                 project_name=self._project_name, base_path=self._base_path
             )
-            logging.info("-----------------------------------------")
-            logging.info(f"Init aws services {self._ec2_config_dict}")
-
             try:
                 self._aws_services = AWSServices(
                     local_pem_path=self.local_pem_path,
@@ -496,6 +505,11 @@ class FiniteStateMachine(object):
             ):
                 logging.info("Clean up cloud resources")
                 # check if eks exist
+                # check ec2 status. if stop wake up ec2
+                try:
+                    self._aws_services.wake_up_ec2()
+                except Exception as e:
+                    raise Exception(f"Wakeup ec2 failed :{e}")
 
                 # delete eks cluster
                 try:

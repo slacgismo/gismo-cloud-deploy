@@ -8,7 +8,7 @@ metadata:
     project: pvinsight
 nodeGroups:
 - desiredCapacity: 0
-  instanceType: t2.large
+  instanceType: t2.small
   maxSize: 100
   minSize: 0
   name: gcd

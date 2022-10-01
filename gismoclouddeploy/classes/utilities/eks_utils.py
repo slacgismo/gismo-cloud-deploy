@@ -36,8 +36,6 @@ def num_pod_ready(container_prefix: str) -> int:
                 )
                 pod_name = i.metadata.name
                 ready_replicas = i.status.ready_replicas
-                # print(f"container_prefix :{container_prefix} pod_name :{pod_name}")
-                # print("---------->")
     if pod_name is None:
         raise Exception(f"No pod {container_prefix} in list")
 
@@ -47,7 +45,7 @@ def num_pod_ready(container_prefix: str) -> int:
 def wait_pod_ready(
     num_container: str, container_prefix: str, counter: int, delay: int
 ) -> bool:
-    print("Handle wait pod ready -----")
+    print("Handle wait pod ready")
     print(f"num_container {num_container} container_prefix {container_prefix}")
     cunrrent_num_container = 0
     # print(f"container_prefix :{container_prefix}")
@@ -101,7 +99,7 @@ def scale_node_number(min_nodes: int, cluster_name: str, nodegroup_name: str):
             nodes_max=1,
             nodes_min=0,
         )
-        print(f"scale down to {num_node}, res: {res}")
+        # print(f"scale down to {num_node}, res: {res}")
     else:
         res = invoke_eksctl_scale_node(
             cluster_name=cluster_name,
@@ -110,7 +108,7 @@ def scale_node_number(min_nodes: int, cluster_name: str, nodegroup_name: str):
             nodes_max=num_node,
             nodes_min=num_node,
         )
-        print(f"scale up to {num_node}, res:{res}")
+        # print(f"scale up to {num_node}, res:{res}")
 
 
 def match_pod_ip_to_node_name(pods_name_sets: set) -> dict:

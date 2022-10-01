@@ -1,5 +1,8 @@
 import inquirer
 from asyncio import streams
+import readline
+
+from mainmenu.classes.constants.EKSInstanceType import EKSInstanceType
 
 from ..constants.InputDescriptions import InputDescriptions
 from ..constants.MenuActions import MenuActions
@@ -7,6 +10,7 @@ from ..constants.Platform import Platform
 import logging
 from .aws_utitlties import connect_aws_client, check_bucket_exists_on_s3
 import os
+from ..constants.EC2InstanceType import EC2InstanceType
 
 
 def convert_yes_no_to_bool(input: str) -> bool:
@@ -212,22 +216,6 @@ def enter_the_working_project_path(default_project: str) -> str:
         default_answer=default_project,
     )
     return origin_project_path
-    self._project_name = "temp/" + basename(self._origin_project_path)
-    self._temp_project_absoult_path = self._base_path + f"/{self._project_name}"
-
-    logging.info(
-        f"Copy {self._origin_project_path} to {self._temp_project_absoult_path}"
-    )
-
-    # if tem project temp does not exist create temp project
-    if not os.path.exists(self._temp_project_absoult_path):
-        logging.info(f"Create {self._temp_project_absoult_path}")
-        os.makedirs(self._temp_project_absoult_path)
-    # 3.8+ only!
-    shutil.copytree(
-        self._origin_project_path, self._temp_project_absoult_path, dirs_exist_ok=True
-    )
-    return
 
 
 def select_platform() -> str:
@@ -324,6 +312,40 @@ def handle_proecess_files_inputs_questions(
         raise Exception(f"Handle generate run-file command error:{e}")
 
     return return_answer
+
+
+def select_ec2_instance_type() -> str:
+    ec2_instance_type = [
+        inquirer.List(
+            "type",
+            message="Select EC2 instance type",
+            choices=[
+                EC2InstanceType.t2small.value,
+                EC2InstanceType.t2medium.value,
+                EC2InstanceType.t2large.value,
+            ],
+        ),
+    ]
+    inst_answer = inquirer.prompt(ec2_instance_type)
+    type = inst_answer["type"]
+    return type
+
+
+def select_eks_instance_type() -> str:
+    eks_instance_type = [
+        inquirer.List(
+            "type",
+            message="Select EKS instance type",
+            choices=[
+                EKSInstanceType.t2small.value,
+                EKSInstanceType.t2medium.value,
+                EKSInstanceType.t2large.value,
+            ],
+        ),
+    ]
+    inst_answer = inquirer.prompt(eks_instance_type)
+    type = inst_answer["type"]
+    return type
 
 
 def get_system_id_from_selected_history(saved_config_path_base: str) -> str:

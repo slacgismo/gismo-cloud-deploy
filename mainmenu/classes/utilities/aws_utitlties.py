@@ -12,7 +12,7 @@ import logging
 import paramiko
 import time
 from pathlib import Path
-from .convert_yaml import check_if_path_exist_and_create, write_aws_setting_to_yaml
+from .convert_yaml import check_if_path_exist_and_create
 from .update_sshconfig import add_public_ip_to_sshconfig
 from asyncio import exceptions
 
@@ -128,7 +128,6 @@ def get_ec2_instance_id_and_keypair_with_tags(
             Filters=[{"Name": "tag:" + tag_key_f, "Values": [tag_val_f]}]
         )
         Reservations = response["Reservations"]
-        print(f"Reservations :{Reservations}")
         # print(response['Reservations'])
         if len(Reservations) > 0:
             if "Instances" in Reservations[0] and len(Reservations[0]["Instances"]) > 0:

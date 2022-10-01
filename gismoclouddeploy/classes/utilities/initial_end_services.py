@@ -79,7 +79,6 @@ def initial_end_services(
         # _delete_namespace= invoke_force_delete_namespace(namespace=namespace)
         print(f"Delete namespace :{namespace}")
         print(_delete_resource)
-        print(f"========================== {env}")
     if env == DevEnvironments.AWS.name:
         logger.info("Scale down EKS nodes ")
         scale_eks_nodes_and_wait(

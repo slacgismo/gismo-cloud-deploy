@@ -440,7 +440,6 @@ class GismoCloudDeploy(object):
 
         # update aws parameters
         if self._is_local():
-            print("---------------RUNNING LOCAL")
             # update image rag
             for service_name in self._services_config_list:
                 if (
@@ -454,7 +453,6 @@ class GismoCloudDeploy(object):
                     ] = "IfNotPresent"
 
         elif self._is_aws():
-            print("---------------RUNNING AWS")
             for service_name in self._services_config_list:
                 if (
                     service_name == "worker"
