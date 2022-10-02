@@ -10,7 +10,7 @@ from .utilities.handle_inputs import (
     select_is_breaking_ssh,
     handle_input_ssh_custom_command,
 )
-
+import time
 from .utilities.helper import get_pem_file_full_path_name
 from .constants.InputDescriptions import InputDescriptions
 from .utilities.convert_yaml import write_aws_setting_to_yaml
@@ -560,7 +560,7 @@ class AWSServices(object):
                 logging.info(f"In stopped or running running sate")
                 is_ec2_state_ready = True
                 break
-            wait_time.sleep(delay)
+            time.sleep(delay)
 
         if is_ec2_state_ready is False:
             raise ValueError(f"Wait ec2 state overtime :{ec2_state}")
