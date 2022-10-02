@@ -147,8 +147,8 @@ def replace_k8s_yaml_with_replicas(
 
 def scale_eks_nodes_and_wait(
     scale_node_num: int = 1,
-    total_wait_time: int = 60,
-    delay: int = 1,
+    total_wait_time: int = 90,
+    delay: int = 5,
     cluster_name: str = None,
     nodegroup_name: str = None,
 ) -> bool:

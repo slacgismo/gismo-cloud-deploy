@@ -4,6 +4,7 @@ import logging
 import yaml
 from typing import List
 import time
+import sys
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -351,10 +352,10 @@ def check_if_pod_ready(
             )
             if cunrrent_num_container == num_container:
                 logger.info(
-                    f"== Waiting {container_prefix} completed. [desired / available]: [{cunrrent_num_container} / {num_container}] =="
+                    f"====== Waiting {container_prefix} completed. [desired / available]: [{cunrrent_num_container} / {num_container}] ======"
                 )
-
-                return
+                sys.exit()
+                # return
             total_wait_time -= delay
 
             time.sleep(delay)
@@ -364,9 +365,11 @@ def check_if_pod_ready(
 
     except Exception as e:
         raise Exception(f"{e}")
-    logging.error()
+    logging.error(
+        f"Wait {container_prefix} in {namespace},[desired / available]: [{cunrrent_num_container:} / {num_container} over time. Check the generated eks instances. You might need to generate more instance or larger instance type"
+    )
     raise Exception(
-        f"Wait {container_prefix} in {namespace},[desired / available]: [{cunrrent_num_container:} / {num_container} over time"
+        f"Wait {container_prefix} in {namespace},[desired / available]: [{cunrrent_num_container:} / {num_container} over time Check the generated eks instances. You might need to generate more instance or larger instance type"
     )
 
 

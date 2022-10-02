@@ -58,35 +58,26 @@ def long_pulling_sqs_multi_server(
     num_total_tasks = -1
     uncompleted_task_id_set = set()
     total_tasks_number = 0
-
-    # node_name = match_hostname_from_node_name(hostname=msg_dict["hostname"], pod_prefix="worker")
     match_nodemname_hostname_dict = collect_node_name_and_pod_name()
-    # print(f"nodes_dict: {match_nodemname_hostname_dict}")
+
     is_received_init_task_ids_dict_completed = True
 
-    # match_nodemname_hostname_dict = dict()
-    # match_nodemname_hostname_dict =
     while True > 0:
         messages = receive_queue_message(
             sqs_url, sqs_client, MaxNumberOfMessages=10, wait_time=delay
         )
-        # saved_file_list = worker_config.filename
-        # _temp_data = {}
-        # for file in saved_file_list:
-        #     _temp_data[file] = []
+
         save_data = []
         logs_data = []
         error_data = []
-        # init_command_logs = []
 
         _message_start_time = time.time()
         if "Messages" in messages:
-            # print(f"length of message: {len(messages)}")
+
             loog_server_start = time.time()
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 msg_dict = json.loads(msg_body)
-                # print(f"msg_dict: {msg_dict}")
 
                 receipt_handle = msg["ReceiptHandle"]
                 delete_queue_message(sqs_url, receipt_handle, sqs_client)

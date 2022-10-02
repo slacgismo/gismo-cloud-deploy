@@ -614,7 +614,7 @@ class GismoCloudDeploy(object):
                 scale_eks_nodes_and_wait(
                     scale_node_num=self._total_num_nodes,
                     total_wait_time=self._scale_eks_nodes_wait_time,
-                    delay=1,
+                    delay=10,
                     cluster_name=self._cluster_name,
                     nodegroup_name=self._nodegroup_name,
                 )
@@ -694,7 +694,7 @@ class GismoCloudDeploy(object):
                 logging.info(f"Check {service_name} state in {namespace}")
                 x = RaisingThread(
                     target=check_if_pod_ready,
-                    args=(namespace, desired_replicas, service_name, 90, 3),
+                    args=(namespace, desired_replicas, service_name, 300, 3),
                 )
                 x.name = key
                 threads.append(x)
