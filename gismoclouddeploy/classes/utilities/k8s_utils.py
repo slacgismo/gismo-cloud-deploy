@@ -87,10 +87,6 @@ def create_k8s_deployment_from_yaml(
         "imagePullPolicy"
     ]
     default_replicas = file_setting["spec"]["replicas"]
-
-    # print(f"update yaml file :namspace {namspace}")
-
-    print(str(desired_replicas), image_url_tag, imagePullPolicy)
     # update setting if not nont
     if image_url_tag is not None and image_url_tag != default_image:
         logger.info(f"update k8s image {image_url_tag}")
@@ -345,7 +341,7 @@ def check_if_pod_ready(
     delay: int = 3,
 ):
     logging.info(f"Check if {container_prefix} ready, num_container : {num_container}")
-    print(f"num_container {num_container} container_prefix {container_prefix}")
+
     cunrrent_num_container = 0
     # print(f"container_prefix :{container_prefix}")
     try:
@@ -354,20 +350,24 @@ def check_if_pod_ready(
                 pod_name_prefix=container_prefix, namespace=namespace
             )
             if cunrrent_num_container == num_container:
-                logger.info(f"{num_container} {container_prefix} pods are running")
+                logger.info(
+                    f"== Waiting {container_prefix} completed. [desired / available]: [{cunrrent_num_container} / {num_container}] =="
+                )
 
                 return
             total_wait_time -= delay
 
             time.sleep(delay)
             logger.info(
-                f"waiting {container_prefix}: {cunrrent_num_container} .Waiting: {total_wait_time}"
+                f"Waiting {container_prefix} , [desired / available]: [{cunrrent_num_container:} / {num_container}]  .Waiting: {total_wait_time}"
             )
 
     except Exception as e:
         raise Exception(f"{e}")
-
-    raise Exception(f"Wait over time: ")
+    logging.error()
+    raise Exception(
+        f"Wait {container_prefix} in {namespace},[desired / available]: [{cunrrent_num_container:} / {num_container} over time"
+    )
 
 
 def num_pod_ready(pod_name_prefix: str, namespace: str) -> int:

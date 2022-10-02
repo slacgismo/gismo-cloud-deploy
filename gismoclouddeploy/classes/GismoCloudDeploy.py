@@ -356,7 +356,7 @@ class GismoCloudDeploy(object):
             aws_secret_access_key=self.aws_secret_access_key,
         )
 
-        print(f"======={self._default_files}")
+        # print(f"======={self._default_files}")
         # define total process files accourding to input command
         n_files = return_process_filename_base_on_command_and_sort_filesize(
             first_n_files=self.num_inputfile,
