@@ -1,4 +1,3 @@
-
 import json
 import logging
 
@@ -91,8 +90,7 @@ def process_files(worker_config_str: str):
     # print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
-    repeat_number_per_round = int(
-        worker_config_json["repeat_number_per_round"])
+    repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])
     for i in range(repeat_number_per_round):
         for index_file, file in enumerate(default_files):
             columns_key = worker_config_json["process_column_keywords"]

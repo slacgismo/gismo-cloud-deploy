@@ -1,5 +1,4 @@
 import inquirer
-from asyncio import streams
 import readline
 
 from mainmenu.classes.constants.EKSInstanceType import EKSInstanceType
@@ -209,6 +208,7 @@ def select_acions_menu(platform: str) -> str:
 def enter_the_working_project_path(default_project: str) -> str:
     """
     input project path
+
     """
 
     origin_project_path = handle_input_project_path_question(
@@ -219,6 +219,9 @@ def enter_the_working_project_path(default_project: str) -> str:
 
 
 def select_platform() -> str:
+    """
+    Select a platform
+    """
     inst_question = [
         inquirer.List(
             "select_platform",
@@ -320,7 +323,6 @@ def select_ec2_instance_type() -> str:
             "type",
             message="Select EC2 instance type",
             choices=[
-                EC2InstanceType.t2small.value,
                 EC2InstanceType.t2medium.value,
                 EC2InstanceType.t2large.value,
             ],
@@ -337,7 +339,6 @@ def select_eks_instance_type() -> str:
             "type",
             message="Select EKS instance type",
             choices=[
-                EKSInstanceType.t2small.value,
                 EKSInstanceType.t2medium.value,
                 EKSInstanceType.t2large.value,
             ],

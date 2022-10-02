@@ -3,6 +3,7 @@ from typing import Tuple
 import logging
 import yaml
 from typing import List
+import time
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -179,7 +180,8 @@ def get_k8s_pod_info(prefix: str = None) -> dict:
 
 
 def get_k8s_image_and_tag_from_deployment(
-    prefix: str = None, namespace: str = "default"
+    prefix: str = None,
+    namespace: str = "default",
 ) -> Tuple[str, str, str]:
     try:
         config.load_kube_config()
@@ -255,6 +257,7 @@ def get_k8s_pod_name_from_namespace(
     v1 = client.CoreV1Api()
     ret = v1.list_namespaced_pod(namespace)
     pods = []
+
     for i in ret.items:
         status = i.status.conditions[-1].status
         podname = i.metadata.name.split("-")[0]
@@ -266,10 +269,13 @@ def get_k8s_pod_name_from_namespace(
             if container_statuses is None:
                 continue
             if len(container_statuses) >= 1:
+                state = i.status.container_statuses[-1].state
                 ready = i.status.container_statuses[-1].ready
+
             ready = i.status.container_statuses[-1].ready
 
             if ready is True:
+
                 # if it's ready
                 started_at = i.status.container_statuses[-1].state.running.started_at
                 status = i.status
@@ -329,3 +335,82 @@ def k8s_list_all_namespace():
     ret = v1.list_namespace()
 
     print(ret)
+
+
+def check_if_pod_ready(
+    namespace: str = "default",
+    num_container: int = 1,
+    container_prefix: str = None,
+    total_wait_time: int = 90,
+    delay: int = 3,
+):
+    logging.info(f"Check if {container_prefix} ready, num_container : {num_container}")
+    print(f"num_container {num_container} container_prefix {container_prefix}")
+    cunrrent_num_container = 0
+    # print(f"container_prefix :{container_prefix}")
+    try:
+        while total_wait_time > 0:
+            cunrrent_num_container = num_pod_ready(
+                pod_name_prefix=container_prefix, namespace=namespace
+            )
+            if cunrrent_num_container == num_container:
+                logger.info(f"{num_container} {container_prefix} pods are running")
+
+                return
+            total_wait_time -= delay
+
+            time.sleep(delay)
+            logger.info(
+                f"waiting {container_prefix}: {cunrrent_num_container} .Waiting: {total_wait_time}"
+            )
+
+    except Exception as e:
+        raise Exception(f"{e}")
+
+    raise Exception(f"Wait over time: ")
+
+
+def num_pod_ready(pod_name_prefix: str, namespace: str) -> int:
+    """
+    i.status.container_statuses[-1].last_state
+    'running'
+    'terminated'
+    'waiting'
+    """
+    """
+    state : {'running': None,
+    'terminated': None,
+    'waiting': {'message': None, 'reason': 'ContainerCreating'}}
+    """
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    ret = v1.list_namespaced_pod(namespace)
+    pods = []
+
+    # find the latest version of deployemnt
+    max_version = 0
+    pod_name = None
+    ready_replicas = 0
+    for i in ret.items:
+        podname = i.metadata.name.split("-")[0]
+        if podname == pod_name_prefix:
+
+            # status = i.status.conditions
+
+            name = i.metadata.name
+            ready = False
+            container_statuses = i.status.container_statuses
+            if container_statuses is None:
+                continue
+            if len(container_statuses) >= 1:
+                state = i.status.container_statuses[-1].state
+                waiting = state.waiting
+                terminated = state.terminated
+                if terminated is not None:
+                    raise Exception(f" Pod {pod_name_prefix} terminated: {terminated}")
+
+            ready = i.status.container_statuses[-1].ready
+            if ready is True:
+                ready_replicas += 1
+
+    return ready_replicas

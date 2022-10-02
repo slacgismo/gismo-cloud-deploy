@@ -13,59 +13,6 @@ logging.basicConfig(
 )
 
 
-def num_pod_ready(container_prefix: str) -> int:
-    config.load_kube_config()
-    v1 = client.AppsV1Api()
-    resp = v1.list_replica_set_for_all_namespaces(watch=False)
-    pods = []
-
-    # find the latest version of deployemnt
-    max_version = 0
-    pod_name = None
-    ready_replicas = 0
-    for i in resp.items:
-        pod_prefix = i.metadata.name.split("-")[0]
-
-        if pod_prefix == container_prefix:
-            if (
-                int(i.metadata.annotations["deployment.kubernetes.io/revision"])
-                > max_version
-            ):
-                max_version = int(
-                    i.metadata.annotations["deployment.kubernetes.io/revision"]
-                )
-                pod_name = i.metadata.name
-                ready_replicas = i.status.ready_replicas
-    if pod_name is None:
-        raise Exception(f"No pod {container_prefix} in list")
-
-    return ready_replicas
-
-
-def wait_pod_ready(
-    num_container: str, container_prefix: str, counter: int, delay: int
-) -> bool:
-    print("Handle wait pod ready")
-    print(f"num_container {num_container} container_prefix {container_prefix}")
-    cunrrent_num_container = 0
-    # print(f"container_prefix :{container_prefix}")
-    while counter > 0:
-        cunrrent_num_container = num_pod_ready(container_prefix=container_prefix)
-        if cunrrent_num_container == num_container:
-            logger.info(
-                f"{num_container} {container_prefix} pods are running --> break"
-            )
-
-            return
-        counter -= delay
-        logger.info(
-            f"waiting {container_prefix} {cunrrent_num_container} .counter: {counter - delay} Time: {time.ctime(time.time())}"
-        )
-        time.sleep(delay)
-
-    raise Exception("Wait over time")
-
-
 def num_of_nodes_ready() -> int:
     # print("check node status")
     config.load_kube_config()

@@ -8,7 +8,7 @@ from .utilities.initial_end_services import initial_end_services
 from .utilities.long_pulling_sqs import long_pulling_sqs_multi_server
 from mypy_boto3_s3.client import S3Client
 import os
-
+from .RaisingThread import RaisingThread
 import coloredlogs
 import logging
 from os.path import exists
@@ -36,6 +36,7 @@ from .utilities.k8s_utils import (
     create_k8s_svc_from_yaml,
     get_k8s_pod_name_from_namespace,
     k8s_create_namespace,
+    check_if_pod_ready,
 )
 from .constants.DevEnvironments import DevEnvironments
 
@@ -684,6 +685,29 @@ class GismoCloudDeploy(object):
         delay = 5
         ready_server_list = []
         logging.info(f"self._k8s_namespace_set :{self._k8s_namespace_set}")
+        threads = list()
+        for namespace in self._k8s_namespace_set:
+            # desired_replicas = value["desired_replicas"]
+            for key, value in self._services_config_list.items():
+                service_name = key
+                desired_replicas = value["desired_replicas"]
+                logging.info(f"Check {service_name} state in {namespace}")
+                x = RaisingThread(
+                    target=check_if_pod_ready,
+                    args=(namespace, desired_replicas, service_name, 90, 3),
+                )
+                x.name = key
+                threads.append(x)
+                x.start()
+        try:
+            for index, thread in enumerate(threads):
+                thread.join()
+                logging.info("Wait %s thread done", thread.name)
+        except Exception as e:
+            raise Exception(e)
+
+        logging.info(" ========= Check all services in namespaces success ========= ")
+        # for namespace in self._k8s_namespace_set:
 
         while wait_time > 0 and len(ready_server_list) < len(self._k8s_namespace_set):
             ready_server_list = []
@@ -1066,3 +1090,17 @@ def upload_file_to_s3(
     )
     response = s3_client.upload_file(source_file_local, bucket, target_file_s3)
     logging.info(f"Upload {source_file_local} success")
+
+
+# class RaisingThread(threading.Thread):
+#     def run(self):
+#         self._exc = None
+#         try:
+#             super().run()
+#         except Exception as e:
+#             self._exc = e
+
+#     def join(self, timeout=None):
+#         super().join(timeout=timeout)
+#         if self._exc:
+#             raise self._exc

@@ -105,15 +105,15 @@ def tracklog_decorator(func):
     return wrapper
 
 
-def connect_aws_client(client_name: str, key_id: str, secret: str, region: str):
-    try:
-        client = boto3.client(
-            client_name,
-            region_name=region,
-            aws_access_key_id=key_id,
-            aws_secret_access_key=secret,
-        )
-        return client
+# def connect_aws_client(client_name: str, key_id: str, secret: str, region: str):
+#     try:
+#         client = boto3.client(
+#             client_name,
+#             region_name=region,
+#             aws_access_key_id=key_id,
+#             aws_secret_access_key=secret,
+#         )
+#         return client
 
-    except Exception:
-        raise Exception("AWS Validation Error")
+#     except Exception:
+#         raise Exception("AWS Validation Error")
