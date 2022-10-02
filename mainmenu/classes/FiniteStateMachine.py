@@ -185,6 +185,20 @@ class FiniteStateMachine(object):
 
     # Init state
     def handle_inputs(self, event):
+        # check created_resources_history and temp folder exist
+        created_resources_history_folder = (
+            self._base_path + "/created_resources_history"
+        )
+        if not exists(created_resources_history_folder):
+            os.mkdir(created_resources_history_folder)
+
+        temp_folder = self._base_path + "/temp"
+        if not exists(temp_folder):
+            os.mkdir(temp_folder)
+        results_folder = self._base_path + "/results"
+        if not exists(results_folder):
+            os.mkdir(results_folder)
+
         logging.info("handle inputs")
         # step 1 input project folder
         self._origin_project_path = enter_the_working_project_path(
@@ -270,6 +284,8 @@ class FiniteStateMachine(object):
                 self._system_id = get_system_id_from_selected_history(
                     saved_config_path_base=self.saved_config_path_base
                 )
+                if self._system_id is None:
+                    raise Exception("No saved config file")
                 logging.info(f"selected id :{self._system_id }")
                 self._select_history_path = (
                     self.saved_config_path_base + f"/{ self._system_id}"
@@ -367,6 +383,7 @@ class FiniteStateMachine(object):
                 logging.info("Start to create cloud resource")
                 try:
                     self._aws_services.create_ec2_from_template_file()
+
                     export_ec2_file = (
                         self.saved_config_path_base
                         + f"/{self._system_id}/config-ec2.yaml"

@@ -356,6 +356,8 @@ def get_system_id_from_selected_history(saved_config_path_base: str) -> str:
     logging.info("select_created_cloud_config_files")
 
     config_lists = get_subfolder(parent_folder=saved_config_path_base)
+    if len(config_lists) == 0:
+        raise Exception(" No history data")
     questions = [
         inquirer.List(
             "dir",
@@ -363,6 +365,7 @@ def get_system_id_from_selected_history(saved_config_path_base: str) -> str:
             choices=config_lists,
         ),
     ]
+
     inst_answer = inquirer.prompt(questions)
     answer = inst_answer["dir"]
     # select_absolute_history_path = saved_config_path_base + f"/{answer}"
@@ -373,10 +376,12 @@ def get_subfolder(parent_folder) -> list:
     if not os.path.exists(parent_folder):
         raise Exception(f"{parent_folder} does not exis–t")
     config_lists = []
+
     for fullpath, j, y in os.walk(parent_folder):
         relative_path = remove_partent_path_from_absolute_path(
             parent_path=parent_folder, absolut_path=fullpath
         )
+        print(f"relative_path :{relative_path}")
         if relative_path == ".":
             continue
         config_lists.append(relative_path)

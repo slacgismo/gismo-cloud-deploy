@@ -27,4 +27,3 @@ mypy-boto3-ec2==1.24.83
 mypy-boto3-s3 ==1.24.76
 mypy-boto3-sqs==1.24.60
 mypy-boto3-sts>=1.24.36
-black>=22.8.0
