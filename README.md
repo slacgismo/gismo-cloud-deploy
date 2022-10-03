@@ -94,6 +94,10 @@ ECR_REPO=<your-ecr-repository-url>
 
 If you are using your own account other than SLAC Gismo group account. Please create a private ECR repositories that will contains three temporary images (`server`, `worker`, `celeryflower`). Those images are created during the run-time, and will are deleted after the process completed.
 
+#### Install docker
+
+This application use [Docker](https://docs.docker.com/engine/install/) to build images. Please install Docker and make sure docker dameon is running.
+
 ### Quick Start
 
 #### Important information
