@@ -148,7 +148,7 @@ class GismoCloudDeploy(object):
         self._num_namesapces = 1
         self._num_worker_pods_per_namespace = 8
         self._total_number_files = 0
-        self._worker_desired_replicas_per_namespaces = 1
+        self._worker_desired_replicas_per_namespaces = 2
         self._services_config_list = {}
         self._filename = {}
         self._ready_server_list = []
@@ -486,7 +486,10 @@ class GismoCloudDeploy(object):
             ["parameters", "values"],
             ["environments", self.env],
             ["project folder", self.project],
-            ["worker replicas", self._worker_desired_replicas_per_namespaces],
+            [
+                "worker replicas per namespaces",
+                self._worker_desired_replicas_per_namespaces,
+            ],
             ["number of namespaces", self._num_namesapces],
             ["number of files per namespace", num_files_per_namespace],
             ["image_tag", self._user_id],
@@ -867,7 +870,7 @@ class GismoCloudDeploy(object):
             init_process_time_list=self._init_process_time_list,
             total_proscee_time_list=self._total_proscee_time_list,
             eks_nodes_number=self._total_num_nodes,
-            num_workers=self._worker_desired_replicas,
+            num_workers=self._worker_desired_replicas_per_namespaces,
             logs_file_path=self._save_file_absoulte_path_local,
             performance_file_txt=self._save_file_absoulte_path_local
             + "/"
