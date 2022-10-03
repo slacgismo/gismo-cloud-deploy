@@ -148,7 +148,7 @@ class GismoCloudDeploy(object):
         self._num_namesapces = 1
         self._num_worker_pods_per_namespace = 8
         self._total_number_files = 0
-        self._worker_desired_replicas_per_namespaces = 2
+        self._worker_desired_replicas_per_namespaces = 1
         self._services_config_list = {}
         self._filename = {}
         self._ready_server_list = []
