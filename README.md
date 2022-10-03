@@ -304,21 +304,21 @@ A project folder must contains four files as below:
 - [requirements.txt](#requirementstxt)
 - [config.yaml](#configyaml)
 
-#### Dockerfile
+#### `Dockerfile`
 
 This Dockerfile contains all necessary system dependencies. Suppose you would like to install any other dependencies other than python packages. Please include it in this file. For example, the `solver license file` is copied from your local folder to docker images through this Dockerfile.
 
-#### entrypoint.py
+#### `entrypoint.py`
 
 When you define your code block folder, this folder has to include a `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside the project folder (eg.`examples/solardatatools`) and pastes them to docker images. Developers can include any files or self-defined python modules in their folder (eg `my_modules`). Those files, sub-folder and modules will be copied to the Docker images.
 
 The `gismoclouddeploy` passes the filename and column name to this `entrypoint.py` file. Each entrypoint.py file processes exactly one filename with one column name only. For example, if you want to process one file with two column names. This application will run this entrypoint.py twice with the same file name and two different column names.
 
-#### requirements.txt
+#### `requirements.txt`
 
 Please include a `requirements.txt` file under your project folder. You have to include all the necessary dependencies packages in this file. The Docker copies those files into their images, and the application will install python packages based on it. Some packages are necessary to run the flask server and celery worker. Please do not remove it. Please check the example `requirements.txt` to get more details.
 
-#### config.yaml
+#### `config.yaml`
 
 This file lists all the system parameters that pass to the `gismoclouddeploy`. Here list some import parameters:
 
@@ -355,7 +355,7 @@ This file lists all the system parameters that pass to the `gismoclouddeploy`. H
 
 #### Run command on AWS
 
-Suppose you are already familiar with how to create EC2 bastion and EKS cluster. You can run this application directly on AWS. It is faster and easy to debug. Follow the steps to run this application on AWS EC2.
+Suppose you are already familiar with how to create EC2 bastion and EKS cluster, you can run this application directly on AWS. It is faster and easy to debug. Follow the steps to run this application on AWS EC2.
 Suppose you have created and installed all the dependencies. Activate your pyton3 virtual environment.
 
 ```bash
@@ -367,7 +367,7 @@ Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
 cd ./gismoclouddeploy/services
-python3 main.py run-files -n 1 -s 1 -p examples/solardatatools -c <your-cluster-name>
+python3 main.py run-files -n 1 -s 1 -p examples/sleep -c <your-cluster-name>
 ```
 
 Please follwo [Command](#command) section to explore the command detail.
@@ -426,10 +426,7 @@ Options:
   -p, --project TEXT          Project folder name
   -s, --scalenodes INTEGER    Total number of nodes(instances)
   -r, --repeat INTEGER        Repeat time
-  -c, --cluster TEXT          eks cluster name, if run in local, just use
-                              defaul 'local'
-                              It's hardcode in config/eks/cluster.yaml
-  -f, --file TEXT             run specific file)
+  -c, --cluster TEXT          eks cluster name (You have to specifiy it if you are running on AWS)
   --help                      Show this message and exit.
 ```
 

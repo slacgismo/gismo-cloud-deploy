@@ -14,7 +14,6 @@ load_dotenv()
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION")
-# SQS_URL = os.getenv("SQS_URL")  # aws standard url
 ECR_REPO = os.getenv("ECR_REPO")  # get ecr repo
 
 
@@ -62,15 +61,14 @@ def main():
 @click.option(
     "--cluster",
     "-c",
-    help="eks cluster name, if run in local, just use defaul 'local'",
+    help="eks cluster name (You have to specifiy it if you are running on AWS)",
     default="local",
 )
 @click.option(
     "--nodegroup_name",
     "-nd",
     help="eks cluster nodegroup name, default is 'gcd'.\
-        Define the instance type of the nodes. You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.\
-        (PS. t2.micro cannot work in this application.)",
+        Define the instance type of the nodes. You should not change this parameters unless you change it in cluster.yaml when you create a new cluster.(PS. t2.micro cannot work in this application.)",
     default="gcd",
 )
 @click.option(
