@@ -696,7 +696,7 @@ class GismoCloudDeploy(object):
                 logging.info(f"Check {service_name} state in {namespace}")
                 x = RaisingThread(
                     target=check_if_pod_ready,
-                    args=(namespace, desired_replicas, service_name, 300, 3),
+                    args=(namespace, desired_replicas, service_name, 300, 5),
                 )
                 x.name = key
                 threads.append(x)

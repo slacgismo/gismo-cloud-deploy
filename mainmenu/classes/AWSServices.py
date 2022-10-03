@@ -537,7 +537,7 @@ class AWSServices(object):
             except Exception as e:
                 raise Exception(f"run eks command {description} file failed \n {e}")
 
-    def wake_up_ec2(self, wait_time: int = 90, delay: int = 3):
+    def wake_up_ec2(self, wait_time: int = 90, delay: int = 5):
 
         logging.info("Wake up ec2")
         ec2_instance_id = self._ec2_instance_id
