@@ -80,7 +80,7 @@ def initial_end_services(
         scale_eks_nodes_and_wait(
             scale_node_num=0,
             total_wait_time=scale_eks_nodes_wait_time,
-            delay=3,
+            delay=15,
             cluster_name=cluster_name,
             nodegroup_name=nodegroup_name,
         )

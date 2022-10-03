@@ -101,20 +101,23 @@ def handle_input_cloumn_name_question(
 
 
 def handle_input_number_of_scale_instances_question(
-    input_question: str, default_answer: int, max_node: int
+    input_question: str = None,
+    default_answer: int = 1,
+    max_node: int = 100,
+    min_node: int = 1,
 ) -> int:
     input_number = default_answer
     while True:
         input_number = int(
             input(
-                f"{input_question} (minimum is 1 and max is {max_node}) (default:{default_answer}):"
+                f"{input_question} (minimum is {min_node} and max is {max_node}) (default:{default_answer}):"
             )
             or default_answer
         )
         if not isinstance(input_number, int):
             logging.error(f"{input_number} is not an integer")
         elif int(input_number) < 1 or int(input_number) > int(max_node):
-            logging.error(f"Input number must be within 1 to {max_node}")
+            logging.error(f"Input number must be within {min_node} to {max_node}")
         else:
             break
     return input_number
@@ -138,7 +141,7 @@ def hanlde_input_project_name_in_tag(input_question: str, default_answer: str) -
 
 def handle_input_project_path_question(
     input_question: str,
-    default_answer: int,
+    default_answer: str,
 ) -> str:
     while True:
         project_path = str(
@@ -339,6 +342,7 @@ def select_eks_instance_type() -> str:
             "type",
             message="Select EKS instance type",
             choices=[
+                # EKSInstanceType.t2small.value,
                 EKSInstanceType.t2medium.value,
                 EKSInstanceType.t2large.value,
             ],
@@ -396,3 +400,12 @@ def remove_partent_path_from_absolute_path(parent_path, absolut_path) -> str:
 def handle_input_ssh_custom_command():
     custom_command = input(f"Please type your command: ")
     return custom_command
+
+
+def handle_update_number_of_nodes(default_number: int) -> int:
+    update_nodes_number = handle_input_number_of_scale_instances_question(
+        input_question=InputDescriptions.is_update_numbder_of_nodes.value,
+        min_node=default_number,
+        default_answer=default_number,
+    )
+    return int(update_nodes_number)

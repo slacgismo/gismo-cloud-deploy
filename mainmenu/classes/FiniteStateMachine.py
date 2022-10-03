@@ -1,3 +1,4 @@
+from mainmenu.classes.constants.EKSInstanceType import EKSInstanceType
 from .utilities.aws_utitlties import connect_aws_client, get_iam_user_name
 from transitions import Machine
 from .utilities.handle_inputs import (
@@ -9,6 +10,7 @@ from .utilities.handle_inputs import (
     get_system_id_from_selected_history,
     select_ec2_instance_type,
     select_eks_instance_type,
+    handle_update_number_of_nodes,
 )
 from .AWSServices import AWSServices
 from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
@@ -233,14 +235,26 @@ class FiniteStateMachine(object):
                         saved_eks_config_file=self.eks_config_templates
                     )
                     # ask if user want to change the instance type
-                    if self._platform == Platform.AWS.name:
-                        ec2_instance_type = select_ec2_instance_type()
-                        eks_instance_type = select_eks_instance_type()
-                        # update ec2 instance type
-                        self._ec2_config_dict["ec2_instance_type"] = ec2_instance_type
-                        self._eks_config_dict["nodeGroups"][0][
-                            "instanceType"
-                        ] = eks_instance_type
+                    # if self._platform == Platform.AWS.name:
+                    #     ec2_instance_type = select_ec2_instance_type()
+                    #     eks_instance_type = select_eks_instance_type()
+                    #     # update ec2 instance type
+                    #     self._ec2_config_dict["ec2_instance_type"] = ec2_instance_type
+                    #     self._eks_config_dict["nodeGroups"][0][
+                    #         "instanceType"
+                    #     ] = eks_instance_type
+                    eks_instance_type = self._eks_config_dict["nodeGroups"][0][
+                        "instanceType"
+                    ]
+                    if (
+                        eks_instance_type == EKSInstanceType.t2small.value
+                        or eks_instance_type == EKSInstanceType.t2medium.value
+                    ):
+                        if self._input_answers["num_of_nodes"] == 1:
+                            update_node_number = handle_update_number_of_nodes(
+                                default_number=3
+                            )
+                            self._input_answers["num_of_nodes"] = update_node_number
 
                     # generate ec2 and eks cluster name
                     self._system_id = self._generate_system_id()
@@ -299,9 +313,10 @@ class FiniteStateMachine(object):
                     )
                     tags = self._ec2_config_dict["tags"]
                 except Exception as e:
-
                     raise Exception(f"Import and verify history ec2 file failed: {e}")
+
                 eks_config_file = self._select_history_path + "/cluster.yaml"
+                logging.info(f"eks_config_file :{eks_config_file}")
                 if not exists(eks_config_file):
                     logging.warning(
                         "No saved eks condig file found import from templates"
@@ -311,8 +326,24 @@ class FiniteStateMachine(object):
                     self._eks_config_dict = import_and_verify_eks_config(
                         saved_eks_config_file=eks_config_file
                     )
+                    eks_instance_type = self._eks_config_dict["nodeGroups"][0][
+                        "instanceType"
+                    ]
+
+                    if (
+                        eks_instance_type == EKSInstanceType.t2small.value
+                        or eks_instance_type == EKSInstanceType.t2medium.value
+                    ):
+                        if "num_of_nodes" in self._input_answers:
+                            if self._input_answers["num_of_nodes"] == 1:
+                                update_node_number = handle_update_number_of_nodes(
+                                    default_number=3
+                                )
+                                self._input_answers["num_of_nodes"] = update_node_number
                 except Exception as e:
-                    raise Exception("A EC2 file exists but a eks file does not exists")
+                    raise Exception(
+                        f"A EC2 file exists but a eks file does not exists :{e}"
+                    )
 
         return
 

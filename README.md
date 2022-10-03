@@ -26,13 +26,11 @@
 </tr>
 </table>
 
-
-This project is to build a `gismo-cloud-deploy` tool designed to execute time-consuming computation on multiple AWS EC2 instances in parallel. The tool containerizes users' custom scripts into docker images, and it utilizes `Kubernetes` (AWS EKS) horizontal scaling and vertical scaling features to distribute those images evenly among generated instances.
+This project is to build a `gismo-cloud-deploy` tool that designed to execute time-consuming computation on multiple AWS EC2 instances in parallel. The tool containerizes users' custom scripts into docker images, and it utilizes `Kubernetes` (AWS EKS) horizontal scaling and vertical scaling features to distribute those images evenly among generated instances.
 
 Since this project uses many cloud services of AWS, an extra automation tool operates AWS services on the user's local machine through SSH. The automation tool `mainmenu` can generate a new EC2 bastion. Through the generated EC2 bastion, it creates EKS cluster and run `gismo-cloud-deploy` tool. Please see the [System diagram](#system-diagram) for more details.
 
 ---
-
 
 ## Install & Setup
 
@@ -57,7 +55,7 @@ source ./venv/bin/activate
 Install python dependencies.
 
 ```bash
-pip install --upgrade pip 
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
@@ -107,9 +105,10 @@ If you are using your own account other than SLAC Gismo group account. Please cr
   - SQS
   - Security Group
   - Keypair
-- When you run the application through `menu`, it limits one EC2 basiton and one EKS cluster per account.
+- When you run the application through the `menu` command, it limits the creation of EC2 bastions and EKS clusters to one EC2 bastion and one cluster per account.
 - The EC2 bastion and EKS cluster name is `gcd-<Your-iam-user-name>`.
-- If you want to run multiple `gismoclouddeploy`, you need to manually generate EC2 bastion and EKS cluster.
+- If you want to run multiple `gismoclouddeploy`, you must manually generate EC2 bastion and EKS cluster.
+- You must use at least `t2.medium` or higher to run this application.
 
 #### Run menu
 
@@ -119,19 +118,16 @@ Run `menu` command to select main menu.
 python3 main.py menu
 ```
 
-
 ##### project path
 
 ```bash
-('Enter project folder (Hit `Enter` button to use default path',): /Users/<username>/Development/gismo/gismo-cloud-deploy/examples/sleep path): 
+('Enter project folder (Hit `Enter` button to use default path',): /Users/<username>/Development/gismo/gismo-cloud-deploy/examples/sleep path):
 ```
 
 There are four examples included in this tool. Please check [Examples projects](#example-projects) for more information.
 First, for a quick start, copy the `example/sleep` projects to your desktop. You can input `<bas-path>/desktop/sleep` project (`<bas-path>` refer to the absolute path of `desktop` folder). Then editing the function `entrypoint` in `entrypoint.py`. Change the delay time from `5` to `3`. The application will only run a for-loop in this task for `3` seconds.
 
-Second, open the `config.yaml` file in your project folder. You have to specify the `data_bucket`, `file_pattern` and `process_column_keywords` parameters. Use default `file_pattern:*csv` `data_bucket:"pv.insight.nrel"` and default `process_column_keywords: "^Pow"`, this application will process the file that matches `file_pattern:*csv` in `data_bucket:"pv.insight.nrel"`.  In this case, it runs the `csv` file of a bucket called `pv.insight.nrel` on S3. When this application is running, the application passes the match file name to `entrypoint` function as `curr_process_file` and matched column name as `curr_process_column`. If there is no matched column name, the `curr_process_column` in the entrypoint function is `None`.
-
- <!-- It run a for loop without doing anything. The custom script file is `entrypoint.py`. You can modify this script with any custom codes inside you like and save the results in a JSON format. But you have to put your code block inside the `entrypoint` function. Please read [project files structures](#project-files-structures) to get more details. -->
+Second, open the `config.yaml` file in your project folder. You have to specify the `data_bucket`, `file_pattern` and `process_column_keywords` parameters. Use default `file_pattern:*csv` `data_bucket:"pv.insight.nrel"` and default `process_column_keywords: "^Pow"`, this application will process the file that matches `file_pattern:*csv` in `data_bucket:"pv.insight.nrel"`. In this case, it runs the `csv` file of a bucket called `pv.insight.nrel` on S3. When this application is running, the application passes the match file name to `entrypoint` function as `curr_process_file` and matched column name as `curr_process_column`. If there is no matched column name, the `curr_process_column` in the entrypoint function is `None`.
 
 ##### platform
 
@@ -159,7 +155,7 @@ The following question is to type your project path.
 The following instruction asks you to type a project name. The name appears in the tags of each created cloud resource. They are the information for budget management if your company needs it. Please type any name you like.
 
 ```bash
-Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path): 
+Enter the name of project. This will be listed in all created cloud resources, and it's used for managing budege. (It's not the same as project path):
 ```
 
 ##### Debug mode
@@ -167,7 +163,7 @@ Enter the name of project. This will be listed in all created cloud resources, a
 The following instruction asks you to select debug mode. Suppose you are a developer who likes to debug this project. You can type `yes`; otherwise, type `no`. The default answer is `no`.
 
 ```bash
-Run debug mode through SSH? If `no`, an following instructions will help you to create a run-files command and execute it. (default answer:no) 
+Run debug mode through SSH? If `no`, an following instructions will help you to create a run-files command and execute it. (default answer:no)
 ```
 
 ##### Number of generated ec2 instances
@@ -182,16 +178,16 @@ The following instruction will ask you to type how many ec2 instances you want t
 
 The following instruction will ask you if you would like to destroy the cloud resources that you created after the application is completed. Hit enter button to give the default answer 'no'. Since creating and deleting cloud resources take 10 ~ 20 minutes if you want to run the application multiple times. You can delete those cloud resources later. :warning: However, an active EKS cluster ==cost $0.10 per hour==. So if you don't want to pay the fee. Please type `yes` to destroy all resources after completion.
 
-```bash
-"Do you want to delete all created resources?\n If you type 'no', there will be an operating cost from generated EKS cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create. Sept 2022). The ec2 bastion will be stopped (no operating cost).\n However, if you type 'yes', the generated ec2 bastions and EKS cluster will be deleted (No operating cost from ec2 and EKS cluster).\n It takes about 10~20 mins to generate a new EKS cluster.\n", (default answer:no) 
+````bash
+"Do you want to delete all created resources?\n If you type 'no', there will be an operating cost from generated EKS cluster (You pay $0.10 per hour for each Amazon EKS cluster that you create. Sept 2022). The ec2 bastion will be stopped (no operating cost).\n However, if you type 'yes', the generated ec2 bastions and EKS cluster will be deleted (No operating cost from ec2 and EKS cluster).\n It takes about 10~20 mins to generate a new EKS cluster.\n", (default answer:no)
 
 ##### Number of process files
 
 The following instructions will generate the run-command. It starts by asking if you would like to process all files in the defined data bucket in `config.yaml`. Hit enter button to give the default answer `no`.
 
 ```bash
-Do you want to process all files in the databucket that defined in config.yaml? (default answer:no) 
-```
+Do you want to process all files in the databucket that defined in config.yaml? (default answer:no)
+````
 
 If you type `no`, the following instruction will ask you to type the number of process files. You can enter to give the default answer `1`. This application will process the first files in the defined data bucket.
 
@@ -236,7 +232,7 @@ Then the terminal will print out all the variables and ask for confirmation to p
 ```
 
 ```bash
-Confirm to process (must be yes/no) (default answer:yes) 
+Confirm to process (must be yes/no) (default answer:yes)
 ```
 
 After you give the confirmation `yes` to process, it will start with the following steps.
@@ -252,7 +248,7 @@ After you give the confirmation `yes` to process, it will start with the followi
 7. Run `gismo-cloud-deploy` on the EKS cluster.
 8. Download results from the EC2 bastion to the local project folder.
 9. Congratulation!! This application completes.
-  
+
 After completing the application, the saved data are downloaded from the EC2 bastion and stored in your `results` folder.
 The results folder contains four different files.
 
@@ -265,6 +261,7 @@ The results folder contains four different files.
 ### MainMenu
 
 Users can select four actions.
+
 ##### create_cloud_resources_and_start
 
 In this action, this application will generate all necessary cloud resources as [create new cloud resources](#create-new-cloud-resource-steps) described.
@@ -290,9 +287,8 @@ Run the application on your local machine, and ==it's recommended to run your pr
   This example runs a for loop without doing anything.
 
 - examples/solardatatools
-  This examples runs the [solar-data-tools](https://github.com/slacgismo/solar-data-tools) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details about how to get this license. 
+  This examples runs the [solar-data-tools](https://github.com/slacgismo/solar-data-tools) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details about how to get this license.
   If you want to include a solver license file such as `mosek.lic`, you have to specify the three parameters `solver_name`, `solver_lic_target_path_in_images_dest` and `solver_lic_file_local_source` in your project's `config.yaml` file. The license file has to be located in your local project folder in the same location (relative path ) that you specifiy as `solver_lic_file_local_source`. The `solver_lic_target_path_in_images_dest` is the absolute path that puts the license file in the built images, and it's where official `MOSEK` requests.
-  
 - examples/stasticclearsky
   This examples runs the [StatisticClearSky](https://github.com/slacgismo/StatisticalClearSky) project. It requires a `MOSEK` solver license file to run properly. Please check [Include MOSEK licenses](#include-mosek-license) to get more details.
 
@@ -304,14 +300,14 @@ A project folder must contains four files as below:
 - [entrypoint.py](#entrypointpy)
 - [requirements.txt](#requirementstxt)
 - [config.yaml](#configyaml)
-  
+
 #### Dockerfile
 
 This Dockerfile contains all necessary system dependencies. Suppose you would like to install any other dependencies other than python packages. Please include it in this file. For example, the `solver license file` is copied from your local folder to docker images through this Dockerfile.
 
 #### entrypoint.py
 
-When you define your code block folder, this folder has to include a  `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside the project folder (eg.`examples/solardatatools`) and pastes them to docker images. Developers can include any files or self-defined python modules in their folder (eg `my_modules`). Those files, sub-folder and modules will be copied to the Docker images.
+When you define your code block folder, this folder has to include a `entrypoint.py` file with a `entrypoint` function in it. The `entrypoint` function is the start function of this application. When this application builds images, it copies all the files inside the project folder (eg.`examples/solardatatools`) and pastes them to docker images. Developers can include any files or self-defined python modules in their folder (eg `my_modules`). Those files, sub-folder and modules will be copied to the Docker images.
 
 The `gismoclouddeploy` passes the filename and column name to this `entrypoint.py` file. Each entrypoint.py file processes exactly one filename with one column name only. For example, if you want to process one file with two column names. This application will run this entrypoint.py twice with the same file name and two different column names.
 
@@ -332,7 +328,7 @@ This file lists all the system parameters that pass to the `gismoclouddeploy`. H
 
 - data_bucket: "pv.insight.nrel"
   This is the S3 bucket where you keep your data files.
-- file_pattern: "*.csv"
+- file_pattern: "\*.csv"
   This application searches and down the file that match this file pattern, and passes them to the tasks.
 - process_column_keywords: "^Pow"
   When the application downloads each `csv` file, it searches the column name by this column keywords based on regex expression and pass to the tasks.
@@ -341,12 +337,13 @@ This file lists all the system parameters that pass to the `gismoclouddeploy`. H
 - saved_path_cloud: "results"
 
 - filename:
+
   - saved_data: 'results.csv'
   - logs_data: 'logs.csv'
   - error_data: 'errors.csv'
   - performance: 'performance.txt'
   - runtime_gantt_chart: 'runtime.png'
-These are the saved files' names. Please do not change them. Those saved files are stored in your local project path under the `results` folder.
+    These are the saved files' names. Please do not change them. Those saved files are stored in your local project path under the `results` folder.
 
 - is_celeryflower_on: False
   Turn of / off flower . You can turn on Celery folwer to monitor the rabbitmq inside kubernetes. It will provide a public link to access the celeryflower. However, the celeryflower service is destroyed after application completed. Moreover, it generate extra cost because of public IP address from AWS.
@@ -375,7 +372,7 @@ Please follwo [Command](#command) section to explore the command detail.
 
 After it completed, the terminal prints out the performance analysis as below:
 
-~~~
+```
 +-------------------------------------+-----------------------+---------------------------------+
 | Performance                         | Results               | Info                            |
 +-------------------------------------+-----------------------+---------------------------------+
@@ -393,7 +390,7 @@ After it completed, the terminal prints out the performance analysis as below:
 | Number of nodes                     | 1                     |                                 |
 | Number of workers                   | 1                     |                                 |
 +-------------------------------------+-----------------------+---------------------------------+
-~~~
+```
 
 Check the saved data file, Gantt plot, and tasks performance in `./examples/solardatatools/results` folder.
 
@@ -409,7 +406,7 @@ The gcd command supports the following subcommands:
 
 ### run-files command
 
-~~~
+```
 Usage: python3 main.py run-files [OPTIONS]
 
 Run Process Files
@@ -431,7 +428,7 @@ Options:
                               It's hardcode in config/eks/cluster.yaml
   -f, --file TEXT             run specific file)
   --help                      Show this message and exit.
-~~~
+```
 
 - If you use the default `run-files` command with no option, this program processes the files defined in the `config.yaml` file and generates the saved results in a file specified in `config.yaml` file.
 - The process file command with option command `-n` followed by an `integer number` will process the first `number` files in the defined bucket. (eg. `-n 10` will process the first ten files in the specified bucket )
@@ -445,7 +442,7 @@ python3 main.py run-files -f PVO/PVOutput/11106.csv -f PVO/PVOutput/10010.csv -s
 - If you are running on AWS, giving a cluster name through `-c` option command is necessary.
 - The `-s` option command is to specify how many instances you want to generate.
 - The `-p` command is the project name. This project have to locate in this repository. It's recommended to put it under `temp` folder.
-  ***Note*** If you are using the `menu` selection's `run-in-local-machine`. You can put your project anywhere on your local machine. The `menu` copies the project into this repository under `temp` folder.
+  **_Note_** If you are using the `menu` selection's `run-in-local-machine`. You can put your project anywhere on your local machine. The `menu` copies the project into this repository under `temp` folder.
 - The `-r` option command is to specify how many time you want to repeat the application. The default value is `1`.
 
 #### Examples
@@ -478,9 +475,10 @@ The create cluster command will create an EKS cluster from a template file named
 :warning: The `max_size` variable under `nodeGroups` limits the maximum nodes number that scales in this application. ==The default number is 100==.
 
 ---
+
 #### Include MOSEK license
 
- MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
+MOSEK is a commercial software package. The included YAML file will install MOSEK for you, but you will still need to obtain a license. More information is available here:
 
 - [mosek](https://www.mosek.com/resources/getting-started/)
 - [Free 30-day trial](https://www.mosek.com/products/trial/)
@@ -494,7 +492,6 @@ This license file will be uploaded to a temporary S3 folder and downloaded into 
 ### Read error/logs files
 
 This program saves all the output in a logs files. It separates error output into a error file. Developers can check the error of previous run-time in this error file.
-
 
 ### Debug in real time
 
@@ -526,13 +523,13 @@ kubectl get all -n 1664143998-<your-hostid>
 
 It prints out:
 
-~~~
+```
 NAME                       READY   STATUS    RESTARTS   AGE
 rabbitmq-84669ddxxs-rc2fx   1/1     Running   0          10h
 redis-697477d557-8jdz2     1/1     Running   0          10h
 server-65bf8bc584-kc6zs    1/1     Running   0          10h
 worker-6d47d89f94-r7drj    1/1     Running   0          10h
-~~~
+```
 
 :warning: The worker's (`worker-<random id>`) name changes when this application restarts the services.
 
@@ -585,12 +582,12 @@ kubectl edit configmap aws-auth -n kube-system
 
 change the config file as:
 
-~~~
+```
 mapUsers: |
   - userarn: arn:aws:iam::[account_id]:root
     groups:
     - system:masters
-~~~
+```
 
 ---
 
