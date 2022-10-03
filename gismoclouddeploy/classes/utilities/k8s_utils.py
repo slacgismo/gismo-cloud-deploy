@@ -352,7 +352,7 @@ def check_if_pod_ready(
             )
             if cunrrent_num_container == num_container:
                 logger.info(
-                    f"====== Waiting {container_prefix} completed. [desired / available]: [{cunrrent_num_container} / {num_container}] ======"
+                    f"====== namespace: {namespace} {container_prefix} completed. [desired / available]: [{num_container} / {cunrrent_num_container}] ======"
                 )
                 sys.exit()
                 # return
@@ -360,7 +360,7 @@ def check_if_pod_ready(
 
             time.sleep(delay)
             logger.info(
-                f"Waiting {container_prefix} , [desired / available]: [{cunrrent_num_container:} / {num_container}]  .Waiting: {total_wait_time}"
+                f"namespace: {namespace} {container_prefix} : , [desired / available]: [{num_container:} / {cunrrent_num_container}]  .Waiting: {total_wait_time}"
             )
 
     except Exception as e:
