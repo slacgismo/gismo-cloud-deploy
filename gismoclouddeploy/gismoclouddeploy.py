@@ -101,7 +101,6 @@ def gismoclouddeploy(
             # something wrong break while loop and clean services.
             logging.error(f"Somehting wrong : {e}")
             break
-
     # clean up state, clean up k8s, delete namspaces, scale down eks nodes to 0 .
     logging.info(f" ===== State: {gcd.state} =======")
     gcd.trigger_cleanup()

@@ -407,6 +407,9 @@ def num_pod_ready(pod_name_prefix: str, namespace: str) -> int:
                 continue
             if len(container_statuses) >= 1:
                 state = i.status.container_statuses[-1].state
+                if podname == "worker":
+                    print("--------------------------")
+                    print(i.status.container_statuses[-1])
                 waiting = state.waiting
                 terminated = state.terminated
                 if terminated is not None:

@@ -691,6 +691,13 @@ class GismoCloudDeploy(object):
 
     def handle_verify_k8s_services(self, event):
         logging.info("handle_verify_k8s_services")
+        wait_time = 20
+        delay = 5
+
+        while wait_time > 0:
+            time.sleep(delay)
+            wait_time -= delay
+            logging.info(f"Waiting.. {wait_time} sec")
 
         wait_time = 120
         delay = 5
@@ -741,7 +748,7 @@ class GismoCloudDeploy(object):
             wait_time -= delay
 
         self._ready_server_list = ready_server_list
-        wait_time = 16
+        wait_time = 12
         delay = 4
 
         while wait_time > 0:

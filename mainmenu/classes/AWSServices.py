@@ -584,12 +584,6 @@ class AWSServices(object):
                 keypair_name=self._keypair_name,
                 local_pem_path=self.local_pem_path,
             )
-            # add_public_ip_to_sshconfig(
-            #     public_ip=self._ec2_public_ip,
-            #     login_user=self._login_user,
-            #     key_pair_name=self._keypair_name
-            # )
-
         return
 
     def check_eks_exist(
