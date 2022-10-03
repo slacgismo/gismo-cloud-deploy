@@ -691,6 +691,8 @@ class GismoCloudDeploy(object):
             for key, value in self._services_config_list.items():
                 service_name = key
                 desired_replicas = value["desired_replicas"]
+                # if service_name == "worker":
+                #     desired_replicas = 2
                 logging.info(f"Check {service_name} state in {namespace}")
                 x = RaisingThread(
                     target=check_if_pod_ready,

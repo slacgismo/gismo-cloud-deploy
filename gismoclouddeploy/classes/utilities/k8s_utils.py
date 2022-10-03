@@ -414,6 +414,7 @@ def num_pod_ready(pod_name_prefix: str, namespace: str) -> int:
 
             ready = i.status.container_statuses[-1].ready
             if ready is True:
-                ready_replicas += 1
-
+                # ready_replicas += 1
+                pods.append(name)
+    ready_replicas = len(pods)
     return ready_replicas
