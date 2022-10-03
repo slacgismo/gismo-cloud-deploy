@@ -174,7 +174,7 @@ def scale_eks_nodes_and_wait(
 
         while total_wait_time:
             num_nodes = num_of_nodes_ready()
-            print(
+            logger.info(
                 f"waiting {target_node_number} ready , current num_nodes:{num_nodes}  ....counter: {total_wait_time} Time: {time.ctime(time.time())}"
             )
             if num_nodes == target_node_number:

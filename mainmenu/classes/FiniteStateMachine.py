@@ -234,7 +234,7 @@ class FiniteStateMachine(object):
                     self._eks_config_dict = import_and_verify_eks_config(
                         saved_eks_config_file=self.eks_config_templates
                     )
-                    # ask if user want to change the instance type
+                    # ask if users want to change the instance type
                     # if self._platform == Platform.AWS.name:
                     #     ec2_instance_type = select_ec2_instance_type()
                     #     eks_instance_type = select_eks_instance_type()

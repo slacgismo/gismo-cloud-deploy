@@ -5,7 +5,7 @@ from mypy_boto3_ec2.client import EC2Client
 from mypy_boto3_s3.client import S3Client
 from mypy_boto3_sts.client import STSClient
 from mypy_boto3_ec2.service_resource import EC2ServiceResource
-
+from os.path import basename
 import os
 import botocore
 import logging
@@ -462,6 +462,8 @@ def ssh_upload_folder_to_ec2(
     2. check if relative folder exists on remote path
     3. if not exist, create a new remote path
     4. upload all files to remote folder
+
+    Params
     ----------------------------------------------------------
     :param user_name:          login user of ec2
     :param instance_id:         EC2 instance id
@@ -494,13 +496,6 @@ def ssh_upload_folder_to_ec2(
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name, username=user_name, pkey=privkey)
 
-    # step 1. get relative folder
-    # project_folder = basename(local_folder_base)
-    # print(f"project_folder: {project_folder}, local_folder :{local_folder_base}")
-    logging.info("Lists local files in path, and create remote files list")
-    base_path = os.getcwd()
-
-    # this will be an issue. change here if enoug time
     logging.info("Create remote temp folder if it does not exist")
     folder = f"/home/{user_name}/gismo-cloud-deploy/temp"
     logging.info(f"Crete{folder}")
@@ -508,6 +503,21 @@ def ssh_upload_folder_to_ec2(
     (stdin, stdout, stderr) = ssh.exec_command(command)
     for line in stdout.readlines():
         print(line)
+    # step 1. get relative folder
+    project_folder = basename(local_project_path_base)
+    print(f"project_folder: {project_folder}, local_folder :{local_project_path_base}")
+    logging.info("Lists local files in path, and create remote files list")
+    base_path = os.getcwd()
+    logging.info("Create remote temp folder if it does not exist")
+    _remote_project_folder = (
+        f"/home/{user_name}/gismo-cloud-deploy/temp/{project_folder}"
+    )
+    logging.info(f"Crete{_remote_project_folder}")
+    command = f'if [ ! -d "{_remote_project_folder}" ]; then \n echo ssh: {_remote_project_folder} does not exist \n mkdir {_remote_project_folder} \n echo ssh: create {_remote_project_folder}  \n fi'
+    (stdin, stdout, stderr) = ssh.exec_command(command)
+    for line in stdout.readlines():
+        print(line)
+    # this will be an issue. change here if enoug time
 
     relative_path = []
 
@@ -558,6 +568,17 @@ def ssh_upload_folder_to_ec2(
 
 
 def get_all_files_in_local_dir(local_dir: str) -> list:
+    """
+    list all files in local directory
+
+    Parameters
+    ----------
+    :param str local_dir: local directory
+
+    Returns
+    -------
+    :return list of files
+    """
     all_files = list()
 
     if os.path.exists(local_dir):
@@ -577,14 +598,26 @@ def get_all_files_in_local_dir(local_dir: str) -> list:
     return all_files
 
 
-def upload_file_to_sc2(
+def upload_file_to_ec2(
     user_name: str,
     instance_id: str,
     pem_location: str,
     local_file: str,
     remote_file: str,
-    ec2_resource,
+    ec2_resource: EC2ServiceResource,
 ):
+    """
+    Upload sinlge file to remote AWS EC2
+
+    Parameters
+    ----------
+    :param str user_name: ec2 login user
+    :param str instance_id: ec2 instance id
+    :param str pem_location: keypair path and name
+    :param str local_file: local file path and name
+    :param str remote_file: remote file path and name
+    :param EC2ServiceResource ec2_resource: boto3. ec2 resource object
+    """
 
     instances = ec2_resource.instances.filter(
         Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
@@ -633,10 +666,22 @@ def ssh_download_folder_from_ec2(
     user_name: str,
     instance_id: str,
     pem_location: str,
-    ec2_resource,
     local_folder: str,
     remote_folder: str,
+    ec2_resource: EC2ServiceResource,
 ):
+    """
+    Download a folder from AWS EC2 to local folder
+
+    Parameters
+    ----------
+    :param str user_name: ec2 login user
+    :param str instance_id: ec2 instance id
+    :param str pem_location: keypair path and name
+    :param str local_folder: local folder path
+    :param str remote_folder: remote folder path
+    :param EC2ServiceResource ec2_resource: boto3. ec2 resource object
+    """
     instances = ec2_resource.instances.filter(
         Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
     )
@@ -691,14 +736,28 @@ def sftp_get_recursive(path: str, dest: str, sftp: paramiko.SSHClient):
 
 def get_public_ip_and_update_sshconfig(
     wait_time: int = 90,
-    delay: int = 3,
+    delay: int = 5,
     ec2_instance_id: str = None,
     ec2_client: EC2Client = None,
     system_id: str = None,
     login_user: str = None,
     keypair_name: str = None,
     local_pem_path: str = None,
-) -> str:
+):
+    """
+    Get ec2 public and update local .ssh/config file
+
+    Parameters
+    ----------
+    :param int wait_time:       total wait time of fetching public ip of ec2
+    :param int delay:           interval of fetching public ip of ec2
+    :param str ec2_instance_id: ec2 instance id
+    :param str ec2_client:      boto3 client object
+    :param str system_id:       system id
+    :param str login_user:      ec2 login user
+    :param str keypair_name:    ec2 keypair name
+    :param str local_pem_path:  local pem file path
+    """
     ec2_public_ip = None
 
     while wait_time > 0 and ec2_public_ip is None:
@@ -720,23 +779,21 @@ def get_public_ip_and_update_sshconfig(
     )
 
 
-def check_if_ec2_with_name_exist(ec2_resource=None, ec2_name: str = None):
-    try:
-        for instance in ec2_resource.instances.all():
-            ec2tags = instance.tags
-            for tag in ec2tags:
-                if tag["Key"] == "Name":
-                    name = tag["Value"]
-                    if name == ec2_name:
-                        return True
-    except Exception as e:
-        raise Exception(f"find ec2 name in tags failed:{e}")
-    return False
-
-
 def check_eks_cluster_with_name_exist(
     eks_client=None, cluster_name: str = None
 ) -> bool:
+    """
+    search eks cluster with name. If the name is found, return True, else return False
+
+    Parameters
+    ----------
+    :param int eks_client:  bot3 eks client object
+    :param str cluster_name:  EKS cluster name
+
+    Returns
+    -------
+    :return boolen: Retrun True if found else return False.
+    """
     try:
         response = eks_client.list_clusters()
         if len(response) == 0:
@@ -745,9 +802,10 @@ def check_eks_cluster_with_name_exist(
         if "clusters" in response:
             cluster_list = response["clusters"]
             for name in cluster_list:
-                print(name)
                 if name == cluster_name:
                     return True
+                else:
+                    logging.warning(f"Other eks cluster: {name}")
 
         return False
     except Exception as e:

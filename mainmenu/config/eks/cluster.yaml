@@ -10,7 +10,7 @@ metadata:
 
 nodeGroups:
   - name: gcd # nodegroup name
-    instanceType: t2.small
+    instanceType: t2.medium
     desiredCapacity: 0
     minSize: 0
     maxSize: 100

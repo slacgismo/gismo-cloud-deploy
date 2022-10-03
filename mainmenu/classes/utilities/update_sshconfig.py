@@ -8,7 +8,18 @@ from os.path import expanduser
 def add_public_ip_to_sshconfig(
     public_ip: str, host: str, login_user: str, key_pair_name: str, local_pem_path: str
 ):
+    """
+    add new public ip to ssh/config file into a host. If the hose exists in file, the host update it current public ip
 
+    Parameters
+    ----------
+    :param str public_ip:       interval of fetching public ip of ec2
+    :param str host:            host name
+    :param str ec2_instance_id: ec2 instance id
+    :param str login_user:      ec2 login user
+    :param str key_pair_name:   ec2 keypair name
+    :param str local_pem_path:  local pem file path
+    """
     ssh_confg_file = local_pem_path + "/config"
     if not exists(ssh_confg_file):
         try:
@@ -43,15 +54,6 @@ def add_public_ip_to_sshconfig(
     )
     logging.info(f"add {public_ip} success")
     c.save()
-
-
-# def update_sshconfig(
-#     public_ip:str,
-#     hostname:str,
-#     login_user:str,
-#     key_pair_name:str
-# ):
-#     c = read_ssh_config(expanduser("~/.ssh/config"))
 
 
 def delete_public_ip_to_sshconfig(public_ip: str):

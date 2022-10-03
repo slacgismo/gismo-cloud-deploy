@@ -31,7 +31,7 @@ from .utilities.aws_utitlties import (
     check_if_ec2_ready_for_ssh,
     get_public_ip,
     ssh_upload_folder_to_ec2,
-    upload_file_to_sc2,
+    upload_file_to_ec2,
     get_public_ip_and_update_sshconfig,
     check_eks_cluster_with_name_exist,
 )
@@ -373,7 +373,7 @@ class AWSServices(object):
         # upload .env
         local_env = "./deploy/install.sh"
         remote_env = f"/home/{self._login_user}/install.sh"
-        upload_file_to_sc2(
+        upload_file_to_ec2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=self._pem_file,
@@ -403,7 +403,7 @@ class AWSServices(object):
         local_env = ".env"
 
         remote_env = f"{remote_base_path}/.env"
-        upload_file_to_sc2(
+        upload_file_to_ec2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=self._pem_file,
@@ -425,7 +425,7 @@ class AWSServices(object):
         )
 
         remote_projects_folder = f"{remote_base_path}/{self.project_name}"
-
+        # remote_temp_folder = f"{remote_base_path}/temp"
         logging.info("-------------------")
         logging.info(f"upload local project folder to ec2 projects")
         logging.info(f"local folder:{self.local_temp_project_path}")
@@ -461,7 +461,7 @@ class AWSServices(object):
         # ec2_name = self.get_ec2_name_from_tags()
         remote_cluster = f"/home/{self._login_user}/gismo-cloud-deploy/created_resources_history/{self.system_id}/cluster.yaml"
 
-        upload_file_to_sc2(
+        upload_file_to_ec2(
             user_name=self._login_user,
             instance_id=self._ec2_instance_id,
             pem_location=self._pem_file,

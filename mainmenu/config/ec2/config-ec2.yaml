@@ -1,7 +1,7 @@
 ec2_image_id: ami-0568773882d492fc8
 ec2_instance_id:
 securitygroup_name: "SSH-ONLY"
-ec2_instance_type: t2.small
+ec2_instance_type: t2.medium
 ec2_volume: "20"
 key_pair_name:
 login_user: ec2-user

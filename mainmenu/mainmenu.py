@@ -93,6 +93,7 @@ def mainmenu(
             logging.info(f" ===== Menu State: {fsm.state}  =======")
         except Exception as e:
             raise Exception(f"AWS platform error :{e}")
+
     try:
         fsm.trigger_end()
         logging.info(f" ===== Menu State: {fsm.state}  =======")

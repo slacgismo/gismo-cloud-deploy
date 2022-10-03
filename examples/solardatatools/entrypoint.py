@@ -23,6 +23,9 @@ def entrypoint(
 ) -> dict:
     """
     Entrypoint function to wrap your code
+
+    Parameters
+    ----------
     :param str user_id: This user_id is generated in cli command and pass to here(worker). This user id is required to used in sns, dynamodb and sqs services
     :param str data_bucket: This data_bucket is the s3 bucket that contains data files.
     :param str curr_process_file: Current process file. This file name is one of the file name in logs file.()
@@ -32,7 +35,10 @@ def entrypoint(
     :param str aws_region:
     :param str solver_name: The solver name that defined in config.yaml
     :param str solver_file: The solver file location inside worker. This file location is defined in config.yaml.
-    :return dict json_message: Return a json format object
+
+    Returns
+    -------
+    :return dict key value pairs: Return a json format object
     """
 
     ## ==================== Modify your code below ==================== ##
@@ -42,11 +48,10 @@ def entrypoint(
         f"process file:{curr_process_file} , column:{curr_process_column}, solve: {solver_file}"
     )
 
-
-    # check solver file exist: 
+    # check solver file exist:
     if solver_name is not None and (exists(solver_file) is False):
         raise Exception(f"solver_file:{solver_file} dose not exist")
-    
+
     # read csv file from s3
     try:
         df = read_csv_from_s3(

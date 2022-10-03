@@ -1,10 +1,6 @@
 import logging
-
-
-from os.path import exists
-from datetime import datetime
-from .my_modules import read_csv_from_s3
 import time
+
 logger = logging.getLogger()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
@@ -23,6 +19,9 @@ def entrypoint(
 ) -> dict:
     """
     Entrypoint function to wrap your code
+
+    Parameters
+    ----------
     :param str user_id: This user_id is generated in cli command and pass to here(worker). This user id is required to used in sns, dynamodb and sqs services
     :param str data_bucket: This data_bucket is the s3 bucket that contains data files.
     :param str curr_process_file: Current process file. This file name is one of the file name in logs file.()
@@ -32,7 +31,10 @@ def entrypoint(
     :param str aws_region:
     :param str solver_name: The solver name that defined in config.yaml
     :param str solver_file: The solver file location inside worker. This file location is defined in config.yaml.
-    :return dict json_message: Return a json format object
+
+    Returns
+    -------
+    :return dict key value pairs: Return a json format object
     """
 
     ## ==================== Modify your code below ==================== ##
@@ -48,16 +50,14 @@ def entrypoint(
     is_end = False
     period = 0
     end_time = 0
-    print ("Start : %s" % time.ctime())
+    print("Start : %s" % time.ctime())
     while period < delay:
         i += 0
         # _curr = time.time()
-        end_time =  time.time()
+        end_time = time.time()
         period = int(end_time - start_time)
         print(f"period: {period}")
-    print ("End : %s" % time.ctime())
-
-    
+    print("End : %s" % time.ctime())
 
     try:
         # ==================== PS:Save data in json format is required  ==================== ##
@@ -66,7 +66,7 @@ def entrypoint(
             "bucket": data_bucket,
             "curr_process_file": curr_process_file,
             "curr_process_column": curr_process_column,
-            "delay":delay,
+            "delay": delay,
             "period": period,
             "start_time": start_time,
             "end_time": end_time,
