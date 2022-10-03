@@ -148,7 +148,7 @@ class GismoCloudDeploy(object):
         self._num_namesapces = 1
         self._num_worker_pods_per_namespace = 8
         self._total_number_files = 0
-        self._worker_desired_replicas = 1
+        self._worker_desired_replicas_per_namespaces = 1
         self._services_config_list = {}
         self._filename = {}
         self._ready_server_list = []
@@ -380,7 +380,9 @@ class GismoCloudDeploy(object):
         self._worker_desired_replicas_per_namespaces = int(
             math.ceil(self._total_num_nodes / self._num_namesapces) - 1
         )
-
+        logging.info(
+            f" self._worker_desired_replicas_per_namespaces :{ self._worker_desired_replicas_per_namespaces}"
+        )
         if self._worker_desired_replicas_per_namespaces < 1:
             self._worker_desired_replicas_per_namespaces = 1
 
@@ -478,13 +480,13 @@ class GismoCloudDeploy(object):
                 if service_name == "worker":
                     self._services_config_list[service_name][
                         "desired_replicas"
-                    ] = self._worker_desired_replicas
+                    ] = self._worker_desired_replicas_per_namespaces
 
         ec2_resources = [
             ["parameters", "values"],
             ["environments", self.env],
             ["project folder", self.project],
-            ["worker replicas", self._worker_desired_replicas],
+            ["worker replicas", self._worker_desired_replicas_per_namespaces],
             ["number of namespaces", self._num_namesapces],
             ["number of files per namespace", num_files_per_namespace],
             ["image_tag", self._user_id],
@@ -648,6 +650,7 @@ class GismoCloudDeploy(object):
                     desired_replicas = self._worker_desired_replicas_per_namespaces
                 else:
                     desired_replicas = value["desired_replicas"]
+
                 image_base_url = value["image_name"]
                 image_tag = value["image_tag"]
                 imagePullPolicy = value["imagePullPolicy"]
@@ -696,8 +699,7 @@ class GismoCloudDeploy(object):
             for key, value in self._services_config_list.items():
                 service_name = key
                 desired_replicas = value["desired_replicas"]
-                if service_name == "worker":
-                    desired_replicas = self._worker_desired_replicas
+
                 # if service_name == "worker":
                 #     desired_replicas = 2
                 logging.info(f"Check {service_name} state in {namespace}")
