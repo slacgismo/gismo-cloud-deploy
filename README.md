@@ -125,9 +125,11 @@ python3 main.py menu
 ```
 
 There are four examples included in this tool. Please check [Examples projects](#example-projects) for more information.
-First, for a quick start, copy the `example/sleep` projects to your desktop. You can input `<bas-path>/desktop/sleep` project (`<bas-path>` refer to the absolute path of `desktop` folder). Then editing the function `entrypoint` in `entrypoint.py`. Change the delay time from `5` to `3`. The application will only run a for-loop in this task for `3` seconds.
+First, for a quick start, you could hit enter to use default project located at `examples/sleep` folder. If you want to edit your script, you could copy the `examples/sleep` projects to your desktop and input `<bas-path>/desktop/sleep` project (`<bas-path>` refer to the absolute path of `desktop` folder). Then you can edit the function `entrypoint` in `entrypoint.py`. Let changing the delay time from `5` to `3`. This application will only run a for-loop in this task for `3` seconds.
 
-Second, open the `config.yaml` file in your project folder. You have to specify the `data_bucket`, `file_pattern` and `process_column_keywords` parameters. Use default `file_pattern:*csv` `data_bucket:"pv.insight.nrel"` and default `process_column_keywords: "^Pow"`, this application will process the file that matches `file_pattern:*csv` in `data_bucket:"pv.insight.nrel"`. In this case, it runs the `csv` file of a bucket called `pv.insight.nrel` on S3. When this application is running, the application passes the match file name to `entrypoint` function as `curr_process_file` and matched column name as `curr_process_column`. If there is no matched column name, the `curr_process_column` in the entrypoint function is `None`.
+Second, open the `config.yaml` file in your project folder. You have to specify the `data_bucket`, `file_pattern` and `process_column_keywords` parameters. Use default `file_pattern:*csv` `data_bucket:"pv.insight.nrel"` and default `process_column_keywords: "^Pow"`, this application will process the file that matches `file_pattern:*csv` in `data_bucket:"pv.insight.nrel"`. In this case, it runs the `csv` file of a bucket called `pv.insight.nrel` on S3. When this application is running, the application passes the match file name to `entrypoint` function as `curr_process_file` and matched column name with regular expression keywords defined in `curr_process_column`. If there is no matched column name, the `curr_process_column` in the entrypoint function is `None`.
+
+**_NOTE_** If you don't have permission to access default data bucket `pv.insight.nrel` and saved bucket: `pv.insight.test` on AWS, you have to create your S3 bucket and put some `.csv` files in the data bucket. After you create your S3 bucket, you need to define the `data_bucket:` and `saved_bucket` as your custom S3 bucket name.
 
 ##### platform
 
@@ -169,6 +171,7 @@ Run debug mode through SSH? If `no`, an following instructions will help you to 
 ##### Number of generated ec2 instances
 
 The following instruction will ask you to type how many ec2 instances you want to generate. Hit enter button to give the default answer `1`. It will spawn one ec2 instance to run the script.
+**_NOTE_** If you create a cluster with a small instance type such as `t2.medium`, please create at least three nodes(instances) to avoid system error. (The error comes from the limited memory of `t2.medium`.)
 
 ```bash
  Input an postive integer:  (minimum is 1 and max is 100) (default:1):
@@ -276,7 +279,7 @@ If the cloud resources had been created previously, users can destroy all the cl
 
 ##### run_in_local_machine
 
-Run the application on your local machine, and ==it's recommended to run your project locally before you run it on AWS EKS==. It has no extra costs, and it's easy to debug. However, the local machine always uses default one instances to run files. If users only run a small number of files, the process runs faster without generating cloud resources.
+Run the application on your local machine, and ==it's highly recommended to run your project locally before you run it on AWS EKS==. It has no extra costs, and it's easy to debug. However, the local machine always uses default one instances to run files. If users only run a small number of files, the process runs faster without generating cloud resources.
 
 ### Example projects
 
@@ -406,7 +409,7 @@ The gcd command supports the following subcommands:
 
 ### run-files command
 
-```
+```bash
 Usage: python3 main.py run-files [OPTIONS]
 
 Run Process Files
