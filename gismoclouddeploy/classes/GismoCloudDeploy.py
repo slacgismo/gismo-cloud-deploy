@@ -474,6 +474,11 @@ class GismoCloudDeploy(object):
                         "image_tag"
                     ] = self._user_id
                 logging.info(f"{service_name} : {updated_name}")
+                # update worker replicas
+                if service_name == "worker":
+                    self._services_config_list[service_name][
+                        "desired_replicas"
+                    ] = self._worker_desired_replicas
 
         ec2_resources = [
             ["parameters", "values"],
