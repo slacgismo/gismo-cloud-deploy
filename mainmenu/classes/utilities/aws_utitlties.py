@@ -257,12 +257,11 @@ def check_if_ec2_ready_for_ssh(
     instances = ec2_resource.instances.filter(
         Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
     )
-    print(instances)
 
     p2_instance = None
     while wait_time > 0:
         for instance in instances:
-            print(instance, instance_id)
+
             if instance.id == instance_id:
                 p2_instance = instance
                 logging.info(f"{instance_id} is running")
