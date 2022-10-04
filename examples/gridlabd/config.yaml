@@ -1,0 +1,28 @@
+# AWS parameters used for cli.
+
+scale_eks_nodes_wait_time: 90 # in second
+interval_of_wait_pod_ready: 90 # in second
+
+# solver:
+solver_name: ""
+solver_lic_target_path_in_images_dest: ""
+solver_lic_file_local_source: ""
+
+data_bucket: "gcd.hipas.models"
+file_pattern: "*.glm" #   ".glm"        # Bucket contains origin data files. user regulare expression
+#default_process_files: ["PVO/PVOutput/46851.csv","PVO/PVOutput/11106.csv","PVO/PVOutput/10010.csv"]   # Default process files. If users do not use option -n command.
+process_column_keywords: "^Pow" # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
+saved_bucket: "pv.insight.test" # Bucket of saved files.
+saved_path_cloud: "results" # Path of saved files in bucket
+acccepted_idle_time: 360
+interval_of_checking_sqs: 1
+filename:
+  saved_data: "results.csv"
+  logs_data: "logs.csv"
+  error_data: "errors.csv"
+  performance: "performance.txt"
+  runtime_gantt_chart: "runtime.png"
+
+repeat_number_per_round: 1 # Repeat overall tasks per round before run end services.
+is_celeryflower_on: False # Turn of / off flower
+num_worker_pods_per_namespace: 8

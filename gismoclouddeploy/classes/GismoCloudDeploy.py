@@ -276,7 +276,7 @@ class GismoCloudDeploy(object):
             k8s_config = convert_yaml_to_json(yaml_file=k8s_configfile)
             self._services_config_list = k8s_config["services_config_list"]
             self._data_bucket = self._config["data_bucket"]
-            self._file_type = self._config["file_pattern"]
+            self._file_pattern = self._config["file_pattern"]
 
             self._code_template_folder = None
             self._saved_path_cloud = self._config["saved_path_cloud"]
@@ -923,7 +923,7 @@ def list_files_in_bucket(bucket_name: str, s3_client, file_pattern: str):
             filename = file["Key"]
 
             matches = fnmatch.fnmatch(filename, file_pattern)
-
+            print(f"matches :{matches}")
             if matches:
                 obj = {
                     "Key": file["Key"],
