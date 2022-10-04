@@ -154,8 +154,6 @@ Please select an action to execute this application. In this example, please sel
    cleanup_cloud_resources
 ```
 
-The following question is to type your project path.
-
 ##### project name
 
 The following instruction asks you to type a project name. The name appears in the tags of each created cloud resource. They are the information for budget management if your company needs it. Please type any name you like.
