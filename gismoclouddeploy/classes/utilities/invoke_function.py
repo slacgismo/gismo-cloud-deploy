@@ -291,12 +291,12 @@ def invoke_exec_k8s_run_process_files(
         "--stdin",
         "--tty",
         "--",
-        "python",
+        "python3",
         "app.py",
         "process_files",
         f"{config_params_str}",
     ]
-    # print(f"run-fils command: {command}")
+    print(f"run-fils command: {command}")
     try:
 
         res = subprocess.Popen(
