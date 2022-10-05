@@ -285,6 +285,8 @@ If the cloud resources had been created previously, users can destroy all the cl
 
 Run the application on your local machine, and ==it's highly recommended to run your project locally before you run it on AWS EKS==. It has no extra costs, and it's easy to debug. However, the local machine always uses default one instances to run files. If users only run a small number of files, the process runs faster without generating cloud resources.
 
+If you want to run this application on your local machine, you have to install [Docker](https://docs.docker.com/config/daemon/), and [kubectl](https://kubernetes.io/docs/tasks/tools) in your local environment. Then you can use `menu` command to follow through the rest of the process.
+
 ### Example projects
 
 - examples/gridlabd
@@ -363,19 +365,19 @@ If you have trouble to setup aws through `menu` command, you can manually do the
 
 Create an EC2 bastion steps:
 
-1. Login into your AWS console, and search `EC2` in the search bar. Click `EC2 Dashboard` tabe in the left side windwo.
-2. In the `EC2 Dashboard` page, click `instacnes` button. You will go to ec2 instance page.
-3. In the top right coner, click `Launch instances` button.
-4. In the Launch an instance page, go to Name and tags section, to give your ec2 bastion a name in the `Name` input.
-5. Clicke `Add addtional tags` and click `Add tag`.
-6. Type `project` in `Key` and a project name in `Value`. This project name is used to manage budget.
-7. Go to Application and OS Images (Amazon Machine Image)section and change the `Instance type` to `t2.medium`.
-8. In the key pair (login) section, if you have created keypair before, you can use your old one in the `key pair name` input. Otherwise, click `Create a new key pair` button to create a new keypair.
+1. Login into your AWS console, and search `EC2` in the search bar. Click the `EC2 Dashboard` button in the left side window.
+2. On the `EC2 Dashboard` page, click the `instances` button. You will go to the ec2 instance page.
+3. Click the `Launch instances` button in the top right corner.
+4. In the Launch an instance page, go to the Name and tags section to give your ec2 bastion a name in the `Name` input.
+5. Click `Add additional tags` and click `Add tag`.
+6. Type `project` in `Key` and a project name in `Value`. This project name is used to manage the budget.
+7. Go to the Application and OS Images (Amazon Machine Image)section and change the `Instance type` to `t2.medium`.
+8. In the key pair (login) section, if you have created a keypair before, you can use your old one in the `key pair name` input. Otherwise, click the `Create a new key pair` button to create a new key pair.
 9. In the Network setting section, select `Create security group` and select `Allow SSH traffic from`.
 10. In the Configure storage section, type `16` GiB as storage.
-11. Click `Launch instance` in right section and start creating a new EC2 instance.
-12. You can either to use the created keypair to connect the EC2 bastion through SSH or you can click `Connect` button to login in into the EC2 from web browser.
-13. Suppose you are already login to the EC2's terminal, it's time to setup the environemnt and install `gismoclouddeploy` from gihub.
+11. Click `Launch instance` in the right section and start creating a new EC2 instance.
+12. You either use the created key pair to connect the EC2 bastion through SSH, or you can click the `Connect` button to log into the EC2 from the web browser.
+13. Suppose you are already login to the EC2's terminal; it's time to set up the environment and install `gismoclouddeploy` from GitHub.
     Setup the EC2 bastion environment:
 
 Install dependencies
@@ -420,10 +422,10 @@ cd ./gismoclouddeploy/services
 python3 main.py run-files -n 1 -s 1 -p examples/sleep -c <your-cluster-name>
 ```
 
-Please follwo [Command](#command) section to explore the command detail.
-:warning: If you see some error messages related to **unauthorized** actions, it means this cluster didn't authorize the permission to this role. Please reach out the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster
+Please follow the [Command](#command) section to explore the command detail.
+:warning: If you see some error messages related to **unauthorized** actions, it means this cluster didn't authorize the permission to this role. Please reach out to the project or cluster creator to grant permission. Or follow the [EKS configuration](#eks-configuration) section to create a new cluster
 
-After it completed, the terminal prints out the performance analysis as below:
+After it is completed, the terminal prints out the performance analysis as below:
 
 ```
 +-------------------------------------+-----------------------+---------------------------------+
