@@ -15,6 +15,7 @@ from pathlib import Path
 from .convert_yaml import check_if_path_exist_and_create
 from .update_sshconfig import add_public_ip_to_sshconfig
 from asyncio import exceptions
+import re
 
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
@@ -222,8 +223,10 @@ def get_iam_user_name(sts_client: STSClient) -> str:
         if "Arn" in response:
             # print('Arn:', response['Arn'])
             arn = response["Arn"]
-            base, user_name = arn.split("/")
-            return user_name
+            base, _user_name = arn.split("/")
+            # remove special charaters
+            username = re.sub("[^A-Za-z0-9]+", "", _user_name)
+            return username
         return None
     except botocore.exceptions.ClientError as err:
         raise Exception(err)

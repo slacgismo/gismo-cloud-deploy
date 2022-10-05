@@ -154,6 +154,8 @@ Please select an action to execute this application. In this example, please sel
    cleanup_cloud_resources
 ```
 
+The following question is to type your project path.
+
 ##### project name
 
 The following instruction asks you to type a project name. The name appears in the tags of each created cloud resource. They are the information for budget management if your company needs it. Please type any name you like.
@@ -355,17 +357,63 @@ This file lists all the system parameters that pass to the `gismoclouddeploy`. H
 - num_worker_pods_per_namespace: 8
   number of instances per namspaces. If you are running short task (for exampel, 5 sec tasks), you can set this number samller, such as 4. However, 8 is recommanded.
 
-#### Run command on AWS
+#### setup environment on AWS
 
-Suppose you are already familiar with how to create EC2 bastion and EKS cluster, you can run this application directly on AWS. It is faster and easy to debug. Follow the steps to run this application on AWS EC2.
-Suppose you have created and installed all the dependencies. Activate your pyton3 virtual environment.
+If you have trouble to setup aws through `menu` command, you can manually do the installation on AWS directly.
+
+Create an EC2 bastion steps:
+
+1. Login into your AWS console, and search `EC2` in the search bar. Click `EC2 Dashboard` tabe in the left side windwo.
+2. In the `EC2 Dashboard` page, click `instacnes` button. You will go to ec2 instance page.
+3. In the top right coner, click `Launch instances` button.
+4. In the Launch an instance page, go to Name and tags section, to give your ec2 bastion a name in the `Name` input.
+5. Clicke `Add addtional tags` and click `Add tag`.
+6. Type `project` in `Key` and a project name in `Value`. This project name is used to manage budget.
+7. Go to Application and OS Images (Amazon Machine Image)section and change the `Instance type` to `t2.medium`.
+8. In the key pair (login) section, if you have created keypair before, you can use your old one in the `key pair name` input. Otherwise, click `Create a new key pair` button to create a new keypair.
+9. In the Network setting section, select `Create security group` and select `Allow SSH traffic from`.
+10. In the Configure storage section, type `16` GiB as storage.
+11. Click `Launch instance` in right section and start creating a new EC2 instance.
+12. You can either to use the created keypair to connect the EC2 bastion through SSH or you can click `Connect` button to login in into the EC2 from web browser.
+13. Suppose you are already login to the EC2's terminal, it's time to setup the environemnt and install `gismoclouddeploy` from gihub.
+    Setup the EC2 bastion environment:
+
+Install dependencies
+
+1. Update yum and install git :
 
 ```bash
-cd gismo-cloud-deploy/gismoclouddeploy/services
+sudo yum update -y
+sudo yum install git -y
+```
+
+2. Install `gismoclouddeploy` from `gihub`.
+   ```bash
+   git clone https://github.com/slacgismo/gismo-cloud-deploy.git
+   ```
+3. Run `install.sh` and wait it completes.
+
+```bash
+cd gismo-cloud-deploy/deploy
+source .install.sh
+```
+
+4. Create and activate python virtual environment
+
+```bash
+cd gismo-cloud-deploy/
+python3 -m venv venv
 source ./venv/bin/activate
 ```
 
-Under the virtual environment `(venv)`, run the `run-files` command to test it.
+5. Install python pacakges
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+6. Under the virtual environment `(venv)`, run the `run-files` command to test it.
 
 ```bash
 cd ./gismoclouddeploy/services
