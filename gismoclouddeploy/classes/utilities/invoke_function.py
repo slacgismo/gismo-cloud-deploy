@@ -228,41 +228,6 @@ def invoke_eksctl_scale_node(
     return res
 
 
-def invoke_exec_docker_run_process_files(
-    config_params_str: str = None,
-    image_name: str = None,
-    first_n_files: str = None,
-    namespace: str = "default",
-) -> str:
-
-    command = [
-        "docker",
-        "exec",
-        "-n",
-        f"{namespace}" "-it",
-        image_name,
-        "python",
-        "app.py",
-        "process_files",
-        f"{config_params_str}",
-        f"{first_n_files}",
-    ]
-    try:
-        # print(command)
-        res = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
-        # out, err = res.communicate()
-    except KeyboardInterrupt as e:
-        logger.error(f"Invoke process file error:{e}")
-        # res.terminate()
-    # print("output")
-    # print(out)
-    return res
-    # res = exec_docker_command(command)
-    # return res
-
-
 def invoke_exec_docker_ping_worker(
     service_name: str = None,
 ) -> str:

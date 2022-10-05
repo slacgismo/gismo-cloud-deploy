@@ -63,7 +63,7 @@ pip install -r requirements.txt
 
 Before running the automation tool that controls EC2 instances, we need to set up the AWS credentials.
 
-If you are using a share account, you can ask your account manager to add permissions into your `IAM` user. If you are individual user would like use this application. You can login into your AWS console and select your `IAM` user in the `IAM` user page. Hit the `Add permissions` button to inlcude standard and custom permissions below.
+If you are using a member of SLAC GISMO, you can ask the account manager to add your `IAM` user to an `IAM` group with pre-defined permissions. However, If you are an individual developer and would like to use this application, you can log into your AWS console and select your `IAM` user on the `IAM` user page. Hit the `Add permissions` button to include standard and custom permissions below.
 
 The standard permissions includes:
 

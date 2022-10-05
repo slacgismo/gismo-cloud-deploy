@@ -1,47 +1,14 @@
 from re import I
 import botocore
-
+import time
 from .k8s_utils import (
     get_k8s_image_and_tag_from_deployment,
     create_k8s_deployment_from_yaml,
 )
 
-from .invoke_function import (
-    invoke_kubectl_delete_deployment,
-    invoke_exec_docker_run_process_files,
-    invoke_exec_k8s_run_process_files,
-)
+from .invoke_function import invoke_kubectl_delete_deployment
 
 import logging
-
-logger = logging.getLogger()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s: %(levelname)s: %(message)s"
-)
-
-
-def invoke_process_files_to_server_namespace(
-    is_docker: bool = False,
-    server_name: str = None,
-    worker_config_str: str = None,
-    namespace: str = "default",
-) -> str:
-    if is_docker:
-        _resp = invoke_exec_docker_run_process_files(
-            config_params_str=worker_config_str,
-            image_name=server_name,
-            first_n_files=None,
-            namesapce=namespace,
-        )
-    else:
-        _resp = invoke_exec_k8s_run_process_files(
-            config_params_str=worker_config_str,
-            pod_name=server_name,
-            first_n_files=None,
-            namespace=namespace,
-        )
-
-    return _resp
 
 
 def create_or_update_k8s_deployment(
@@ -64,8 +31,8 @@ def create_or_update_k8s_deployment(
         if curr_status is None:
             # Deployment does not exist
 
-            logger.info(f"Deployment {image_url} does not exist ")
-            logger.info(f" Create {image_url} deployment  namespace: {namespace}")
+            logging.info(f"Deployment {image_url} does not exist ")
+            logging.info(f" Create {image_url} deployment  namespace: {namespace}")
             create_k8s_deployment_from_yaml(
                 service_name=service_name,
                 image_url_tag=image_url,
@@ -75,7 +42,7 @@ def create_or_update_k8s_deployment(
                 namspace=namespace,
             )
         else:
-            logger.info(f"Deployment {service_name}:{curr_tag} exist")
+            logging.info(f"Deployment {service_name}:{curr_tag} exist")
 
             if (
                 curr_status.unavailable_replicas is not None
@@ -84,17 +51,17 @@ def create_or_update_k8s_deployment(
             ):
 
                 if curr_status.unavailable_replicas is not None:
-                    logger.info("Deployment status error")
+                    logging.info("Deployment status error")
                 if int(curr_status.replicas) != int(desired_replicas):
-                    logger.info(
+                    logging.info(
                         f"Update replicas from:{curr_status.replicas} to {desired_replicas}"
                     )
                 if curr_tag != image_tag:
-                    logger.info(
+                    logging.info(
                         f"Update from {service_name}:{curr_tag} to {service_name}:{image_tag}"
                     )
 
-                logger.info(f"Delete  {service_name}:{curr_tag} ")
+                logging.info(f"Delete  {service_name}:{curr_tag} ")
                 output = invoke_kubectl_delete_deployment(name=service_name)
                 # logger.info(output)
 
@@ -108,7 +75,7 @@ def create_or_update_k8s_deployment(
                     file_name=k8s_file_name,
                 )
     except Exception as e:
-        logger.info(e)
+        logging.info(e)
         raise e
 
 
@@ -144,3 +111,12 @@ def verify_a_key_in_dict(dict_format: dict, key: str) -> None:
         assert key in dict_format
     except Exception:
         raise Exception(f"does not contain {key}")
+
+
+def do_nothing_and_wait(wait_time: int = 60, delay: int = 3):
+
+    while wait_time > 0:
+        time.sleep(delay)
+        wait_time -= delay
+        logging.info(f"Waiting.. {wait_time} sec")
+    return

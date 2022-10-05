@@ -19,6 +19,13 @@ def check_aws_validity(key_id: str, secret: str) -> bool:
 
 
 def check_environment_is_aws() -> bool:
+    """
+    Check current environment is AWS os LOCAL
+
+    Returns
+    -------
+    :return bool: If it's running on AWS return True, else return False
+    """
     datasource_file = "/var/lib/cloud/instance/datasource"
     if exists(datasource_file):
         return True

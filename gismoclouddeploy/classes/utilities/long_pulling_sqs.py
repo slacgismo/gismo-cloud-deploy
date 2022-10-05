@@ -36,8 +36,6 @@ def long_pulling_sqs_multi_server(
         region=aws_region,
     )
 
-    task_completion = 0
-
     is_receive_task_info = False
 
     received_init_task_ids_dict = dict()
@@ -133,25 +131,21 @@ def long_pulling_sqs_multi_server(
                         received_init_task_ids_dict[po_server_name].append(
                             received_init_id
                         )
-
-                    # _num_of_total_tasks_of_server = int(msg_dict["num_total_tasks"])
-                    # if _num_of_total_tasks_of_server > 0:
-                    #     received_init_task_total_num_dict[po_server_name] = int(msg_dict["num_total_tasks"])
-                    _receive_command = {
-                        "file_name": msg_dict["file_name"],
-                        "column_name": msg_dict["column_name"],
-                        "task_id": msg_dict["task_id"],
-                        "po_server_name": po_server_name,
-                        "send_time": msg_dict["send_time"],
-                        "index_file": msg_dict["index_file"],
-                        "index_colium": msg_dict["index_colium"],
-                        "repeat_number_per_round": msg_dict["repeat_number_per_round"],
-                    }
+                    # _receive_command = {
+                    #     "file_name": msg_dict["file_name"],
+                    #     "column_name": msg_dict["column_name"],
+                    #     "task_id": msg_dict["task_id"],
+                    #     "po_server_name": po_server_name,
+                    #     "send_time": msg_dict["send_time"],
+                    #     "index_file": msg_dict["index_file"],
+                    #     "index_colium": msg_dict["index_colium"],
+                    #     "repeat_number_per_round": msg_dict["repeat_number_per_round"],
+                    # }
                     # init_command_logs.append(_receive_command)
 
                 # 2. if the alert type is SYSTEM_ERROR, or SAVED_DATA
                 # add
-                _process_save_data_stat = time.time()
+
                 if (
                     alert_type == SNSSubjectsAlert.SYSTEM_ERROR.name
                     or alert_type == SNSSubjectsAlert.SAVED_DATA.name
@@ -220,8 +214,6 @@ def long_pulling_sqs_multi_server(
                     # Save data
                     if alert_type == SNSSubjectsAlert.SAVED_DATA.name:
                         save_data.append(msg_dict["data"])
-                    # end_process_save_data_stat = time.time() -  _process_save_data_stat
-                    # print(f'----end append save data time : {round(end_process_save_data_stat, 2)} ')
 
                 if alert_type == SNSSubjectsAlert.SEND_TASKID_INFO.name:
 
@@ -249,7 +241,6 @@ def long_pulling_sqs_multi_server(
         append_receive_data(data_dict=error_data, file_name=errors_file_path_name)
 
         _is_receive_message_again = False
-        # if is_received_init_task_ids_dict_completed is True:
         _totak_tasks_number_in_server = 0
         _total_tasks_of_all_server = 0
         _current_length_tasks_of_all_server = 0
@@ -272,17 +263,15 @@ def long_pulling_sqs_multi_server(
                     received_completed_task_ids_dict_comleted[server_name] = True
 
                     # logger.info(f" server_name : {server_name } _totak_tasks_number_in_server:{_totak_tasks_number_in_server} compelted")
-                else:
-                    task_completion = 0
-                    if _totak_tasks_number_in_server > 0:
+                # else:
+                #     task_completion = 0
+                #     if _totak_tasks_number_in_server > 0:
 
-                        task_completion = int(
-                            _current_complete_tasks_in_server
-                            * 100
-                            / _totak_tasks_number_in_server
-                        )
-
-                    # logger.info(f" server_name : {server_name } _totak_tasks_number_in_server:{_totak_tasks_number_in_server} _current_complete_tasks_in_server : {_current_complete_tasks_in_server} task_completion: {task_completion} %")
+                #         task_completion = int(
+                #             _current_complete_tasks_in_server
+                #             * 100
+                #             / _totak_tasks_number_in_server
+                #         )
 
                 if (
                     previous_received_completed_task_ids_set_len[server_name]
@@ -317,7 +306,7 @@ def long_pulling_sqs_multi_server(
             return
 
         # # Handle over time
-        idle_time = time.time() - previous_messages_time
+        idle_time = int(time.time() - previous_messages_time)
         if idle_time >= acccepted_idle_time:
             uncompleted_task_length = (
                 _total_tasks_of_all_server - _current_length_tasks_of_all_server
@@ -328,13 +317,12 @@ def long_pulling_sqs_multi_server(
             )
             return uncompleted_task_length
 
-        total_time = time.time() - start_time
+        total_time = int(time.time() - start_time)
         logger.info(
-            f" total_time .: {total_time} \
+            f" total_time : {total_time} \
             Idle Time: {idle_time} "
         )
         time.sleep(delay)
-        # wait_time -= int(delay)
 
     return uncompleted_task_id_set
 

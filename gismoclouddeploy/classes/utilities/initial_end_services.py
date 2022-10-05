@@ -6,26 +6,12 @@ from .check_aws import connect_aws_client
 import logging
 from .eks_utils import scale_eks_nodes_and_wait
 from .invoke_function import (
-    invoke_kubectl_delete_all_deployment,
-    invoke_kubectl_delete_all_services,
     invoke_kubectl_delete_namespaces,
     invoke_kubectl_delete_all_from_namspace,
 )
 
 from .sqs import delete_queue
-
-from os.path import exists
 import logging
-
-
-def delete_k8s_all_po_sev_deploy_daemonset(namespace: str = "default"):
-    logging.info("----------->.  Delete k8s deployment ----------->")
-    delete_deploy = invoke_kubectl_delete_all_deployment(namespace=namespace)
-    logging.info(delete_deploy)
-    logging.info("----------->.  Delete k8s services ----------->")
-    delete_svc = invoke_kubectl_delete_all_services(namespace=namespace)
-    logging.info(delete_svc)
-    return
 
 
 def initial_end_services(
@@ -68,7 +54,6 @@ def initial_end_services(
 
     for server_info in server_list:
         namespace = server_info["namespace"]
-        # delete_k8s_all_po_sev_deploy_daemonset(namespace= namespace)
 
         logging.info(f"Clean all resources in: {namespace}")
         _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace=namespace)
@@ -100,7 +85,7 @@ def initial_end_services(
                     image_tag=image_tag,
                 )
 
-    logging.info("Delete all docker images")
+    # logging.info("Delete all docker images")
     # invoke_docker_system_prune_all()
 
     return
@@ -109,6 +94,7 @@ def initial_end_services(
 def delete_ecr_image(
     ecr_client=None, image_name: str = None, image_tag: str = None
 ) -> str:
+
     if ecr_client is None or image_name is None or image_tag is None:
         raise Exception("Input parameters error")
     if image_tag == "latest" or image_tag == "develop":
@@ -122,14 +108,13 @@ def delete_ecr_image(
     except Exception as e:
         raise Exception(f"{image_name}:{image_tag} does not exist")
 
-    # delete ecr tag
     response = ecr_client.list_images(
         repositoryName=image_name, filter={"tagStatus": "TAGGED"}
     )
     delete_image_ids = [
         image for image in response["imageIds"] if image["imageTag"] == image_tag
     ]
-    # print(delete_image_ids)
+
     delete_resp = ecr_client.batch_delete_image(
         repositoryName=image_name, imageIds=delete_image_ids
     )
@@ -139,6 +124,19 @@ def delete_ecr_image(
 def check_ecr_tag_exists(
     image_tag: str = None, image_name: str = None, ecr_client=None
 ) -> bool:
+    """
+    Check if ECR name/tag exist.
+
+    Parameters
+    ----------
+    :param str image_tag: Image name
+    :param str image_name: Image tag
+    :param str ecr_client: boto3 ecr client object
+
+    Returns
+    -------
+    :return bool: Return True if ECR name/tag exist else return False
+    """
     response = ecr_client.describe_images(
         repositoryName=image_name, filter={"tagStatus": "TAGGED"}
     )
@@ -154,42 +152,6 @@ def check_ecr_tag_exists(
         return False
 
 
-def upload_results_to_s3(
-    saved_files_dict_local: dict = None,
-    saved_files_dict_cloud: dict = None,
-    saved_bucket: str = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-) -> None:
-
-    # saved_file_list = worker_config.filename
-    logging.info("start update results")
-    for key, localfile in saved_files_dict_local.items():
-        file_local = saved_files_dict_local[key]
-        file_aws = saved_files_dict_cloud[key]
-        logging.info(f"{key} file_local :{file_local} file_aws :{file_aws}")
-
-        # check if local exist
-        if exists(file_local):
-            try:
-                upload_file_to_s3(
-                    bucket=saved_bucket,
-                    source_file_local=file_local,
-                    target_file_s3=file_aws,
-                    aws_access_key=aws_access_key,
-                    aws_secret_access_key=aws_secret_access_key,
-                    aws_region=aws_region,
-                )
-                logging.info(
-                    f"Save {file_local} to {file_aws}  on {saved_bucket} success"
-                )
-            except Exception as e:
-                logging.error(f"Save data on S3 failed {e}")
-                raise Exception(e)
-    return
-
-
 def upload_file_to_s3(
     bucket: str = None,
     source_file_local: str = None,
@@ -198,6 +160,10 @@ def upload_file_to_s3(
     aws_secret_access_key: str = None,
     aws_region: str = None,
 ) -> None:
+    """
+    Upload file to S3 bucket
+
+    """
 
     s3_client = connect_aws_client(
         client_name="s3",

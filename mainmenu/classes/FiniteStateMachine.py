@@ -8,8 +8,6 @@ from .utilities.handle_inputs import (
     select_platform,
     handle_proecess_files_inputs_questions,
     get_system_id_from_selected_history,
-    select_ec2_instance_type,
-    select_eks_instance_type,
     handle_update_number_of_nodes,
 )
 from .AWSServices import AWSServices
@@ -179,10 +177,6 @@ class FiniteStateMachine(object):
 
     # Error state
     def handle_error(self, event):
-        # logging.error("Error state")
-        # ask if need to clean up the resources
-        logging.error(f"Handle error :{event.error}")
-
         raise Exception(f"Error :{event.error}")
 
     # Init state
@@ -234,15 +228,6 @@ class FiniteStateMachine(object):
                     self._eks_config_dict = import_and_verify_eks_config(
                         saved_eks_config_file=self.eks_config_templates
                     )
-                    # ask if users want to change the instance type
-                    # if self._platform == Platform.AWS.name:
-                    #     ec2_instance_type = select_ec2_instance_type()
-                    #     eks_instance_type = select_eks_instance_type()
-                    #     # update ec2 instance type
-                    #     self._ec2_config_dict["ec2_instance_type"] = ec2_instance_type
-                    #     self._eks_config_dict["nodeGroups"][0][
-                    #         "instanceType"
-                    #     ] = eks_instance_type
                     eks_instance_type = self._eks_config_dict["nodeGroups"][0][
                         "instanceType"
                     ]
@@ -299,7 +284,7 @@ class FiniteStateMachine(object):
                     saved_config_path_base=self.saved_config_path_base
                 )
                 if self._system_id is None:
-                    raise Exception("No saved config file")
+                    raise Exception("No History data")
                 logging.info(f"selected id :{self._system_id }")
                 self._select_history_path = (
                     self.saved_config_path_base + f"/{ self._system_id}"
@@ -344,7 +329,6 @@ class FiniteStateMachine(object):
                     raise Exception(
                         f"A EC2 file exists but a eks file does not exists :{e}"
                     )
-
         return
 
     def handle_confirmation(self, event):

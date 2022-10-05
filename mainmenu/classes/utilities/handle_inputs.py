@@ -360,8 +360,11 @@ def get_system_id_from_selected_history(saved_config_path_base: str) -> str:
     logging.info("select_created_cloud_config_files")
 
     config_lists = get_subfolder(parent_folder=saved_config_path_base)
+
     if len(config_lists) == 0:
-        raise Exception(" No history data")
+
+        return
+        # raise Exception(" No history data")
     questions = [
         inquirer.List(
             "dir",

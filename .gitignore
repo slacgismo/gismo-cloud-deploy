@@ -76,4 +76,6 @@ runtime.png
 *.pem
 
 results/
+temp/
+created_resources_history/
 notebooks/datasets/

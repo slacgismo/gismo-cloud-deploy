@@ -20,7 +20,7 @@ import time
 import threading
 from .utilities.eks_utils import scale_eks_nodes_and_wait
 import json
-from .utilities.command_utils import verify_keys_in_configfile
+from .utilities.command_utils import verify_keys_in_configfile, do_nothing_and_wait
 from .utilities.invoke_function import (
     invoke_docker_compose_build,
     invoke_tag_image,
@@ -691,16 +691,10 @@ class GismoCloudDeploy(object):
 
     def handle_verify_k8s_services(self, event):
         logging.info("handle_verify_k8s_services")
-        wait_time = 20
-        delay = 5
+        # k8s need time to deplay . If you catch the status of k8s services,
+        # There are chances that the status of first time is incorrect.
+        do_nothing_and_wait(wait_time=30, delay=5)
 
-        while wait_time > 0:
-            time.sleep(delay)
-            wait_time -= delay
-            logging.info(f"Waiting.. {wait_time} sec")
-
-        wait_time = 120
-        delay = 5
         ready_server_list = []
         logging.info(f"self._k8s_namespace_set :{self._k8s_namespace_set}")
         threads = list()
@@ -715,7 +709,7 @@ class GismoCloudDeploy(object):
                 logging.info(f"Check {service_name} state in {namespace}")
                 x = RaisingThread(
                     target=check_if_pod_ready,
-                    args=(namespace, desired_replicas, service_name, 300, 5),
+                    args=(namespace, desired_replicas, service_name, 360, 5),
                 )
                 x.name = key
                 threads.append(x)
@@ -728,8 +722,10 @@ class GismoCloudDeploy(object):
             raise Exception(e)
 
         logging.info(" ========= Check all services in namespaces success ========= ")
-        # for namespace in self._k8s_namespace_set:
 
+        # get server name from namspaces
+        wait_time = 120
+        delay = 5
         while wait_time > 0 and len(ready_server_list) < len(self._k8s_namespace_set):
             ready_server_list = []
             for namespace in self._k8s_namespace_set:
@@ -740,23 +736,12 @@ class GismoCloudDeploy(object):
                     continue
                 _server_info = {"name": server_name, "namespace": namespace}
                 ready_server_list.append(_server_info)
-
-            logging.info(
-                f"K8s reboot Wait {wait_time} sec len(ready_server_list): {len(ready_server_list)},len(self._k8s_namespace_set)  {len(self._k8s_namespace_set)}"
-            )
             time.sleep(delay)
             wait_time -= delay
 
         self._ready_server_list = ready_server_list
-        wait_time = 12
-        delay = 4
-
-        while wait_time > 0:
-            time.sleep(delay)
-            wait_time -= delay
-            logging.info(f"Waiting.. {wait_time} sec")
-
-        logging.info("Server is ready")
+        for server_name in self._ready_server_list:
+            logging.info(f"Server: {server_name} ready")
         return
 
     def handle_send_command_and_long_polling_sqs(self, event):

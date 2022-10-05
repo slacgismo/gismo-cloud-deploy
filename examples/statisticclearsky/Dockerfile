@@ -65,14 +65,9 @@ RUN mkdir $TARGET_PATH_OF_UPLOAD_FILE
 COPY $source_path_of_upload_file  $TARGET_PATH_OF_UPLOAD_FILE
 
 # WORKDIR /app
-
-RUN mkdir /app
 WORKDIR /app
 
-
-
 # copy project code
-
 
 COPY ./gismoclouddeploy/server .
 
