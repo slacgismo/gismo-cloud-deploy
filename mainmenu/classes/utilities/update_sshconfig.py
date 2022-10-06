@@ -54,12 +54,3 @@ def add_public_ip_to_sshconfig(
     )
     logging.info(f"add {public_ip} success")
     c.save()
-
-
-def delete_public_ip_to_sshconfig(public_ip: str):
-    logging.info("Delete public ip to ssh config")
-    c = read_ssh_config(expanduser("~/.ssh/config"))
-    print("hosts", c.hosts())
-    c.remove(public_ip)
-    logging.info(f"Remove {public_ip} success")
-    c.save()

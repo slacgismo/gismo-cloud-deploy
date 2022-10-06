@@ -3,7 +3,7 @@ from os.path import basename, exists
 import shutil
 import logging
 from ..constants.Platform import Platform
-
+import time
 from mainmenu.classes.constants.Platform import Platform
 
 
@@ -53,3 +53,12 @@ def generate_run_command_from_inputs(
         raise Exception("Generated command is None")
 
     return command
+
+
+def do_nothing_and_wait(wait_time: int = 60, delay: int = 3):
+
+    while wait_time > 0:
+        time.sleep(delay)
+        wait_time -= delay
+        logging.info(f"Waiting.. {wait_time} sec")
+    return

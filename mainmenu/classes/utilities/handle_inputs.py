@@ -132,8 +132,11 @@ def hanlde_input_project_name_in_tag(input_question: str, default_answer: str) -
             )
         else:
             project_name = str(input(f"{input_question}: "))
+
         if len(project_name) < 3:
-            logging.error(f"Project name : {project_name} is too short")
+            logging.error(
+                f"Project name : [{project_name}] is empty or less than three characters"
+            )
         else:
             break
     return project_name
@@ -148,9 +151,9 @@ def handle_input_project_path_question(
             input(f"{input_question}: {default_answer} path): ") or default_answer
         )
         project_path = project_path.replace("'", "")
-        print(f"project_path :{project_path}")
+        logging.info(f"You have select:{project_path}")
         if not os.path.exists(project_path):
-            raise Exception(f"project path: {project_path} does not exist!!")
+            raise FileExistsError(f"project path: {project_path} does not exist!!")
         else:
             break
 

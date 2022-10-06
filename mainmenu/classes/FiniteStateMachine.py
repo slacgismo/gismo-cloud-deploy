@@ -1,3 +1,4 @@
+from gismoclouddeploy.classes.utilities.command_utils import do_nothing_and_wait
 from mainmenu.classes.constants.EKSInstanceType import EKSInstanceType
 from .utilities.aws_utitlties import connect_aws_client, get_iam_user_name
 from transitions import Machine
@@ -55,7 +56,7 @@ class FiniteStateMachine(object):
 
     default_answer = {
         "default_project": "examples/sleep",
-        "project_in_tags": "pvinsight",
+        "project_in_tags": None,
         "is_ssh": "no",
         "num_of_nodes": 1,
         "cleanup_resources_after_completion": "no",
@@ -549,6 +550,12 @@ class FiniteStateMachine(object):
                     if cluster_name is not None:
                         is_eks_cluster_exist = self._aws_services.check_eks_exist()
                         if is_eks_cluster_exist:
+                            # scale down nodes first
+                            self._aws_services.handle_ssh_eks_action(
+                                eks_action=EKSActions.scaledownzero.name,
+                            )
+                            do_nothing_and_wait(wait_time=90, delay=5)
+                            # delete eks node
                             self._aws_services.handle_ssh_eks_action(
                                 eks_action=EKSActions.delete.name,
                             )
@@ -679,7 +686,7 @@ class FiniteStateMachine(object):
 
             full_path_file = temp_project_absoult_path + "/" + file
             if not exists(full_path_file):
-                raise Exception(f"{full_path_file} does not exist!!")
+                raise FileNotFoundError(f"{full_path_file} does not exist!!")
             logging.info(f"{file} exists !!")
 
         logging.info("Verify files list success")
@@ -706,7 +713,9 @@ class FiniteStateMachine(object):
                 temp_project_absoult_path + f"/{solver_lic_file_local_source}"
             )
             if not exists(solver_absolute_path_file):
-                raise Exception(f" solver {solver_absolute_path_file} does not exist")
+                raise FileNotFoundError(
+                    f" solver {solver_absolute_path_file} does not exist"
+                )
             logging.info(f"solver file :{solver_lic_file_local_source} exist")
 
         return

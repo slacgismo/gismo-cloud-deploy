@@ -16,7 +16,7 @@ class InputDescriptions(enum.Enum):
         "Enter project folder (Hit `Enter` button to use default path"
     )
 
-    is_cleanup_resources_after_completion = "Do you want to delete all created resources? \n If you type 'no', there will be an operating cost generated from an EKS cluster (You pay $0.10 per hour for each Amazon EKS cluster you create. Sept,2022). The ec2 bastion will be stopped (no operating cost). \n However, if you type 'yes', the generated EC2 bastions and the EKS cluster will be deleted (No operating cost from ec2 and EKS cluster).\n It takes about 10~20 mins to generate a new EKS cluster."
+    is_cleanup_resources_after_completion = "Do you want to delete all the created cloud resources after completing the process? \n If you type 'no', an operating cost will be generated from an EKS cluster (You pay $0.10 per hour for each Amazon EKS cluster you create. Sept 2022). The EC2 bastion stops (no operating cost). \n However, if you type 'yes', the generated EC2 bastions and the EKS cluster will be deleted (No operating cost from ec2 and EKS cluster).\n Launching a new EKS cluster takes about 10 ~ 15 minutes. You can type' no' if you want to run this application multiple times. You can still delete all created cloud resources from the main menu."
 
     select_an_action = "Please select an action."
 

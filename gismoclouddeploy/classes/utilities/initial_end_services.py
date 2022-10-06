@@ -56,8 +56,8 @@ def initial_end_services(
         namespace = server_info["namespace"]
 
         logging.info(f"Clean all resources in: {namespace}")
-        _delete_resource = invoke_kubectl_delete_all_from_namspace(namespace=namespace)
-        _delete_namespace = invoke_kubectl_delete_namespaces(namespace=namespace)
+        invoke_kubectl_delete_all_from_namspace(namespace=namespace)
+        invoke_kubectl_delete_namespaces(namespace=namespace)
         logging.info(f"Delete namespace:{namespace}")
 
     if env == DevEnvironments.AWS.name:

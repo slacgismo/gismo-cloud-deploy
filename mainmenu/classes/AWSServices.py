@@ -36,6 +36,8 @@ from .utilities.aws_utitlties import (
     check_eks_cluster_with_name_exist,
 )
 
+from .utilities.helper import do_nothing_and_wait
+
 from .constants.AWSActions import AWSActions
 from .constants.EC2Status import EC2Status
 from .constants.EKSActions import EKSActions
@@ -502,10 +504,6 @@ class AWSServices(object):
 
         elif eks_action == EKSActions.delete.name:
             logging.info("set delete eks culster command ")
-            # scale down if cluster exist
-            scaledown_command = f'rec="$(eksctl get cluster | grep {cluster_name})" \n if [ -n "$rec" ] ; then eksctl scale nodegroup --cluster {cluster_name} --name {nodegroup_name} --nodes 0; fi'
-            ssh_command_list["scaledonw cluster"] = scaledown_command
-            # delete cluster if cluster exist
             delete_eks_command = f'rec="$(eksctl get cluster | grep {cluster_name})" \n if [ -n "$rec" ] ; then eksctl delete cluster -f {remote_cluster_file}; fi'
 
             ssh_command_list["Delete EKS cluster"] = delete_eks_command
@@ -651,7 +649,7 @@ class AWSServices(object):
                 res = self._ec2_resource.instances.filter(
                     InstanceIds=[ec2_instance_id]
                 ).start()  # for stopping an ec2 instance
-                instance = check_if_ec2_ready_for_ssh(
+                check_if_ec2_ready_for_ssh(
                     instance_id=ec2_instance_id,
                     wait_time=self._ssh_total_wait_time,
                     delay=self._ssh_wait_time_interval,

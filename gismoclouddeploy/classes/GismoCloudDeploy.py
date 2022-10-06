@@ -271,7 +271,7 @@ class GismoCloudDeploy(object):
                 f"{self._base_path}/gismoclouddeploy/config/k8s/config-k8s.yaml"
             )
             if not exists(k8s_configfile):
-                raise Exception(f"{k8s_configfile} does not exist.")
+                raise FileNotFoundError(f"{k8s_configfile} does not exist.")
 
             k8s_config = convert_yaml_to_json(yaml_file=k8s_configfile)
             self._services_config_list = k8s_config["services_config_list"]
@@ -430,7 +430,7 @@ class GismoCloudDeploy(object):
             delay_seconds="0",
             visiblity_timeout="60",
             sqs_resource=sqs_resource,
-            tags={"project": "pvinsight"},
+            tags={"project": self._cluster_name},
         )
         self._sqs_url = _resp.url
         logging.info(f"======== Create {self._sqs_url} success =======")
@@ -506,11 +506,6 @@ class GismoCloudDeploy(object):
     def handle_build_and_tag_images(self, event):
         logging.info("handle_build_and_tag_images")
 
-        # Should check the docker server is running.
-        # if not invoker_check_docker_running():
-        #     raise Exception("Docker is not running")
-        # docker build image
-
         project_path = f"{self._base_path}/{self.project}"
         _solver_absolute_file = os.path.join(
             project_path, self._solver_lic_file_local_source
@@ -519,7 +514,9 @@ class GismoCloudDeploy(object):
         if len(self._solver_lic_file_local_source) != 0 and not exists(
             _solver_absolute_file
         ):
-            raise Exception(f"license file: {_solver_absolute_file} does not eixst")
+            raise FileNotFoundError(
+                f"license file: {_solver_absolute_file} does not eixst"
+            )
 
         if (
             not exists(_solver_absolute_file)

@@ -186,13 +186,9 @@ def analyze_all_local_logs_files(
         logs_path_name = logs_file_path + "/" + logs_file
         per_dict = analyze_signle_local_logs_file(
             logs_file_path_name=logs_path_name,
-            instanceType=instanceType,
-            initial_process_time=0,
-            total_process_time=1100,
-            eks_nodes_number=eks_nodes_number,
-            num_workers=num_workers,
-            num_unfinished_tasks=0,
-            code_templates_folder=code_templates_folder,
+            initial_process_time=initial_process_time,
+            total_process_time=total_process_time,
+            num_unfinished_tasks=num_unfinished_tasks,
         )
 
         repeat_number_str = f"Repeat {index}"
@@ -315,13 +311,9 @@ def analyze_all_local_logs_files(
 
 def analyze_signle_local_logs_file(
     logs_file_path_name: str = None,
-    instanceType: str = None,
     initial_process_time: float = 0,
     total_process_time: float = 0,
-    eks_nodes_number: int = 0,
-    num_workers: int = 0,
     num_unfinished_tasks: int = 0,
-    code_templates_folder: str = None,
 ) -> dict:
 
     if exists(logs_file_path_name) is False:

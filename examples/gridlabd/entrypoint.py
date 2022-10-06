@@ -57,8 +57,7 @@ def entrypoint(
         print(curr_process_file)
         local_file = models_path + "/" + download_file
         print(local_file)
-        res = s3_client.download_file(
-            data_bucket, curr_process_file, local_file)
+        res = s3_client.download_file(data_bucket, curr_process_file, local_file)
         print(res)
     except Exception as e:
         logger.error(f"Download file error: {e}")

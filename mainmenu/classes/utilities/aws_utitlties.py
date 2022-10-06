@@ -498,11 +498,13 @@ def ssh_upload_folder_to_ec2(
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name, username=user_name, pkey=privkey)
 
+    # I should clean up this block when I have time
+    # ---------------------------------------------
     logging.info("Create remote temp folder if it does not exist")
     folder = f"/home/{user_name}/gismo-cloud-deploy/temp"
     logging.info(f"Crete{folder}")
     command = f'if [ ! -d "{folder}" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi'
-    (stdin, stdout, stderr) = ssh.exec_command(command)
+    (_, stdout, _) = ssh.exec_command(command)
     for line in stdout.readlines():
         print(line)
     # step 1. get relative folder
@@ -516,10 +518,10 @@ def ssh_upload_folder_to_ec2(
     )
     logging.info(f"Crete{_remote_project_folder}")
     command = f'if [ ! -d "{_remote_project_folder}" ]; then \n echo ssh: {_remote_project_folder} does not exist \n mkdir {_remote_project_folder} \n echo ssh: create {_remote_project_folder}  \n fi'
-    (stdin, stdout, stderr) = ssh.exec_command(command)
+    (_, stdout, _) = ssh.exec_command(command)
     for line in stdout.readlines():
         print(line)
-    # this will be an issue. change here if enoug time
+    # ---------------------------------------------
 
     relative_path = []
 
@@ -560,8 +562,6 @@ def ssh_upload_folder_to_ec2(
             logging.info(f"upload :{key} to {value} success")
         except Exception as e:
             logging.error(f"upload :{key} to {value} failed: {e}")
-        # print(f"local :{key}")
-        # print(f"value :{value}")
     ftp_client.close()
     logging.info(
         f"Uplodate {local_project_path_base} to {remote_project_path_base} success!!!"
@@ -640,19 +640,15 @@ def upload_file_to_ec2(
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name, username=user_name, pkey=privkey)
 
-    logging.warning(
-        "Create created_resources_history folder. Change below if you have time---"
-    )
     folder = f"/home/{user_name}/gismo-cloud-deploy/created_resources_history"
     logging.info(f"Crete{folder}")
     command = f'if [ ! -d "{folder}" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi'
-    (stdin, stdout, stderr) = ssh.exec_command(command)
+    (_, stdout, _) = ssh.exec_command(command)
     for line in stdout.readlines():
         print(line)
-    logging.warning("This is a bad implementation. Change above if you have time---")
 
     command = f'if [ ! -d "{path}" ]; then \n echo {path} does not exist \n mkdir {path} \n echo create {path} \n fi'
-    (stdin, stdout, stderr) = ssh.exec_command(command)
+    (_, stdout, _) = ssh.exec_command(command)
     for line in stdout.readlines():
         print(line)
 
@@ -702,12 +698,6 @@ def ssh_download_folder_from_ec2(
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name, username=user_name, pkey=privkey)
-    # if use password
-    # transport = paramiko.Transport((host, port))
-    # transport.connect(username=username, password=password)
-    # sftp = paramiko.SFTPClient.from_transport(transport)
-    # sftp_get_recursive(remote_path, local_path, sftp)
-    # sftp.close()
     logging.info(f"get recursive from {remote_folder} to {local_folder}")
     ftp_client = ssh.open_sftp()
     sftp_get_recursive(remote_folder, local_folder, ftp_client)
