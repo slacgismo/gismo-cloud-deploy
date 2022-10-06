@@ -73,6 +73,7 @@ RUN echo "==================================================="
 RUN mkdir $TARGET_PATH_OF_UPLOAD_FILE
 COPY $source_path_of_upload_file  $TARGET_PATH_OF_UPLOAD_FILE
 
+WORKDIR /app/project/gridlabd-models
 
 WORKDIR /app
 
