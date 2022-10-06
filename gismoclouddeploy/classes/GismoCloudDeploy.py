@@ -430,7 +430,7 @@ class GismoCloudDeploy(object):
             delay_seconds="0",
             visiblity_timeout="60",
             sqs_resource=sqs_resource,
-            tags={"project": self._cluster_name},
+            tags={"project": "pvinsight"},
         )
         self._sqs_url = _resp.url
         logging.info(f"======== Create {self._sqs_url} success =======")
@@ -850,7 +850,9 @@ class GismoCloudDeploy(object):
 
     def handle_analyzing_logs(self, event):
         logging.info("handle_analyzing_logs")
+        print(f"self._init_process_time_list :{self._init_process_time_list}")
 
+        print(f"self._total_proscee_time_list :{self._total_proscee_time_list}")
         # logs_file_list = self._saved_file_local['logs_data']
         analyze_all_local_logs_files(
             project=self.project,

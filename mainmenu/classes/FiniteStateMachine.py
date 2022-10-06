@@ -1,3 +1,21 @@
+"""
+A finite state machine to manage menu work flow
+State :
+        "start",
+        "init",
+        "ready",
+        "process",
+        "end",
+Flow :
+    init state: start 
+    trigger_initial : start  -> init
+    trigger_ready : init -> ready
+    trigger_process : ready -> process
+    trigger_end : * -> end
+    on exception: -> handle_error
+"""
+
+
 from gismoclouddeploy.classes.utilities.command_utils import do_nothing_and_wait
 from mainmenu.classes.constants.EKSInstanceType import EKSInstanceType
 from .utilities.aws_utitlties import connect_aws_client, get_iam_user_name

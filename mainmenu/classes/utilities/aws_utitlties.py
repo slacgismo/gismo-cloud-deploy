@@ -199,7 +199,18 @@ def check_keypair_name_exists(ec2_client: EC2Client, keypair_name: str) -> bool:
 
 
 def get_ec2_state_from_id(ec2_client: EC2Client, id: str) -> str:
+    """
+    Get ec2 state from instacne id
 
+    Parameters
+    ----------
+    :params ec2_client: boto3 EC2 client object
+    :params str id: ec2 instance id
+
+    Return
+    ------
+    :return str -> ec2 state
+    """
     # check ec2 status
     response = ec2_client.describe_instance_status(
         InstanceIds=[id], IncludeAllInstances=True
@@ -209,15 +220,25 @@ def get_ec2_state_from_id(ec2_client: EC2Client, id: str) -> str:
     for instance in response["InstanceStatuses"]:
         instance_id = instance["InstanceId"]
         if instance_id == id:
-
-            system_status = instance["SystemStatus"]
-            instance_status = instance["InstanceStatus"]
+            # system_status = instance["SystemStatus"]
+            # instance_status = instance["InstanceStatus"]
             state = instance["InstanceState"]["Name"]
             return state
     return None
 
 
 def get_iam_user_name(sts_client: STSClient) -> str:
+    """
+    Get iam user name and remove special characters
+
+    Parameters
+    ----------
+    :params sts_client: boto3 STS client object
+
+    Return
+    ------
+    :return str -> iam user name
+    """
     try:
         response = sts_client.get_caller_identity()
         if "Arn" in response:
@@ -241,22 +262,46 @@ def delete_security_group(ec2_client: EC2Client, group_id: str):
 
 
 def delete_key_pair(ec2_client: EC2Client, key_name: str):
+    """
+    Delete key pair of AWS
+
+    Parameters
+    ----------
+    :params ec2_client: boto3 EC2 client object
+    :params str key_name: key name
+
+    """
     try:
-        res = ec2_client.delete_key_pair(KeyName=key_name)
+        ec2_client.delete_key_pair(KeyName=key_name)
         logging.info("Key pair deleted")
     except botocore.exceptions.ClientError as err:
         raise Exception(err)
 
 
 def check_if_ec2_ready_for_ssh(
-    instance_id: str,
-    wait_time: int,
-    delay: int,
-    pem_location: str,
-    user_name: str,
-    ec2_resource,
+    instance_id: str = None,
+    wait_time: int = 60,
+    delay: int = 3,
+    pem_location: str = None,
+    user_name: str = None,
+    ec2_resource: EC2ServiceResource = None,
 ) -> bool:
-    # ec2 = boto3.resource('ec2')
+    """
+    Check ec2 state from instance id. If the ec2 state is not running, waking up ec2, and try ssh connection.
+
+    Parameters
+    ----------
+    :params ec2_resource: boto3 EC2 resource object
+    :params str user_name: ec2 login user
+    :params str pem_location: local key file
+    :params str instance_id: EC2 instance id
+    :params str wait_time: Total wait time of waking up ec2 instance
+    :params str delay: Interval of wait time
+
+    Return
+    ------
+    return bool : If ssh connection failed, return False, else return True
+    """
     instances = ec2_resource.instances.filter(
         Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
     )
@@ -284,6 +329,8 @@ def check_if_ec2_ready_for_ssh(
         wait_time -= delay
         time.sleep(delay)
         logging.info(f"Wait: {wait_time}...")
+
+    return False
 
 
 def create_instance(

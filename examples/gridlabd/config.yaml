@@ -10,7 +10,7 @@ solver_lic_file_local_source: ""
 
 data_bucket: "gcd.hipas.models"
 file_pattern: "*.glm" #   ".glm"        # Bucket contains origin data files. user regulare expression
-#default_process_files: ["PVO/PVOutput/46851.csv","PVO/PVOutput/11106.csv","PVO/PVOutput/10010.csv"]   # Default process files. If users do not use option -n command.
+
 process_column_keywords: "^Pow" # partial match. Process all matched column name. Test colmun: "WS_5" "WS_5_DateUTC"
 saved_bucket: "pv.insight.test" # Bucket of saved files.
 saved_path_cloud: "results" # Path of saved files in bucket

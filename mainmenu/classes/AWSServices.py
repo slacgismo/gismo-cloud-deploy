@@ -351,7 +351,7 @@ class AWSServices(object):
     def hanle_ec2_setup_dependencies(self):
         logging.info("Start setup gcd environments on AWS ec2")
 
-        instance = check_if_ec2_ready_for_ssh(
+        is_ssh_success = check_if_ec2_ready_for_ssh(
             instance_id=self._ec2_instance_id,
             wait_time=self._ssh_total_wait_time,
             delay=self._ssh_wait_time_interval,
@@ -359,8 +359,8 @@ class AWSServices(object):
             user_name=self._login_user,
             ec2_resource=self._ec2_resource,
         )
-
-        logging.info(f"instance ready :{instance}")
+        if not is_ssh_success:
+            raise Exception(f"SSH to {self._ec2_instance_id} connection failed")
 
         self._ec2_public_ip = get_public_ip(
             ec2_client=self._ec2_client, instance_id=self._ec2_instance_id
@@ -646,10 +646,10 @@ class AWSServices(object):
 
         if action == EC2Actions.start.name:
             if ec2_instance_id is not None:
-                res = self._ec2_resource.instances.filter(
+                self._ec2_resource.instances.filter(
                     InstanceIds=[ec2_instance_id]
                 ).start()  # for stopping an ec2 instance
-                check_if_ec2_ready_for_ssh(
+                is_ssh_connect_success = check_if_ec2_ready_for_ssh(
                     instance_id=ec2_instance_id,
                     wait_time=self._ssh_total_wait_time,
                     delay=self._ssh_wait_time_interval,
@@ -657,6 +657,8 @@ class AWSServices(object):
                     user_name=login_user,
                     ec2_resource=self._ec2_resource,
                 )
+                if not is_ssh_connect_success:
+                    raise Exception(f"SSH to {ec2_instance_id} failed")
                 ec2_public_ip = get_public_ip(
                     ec2_client=self._ec2_client, instance_id=ec2_instance_id
                 )
@@ -675,7 +677,7 @@ class AWSServices(object):
         elif action == EC2Actions.terminate.name:
             logging.info("Get ec2 terminate")
             try:
-                res_term = self._ec2_resource.instances.filter(
+                self._ec2_resource.instances.filter(
                     InstanceIds=[ec2_instance_id]
                 ).terminate()  # for terminate an ec2 insta
             except Exception as e:

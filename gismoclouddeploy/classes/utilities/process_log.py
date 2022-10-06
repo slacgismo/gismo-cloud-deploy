@@ -1,5 +1,6 @@
 from asyncio.log import logger
 from genericpath import exists
+import logging
 import os
 import pandas as pd
 
@@ -145,8 +146,8 @@ def analyze_all_local_logs_files(
     project: str,
     instanceType: str,
     num_namspaces: int,
-    init_process_time_list: float,
-    total_proscee_time_list: float,
+    init_process_time_list: list,
+    total_proscee_time_list: list,
     eks_nodes_number: int,
     num_workers: int,
     logs_file_path: str,
@@ -155,6 +156,8 @@ def analyze_all_local_logs_files(
     code_templates_folder: str,
     repeat_number: int,
 ) -> List[str]:
+
+    logging.info(f"initial_process_time : {init_process_time_list}")
 
     logs_files_list = []
     for _file in os.listdir(logs_file_path):
@@ -173,21 +176,21 @@ def analyze_all_local_logs_files(
     longest_task = ["longest_task"]
     task_duration_in_parallelism = ["task_duration_in_parallelism"]
     tasks_durtaion_sum = ["tasks_durtaion_sum"]
+    # initial_process_time = init_process_time_list[repeat_number]
     initial_process_time = ["initial_process_time"]
     total_process_time = ["total_process_time"]
     effeciencyFactor = ["effeciencyFactor"]
     total_tasks = ["total_tasks"]
-    error_task = ["error_task"]
 
     index = 0
     performance_dict = {}
-    for logs_file in logs_files_list:
+    for index, logs_file in enumerate(logs_files_list):
         logger.info(f"Porcess {logs_file}")
         logs_path_name = logs_file_path + "/" + logs_file
         per_dict = analyze_signle_local_logs_file(
             logs_file_path_name=logs_path_name,
-            initial_process_time=initial_process_time,
-            total_process_time=total_process_time,
+            initial_process_time=init_process_time_list[index],
+            total_process_time=total_proscee_time_list[index],
             num_unfinished_tasks=num_unfinished_tasks,
         )
 
