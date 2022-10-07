@@ -30,7 +30,10 @@ from .utilities.invoke_function import (
     invoke_exec_k8s_run_process_files,
 )
 
-from .utilities.process_log import analyze_all_local_logs_files, process_logs_from_local
+from .utilities.process_log import (
+    analyze_all_local_logs_files,
+    plot_gantt_from_local_log_file,
+)
 from .utilities.k8s_utils import (
     check_k8s_services_exists,
     create_k8s_svc_from_yaml,
@@ -581,7 +584,7 @@ class GismoCloudDeploy(object):
         if self._is_aws():
             logging.info("Validate ECR repo")
             try:
-                validation_resp = invoke_ecr_validation(ecr_repo=self.ecr_repo)
+                invoke_ecr_validation(ecr_repo=self.ecr_repo)
             except Exception as e:
                 raise Exception(f"Validation ECR failed!!")
 
@@ -802,7 +805,7 @@ class GismoCloudDeploy(object):
 
         # process logs and generate gantts
 
-        process_logs_from_local(
+        plot_gantt_from_local_log_file(
             logs_file_path_name_local=_temp_file_local_dict["logs_data"],
             saved_image_name_local=_temp_file_local_dict["runtime_gantt_chart"],
         )

@@ -1,5 +1,6 @@
 import logging
 import time
+import numpy as np
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -45,19 +46,26 @@ def entrypoint(
     )
     print("---------->")
     delay = 5
-    start_time = time.time()
+    start_time = float(time.time())
+    start_ctime = time.ctime()
     i = 0
     is_end = False
     period = 0
     end_time = 0
-    print("Start : %s" % time.ctime())
-    while period < delay:
-        i += 0
-        # _curr = time.time()
-        end_time = time.time()
-        period = int(end_time - start_time)
-        print(f"period: {period}")
-    print("End : %s" % time.ctime())
+    print("Start : %s" % start_ctime)
+
+    while True:
+        A = np.array([[4, 3, 2], [-2, 2, 3], [3, -5, 2]])
+        B = np.array([25, -10, -4])
+        answer = np.linalg.inv(A).dot(B)
+        end_time = float(time.time())
+
+        duration = int(end_time - start_time)
+        if duration >= delay:
+            break
+
+    end_ctime = time.ctime()
+    print("End : %s" % end_ctime)
 
     try:
         # ==================== PS:Save data in json format is required  ==================== ##
@@ -66,10 +74,11 @@ def entrypoint(
             "bucket": data_bucket,
             "curr_process_file": curr_process_file,
             "curr_process_column": curr_process_column,
+            "answer": str(answer),
             "delay": delay,
-            "period": period,
-            "start_time": start_time,
-            "end_time": end_time,
+            "period": duration,
+            "start_time": start_ctime,
+            "end_time": end_ctime,
         }
     except Exception as e:
         raise Exception(f"Save data error: {e}")

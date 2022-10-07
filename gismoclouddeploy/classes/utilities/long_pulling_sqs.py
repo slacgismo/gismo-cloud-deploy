@@ -36,8 +36,6 @@ def long_pulling_sqs_multi_server(
         region=aws_region,
     )
 
-    is_receive_task_info = False
-
     received_init_task_ids_dict = dict()
     received_init_task_total_num_dict = dict()
     received_completed_task_ids_dict = dict()
@@ -45,7 +43,7 @@ def long_pulling_sqs_multi_server(
     previous_received_completed_task_ids_set_len = dict()
     for server_info in server_list:
         server_name = server_info["name"]
-        namespace = server_info["namespace"]
+
         received_completed_task_ids_dict_comleted[server_name] = False
         received_completed_task_ids_dict[server_name] = []
         received_init_task_ids_dict[server_name] = []
@@ -55,10 +53,7 @@ def long_pulling_sqs_multi_server(
     previous_messages_time = time.time()  # flag of idle time
     num_total_tasks = -1
     uncompleted_task_id_set = set()
-    total_tasks_number = 0
     match_nodemname_hostname_dict = collect_node_name_and_pod_name()
-
-    is_received_init_task_ids_dict_completed = True
 
     while True > 0:
         messages = receive_queue_message(
@@ -69,10 +64,7 @@ def long_pulling_sqs_multi_server(
         logs_data = []
         error_data = []
 
-        _message_start_time = time.time()
         if "Messages" in messages:
-
-            loog_server_start = time.time()
             for msg in messages["Messages"]:
                 msg_body = msg["Body"]
                 msg_dict = json.loads(msg_body)
@@ -131,6 +123,7 @@ def long_pulling_sqs_multi_server(
                         received_init_task_ids_dict[po_server_name].append(
                             received_init_id
                         )
+                    # if you want to store init command log, you can uncomment below
                     # _receive_command = {
                     #     "file_name": msg_dict["file_name"],
                     #     "column_name": msg_dict["column_name"],
@@ -231,10 +224,6 @@ def long_pulling_sqs_multi_server(
                         )
                     delete_queue_message(sqs_url, receipt_handle, sqs_client)
 
-            # loog_server_end = time.time() - loog_server_start
-            # print(f" ***** end messages loop server :{round(loog_server_end,2)}")
-            # END of receive message
-
         # save data, logs errors
         append_receive_data(data_dict=save_data, file_name=save_data_file_path_name)
         append_receive_data(data_dict=logs_data, file_name=save_logs_file_paht_name)
@@ -261,17 +250,6 @@ def long_pulling_sqs_multi_server(
                     == _current_complete_tasks_in_server
                 ):
                     received_completed_task_ids_dict_comleted[server_name] = True
-
-                    # logger.info(f" server_name : {server_name } _totak_tasks_number_in_server:{_totak_tasks_number_in_server} compelted")
-                # else:
-                #     task_completion = 0
-                #     if _totak_tasks_number_in_server > 0:
-
-                #         task_completion = int(
-                #             _current_complete_tasks_in_server
-                #             * 100
-                #             / _totak_tasks_number_in_server
-                #         )
 
                 if (
                     previous_received_completed_task_ids_set_len[server_name]
@@ -333,7 +311,6 @@ def append_receive_data(
 ) -> None:
     if len(data_dict) == 0:
         return
-    # print(f"<----->save files {file_name}  data_dict:{data_dict}")
     try:
         if len(data_dict) > 0:
             save_data_df = pd.json_normalize(data_dict)

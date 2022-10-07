@@ -13,8 +13,6 @@ from terminaltables import AsciiTable
 
 import plotly.express as px
 import plotly.io as pio
-import botocore
-from mypy_boto3_s3.client import S3Client
 
 
 def process_df_for_gantt(df: pd):
@@ -41,11 +39,24 @@ def process_df_for_gantt(df: pd):
     return worker_dict
 
 
-def process_logs_from_local(
+def plot_gantt_from_local_log_file(
     logs_file_path_name_local: str = None,
     saved_image_name_local: str = None,
-    s3_client: S3Client = None,
-) -> bool:
+    image_width: int = 2400,
+    image_height: int = 1600,
+):
+    """
+    Plot gantt chart of system's runtime.
+
+    Parameters
+    ----------
+    :params str logs_file_path_name_local: local log file
+    :params str saved_image_name_local: export image name
+    :params str width: export image name
+    :params str image_width: export image width
+    :params str image_height: export image height
+
+    """
     if exists(logs_file_path_name_local) is False:
         logger.error(f"{logs_file_path_name_local} does not exist")
         return False
@@ -59,7 +70,7 @@ def process_logs_from_local(
     worker_dict = process_df_for_gantt(df)
     # # # # Show dataframe
     gantt_list = []
-    for key, value in worker_dict.items():
+    for _, value in worker_dict.items():
         try:
             pod_ip = value["host_ip"]
             node_name = ""
@@ -76,8 +87,7 @@ def process_logs_from_local(
                 ).isoformat()
                 end_time = datetime.datetime.fromtimestamp((value["end"])).isoformat()
             except Exception as e:
-                logger.error(f"error {e}")
-                raise e
+                raise Exception(f"plot gantt failed {e}")
 
             item = dict(
                 Task=task,
@@ -90,7 +100,7 @@ def process_logs_from_local(
                 Duration=value["duration"],
             )
         except Exception as e:
-            # logger.warning(f"Missing Key {e} in {value}")
+            logger.warning(f"Missing Key {e} in {value}")
             continue
         gantt_list.append(item)
     gantt_df = pd.DataFrame(gantt_list)
@@ -100,46 +110,14 @@ def process_logs_from_local(
     )  # otherwise tasks are listed from the bottom up
 
     pio.write_image(
-        fig, saved_image_name_local, format="png", scale=1, width=2400, height=1600
+        fig,
+        saved_image_name_local,
+        format="png",
+        scale=1,
+        width=image_width,
+        height=image_height,
     )
-    return True
-
-
-def read_all_csv_from_s3_and_parse_dates_from(
-    bucket_name: str = None,
-    file_path_name: str = None,
-    s3_client=None,
-    dates_column_name=None,
-    index_col=0,
-) -> pd.DataFrame:
-
-    if (
-        bucket_name is None
-        or file_path_name is None
-        or s3_client is None
-        or dates_column_name is None
-    ):
-        return
-    try:
-        response = s3_client.get_object(Bucket=bucket_name, Key=file_path_name)
-    except Exception as e:
-        print(f"error read  file: {file_path_name} error:{e}")
-        raise e
-    status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-
-    if status == 200:
-        result_df = pd.read_csv(
-            response.get("Body"),
-            index_col=index_col,
-            parse_dates=["timestamp"],
-            infer_datetime_format=True,
-        )
-        # print(result_df.head())
-        result_df["timestamp"] = pd.to_datetime(result_df["timestamp"], unit="s")
-
-    else:
-        print(f"Unsuccessful S3 get_object response. Status - {status}")
-    return result_df
+    return
 
 
 def analyze_all_local_logs_files(
@@ -293,7 +271,6 @@ def analyze_all_local_logs_files(
         max_duration,
         longest_task,
         num_error_task,
-        num_unfinished_tasks,
         task_duration_in_parallelism,
         tasks_durtaion_sum,
         initial_process_time,
