@@ -153,7 +153,6 @@ def analyze_all_local_logs_files(
     logs_file_path: str,
     performance_file_txt: str,
     num_unfinished_tasks: int,
-    code_templates_folder: str,
     repeat_number: int,
 ) -> List[str]:
 
@@ -176,7 +175,6 @@ def analyze_all_local_logs_files(
     longest_task = ["longest_task"]
     task_duration_in_parallelism = ["task_duration_in_parallelism"]
     tasks_durtaion_sum = ["tasks_durtaion_sum"]
-    # initial_process_time = init_process_time_list[repeat_number]
     initial_process_time = ["initial_process_time"]
     total_process_time = ["total_process_time"]
     effeciencyFactor = ["effeciencyFactor"]
@@ -218,7 +216,6 @@ def analyze_all_local_logs_files(
             "longest_task": per_dict["longest_task"],
             "max_duration": per_dict["max_duration"],
             "num_error_task": per_dict["num_error_task"],
-            "num_unfinished_tasks": per_dict["num_unfinished_tasks"],
             "task_duration_in_parallelism": per_dict["task_duration_in_parallelism"],
             "tasks_durtaion_sum": per_dict["task_duration_in_parallelism"],
             "effeciencyFactor": per_dict["effeciencyFactor"],
@@ -318,6 +315,20 @@ def analyze_signle_local_logs_file(
     total_process_time: float = 0,
     num_unfinished_tasks: int = 0,
 ) -> dict:
+    """
+    Analyze log file and return the system performance in dict format
+
+    Parameters:
+    ----------
+    :param str logs_file_path_name:     Log file name
+    :param str initial_process_time:    Inital process time
+    :param str total_process_time:      Total process time
+    :param str num_unfinished_tasks:    number of unfinish tasks
+
+    Returns:
+    return dictionary format
+
+    """
 
     if exists(logs_file_path_name) is False:
         logger.error(f"{logs_file_path_name} does not exist")
@@ -329,90 +340,81 @@ def analyze_signle_local_logs_file(
     num_error_task = len(error_task)
 
     worker_dict = process_df_for_gantt(df)
-    shortest_task = ""
-    longest_task = ""
-    min_duration = float("inf")
-    max_duration = 0
-    tasks_durtaion_sum = 0
-    average_task_duration = 0
-    total_tasks = 0
-    min_start = float("inf")
-    max_end = 0
-    duration = 0
-    task_duration_in_parallelism = 0
-    efficiency = 0
-    for key, value in worker_dict.items():
-        # logger.info(f"ip {value['host_ip']} ")
-        # logger.info(f"ip {value} ")
-        if ("start" in value) is False:
-            logger.warning(f"missing 'start' key in task {key}")
-            continue
-        if ("end" in value) is False:
-            logger.warning(f"missing 'end' key in task {key}")
-            continue
-        start = float(value["start"])
-        end = float(value["end"])
-        duration = value["duration"]
-        task = value["task"]
-        if task == "loop_tasks_status_task":
-            continue
-        tasks_durtaion_sum += duration
-        if start < min_start:
-            min_start = start
-        if end > max_end:
-            max_end = end
+    # get number of total task
+    total_tasks = len(worker_dict.keys())
+    # get sum of total task durations
+    tasks_durtaion_sum = sum([value["duration"] for value in worker_dict.values()])
+    # get minimum start timestamp
+    _min_start = min([value["start"] for value in worker_dict.values()])
+    # get maximum end timestamp
+    _max_end = max([value["end"] for value in worker_dict.values()])
+    # get minimum task duration
+    min_duration = min([value["duration"] for value in worker_dict.values()])
+    # get maximum task duraton
+    max_duration = max([value["duration"] for value in worker_dict.values()])
+    # get the logest task name (file name)
+    longest_task = {k for k, v in worker_dict.items() if v["duration"] == max_duration}
+    # get the shorest task name (file name)
+    shortest_task = {k for k, v in worker_dict.items() if v["duration"] == min_duration}
+    # get the task duraiton in parallel
+    task_duration_in_parallelism = float(_max_end) - float(_min_start)
+    # get average task durations
+    average_task_duration = (
+        0 if total_tasks == 0 else float(tasks_durtaion_sum / total_tasks)
+    )
 
-        if duration < min_duration:
-            min_duration = duration
-            shortest_task = task
-        if duration > max_duration:
-            max_duration = duration
-            longest_task = task
-        total_tasks += 1
-    task_duration_in_parallelism = max_end - min_start
-    if total_tasks > 0:
-        average_task_duration = tasks_durtaion_sum / total_tasks
-    else:
-        average_task_duration = tasks_durtaion_sum
-
-    if task_duration_in_parallelism > 0:
-        efficiency = int(
-            (
-                (tasks_durtaion_sum - task_duration_in_parallelism)
-                / task_duration_in_parallelism
-            )
-            * 100
-        )
-
-    ip_accumulation_druations = dict()
     # --------------------------
     # calcuate effeciency factor
     # --------------------------
     # step 1 , accumulate the process time of each host_ip/pid
+    ip_info = dict()
     for key, value in worker_dict.items():
-        _duration = float(value["duration"])
         _host_ip = value["host_ip"]
         _pid = value["pid"]
-        key = str(_host_ip) + "/" + str(_pid)
-        if key in ip_accumulation_druations:
-            ip_accumulation_druations[key] += _duration
+        ip = str(_host_ip)
+        if ip in ip_info:
+            ip_info[ip][key] = value
         else:
-            ip_accumulation_druations[key] = _duration
+            ip_info[ip] = {key: value}
 
-    accumulated_process_duration = 0
-    for key, value in ip_accumulation_druations.items():
-        accumulated_process_duration += value
-    effeciency_of_each_ip_pid = dict()
-    effeciencyFactor = 0
-    if task_duration_in_parallelism > 0:
+    thread_info = dict()
+    for key, value in worker_dict.items():
+        _host_ip = value["host_ip"]
+        _pid = value["pid"]
+        # separate thread info
+        thread = str(_host_ip) + "/" + str(_pid)
+        if thread in thread_info:
+            thread_info[thread][key] = value
+        else:
+            thread_info[thread] = {key: value}
 
-        for key, value in ip_accumulation_druations.items():
-            effeciency_of_each_ip_pid[key] = value / task_duration_in_parallelism
-
-    if len(ip_accumulation_druations) > 0:
-        effeciencyFactor = accumulated_process_duration / (
-            task_duration_in_parallelism * len(ip_accumulation_druations)
+    for key, info_dict in ip_info.items():
+        _task_min_start = min([value["start"] for value in info_dict.values()])
+        _task_max_end = max([value["end"] for value in info_dict.values()])
+        _accu_duration = sum([value["duration"] for value in info_dict.values()])
+        ip_info[key]["min_start"] = float(_task_min_start)
+        ip_info[key]["max_end"] = float(_task_max_end)
+        ip_info[key]["task_accumulate_durations"] = float(_accu_duration)
+        ip_info[key]["ip_max_min_duration"] = float(
+            2 * (_task_max_end - _task_min_start)
         )
+        ip_info[key]["ip_efficiency"] = float(_accu_duration * 100) / float(
+            2 * (_task_max_end - _task_min_start)
+        )
+
+    resource_efficiency = 0
+    number_active_ip = 0
+    for key, value in ip_info.items():
+
+        resource_efficiency += ip_info[key]["ip_efficiency"]
+        number_active_ip += 1
+    resource_efficiency = resource_efficiency / len(ip_info)
+
+    # get len of thread
+
+    time_efficiency = (
+        tasks_durtaion_sum * 100 / (task_duration_in_parallelism * len(thread_info))
+    )
 
     performance_dict = {
         "file": logs_file_path_name,
@@ -428,6 +430,7 @@ def analyze_signle_local_logs_file(
         "tasks_durtaion_sum": round(tasks_durtaion_sum, 2),
         "initial_process_time": round(initial_process_time, 2),
         "total_process_time": round(total_process_time, 2),
-        "effeciencyFactor": round(effeciencyFactor, 2),
+        "effeciencyFactor": round(time_efficiency, 2),
+        "resource_efficiency": round(resource_efficiency, 2),
     }
     return performance_dict

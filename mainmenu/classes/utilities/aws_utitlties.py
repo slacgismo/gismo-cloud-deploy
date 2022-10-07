@@ -430,6 +430,8 @@ def run_command_in_ec2_ssh(
 
     for line in iter(stdout.readline, ""):
         print(line, end="")
+    if stdout.channel.recv_exit_status() != 0:
+        raise Exception(f"exec ssh command failed {stderr}")
     print("finished.")
     ssh.close()
 
@@ -545,36 +547,14 @@ def ssh_upload_folder_to_ec2(
     privkey = paramiko.RSAKey.from_private_key_file(pem_location)
     ssh.connect(p2_instance.public_dns_name, username=user_name, pkey=privkey)
 
-    # I should clean up this block when I have time
-    # ---------------------------------------------
-    logging.info("Create remote temp folder if it does not exist")
-    folder = f"/home/{user_name}/gismo-cloud-deploy/temp"
-    logging.info(f"Crete{folder}")
-    command = f'if [ ! -d "{folder}" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi'
-    (_, stdout, _) = ssh.exec_command(command)
-    for line in stdout.readlines():
-        print(line)
-    # step 1. get relative folder
-    project_folder = basename(local_project_path_base)
-    print(f"project_folder: {project_folder}, local_folder :{local_project_path_base}")
-    logging.info("Lists local files in path, and create remote files list")
-    base_path = os.getcwd()
-    logging.info("Create remote temp folder if it does not exist")
-    _remote_project_folder = (
-        f"/home/{user_name}/gismo-cloud-deploy/temp/{project_folder}"
-    )
-    logging.info(f"Crete{_remote_project_folder}")
-    command = f'if [ ! -d "{_remote_project_folder}" ]; then \n echo ssh: {_remote_project_folder} does not exist \n mkdir {_remote_project_folder} \n echo ssh: create {_remote_project_folder}  \n fi'
-    (_, stdout, _) = ssh.exec_command(command)
-    for line in stdout.readlines():
-        print(line)
-    # ---------------------------------------------
-
-    relative_path = []
-
+    path_set = set()
     upload_local_to_remote_dict = {}
+
+    # replcae local path to remote path
     for file in local_files_list:
         path, filename = os.path.split(file)
+        print(f"path: {path}, filename:{filename}")
+
         relative = Path(path).relative_to(Path(local_project_path_base))
         new_path = remote_project_path_base
         if str(relative) == ".":
@@ -586,22 +566,19 @@ def ssh_upload_folder_to_ec2(
                 remote_project_path_base + f"/{relative}/{filename}"
             )
             new_path = remote_project_path_base + f"/{relative}"
-        relative_path.insert(0, new_path)
+        path_set.add(new_path)
 
-    relative = Path(path).relative_to(Path(base_path))
-
-    logging.info("check if remote exist, if not create a new path")
-
-    # Upload files
-    for folder in relative_path:
+    # check if path exist, if not create path
+    for folder in path_set:
         # remote_dir = remote_folder + "/"+ folder
         print(f"remote_dir: {folder}")
-        command = f'if [ ! -d "{folder}" ]; then \n echo ssh: {folder} does not exist \n mkdir {folder} \n echo ssh: create {folder}  \n fi'
-        (stdin, stdout, stderr) = ssh.exec_command(command)
+        command = f'if [ ! -d "{folder}" ]; then \n  mkdir -p {folder} \n echo ssh: create {folder}  \n fi'
+        (_, stdout, _) = ssh.exec_command(command)
         for line in stdout.readlines():
-            print(line)
+            logging.info(line)
     logging.info(f"Create folder :{folder} success")
 
+    # uplaod file
     ftp_client = ssh.open_sftp()
     for key, value in upload_local_to_remote_dict.items():
         try:

@@ -867,7 +867,6 @@ class GismoCloudDeploy(object):
             + "/"
             + self._filename["performance"],
             num_unfinished_tasks=0,
-            code_templates_folder=self._code_template_folder,
             repeat_number=self._num_repetion,
         )
         # update performance

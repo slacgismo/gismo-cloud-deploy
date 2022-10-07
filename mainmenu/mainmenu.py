@@ -2,19 +2,12 @@ from genericpath import exists
 
 
 import os
-
-# setting path
-
-
 import logging
 from mainmenu.classes.constants.Platform import Platform
 
-from .classes.constants.EC2Actions import EC2Actions
+
 from .classes.constants.MenuActions import MenuActions
 from .classes.FiniteStateMachine import FiniteStateMachine
-from .classes.AWSServices import AWSServices
-from .classes.constants.AWSActions import AWSActions
-from .classes.constants.EKSActions import EKSActions
 
 
 from os.path import exists
@@ -87,7 +80,6 @@ def mainmenu(
     else:
         try:
             fsm.trigger_ready()
-
             logging.info(f" ===== Menu State: {fsm.state}  =======")
             fsm.trigger_process()
             logging.info(f" ===== Menu State: {fsm.state}  =======")
@@ -98,5 +90,5 @@ def mainmenu(
         fsm.trigger_end()
         logging.info(f" ===== Menu State: {fsm.state}  =======")
     except Exception as e:
-        logging.error("End state error")
+        logging.error(f"End state error {e}")
     return
