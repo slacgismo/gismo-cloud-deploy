@@ -54,7 +54,6 @@ def check_task_status(task_id: str = None):
 # ***************************
 # Process first n files : first_n_files is integer
 # Process all files  : first_n_files is 0
-
 # ***************************
 
 
@@ -87,7 +86,6 @@ def process_files(worker_config_str: str):
         logger.error(f"AWS validation failed {e}")
         return "AWS validation fail"
 
-    # print(default_files)
     task_ids = []
     user_id = worker_config_json["user_id"]
     repeat_number_per_round = int(worker_config_json["repeat_number_per_round"])
@@ -140,8 +138,7 @@ def process_files(worker_config_str: str):
                 )
 
                 time.sleep(0.02)
-            # publish sns message
-    # print("------------->")
+
     MSG_ATTRIBUTES2 = {
         "user_id": {"DataType": "String", "StringValue": str(user_id)},
     }
@@ -176,8 +173,6 @@ def revoke_task(task_id: str):
 def get_celery_worker_status():
     ERROR_KEY = "ERROR"
     try:
-        # from celery.task.control import inspect
-        # insp = inspect()
         insp = celery.task.control.inspect()
         d = insp.stats()
         if not d:

@@ -2,7 +2,6 @@ from mainmenu.mainmenu import mainmenu
 from mainmenu.classes.utilities.aws_utitlties import check_environment_is_aws
 
 import click
-import logging
 import os
 from pathlib import Path
 from gismoclouddeploy.gismoclouddeploy import gismoclouddeploy
