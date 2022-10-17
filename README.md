@@ -125,15 +125,13 @@ python3 main.py menu
 ##### project path
 
 ```bash
-('Enter project folder (Hit `Enter` button to use default path',): /Users/<username>/Development/gismo/gismo-cloud-deploy/examples/sleep path):
+('Enter project folder (Hit `Enter` button to use default path',): /Users/<username>/Development/gismo/gismo-cloud-deploy/examples/matrix path):
 ```
 
 There are four examples included in this tool. Please check [Examples projects](#example-projects) for more information.
-First, for a quick start, you could hit enter to use default project located at `examples/sleep` folder. If you want to edit your script, you could copy the `examples/sleep` projects to your desktop and input `<bas-path>/desktop/sleep` project (`<bas-path>` refer to the absolute path of `desktop` folder). Then you can edit the function `entrypoint` in `entrypoint.py`. Let changing the delay time from `5` to `3`. This application will only run a for-loop in this task for `3` seconds.
+First, for a quick start, you could hit enter to use default project located at `examples/matrix` folder.
 
-Second, open the `config.yaml` file in your project folder. You have to specify the `data_bucket`, `file_pattern` and `process_column_keywords` parameters. Use default `file_pattern:*csv` `data_bucket:"pv.insight.nrel"` and default `process_column_keywords: "^Pow"`, this application will process the file that matches `file_pattern:*csv` in `data_bucket:"pv.insight.nrel"`. In this case, it runs the `csv` file of a bucket called `pv.insight.nrel` on S3. When this application is running, the application passes the match file name to `entrypoint` function as `curr_process_file` and matched column name with regular expression keywords defined in `curr_process_column`. If there is no matched column name, the `curr_process_column` in the entrypoint function is `None`.
-
-**_NOTE_** If you don't have permission to access default data bucket `pv.insight.nrel` and saved bucket: `pv.insight.test` on AWS, you have to create your S3 bucket and put some `.csv` files in the data bucket. After you create your S3 bucket, you need to define the `data_bucket:` and `saved_bucket` as your custom S3 bucket name.
+If you want to edit your script, please check [Custom scripts section](#custom-scripts).
 
 ##### platform
 
@@ -292,7 +290,7 @@ If you want to run this application on your local machine, you have to install [
 - examples/gridlabd
   This exmaples runs the [gridlabd](https://github.com/slacgismo/gridlabd) project
 
-- examples/sleep
+- examples/matrix
   This example runs a for loop without doing anything.
 
 - examples/solardatatools
@@ -419,7 +417,7 @@ pip install -r requirements.txt
 
 ```bash
 cd ./gismoclouddeploy/services
-python3 main.py run-files -n 1 -s 1 -p examples/sleep -c <your-cluster-name>
+python3 main.py run-files -n 1 -s 1 -p examples/matrix -c <your-cluster-name>
 ```
 
 Please follow the [Command](#command) section to explore the command detail.
@@ -515,6 +513,18 @@ On the AWS environment ,the above command starts the following processes:
 7. After the process is done, this application deletes temporary images on ECR.
 
 ---
+
+### Custom scripts
+
+This section demonstrates how to customise your script by an example of `examples/matrix`. This project simulates a running task duration by solving a matrix problem in a for-loop. You can control the total process time by changing the `delay` variables.
+
+First, please copy the `examples/matrix` projects to your desktop and input `<bas-path>/desktop/matrix` project (`<bas-path>` refer to the absolute path of `desktop` folder). Then you can edit the function `entrypoint` in `entrypoint.py`. Please change the `delay` time from `5` seconds to `8` seconds. This will change the total process duration from `5` seconds to `8` seconds. You can also change the arrays of `A = np.array([[4, 3, 2], [-2, 2, 3], [3, -5, 2]])` and `B = np.array([25, -10, -4])` to get different answer.
+
+Second, open the `config.yaml` file in your project folder. You have to specify the `data_bucket`, `file_pattern` and `process_column_keywords` parameters. Use default `file_pattern:*csv` `data_bucket:"pv.insight.nrel"` and default `process_column_keywords: "^Pow"`, this application will process the file that matches `file_pattern:*csv` in `data_bucket:"pv.insight.nrel"`. In this case, it runs the `csv` file of a bucket called `pv.insight.nrel` on S3. When this application is running, the application passes the match file name to `entrypoint` function as `curr_process_file` and matched column name with regular expression keywords defined in `curr_process_column`. If there is no matched column name, the `curr_process_column` in the entrypoint function is `None`.
+
+**_NOTE_** If you don't have permission to access default data bucket `pv.insight.nrel` and saved bucket: `pv.insight.test` on AWS, you have to create your S3 bucket and put some `.csv` files in the data bucket. After you create your S3 bucket, you need to define the `data_bucket:` and `saved_bucket` as your custom S3 bucket name.
+
+## Third, if you want to add new python packages, you can include a new package in `requirements`. In this example, `numpy` had been added to the `requriements.txt` file.
 
 ### Kubernetes yaml files
 

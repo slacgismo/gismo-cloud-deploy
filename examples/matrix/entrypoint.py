@@ -48,9 +48,6 @@ def entrypoint(
     delay = 5
     start_time = float(time.time())
     start_ctime = time.ctime()
-    i = 0
-    is_end = False
-    period = 0
     end_time = 0
     print("Start : %s" % start_ctime)
 

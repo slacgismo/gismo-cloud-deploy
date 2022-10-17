@@ -31,7 +31,7 @@ def gismoclouddeploy(
                         If number is an integer, this applicaion process the first `number` files in the defined bucket in config.yaml.
 
     :param scalenodes:  Define the number of nodes(instances) that you want to generate on AWS EKS or any cloud platform. The default number is `1`.
-    :param project:     Define the project name. The default projec is `examples/sleep`.
+    :param project:     Define the project name. The default projec is `examples/matrix`.
     :param repeat:      Define how many times you want to repeat this process. The default number is `1`.
     :param cluster:     Define the cluster name of AWS EKS cluster. If you are running on local machine, you can use the default name `local`.
     :param nodegroup_name:  Define the nodegroup of cluster. The default name is `gcd`.

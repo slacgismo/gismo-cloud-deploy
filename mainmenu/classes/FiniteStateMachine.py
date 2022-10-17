@@ -73,7 +73,7 @@ class FiniteStateMachine(object):
     ]
 
     default_answer = {
-        "default_project": "examples/sleep",
+        "default_project": "examples/matrix",
         "project_in_tags": None,
         "is_ssh": "no",
         "num_of_nodes": 1,
