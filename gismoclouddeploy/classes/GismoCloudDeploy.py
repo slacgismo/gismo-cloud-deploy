@@ -1032,15 +1032,12 @@ def send_command_to_server(
             solver=solver,
             user_id=user_id,
         )
-        # logging.info(f"config_str: {config_str}")
-
         resp = invoke_exec_k8s_run_process_files(
             config_params_str=config_str,
             pod_name=server_name,
             namespace=namespace,
         )
-        # logging.info(f"invoke k8s resp:{resp}")
-        # print(f"namespace:{namespace} server_name:{server_name} resp: {resp} ")
+
     return None
 
 
@@ -1097,17 +1094,3 @@ def upload_file_to_s3(
     )
     response = s3_client.upload_file(source_file_local, bucket, target_file_s3)
     logging.info(f"Upload {source_file_local} success")
-
-
-# class RaisingThread(threading.Thread):
-#     def run(self):
-#         self._exc = None
-#         try:
-#             super().run()
-#         except Exception as e:
-#             self._exc = e
-
-#     def join(self, timeout=None):
-#         super().join(timeout=timeout)
-#         if self._exc:
-#             raise self._exc

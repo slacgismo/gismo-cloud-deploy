@@ -15,6 +15,10 @@ Flow :
     on exception: -> handle_error
 """
 
+import imp
+
+
+import subprocess
 
 from gismoclouddeploy.classes.utilities.command_utils import do_nothing_and_wait
 from mainmenu.classes.constants.EKSInstanceType import EKSInstanceType
@@ -200,6 +204,12 @@ class FiniteStateMachine(object):
 
     # Init state
     def handle_inputs(self, event):
+        # check if docker server is running
+        try:
+            s = subprocess.check_output("docker ps", shell=True)
+            logging.info(f"Results of docker ps {s}")
+        except Exception as e:
+            raise Exception("Docker server is not running")
         # check created_resources_history and temp folder exist
         created_resources_history_folder = (
             self._base_path + "/created_resources_history"
