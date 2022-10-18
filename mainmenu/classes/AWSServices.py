@@ -34,6 +34,7 @@ from .utilities.aws_utitlties import (
     upload_file_to_ec2,
     get_public_ip_and_update_sshconfig,
     check_eks_cluster_with_name_exist,
+    ssh_download_folder_from_ec2,
 )
 
 from .utilities.helper import do_nothing_and_wait
@@ -617,6 +618,19 @@ class AWSServices(object):
             pem_location=self._pem_file,
             ec2_resource=self._ec2_resource,
             command=full_ssh_command,
+        )
+
+    def download_results_from_ec2(self, local_save_file_paht: str):
+
+        remote_results_path = f"/home/{self._login_user}/gismo-cloud-deploy/results"
+
+        ssh_download_folder_from_ec2(
+            user_name=self._login_user,
+            instance_id=self._ec2_instance_id,
+            pem_location=self._pem_file,
+            local_folder=local_save_file_paht,
+            remote_folder=remote_results_path,
+            ec2_resource=self._ec2_resource,
         )
 
     def run_ssh_debug_mode(self):

@@ -516,6 +516,12 @@ class FiniteStateMachine(object):
                 )
                 # execute run file command
                 self._aws_services.run_ssh_command(ssh_command=run_files_command)
+                # end of run file download reuslts
+                logging.info("Download results")
+                local_save_path = self._base_path + "/results"
+                self._aws_services.download_results_from_ec2(
+                    local_save_file_paht=local_save_path
+                )
             else:
                 logging.info("SSH Debug mode")
                 self._aws_services.run_ssh_debug_mode()

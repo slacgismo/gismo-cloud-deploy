@@ -707,7 +707,7 @@ def ssh_download_folder_from_ec2(
     instances = ec2_resource.instances.filter(
         Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
     )
-    print(instances)
+    # print(instances)
     p2_instance = None
     for instance in instances:
         if instance.id == instance_id:
