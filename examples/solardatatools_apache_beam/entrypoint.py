@@ -60,6 +60,7 @@ def entrypoint(
     output_absolute_file = base_path + f"/{output_file}"
 
     try:
+        # run apache beam pipeline
         run(
             input_file=[curr_process_file],
             solver=solver_name,
@@ -70,7 +71,8 @@ def entrypoint(
             aws_secret_access_key=aws_secret_access_key,
             aws_region=aws_region,
         )
-
+        # the apache beam pipline save file to output_absolute_file
+        # read file and convert to json format
         if os.path.exists(output_absolute_file):
             with open(output_absolute_file) as f:
                 data = f.read()

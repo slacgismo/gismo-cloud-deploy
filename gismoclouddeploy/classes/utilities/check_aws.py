@@ -4,6 +4,7 @@ import botocore
 import logging
 from mypy_boto3_ec2.client import EC2Client
 from mypy_boto3_s3.client import S3Client
+from typing import List
 
 
 def check_aws_validity(key_id: str, secret: str) -> bool:
@@ -58,3 +59,35 @@ def connect_aws_resource(resource_name: str, key_id: str, secret: str, region: s
         return resource
     except Exception:
         raise Exception("AWS Validation Error")
+
+
+def upload_file_to_s3(
+    bucket: str = None,
+    source_file_local: str = None,
+    target_file_s3: str = None,
+    aws_access_key: str = None,
+    aws_secret_access_key: str = None,
+    aws_region: str = None,
+) -> None:
+
+    s3_client = connect_aws_client(
+        client_name="s3",
+        key_id=aws_access_key,
+        secret=aws_secret_access_key,
+        region=aws_region,
+    )
+    response = s3_client.upload_file(source_file_local, bucket, target_file_s3)
+    logging.info(f"Upload {source_file_local} success")
+
+
+def update_image_tags_for_ecr(
+    service_name: int = 1,
+    ecr_repo: str = None,
+) -> List[str]:
+    """
+    Update worker and server's image_name and tag aws.
+
+    """
+    image_name = f"{ecr_repo}/{service_name}"
+
+    return image_name

@@ -5,6 +5,7 @@ import logging
 from ..constants.Platform import Platform
 import time
 from mainmenu.classes.constants.Platform import Platform
+import subprocess
 
 
 def generate_project_name_from_project_path(project_path: str) -> str:
@@ -62,3 +63,11 @@ def do_nothing_and_wait(wait_time: int = 60, delay: int = 3):
         wait_time -= delay
         logging.info(f"Waiting.. {wait_time} sec")
     return
+
+
+def check_docker_server_is_running():
+    try:
+        s = subprocess.check_output("docker ps", shell=True)
+        logging.info(f"Docker is running")
+    except Exception as e:
+        raise Exception("Docker server is not running")

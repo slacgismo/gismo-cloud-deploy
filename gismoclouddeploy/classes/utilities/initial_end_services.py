@@ -150,26 +150,3 @@ def check_ecr_tag_exists(
         return False
     except Exception as e:
         return False
-
-
-def upload_file_to_s3(
-    bucket: str = None,
-    source_file_local: str = None,
-    target_file_s3: str = None,
-    aws_access_key: str = None,
-    aws_secret_access_key: str = None,
-    aws_region: str = None,
-) -> None:
-    """
-    Upload file to S3 bucket
-
-    """
-
-    s3_client = connect_aws_client(
-        client_name="s3",
-        key_id=aws_access_key,
-        secret=aws_secret_access_key,
-        region=aws_region,
-    )
-    response = s3_client.upload_file(source_file_local, bucket, target_file_s3)
-    logging.info(f"Upload {source_file_local} success")

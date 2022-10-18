@@ -18,8 +18,6 @@ Flow :
 import imp
 
 
-import subprocess
-
 from gismoclouddeploy.classes.utilities.command_utils import do_nothing_and_wait
 from mainmenu.classes.constants.EKSInstanceType import EKSInstanceType
 from .utilities.aws_utitlties import connect_aws_client, get_iam_user_name
@@ -58,6 +56,7 @@ from .utilities.helper import (
     get_absolute_paht_from_project_name,
     delete_project_folder,
     generate_run_command_from_inputs,
+    check_docker_server_is_running,
 )
 
 import sys
@@ -123,7 +122,9 @@ class FiniteStateMachine(object):
         self._aws_services = None
         self._platform = None
 
+        # ===========================
         # Define finite state machine
+        # ===========================
 
         self.machine = Machine(
             model=self,
@@ -171,6 +172,10 @@ class FiniteStateMachine(object):
             after="handle_completion",
         )
 
+        # ===========================
+        # End of definition
+        # ===========================
+
     def _set_user_id(self):
         sts_client = connect_aws_client(
             client_name="sts",
@@ -205,11 +210,7 @@ class FiniteStateMachine(object):
     # Init state
     def handle_inputs(self, event):
         # check if docker server is running
-        try:
-            s = subprocess.check_output("docker ps", shell=True)
-            logging.info(f"Results of docker ps {s}")
-        except Exception as e:
-            raise Exception("Docker server is not running")
+        check_docker_server_is_running()
         # check created_resources_history and temp folder exist
         created_resources_history_folder = (
             self._base_path + "/created_resources_history"
