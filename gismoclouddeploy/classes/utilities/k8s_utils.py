@@ -5,6 +5,7 @@ import yaml
 from typing import List
 import time
 import sys
+from .invoke_function import invoke_print_pod_error_log
 
 logger = logging.getLogger()
 logging.basicConfig(
@@ -365,6 +366,7 @@ def check_if_pod_ready(
 
     except Exception as e:
         raise Exception(f"{e}")
+
     logging.error(
         f"Wait {container_prefix} in {namespace},[desired / available]: [{cunrrent_num_container:} / {num_container} over time. Check the generated eks instances. You might need to generate more instance or larger instance type"
     )
@@ -413,7 +415,12 @@ def num_pod_ready(pod_name_prefix: str, namespace: str) -> int:
                 waiting = state.waiting
                 terminated = state.terminated
                 if terminated is not None:
-                    raise Exception(f" Pod {pod_name_prefix} terminated: {terminated}")
+                    output = invoke_print_pod_error_log(
+                        pod_name=name, namespace=namespace
+                    )
+                    raise Exception(
+                        f" Pod {pod_name_prefix} terminated: {terminated} \n {output}"
+                    )
 
             ready = i.status.container_statuses[-1].ready
             if ready is True:

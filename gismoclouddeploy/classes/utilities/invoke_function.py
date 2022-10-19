@@ -435,3 +435,9 @@ def invoke_docker_system_prune_all():
     command = "docker system prune -a -f"
     output = subprocess.check_output(["bash", "-c", command])
     return output
+
+
+def invoke_print_pod_error_log(pod_name: str, namespace: str):
+    command = f"kubectl logs -f {pod_name}  -n {namespace}"
+    output = subprocess.check_output(["bash", "-c", command])
+    return output

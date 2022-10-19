@@ -85,6 +85,16 @@ class CreateHandler(beam.DoFn):
 @beam.typehints.with_input_types(Tuple[T, DataHandler], str, str)
 @beam.typehints.with_output_types(Tuple[T, DataHandler])
 class RunSolarDataToolsPipeline(beam.DoFn):
+    """
+    Run the solar data tool pipeline on a PCollection of DataHandler objects
+    ...
+
+    Methods
+    -------
+    process(element):
+        Run the process.
+    """
+
     def process(self, element, power_col, solver):
 
         (file, data_handler) = element
@@ -119,13 +129,13 @@ class RunSolarDataToolsPipeline(beam.DoFn):
 @beam.typehints.with_output_types(Dict)
 class GetEstimatedCapacity(beam.DoFn):
     """
-    Run the solar data tool pipeline on a PCollection of DataHandler objects
+    Get capacity_estimate from solar-data-tools data_handler
     ...
 
     Methods
     -------
     process(element):
-        Run the process.
+        Convert the result to dictionary
     """
 
     def process(self, element):
@@ -137,13 +147,13 @@ class GetEstimatedCapacity(beam.DoFn):
 @beam.typehints.with_output_types(Dict)
 class GetAllResults(beam.DoFn):
     """
-    Run the solar data tool pipeline on a PCollection of DataHandler objects
+    Get all results from solar-data-tools data_handler
     ...
 
     Methods
     -------
     process(element):
-        Run the process.
+        Convert the result to dictionary
     """
 
     def process(self, element, data_bucket, curr_process_column, solver):

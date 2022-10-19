@@ -25,8 +25,6 @@ def run(
     data_bucket,
 ) -> None:
     """Build and run the apache beam pipeline."""
-
-    print(f"input file: {input_file}")
     with beam.Pipeline() as pipeline:
         capacity_estimates = (
             pipeline
@@ -55,4 +53,3 @@ def run(
             | "Write to txt" >> beam.ParDo(WrteToFile(), outputfile=output_file)
             # | "print" >> beam.Map(print)
         )
-        print("Complete")

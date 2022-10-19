@@ -12,6 +12,7 @@ from project.tasks import process_data_task, pong_worker
 from project.tasks_utilities.tasks_utils import send_queue_message
 from models.SNSSubjectsAlert import SNSSubjectsAlert
 
+
 app = create_app()
 celery = ext_celery.celery
 
